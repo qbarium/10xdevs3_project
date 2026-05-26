@@ -1,0 +1,5 @@
+# 10xDevs licensed course materials — installed locally via 10x-cli, not for public redistribution
+.claude/
+.agents/
+skills-lock.json
+CLAUDE.md
