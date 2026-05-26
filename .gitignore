@@ -1,5 +1,4 @@
-# 10xDevs licensed course materials — installed locally via 10x-cli, not for public redistribution
-.claude/
-.agents/
-skills-lock.json
-CLAUDE.md
+# 10xDevs licensed skill content — installed locally via 10x-cli, not for public redistribution.
+# Skills are copied manually into projects that need them; metadata files (lock, manifest) stay tracked.
+.claude/skills/
+.agents/skills/
