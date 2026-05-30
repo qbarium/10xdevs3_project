@@ -1,55 +1,76 @@
 <!-- BEGIN @przeprogramowani/10x-cli -->
 
-## 10xDevs AI Toolkit — Module 1, Lesson 1
+## 10xDevs AI Toolkit — Moduł 1, Lekcja 2
 
-Bootstrap a greenfield project end-to-end with the **shaping chain**:
+Wybierz starter i stos dla PRD, który napisałeś w Lekcji 1, z **łańcuchem stosu**:
 
 ```
-/10x-init  →  /10x-shape  →  /10x-prd  →  (10x-tech-stack-selector)  →  (bootstrapper)
+(/10x-init  →  /10x-shape  →  /10x-prd)  →  /10x-tech-stack-selector  →  (bootstrapper)
 ```
 
-The first three skills ship in this lesson; the last two are the next links in the chain.
+Łańcuch PRD pochodzi z Lekcji 1 (ponownie uwzględniony w tej lekcji, abyś mógł poprawić PRD w trakcie pracy). `/10x-tech-stack-selector` to główny temat lekcji; `/10x-bootstrapper` to następne ogniwo, nauczane w Lekcji 3.
 
-### Task Router — Where to start
+### Router zadań — Od czego zacząć
 
-| Skill | Use it when |
+| Umiejętność | Kiedy jej używać |
 | --- | --- |
-| **Project setup** | |
-| `/10x-init` | The project directory is fresh. Scaffolds `context/foundation/lessons.md` and `docs/reference/contract-surfaces.md` so the rest of the workflow has somewhere to write. Run this once per project. |
-| **Discovery** | |
-| `/10x-shape` | You have an idea and need to turn it into structured shape-notes BEFORE writing a PRD. Greenfield only. Walks vision → persona/access → MVP → FRs (with Socratic challenge) → business logic & data → stack-openness sketch. Surfaces empty-CRUD and MVP-too-big anti-patterns by name. Output: `context/foundation/shape-notes.md` with a resumable `checkpoint:` block. |
-| **Document generation** | |
-| `/10x-prd` | You have shape-notes (or raw notes) and want a schema-conformant `context/foundation/prd.md`. Generates against the locked schema, routes every gap verbatim into `## Open Questions`, and refuses to invent domain decisions. On collision, prompts overwrite vs. versioned save (`prd-vN.md`). |
+| **Wybór stosu (główny temat lekcji)** | |
+| `/10x-tech-stack-selector` | Masz PRD w `context/foundation/prd.md` i musisz wybrać starter. Rozpoczyna się od wyraźnego wyboru (przyjmij zalecaną domyślną opcję dla swojej komórki `(product_type, language_family)` lub zaprojektuj własną), przeprowadza przez zestaw pytań uzupełniających, gdy projektujesz własną, stosuje cztery bramki jakości przyjazne dla agenta, analizuje rejestr starterów uwzględniający język i zapisuje `context/foundation/tech-stack.md`. Opcjonalny argument `[path-to-prd]` pozwala wskazać niestandardową lokalizację PRD (np. `/10x-tech-stack-selector @context/foundation/prd-v2.md`); bez niego umiejętność domyślnie używa `context/foundation/prd.md`. Użyj PO `/10x-prd`, PRZED `/10x-bootstrapper`. |
+| **Ponowne uruchomienie upstream w razie potrzeby** | |
+| `/10x-init` / `/10x-shape` / `/10x-prd` | Zestawione, abyś mógł poprawić PRD w trakcie pracy. Jeśli `/10x-tech-stack-selector` ujawni lukę (np. Wymaganie Funkcjonalne, które wymusza funkcję, której nie ma Twój zalecany starter), uruchom ponownie `/10x-prd`, aby poprawić PRD przed wyborem stosu. |
 
-### How the chain hands off
+### Jak działa przekazywanie
 
-- `/10x-init` produces the workflow v2 scaffold (`context/foundation/`, `lessons.md`, `contract-surfaces.md`). `/10x-shape` requires this and will offer to delegate to `/10x-init` if it's missing.
-- `/10x-shape` writes `context/foundation/shape-notes.md` with frontmatter `checkpoint:` (current_phase, phases_completed, frs_drafted, quality_check_status). On re-entry, it resumes from the next unfinished phase.
-- `/10x-prd` reads `shape-notes.md` (default) or any path you pass, scores the input on a 4-signal heuristic, warns on thin input, and writes `context/foundation/prd.md` against the schema at `skills/10x-shape/references/prd-schema.md` (frontmatter aligned 1:1 with 10x-tech-stack-selector's Q1–Q7).
+- `/10x-tech-stack-selector` odczytuje frontmatter `context/foundation/prd.md` (`product_type`, `target_scale`, `timeline_budget`) jako priorytet. Jeśli PRD jest nieobecne, odmawia z jednosentencyjnym przekierowaniem do `/10x-shape` — brak wbudowanego awaryjnego mini-PRD.
+- Umiejętność zapisuje `context/foundation/tech-stack.md` z 4-kluczowym frontmatterem (`starter_id`, `package_manager`, `project_name`, `hints`) plus jednoparagraphową treścią `## Why this stack`. Przekazanie jest celowo minimalne — bootstrapper nie analizuje uzasadnienia, tylko pola.
+- `/10x-bootstrapper` (Lekcja 3) odczytuje `tech-stack.md` i rejestr, aby stworzyć szkielet projektu.
 
-### What the PRD captures (and what it does NOT)
+### Co przechwytuje tech-stack-selector (a czego NIE)
 
-- **Captured**: vision, persona, success criteria, user stories (Given/When/Then), FRs (FR-NNN), NFRs, business logic (one-sentence rule first), data model, access control, durable implementation decisions, testing strategy, deployment & CI/CD strategy, non-goals, open questions.
-- **NOT captured (deliberate)**: framework choices, database choices, file paths, deployment platform. Stack openness is binding — only `product_type` and `tech_preferences.language_family` capture stack-shaped intent. Frameworks are 10x-tech-stack-selector's job.
+- **Przechwycone**: wybór startera (w kształcie rejestru), rodzina języków, menedżer pakietów (otwarty ciąg znaków dla każdego ekosystemu — `pnpm`, `uv`, `bundle`, `cargo` itp.), rozmiar zespołu, cel wdrożenia (pobrany z `deployment_defaults` wybranego startera), dostawca CI/CD + przepływ, pewność bootstrapper'a (`verified | first-class | best-effort`), wybrana ścieżka (standardowa | niestandardowa), odpowiedzi na samoocenę (ścieżka niestandardowa), nadpisanie jakości (ustawiane, gdy użytkownik kontynuuje ze starterem, który nie przeszedł ≥1 bramki przyjaznej dla agenta), flagi funkcji (uwierzytelnianie/płatności/real-time/AI/zadania w tle).
+- **NIE przechwycone (celowo)**: strategiczny plan testów, strategiczny plan wdrożenia, strategiczne decyzje implementacyjne. Są one dalszym etapem po wyborze stosu — przyszłym problemem mapy drogowej technicznej, jeszcze nie zaplanowanym. Tech-stack-selector odpowiada za wybory testów/wdrożenia/CI w *kształcie frameworka*, ponieważ są one nierozłączne z wyborem stosu; to, co jest odroczone, to warstwa *strategiczna* ("testujemy TDD na powierzchni X", "środowisko podglądu dla każdego PR").
 
-### Anti-patterns surfaced during shaping
+### Początkowy wybór (kluczowy)
 
-- **Empty-CRUD**: business logic that reduces to "users add and remove records" with no domain rule. `/10x-shape` names it explicitly and prompts for a real rule shape (recommendation, prioritization, classification, validation, scoring, workflow, calculation).
-- **MVP-too-big**: first-flow estimate exceeds ~1 week of after-hours work, or > 4 distinct user actions before user-visible value, or requires multiple integrations before payoff. Skill names the expensive pieces and offers concrete scope-down moves.
+Pierwsze pytanie to wyraźny wybór — nigdy nie jest ciche. Umiejętność od razu podaje zalecany starter dla Twojej komórki `(product_type, language_family)` i prosi o wyraźne potwierdzenie:
 
-Both are **soft gates**: they warn but allow override. Overrides are recorded in the checkpoint and surfaced in the PRD's `## Open Questions`.
+- **Ścieżka standardowa** — zaakceptuj zalecaną domyślną opcję. Umiejętność pomija audyt funkcji, profil zespołu, preferencje techniczne i pytania dotyczące wariantów frameworka; zadaje tylko pytania dotyczące wdrożenia, CI/CD i nazwy projektu. Przekazanie rejestruje `path_taken: standard` w `hints`.
+- **Ścieżka niestandardowa** — zaprojektuj własną. Umiejętność przeprowadza przez pełny zestaw pytań uzupełniających (audyt funkcji, profil zespołu, preferencje techniczne, wdrożenie, CI/CD, wariant frameworka), zagłębia się w pytanie o runnera testów tylko wtedy, gdy wybrany starter pozostawia to niejednoznaczne, i kończy 5-punktową samooceną gotowości (z lekcji przygotowawczej 4.1) przed zablokowaniem. Przekazanie rejestruje `path_taken: custom` i wypełnia `self_check_answers`.
 
-### Foundation paths used by this lesson
+Mapa zalecanych domyślnych wartości dla każdej komórki jest wielojęzyczna: web/JS i saas/JS oba → 10x-astro-starter (starter marki 10x prowadzi, gdy konkuruje w komórce JS); api/JS → hono; api/Python → fastapi; web/Python → django; web/Ruby → rails; api/Go → go; api/Rust → axum; mobile/Dart → flutter; desktop/Rust → tauri; itd. Komórki bez sprawdzonej domyślnej wartości mają `<none>` i wymuszają ścieżkę niestandardową.
 
-- `context/foundation/shape-notes.md` — `/10x-shape` output
-- `context/foundation/prd.md` (or `prd-vN.md`) — `/10x-prd` output
-- `context/foundation/lessons.md` — recurring rules & pitfalls (scaffolded by `/10x-init`)
-- `docs/reference/contract-surfaces.md` — load-bearing names registry (scaffolded by `/10x-init`)
+### Bramki jakości (kryteria przyjazne dla agenta)
 
-### Universal language
+Każda karta startera zawiera cztery wartości logiczne, które LLM filtruje:
 
-The shipped skills carry no 10xDevs / cohort / certification references. The mechanics (Socratic challenge, gray-area discovery, recommended-answer fatigue mitigation, soft quality gate) are universal indicators of a well-scoped greenfield project.
+1. **Typed** — jawne typy/schematy, z których agent może wnioskować bez uruchamiania programu.
+2. **Convention-based** — silne opinie na temat układu, routingu, konfiguracji.
+3. **Popular in training data** — oceniane *dla każdej rodziny języków*, a nie globalnie (Django jest popularne w danych treningowych Pythona; Spring w Javie; itd.).
+4. **Well-documented** — aktualna, przypięta do wersji, linkowalna dokumentacja.
 
-Skills must not write to `context/archive/`. Archived changes are immutable; if a resolved target path starts with `context/archive/`, abort with: "This change is archived. Open a new change with `/10x-new` instead."
+Kandydaci, którzy nie przejdą żadnej bramki, są wykluczani z zestawu niezaprogramowanych rekomendacji. Jeśli jawnie nazwiesz starter, który nie przeszedł testu, jako swoją preferencję, umiejętność zakwestionuje ten wybór — wskazując najsilniejszą alternatywę o wyższych kryteriach ORAZ ścieżkę kompensacji (instrukcje CLAUDE.md, które łatają luki) — i poprosi o potwierdzenie lub zmianę. Potwierdzenie wyboru z znanymi trudnościami rejestruje nadpisanie w przekazaniu, aby bootstrapper mógł się dostosować.
+
+### Pewność bootstrapper'a
+
+Każda rekomendacja wyświetla `bootstrapper_confidence` dosłownie — nigdy nie jest cicho pomijana:
+
+- **`verified`** — bootstrapper został uruchomiony od początku do końca na tym stosie; tworzenie szkieletu będzie płynne.
+- **`first-class`** — zarejestrowany z prawidłowym CLI, oczekuje się, że będzie działać, ale nie został przetestowany w boju; spodziewaj się w większości płynnego tworzenia szkieletu z okazjonalnymi ręcznymi krokami.
+- **`best-effort`** — ograniczone wsparcie; prawdopodobne ręczne kroki; spodziewaj się tarcia (a generowanie CLAUDE.md przez bootstrapper kompensuje to dodatkowym kontekstem specyficznym dla ekosystemu).
+
+To jest ostrzeżenie przed uruchomieniem `/10x-bootstrapper`, abyś wiedział, czego się spodziewać.
+
+### Ścieżki bazowe używane w tej lekcji
+
+- `context/foundation/prd.md` — dane wejściowe (z Lekcji 1)
+- `context/foundation/tech-stack.md` — dane wyjściowe (przekazanie łańcucha)
+- `context/foundation/lessons.md` — powtarzające się zasady i pułapki
+- `docs/reference/contract-surfaces.md` — rejestr nazw kluczowych
+
+### Uniwersalny język
+
+Dostarczona umiejętność nie zawiera odniesień do 10xDevs / kohorty / certyfikacji. Rejestr zalecanych domyślnych wartości jest wielojęzyczny (JS, Python, Ruby, Java, Go, Rust, PHP, .NET, Dart), a `10x-astro-starter` kohorty to jedna karta w komórce JS+web — nie "jedyna" zalecana ścieżka dla wszystkich.
+
+Umiejętności nie mogą zapisywać do `context/archive/`. Zarchiwizowane zmiany są niezmienne; jeśli docelowa ścieżka zaczyna się od `context/archive/`, przerwij z komunikatem: "Ta zmiana jest zarchiwizowana. Otwórz nową zmianę za pomocą `/10x-new`."
 
 <!-- END @przeprogramowani/10x-cli -->
