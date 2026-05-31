@@ -1,76 +1,54 @@
-<!-- BEGIN @przeprogramowani/10x-cli -->
+# Rules for AI
 
-## 10xDevs AI Toolkit — Moduł 1, Lekcja 2
+This file provides guidance to AI Agent when working with code in this repository.
 
-Wybierz starter i stos dla PRD, który napisałeś w Lekcji 1, z **łańcuchem stosu**:
+## Commands
 
-```
-(/10x-init  →  /10x-shape  →  /10x-prd)  →  /10x-tech-stack-selector  →  (bootstrapper)
-```
+- `npm run dev` — start dev server (Cloudflare workerd runtime)
+- `npm run build` — production build (SSR via `@astrojs/cloudflare`)
+- `npm run preview` — preview production build
+- `npm run lint` — ESLint with type-checked rules
+- `npm run lint:fix` — auto-fix lint issues
+- `npm run format` — Prettier (includes prettier-plugin-astro + prettier-plugin-tailwindcss)
 
-Łańcuch PRD pochodzi z Lekcji 1 (ponownie uwzględniony w tej lekcji, abyś mógł poprawić PRD w trakcie pracy). `/10x-tech-stack-selector` to główny temat lekcji; `/10x-bootstrapper` to następne ogniwo, nauczane w Lekcji 3.
+Pre-commit hooks: husky + lint-staged runs `eslint --fix` on `*.{ts,tsx,astro}` and `prettier --write` on `*.{json,css,md}`.
 
-### Router zadań — Od czego zacząć
+## Architecture
 
-| Umiejętność | Kiedy jej używać |
-| --- | --- |
-| **Wybór stosu (główny temat lekcji)** | |
-| `/10x-tech-stack-selector` | Masz PRD w `context/foundation/prd.md` i musisz wybrać starter. Rozpoczyna się od wyraźnego wyboru (przyjmij zalecaną domyślną opcję dla swojej komórki `(product_type, language_family)` lub zaprojektuj własną), przeprowadza przez zestaw pytań uzupełniających, gdy projektujesz własną, stosuje cztery bramki jakości przyjazne dla agenta, analizuje rejestr starterów uwzględniający język i zapisuje `context/foundation/tech-stack.md`. Opcjonalny argument `[path-to-prd]` pozwala wskazać niestandardową lokalizację PRD (np. `/10x-tech-stack-selector @context/foundation/prd-v2.md`); bez niego umiejętność domyślnie używa `context/foundation/prd.md`. Użyj PO `/10x-prd`, PRZED `/10x-bootstrapper`. |
-| **Ponowne uruchomienie upstream w razie potrzeby** | |
-| `/10x-init` / `/10x-shape` / `/10x-prd` | Zestawione, abyś mógł poprawić PRD w trakcie pracy. Jeśli `/10x-tech-stack-selector` ujawni lukę (np. Wymaganie Funkcjonalne, które wymusza funkcję, której nie ma Twój zalecany starter), uruchom ponownie `/10x-prd`, aby poprawić PRD przed wyborem stosu. |
+**Astro 6 SSR app** with React 19 islands, Tailwind 4, Supabase auth, and shadcn/ui components. Deployed to Cloudflare Workers.
 
-### Jak działa przekazywanie
+### Rendering mode
 
-- `/10x-tech-stack-selector` odczytuje frontmatter `context/foundation/prd.md` (`product_type`, `target_scale`, `timeline_budget`) jako priorytet. Jeśli PRD jest nieobecne, odmawia z jednosentencyjnym przekierowaniem do `/10x-shape` — brak wbudowanego awaryjnego mini-PRD.
-- Umiejętność zapisuje `context/foundation/tech-stack.md` z 4-kluczowym frontmatterem (`starter_id`, `package_manager`, `project_name`, `hints`) plus jednoparagraphową treścią `## Why this stack`. Przekazanie jest celowo minimalne — bootstrapper nie analizuje uzasadnienia, tylko pola.
-- `/10x-bootstrapper` (Lekcja 3) odczytuje `tech-stack.md` i rejestr, aby stworzyć szkielet projektu.
+Full server-side rendering (`output: "server"` in astro.config.mjs). All pages are server-rendered by default. API routes must export `const prerender = false`.
 
-### Co przechwytuje tech-stack-selector (a czego NIE)
+### Auth flow
 
-- **Przechwycone**: wybór startera (w kształcie rejestru), rodzina języków, menedżer pakietów (otwarty ciąg znaków dla każdego ekosystemu — `pnpm`, `uv`, `bundle`, `cargo` itp.), rozmiar zespołu, cel wdrożenia (pobrany z `deployment_defaults` wybranego startera), dostawca CI/CD + przepływ, pewność bootstrapper'a (`verified | first-class | best-effort`), wybrana ścieżka (standardowa | niestandardowa), odpowiedzi na samoocenę (ścieżka niestandardowa), nadpisanie jakości (ustawiane, gdy użytkownik kontynuuje ze starterem, który nie przeszedł ≥1 bramki przyjaznej dla agenta), flagi funkcji (uwierzytelnianie/płatności/real-time/AI/zadania w tle).
-- **NIE przechwycone (celowo)**: strategiczny plan testów, strategiczny plan wdrożenia, strategiczne decyzje implementacyjne. Są one dalszym etapem po wyborze stosu — przyszłym problemem mapy drogowej technicznej, jeszcze nie zaplanowanym. Tech-stack-selector odpowiada za wybory testów/wdrożenia/CI w *kształcie frameworka*, ponieważ są one nierozłączne z wyborem stosu; to, co jest odroczone, to warstwa *strategiczna* ("testujemy TDD na powierzchni X", "środowisko podglądu dla każdego PR").
+- `src/lib/supabase.ts` — creates a Supabase SSR client using `@supabase/ssr` with cookie-based sessions. Uses `astro:env/server` for `SUPABASE_URL` and `SUPABASE_KEY` (server-only secrets declared in astro.config.mjs `env.schema`).
+- `src/middleware.ts` — runs on every request, resolves the current user, attaches to `context.locals.user`. Redirects unauthenticated users away from routes listed in `PROTECTED_ROUTES`.
+- API endpoints: `src/pages/api/auth/{signin,signup,signout}.ts`
+- Auth pages: `src/pages/auth/{signin,signup,confirm-email}.astro`
+- Protected page example: `src/pages/dashboard.astro`
 
-### Początkowy wybór (kluczowy)
+### Key conventions
 
-Pierwsze pytanie to wyraźny wybór — nigdy nie jest ciche. Umiejętność od razu podaje zalecany starter dla Twojej komórki `(product_type, language_family)` i prosi o wyraźne potwierdzenie:
+- **Path alias**: `@/*` maps to `./src/*` (tsconfig paths).
+- **Astro components** for static content/layout; **React components** only when interactivity is needed.
+- **Tailwind class merging**: use the `cn()` helper from `@/lib/utils` (clsx + tailwind-merge) for conditional/merged class names. Do not concatenate class strings manually.
+- **shadcn/ui**: components live in `src/components/ui/`, "new-york" style variant. Install new ones with `npx shadcn@latest add [name]`.
+- **API routes**: use uppercase `GET`, `POST` exports; validate input with zod.
+- **Supabase migrations**: `supabase/migrations/` using naming format `YYYYMMDDHHmmss_short_description.sql`. Always enable RLS on new tables with granular per-operation, per-role policies.
+- **React**: no Next.js directives ("use client" etc.). Extract hooks to `src/components/hooks/`.
+- **Services/helpers** go in `src/lib/` (or `src/lib/services/` for extracted business logic).
+- **Shared types** (entities, DTOs) go in `src/types.ts`.
 
-- **Ścieżka standardowa** — zaakceptuj zalecaną domyślną opcję. Umiejętność pomija audyt funkcji, profil zespołu, preferencje techniczne i pytania dotyczące wariantów frameworka; zadaje tylko pytania dotyczące wdrożenia, CI/CD i nazwy projektu. Przekazanie rejestruje `path_taken: standard` w `hints`.
-- **Ścieżka niestandardowa** — zaprojektuj własną. Umiejętność przeprowadza przez pełny zestaw pytań uzupełniających (audyt funkcji, profil zespołu, preferencje techniczne, wdrożenie, CI/CD, wariant frameworka), zagłębia się w pytanie o runnera testów tylko wtedy, gdy wybrany starter pozostawia to niejednoznaczne, i kończy 5-punktową samooceną gotowości (z lekcji przygotowawczej 4.1) przed zablokowaniem. Przekazanie rejestruje `path_taken: custom` i wypełnia `self_check_answers`.
+### Environment
 
-Mapa zalecanych domyślnych wartości dla każdej komórki jest wielojęzyczna: web/JS i saas/JS oba → 10x-astro-starter (starter marki 10x prowadzi, gdy konkuruje w komórce JS); api/JS → hono; api/Python → fastapi; web/Python → django; web/Ruby → rails; api/Go → go; api/Rust → axum; mobile/Dart → flutter; desktop/Rust → tauri; itd. Komórki bez sprawdzonej domyślnej wartości mają `<none>` i wymuszają ścieżkę niestandardową.
+- Node.js v22.14.0 (see `.nvmrc`)
+- Env vars: `SUPABASE_URL`, `SUPABASE_KEY` (copy `.env.example` to `.env` for Node, or `.dev.vars` for Cloudflare local dev)
+- Local Supabase: `npx supabase start` (requires Docker)
+- Cloudflare local dev: secrets go in `.dev.vars` (gitignored)
+- Deploy: `npx wrangler deploy` (requires Cloudflare account + `wrangler` auth)
 
-### Bramki jakości (kryteria przyjazne dla agenta)
+## CI
 
-Każda karta startera zawiera cztery wartości logiczne, które LLM filtruje:
-
-1. **Typed** — jawne typy/schematy, z których agent może wnioskować bez uruchamiania programu.
-2. **Convention-based** — silne opinie na temat układu, routingu, konfiguracji.
-3. **Popular in training data** — oceniane *dla każdej rodziny języków*, a nie globalnie (Django jest popularne w danych treningowych Pythona; Spring w Javie; itd.).
-4. **Well-documented** — aktualna, przypięta do wersji, linkowalna dokumentacja.
-
-Kandydaci, którzy nie przejdą żadnej bramki, są wykluczani z zestawu niezaprogramowanych rekomendacji. Jeśli jawnie nazwiesz starter, który nie przeszedł testu, jako swoją preferencję, umiejętność zakwestionuje ten wybór — wskazując najsilniejszą alternatywę o wyższych kryteriach ORAZ ścieżkę kompensacji (instrukcje CLAUDE.md, które łatają luki) — i poprosi o potwierdzenie lub zmianę. Potwierdzenie wyboru z znanymi trudnościami rejestruje nadpisanie w przekazaniu, aby bootstrapper mógł się dostosować.
-
-### Pewność bootstrapper'a
-
-Każda rekomendacja wyświetla `bootstrapper_confidence` dosłownie — nigdy nie jest cicho pomijana:
-
-- **`verified`** — bootstrapper został uruchomiony od początku do końca na tym stosie; tworzenie szkieletu będzie płynne.
-- **`first-class`** — zarejestrowany z prawidłowym CLI, oczekuje się, że będzie działać, ale nie został przetestowany w boju; spodziewaj się w większości płynnego tworzenia szkieletu z okazjonalnymi ręcznymi krokami.
-- **`best-effort`** — ograniczone wsparcie; prawdopodobne ręczne kroki; spodziewaj się tarcia (a generowanie CLAUDE.md przez bootstrapper kompensuje to dodatkowym kontekstem specyficznym dla ekosystemu).
-
-To jest ostrzeżenie przed uruchomieniem `/10x-bootstrapper`, abyś wiedział, czego się spodziewać.
-
-### Ścieżki bazowe używane w tej lekcji
-
-- `context/foundation/prd.md` — dane wejściowe (z Lekcji 1)
-- `context/foundation/tech-stack.md` — dane wyjściowe (przekazanie łańcucha)
-- `context/foundation/lessons.md` — powtarzające się zasady i pułapki
-- `docs/reference/contract-surfaces.md` — rejestr nazw kluczowych
-
-### Uniwersalny język
-
-Dostarczona umiejętność nie zawiera odniesień do 10xDevs / kohorty / certyfikacji. Rejestr zalecanych domyślnych wartości jest wielojęzyczny (JS, Python, Ruby, Java, Go, Rust, PHP, .NET, Dart), a `10x-astro-starter` kohorty to jedna karta w komórce JS+web — nie "jedyna" zalecana ścieżka dla wszystkich.
-
-Umiejętności nie mogą zapisywać do `context/archive/`. Zarchiwizowane zmiany są niezmienne; jeśli docelowa ścieżka zaczyna się od `context/archive/`, przerwij z komunikatem: "Ta zmiana jest zarchiwizowana. Otwórz nową zmianę za pomocą `/10x-new`."
-
-<!-- END @przeprogramowani/10x-cli -->
+GitHub Actions workflow (`.github/workflows/ci.yml`) runs lint + build on every push and PR to master. Requires `SUPABASE_URL` and `SUPABASE_KEY` repository secrets for the build step.
