@@ -32,3 +32,6 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# local-only docs (session handoff, personal notes — never pushed)
+docs/local/

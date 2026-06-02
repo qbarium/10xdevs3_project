@@ -1,9 +1,9 @@
 {
   "package": "@przeprogramowani/10x-cli",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "manifestVersion": 3,
-  "lastApplied": "2026-05-31T11:53:57.990Z",
-  "lessonId": "m1l4",
+  "lastApplied": "2026-06-02T15:24:03.998Z",
+  "lessonId": "m1l5",
   "course": "10xdevs3",
   "tool": "claude-code",
   "files": {
@@ -114,14 +114,32 @@
         "contentHashes": {
           "SKILL.md": "ca1c82c80fc24f18f731cf7957e5a69703ba079595c9070b0c723c474b554ec6"
         }
+      },
+      "10x-infra-research": {
+        "files": [
+          "references/agent-friendly-criteria.md",
+          "SKILL.md"
+        ],
+        "contentHashes": {
+          "references/agent-friendly-criteria.md": "888b4b712107bf8d8600061e1d907bb1bc14081cb2c3a74be8c7da641a35ab72",
+          "SKILL.md": "eba7db5e90a6677819432494d5b2b992fa7a7e5952f6a5edc25244f9a6d47d52"
+        }
       }
     },
     "prompts": [
-      "skill-explainer.md"
+      "skill-explainer.md",
+      "m1l5-1-plan-integration.md",
+      "m1l5-2-constrain-approach.md",
+      "m1l5-3-extend-prerequisites.md",
+      "m1l5-4-store-plan.md"
     ],
     "configs": [],
     "promptHashes": {
-      "skill-explainer.md": "51670ed28505a63b0c3e16f5d3af99f634b3ace79f204c33cae289435a2ea60e"
+      "skill-explainer.md": "51670ed28505a63b0c3e16f5d3af99f634b3ace79f204c33cae289435a2ea60e",
+      "m1l5-1-plan-integration.md": "0f1491b163a9824645423a7bd3134466350f53de4f3631ba5504cac7fbd14dbd",
+      "m1l5-2-constrain-approach.md": "9f50a38a30b89228348822f9c7d826cee1a6d1ddaaacf335f85ac05859d08fa6",
+      "m1l5-3-extend-prerequisites.md": "f774170c48cf33106e3201bd5e99a20e12ea1cffc65c532a63102b8ca2e7fb26",
+      "m1l5-4-store-plan.md": "1f5db15fadaa9a5c3acd9a47f3a97db060f5093005ad696e182be7d4bedd8d7d"
     }
   },
   "lessons": {
@@ -322,6 +340,91 @@
       },
       "prompts": [
         "skill-explainer.md"
+      ],
+      "configs": []
+    },
+    "m1l5": {
+      "appliedAt": "2026-06-02T15:24:03.994Z",
+      "skills": {
+        "10x-init": {
+          "files": [
+            "SKILL.md"
+          ]
+        },
+        "10x-shape": {
+          "files": [
+            "references/prd-schema.md",
+            "SKILL.md"
+          ]
+        },
+        "10x-prd": {
+          "files": [
+            "SKILL.md"
+          ]
+        },
+        "10x-tech-stack-selector": {
+          "files": [
+            "references/agent-friendly-criteria.md",
+            "references/decision-flow.md",
+            "references/eval-cases.md",
+            "references/handoff-schema.md",
+            "references/residual-interview.md",
+            "references/starter-registry.yaml",
+            "SKILL.md"
+          ]
+        },
+        "10x-stack-assess": {
+          "files": [
+            "references/agent-friendly-criteria.md",
+            "SKILL.md"
+          ]
+        },
+        "10x-bootstrapper": {
+          "files": [
+            "references/bootstrapper-config.yaml",
+            "references/handoff-consumer.md",
+            "references/post-scaffold-verification.md",
+            "references/pre-scaffold-verification.md",
+            "references/refusal-protocol.md",
+            "references/scaffold-merge.md",
+            "references/verification-log-schema.md",
+            "SKILL.md"
+          ]
+        },
+        "10x-health-check": {
+          "files": [
+            "references/health-check-schema.md",
+            "SKILL.md"
+          ]
+        },
+        "10x-agents-md": {
+          "files": [
+            "SKILL.md"
+          ]
+        },
+        "10x-rule-review": {
+          "files": [
+            "SKILL.md"
+          ]
+        },
+        "10x-lesson": {
+          "files": [
+            "SKILL.md"
+          ]
+        },
+        "10x-infra-research": {
+          "files": [
+            "references/agent-friendly-criteria.md",
+            "SKILL.md"
+          ]
+        }
+      },
+      "prompts": [
+        "skill-explainer.md",
+        "m1l5-1-plan-integration.md",
+        "m1l5-2-constrain-approach.md",
+        "m1l5-3-extend-prerequisites.md",
+        "m1l5-4-store-plan.md"
       ],
       "configs": []
     }

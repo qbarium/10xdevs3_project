@@ -1,5 +1,7 @@
 # Repository Guidelines
 
+**Session pickup:** If `@docs/local/session-handoff.md` exists, read it FIRST — it carries workflow position, user preferences, and open decisions from the previous session. Without it, continue normally with the rest of this file.
+
 TaskerLight — Astro 6 SSR web app with React 19 islands, Tailwind 4, Supabase Auth, deployed to Cloudflare Workers. Architecture detail in `@CLAUDE.md`; local setup in `@README.md`.
 
 ## Hard rules
