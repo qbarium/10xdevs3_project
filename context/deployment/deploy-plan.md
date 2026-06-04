@@ -123,10 +123,10 @@ Repo lokalnie jest na branchu **`main`**, ale `.github/workflows/ci.yml` linie 5
 
 W MVP-week-1 nie tworzymy jeszcze tabel domeny (FR-001..028 wchodzą w M2). Tworzymy **migration placeholder**, żeby pipeline lokal→cloud był ustawiony.
 
-- [ ] **[AGENT]** `npx supabase migration new init` — tworzy plik `supabase/migrations/<YYYYMMDDHHmmss>_init.sql` (pusty).
-- [ ] **[AGENT]** Edycja pliku migracji — dodanie minimalnego komentarza SQL (`-- TaskerLight init migration; domain tables in M2 (FR-001..028)`) plus jednorazowo: weryfikacja, że `auth` schema istnieje (`SELECT 1 FROM information_schema.schemata WHERE schema_name = 'auth';` jako komentarz dokumentacyjny, nie blokujący).
-- [ ] **[AGENT]** `npx supabase db reset` — re-aplikuje wszystkie migracje na lokalnym stacku (pełen reset = idempotentny test).
-- [ ] **[USER → AGENT]** `npx supabase db push` — wysyła migrację do **cloud** project. **[USER]** może być poproszony o database password (zapisany w 0.3.A). **[AGENT]** weryfikuje przez `npx supabase db diff` (powinno zwrócić brak różnic).
+- [x] **[AGENT]** `supabase migration new init` → `supabase/migrations/20260604214624_init.sql`. ✓ 2026-06-04
+- [x] **[AGENT]** Placeholder SQL (komentarze; tabele domenowe w M2). ✓ 2026-06-04
+- [x] **[AGENT]** `supabase db reset` — migracja aplikuje się czysto lokalnie. ✓ 2026-06-04
+- [x] **[USER → AGENT]** `supabase db push` → migracja na chmurze („Finished supabase db push"). Uwierzytelnienie **tokenem z `supabase login`** (CLI: „Initialising login role"), **bez hasła DB**. ✓ 2026-06-04 (plik migracji jeszcze niezacommitowany)
 
 ---
 

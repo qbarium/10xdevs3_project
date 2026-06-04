@@ -1,0 +1,4 @@
+-- TaskerLight — migracja inicjalna (placeholder).
+-- Brak tabel domenowych na tym etapie; wchodzą w M2 (FR-001..028).
+-- Cel: ustawienie i weryfikacja pipeline migracji: lokalna baza -> chmura (db push).
+-- Każda przyszła tabela: RLS ON + granularne polityki per-operacja / per-rola (patrz CLAUDE.md Hard rules).
