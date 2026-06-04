@@ -238,7 +238,7 @@ Decyzja MVP-week-1: tylko Email provider, OAuth (Google/GitHub) i Magic Link →
 ### 7.4 Branch protection na `main` (bramka CI) ✓ 2026-06-05
 
 - [x] **[AGENT]** Włączone przez `gh api`: `required_status_checks=[ci]`, `required_pull_request_reviews` (0 approvals), `enforce_admins=true`. Direct-push na `main` zablokowany → zmiany **wyłącznie przez PR** z zielonym `ci`. ✓ 2026-06-05
-- **Workflow:** feature branch → commit → push → PR do `main` → CI `ci` zielony → **merge (na „filutek")** → Workers Builds auto-deploy. „Filutek" dalej gatuje wejście na prod.
+- **Workflow:** feature branch → commit → push → PR do `main` → CI `ci` zielony → **merge (na jawną zgodę usera)** → Workers Builds auto-deploy. Zgoda usera dalej gatuje wejście na prod.
 
 ---
 
@@ -282,7 +282,7 @@ Nie są wycięte ze scope projektu, tylko świadomie odłożone, by trzymać pie
 
 ## Commit cadence (po każdej Fazie zakończonej sukcesem)
 
-Po pomyślnym ukończeniu każdej Fazy, w której zmieniły się pliki repo, **[AGENT]** proponuje commit message i **czeka na `filutek`** od **[USER]**. Bez `filutek` nie ma commit. Cadence:
+Po pomyślnym ukończeniu każdej Fazy, w której zmieniły się pliki repo, **[AGENT]** proponuje commit message i **czeka na jawną zgodę** od **[USER]**. Bez zgody usera nie ma commit. Cadence:
 
 | Faza                | Commit? | Proponowana wiadomość                                                    |
 | ------------------- | ------- | ------------------------------------------------------------------------ |
