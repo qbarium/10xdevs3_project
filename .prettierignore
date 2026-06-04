@@ -1,0 +1,4 @@
+# Wrangler owns this file's formatting — it rewrites wrangler.jsonc on deploy /
+# resource provisioning (tabs, no trailing newline). Excluding it from Prettier
+# avoids a tabs-vs-spaces tug-of-war between the two tools.
+wrangler.jsonc

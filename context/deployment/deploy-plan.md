@@ -65,7 +65,7 @@ Pięć zewnętrznych zależności, które muszą być gotowe **zanim** ruszą ja
 - [x] **[USER]** Konto Supabase + projekt cloud istnieją (Status: Healthy, plan Free). ✓
 - [x] **[USER]** Project URL + Project ref zanotowane → `docs/local/deploy-secrets.md`. ✓
 - [ ] **[USER]** **DB password** — potwierdzić, że jest zapisane w password managerze (potrzebne w Fazie 1.5 do `supabase db push`; jeśli zgubione → reset w Settings → Database).
-- [ ] **[USER → AGENT]** `anon public` key — pobrać w **Fazie 2** (Settings → API), trafi do `.dev.vars` + `wrangler secret`. **Kopiować anon, NIE `service_role`** (service_role bypassuje RLS).
+- [x] **[USER → AGENT]** Klucz publiczny chmury pobrany (publishable) i wgrany jako `wrangler secret SUPABASE_KEY` w Fazie 2. ✓ 2026-06-04
 - ℹ️ Uwaga: Supabase Free pauzuje projekt po 7 dniach bezczynności — przed launchem sprawdzić, czy nie spauzowany.
 
 #### 0.3.B Lokalny stack przez Docker (development)
@@ -145,9 +145,9 @@ W MVP-week-1 nie tworzymy jeszcze tabel domeny (FR-001..028 wchodzą w M2). Twor
 
 ### 2.2 Sekrety produkcyjne (Cloudflare Workers Secrets z cloud Supabase)
 
-- [ ] **[USER → AGENT]** `npx wrangler secret put SUPABASE_URL` — **[USER]** wkleja **cloud URL** z password managera (Faza 0.3.A) w prompt stdin. **[AGENT]** prowadzi.
-- [ ] **[USER → AGENT]** `npx wrangler secret put SUPABASE_KEY` — **[USER]** wkleja **cloud anon key**. Potwierdzenie, że to anon, NIE service_role.
-- [ ] **[AGENT]** Weryfikacja: `npx wrangler secret list` — pokazuje dwa wpisy bez wartości (CF nie zwraca wartości po wgraniu — to feature).
+- [x] **[AGENT]** `wrangler secret put SUPABASE_URL` (cloud URL). ✓ 2026-06-04 — przy okazji wrangler auto-utworzył pustego Workera `tasker-light` (wypełni go pierwszy deploy).
+- [x] **[USER → AGENT]** `wrangler secret put SUPABASE_KEY` — **[USER]** wkleił klucz **publishable** (publiczny, nie service_role). ✓ 2026-06-04
+- [x] **[AGENT]** `wrangler secret list` → oba wpisy obecne (`SUPABASE_URL`, `SUPABASE_KEY`, typ `secret_text`, bez wartości). ✓ 2026-06-04
 - [ ] **[USER]** Notatka: `AI_PROVIDER_API_KEY` **NIE** jest wgrywany w tej iteracji — wejdzie wraz z FR-006 klasyfikacją w M2 (kolejne kroki).
 
 ---
@@ -156,8 +156,8 @@ W MVP-week-1 nie tworzymy jeszcze tabel domeny (FR-001..028 wchodzą w M2). Twor
 
 ### 3.1 Utworzenie `src/pages/api/health.ts`
 
-- [ ] **[AGENT]** Nowy plik `src/pages/api/health.ts` z exportem `GET`, `export const prerender = false`, używający `astro:env/server` do sprawdzenia obecności `SUPABASE_URL`/`SUPABASE_KEY` i próby utworzenia klienta Supabase. Odpowiedź JSON: `{ ok: true, hasSupabase: boolean, runtime: "workerd", checkedAt: <ISO> }`. **Bez wycieku wartości sekretów** — tylko `hasSupabase: true|false`.
-- [ ] **[AGENT]** Smoke `npm run dev` + `curl http://localhost:4321/api/health` — odpowiedź 200 z `hasSupabase: true` (bo `.dev.vars` wgrany w Fazie 2.1 wskazuje na lokalny stack).
+- [x] **[AGENT]** `src/pages/api/health.ts` — `GET`, `prerender = false`, `astro:env/server`, JSON `{ ok, hasSupabase, runtime, checkedAt }`, bez wycieku wartości sekretów. ✓ 2026-06-05. `npm run build` „Complete!".
+- [ ] **[AGENT]** Smoke HTTP `/api/health` — do wykonania lokalnie (`npm run dev` + curl, oczekiwane `hasSupabase: true`) **lub** zweryfikuje się przy deployu (Faza 5.2 curl prod).
 
 ---
 
