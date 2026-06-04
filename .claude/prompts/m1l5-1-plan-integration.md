@@ -20,4 +20,5 @@ metadata:
   authors:
     - AI Coding Assistant
 ---
+
 Zaplanujmy integrację i wdrożenie {{platform_name}} zgodnie z context/foundation/infrastructure.md. Pamiętaj o zewnętrznych integracjach, a w przypadku skrajnych przypadków (edge cases) zapewnij dodatkowe kroki wsparcia. Jeśli potrzebujesz coś dwukrotnie sprawdzić, śmiało przeglądaj sieć lub problemy na GitHubie w poszukiwaniu dodatkowych informacji. Każda faza powinna być śledzona za pomocą pól wyboru lub innych wskaźników.

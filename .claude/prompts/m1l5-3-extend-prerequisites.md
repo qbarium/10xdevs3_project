@@ -18,43 +18,43 @@ Ten plan rozszerza poprzedni plan, dodając wymagania wstępne dotyczące konfig
 ## Plan
 
 1.  **Zrozumienie wymagań wstępnych:**
-    *   Zidentyfikuj wszelkie zależności systemowe (np. Python, Node.js, Java) wymagane przez CLI lub dodatkowe narzędzia.
-    *   Sprawdź, czy istnieją konkretne wersje tych zależności, które są wymagane.
-    *   Określ, czy wymagane są jakieś zmienne środowiskowe lub ścieżki.
+    - Zidentyfikuj wszelkie zależności systemowe (np. Python, Node.js, Java) wymagane przez CLI lub dodatkowe narzędzia.
+    - Sprawdź, czy istnieją konkretne wersje tych zależności, które są wymagane.
+    - Określ, czy wymagane są jakieś zmienne środowiskowe lub ścieżki.
 
 2.  **Instalacja zależności systemowych:**
-    *   Podaj instrukcje dotyczące instalacji wymaganych zależności systemowych dla różnych systemów operacyjnych (np. `apt`, `yum`, `brew`, instalatory Windows).
-    *   Upewnij się, że użytkownik weryfikuje poprawną instalację i wersję.
+    - Podaj instrukcje dotyczące instalacji wymaganych zależności systemowych dla różnych systemów operacyjnych (np. `apt`, `yum`, `brew`, instalatory Windows).
+    - Upewnij się, że użytkownik weryfikuje poprawną instalację i wersję.
 
 3.  **Konfiguracja zmiennych środowiskowych (jeśli dotyczy):**
-    *   Wyjaśnij, jak ustawić wszelkie niezbędne zmienne środowiskowe (np. `PATH`, `JAVA_HOME`).
-    *   Podaj przykłady dla różnych powłok (Bash, Zsh, PowerShell, CMD).
+    - Wyjaśnij, jak ustawić wszelkie niezbędne zmienne środowiskowe (np. `PATH`, `JAVA_HOME`).
+    - Podaj przykłady dla różnych powłok (Bash, Zsh, PowerShell, CMD).
 
 4.  **Instalacja CLI:**
-    *   Podaj szczegółowe instrukcje dotyczące instalacji CLI dla {{platform_name}}.
-    *   Uwzględnij różne metody instalacji (np. menedżer pakietów, skrypt instalacyjny, pobieranie binarne).
-    *   Weryfikacja instalacji CLI (np. `{{platform_name}} --version`).
+    - Podaj szczegółowe instrukcje dotyczące instalacji CLI dla {{platform_name}}.
+    - Uwzględnij różne metody instalacji (np. menedżer pakietów, skrypt instalacyjny, pobieranie binarne).
+    - Weryfikacja instalacji CLI (np. `{{platform_name}} --version`).
 
 5.  **Instalacja dodatkowych narzędzi:**
-    *   Podaj instrukcje dotyczące instalacji {{extra tooling}}.
-    *   Uwzględnij wszelkie specyficzne kroki konfiguracji wymagane dla {{extra tooling}}.
-    *   Weryfikacja instalacji {{extra tooling}}.
+    - Podaj instrukcje dotyczące instalacji {{extra tooling}}.
+    - Uwzględnij wszelkie specyficzne kroki konfiguracji wymagane dla {{extra tooling}}.
+    - Weryfikacja instalacji {{extra tooling}}.
 
 6.  **Konfiguracja CLI dla {{platform_name}}:**
-    *   Wyjaśnij, jak zainicjować lub skonfigurować CLI (np. `{{platform_name}} configure`, `{{platform_name}} login`).
-    *   Podaj instrukcje dotyczące uwierzytelniania (np. klucze API, tokeny, dane logowania).
-    *   Omów wszelkie specyficzne dla platformy ustawienia konfiguracji (np. region, projekt, profil).
+    - Wyjaśnij, jak zainicjować lub skonfigurować CLI (np. `{{platform_name}} configure`, `{{platform_name}} login`).
+    - Podaj instrukcje dotyczące uwierzytelniania (np. klucze API, tokeny, dane logowania).
+    - Omów wszelkie specyficzne dla platformy ustawienia konfiguracji (np. region, projekt, profil).
 
 7.  **Testowanie konfiguracji:**
-    *   Podaj proste polecenia testowe, aby upewnić się, że CLI i dodatkowe narzędzia działają poprawnie i są prawidłowo skonfigurowane.
-    *   Przykłady: `{{platform_name}} list-resources`, `{{extra tooling}} status`.
+    - Podaj proste polecenia testowe, aby upewnić się, że CLI i dodatkowe narzędzia działają poprawnie i są prawidłowo skonfigurowane.
+    - Przykłady: `{{platform_name}} list-resources`, `{{extra tooling}} status`.
 
 ## Przykład: Konfiguracja AWS CLI i Terraform
 
 ### 1. Zrozumienie wymagań wstępnych
 
-*   **AWS CLI:** Wymaga Pythona 3.x.
-*   **Terraform:** Nie wymaga żadnych zależności systemowych poza samym plikiem binarnym Terraform.
+- **AWS CLI:** Wymaga Pythona 3.x.
+- **Terraform:** Nie wymaga żadnych zależności systemowych poza samym plikiem binarnym Terraform.
 
 ### 2. Instalacja zależności systemowych
 
@@ -156,10 +156,10 @@ aws configure
 
 Zostaniesz poproszony o podanie:
 
-*   `AWS Access Key ID`: Twój klucz dostępu AWS.
-*   `AWS Secret Access Key`: Twój tajny klucz dostępu AWS.
-*   `Default region name`: Domyślny region AWS (np. `us-east-1`).
-*   `Default output format`: Domyślny format wyjściowy (np. `json`).
+- `AWS Access Key ID`: Twój klucz dostępu AWS.
+- `AWS Secret Access Key`: Twój tajny klucz dostępu AWS.
+- `Default region name`: Domyślny region AWS (np. `us-east-1`).
+- `Default output format`: Domyślny format wyjściowy (np. `json`).
 
 ### 7. Testowanie konfiguracji
 

@@ -42,10 +42,10 @@ Solo autor szlifuje MVP web-app w 3 tygodnie po godzinach z twardym deadline'm 2
 
 ## Pre-scaffold verification
 
-| Signal       | Value                                                       | Severity | Notes                                                              |
-| ------------ | ----------------------------------------------------------- | -------- | ------------------------------------------------------------------ |
-| npm package  | not run                                                     | n/a      | `cmd_template` starts with `git clone` — no npm CLI to version-check |
-| GitHub repo  | przeprogramowani/10x-astro-starter last pushed 2026-05-17   | fresh    | from card.docs_url; 14 days before bootstrap                       |
+| Signal      | Value                                                     | Severity | Notes                                                                |
+| ----------- | --------------------------------------------------------- | -------- | -------------------------------------------------------------------- |
+| npm package | not run                                                   | n/a      | `cmd_template` starts with `git clone` — no npm CLI to version-check |
+| GitHub repo | przeprogramowani/10x-astro-starter last pushed 2026-05-17 | fresh    | from card.docs_url; 14 days before bootstrap                         |
 
 `gh` CLI nie zalogowane — fallback do publicznego REST API GitHub (bez auth).
 
@@ -100,21 +100,21 @@ none
 
 ## Hints recorded but not acted on
 
-| Hint                       | Value                              |
-| -------------------------- | ---------------------------------- |
-| bootstrapper_confidence    | first-class                        |
-| quality_override           | false                              |
-| path_taken                 | standard                           |
-| self_check_answers         | null                               |
-| team_size                  | solo                               |
-| deployment_target          | cloudflare-pages                   |
-| ci_provider                | github-actions                     |
-| ci_default_flow            | auto-deploy-on-merge               |
-| has_auth                   | true                               |
-| has_payments               | false                              |
-| has_realtime               | false                              |
-| has_ai                     | true                               |
-| has_background_jobs        | false                              |
+| Hint                    | Value                |
+| ----------------------- | -------------------- |
+| bootstrapper_confidence | first-class          |
+| quality_override        | false                |
+| path_taken              | standard             |
+| self_check_answers      | null                 |
+| team_size               | solo                 |
+| deployment_target       | cloudflare-pages     |
+| ci_provider             | github-actions       |
+| ci_default_flow         | auto-deploy-on-merge |
+| has_auth                | true                 |
+| has_payments            | false                |
+| has_realtime            | false                |
+| has_ai                  | true                 |
+| has_background_jobs     | false                |
 
 v1 bootstrapper'a odczytuje te wskazówki, ale ich nie egzekwuje (brak CI workflow, brak generacji AGENTS.md/CLAUDE.md, brak konfiguracji feature-flag-aware). Pozostają w logu jako audit trail dla przyszłej skill'a M1L4.
 
@@ -123,6 +123,7 @@ v1 bootstrapper'a odczytuje te wskazówki, ale ich nie egzekwuje (brak CI workfl
 Next: a future skill will set up agent context (CLAUDE.md, AGENTS.md). For now, your project is scaffolded and verified — happy hacking.
 
 Useful manual steps in the meantime:
+
 - `git init` (if you have not already) to start your own repo history. (W tym repo `.git/` już istnieje od początku — pomijasz ten krok.)
 - Review any `.scaffold` siblings the conflict policy created and decide which version of each file to keep. (Konkretnie: `CLAUDE.md.scaffold` zawiera oficjalny CLAUDE.md startera Astro+Supabase+Cloudflare; Twój oryginalny `CLAUDE.md` ma sentinel block z `@przeprogramowani/10x-cli` po m1l3. Decyzja czy scalić zawartość, podmienić, czy usunąć scaffold — Twoja.)
 - Address audit findings per your project's risk tolerance — the full breakdown is in this log. `npm audit fix` rozwiązuje większość bez breakage; `yaml` wymaga `--force`.

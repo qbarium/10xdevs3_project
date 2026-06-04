@@ -22,14 +22,14 @@ tech_stack:
 
 ## Porównanie platform
 
-| Platforma | CLI-first | Managed/Serverless | Docs agent-readable | Stable deploy API | MCP integration | Razem | Notatka |
-|---|---|---|---|---|---|---|---|
-| Cloudflare Workers | Pass | Pass | Pass | Pass | Partial | 4P+1Pa | Wrangler dojrzały, llms.txt + content-negotiation `Accept: text/markdown`, 17 MCP serwerów ale bez GA labelek |
-| Render | Pass | Partial | Pass | Pass | Pass | 4P+1Pa | Kontenerowy (Partial managed), GA MCP od Aug 2025, dedykowana strona „Using Render with Coding Agents", llms.txt |
-| Vercel | Pass | Pass | Pass | Pass | Partial | 4P+1Pa | CLI najdojrzalszy, Vercel MCP Public Beta (OAuth), Pro $20/mo bo Hobby = non-commercial |
-| Railway | Pass | Partial | Pass | Pass | Partial | 3P+2Pa | Kontener, llms.txt + docs.railway.com/*.md, Railway MCP "WIP", Amsterdam EU |
-| Fly.io | Pass | Partial | Partial | Pass | Partial | 2P+3Pa | Pełna kontrola przez Dockerfile, brak llms.txt, `fly mcp` experimental, FRA |
-| ~~Netlify~~ | — | — | — | — | — | hard-fail | Sync Functions cap 10s/26s — łamie FR-006 (60s timeout). Background Functions async = łamią UX kontrakt |
+| Platforma          | CLI-first | Managed/Serverless | Docs agent-readable | Stable deploy API | MCP integration | Razem     | Notatka                                                                                                          |
+| ------------------ | --------- | ------------------ | ------------------- | ----------------- | --------------- | --------- | ---------------------------------------------------------------------------------------------------------------- |
+| Cloudflare Workers | Pass      | Pass               | Pass                | Pass              | Partial         | 4P+1Pa    | Wrangler dojrzały, llms.txt + content-negotiation `Accept: text/markdown`, 17 MCP serwerów ale bez GA labelek    |
+| Render             | Pass      | Partial            | Pass                | Pass              | Pass            | 4P+1Pa    | Kontenerowy (Partial managed), GA MCP od Aug 2025, dedykowana strona „Using Render with Coding Agents", llms.txt |
+| Vercel             | Pass      | Pass               | Pass                | Pass              | Partial         | 4P+1Pa    | CLI najdojrzalszy, Vercel MCP Public Beta (OAuth), Pro $20/mo bo Hobby = non-commercial                          |
+| Railway            | Pass      | Partial            | Pass                | Pass              | Partial         | 3P+2Pa    | Kontener, llms.txt + docs.railway.com/\*.md, Railway MCP "WIP", Amsterdam EU                                     |
+| Fly.io             | Pass      | Partial            | Partial             | Pass              | Partial         | 2P+3Pa    | Pełna kontrola przez Dockerfile, brak llms.txt, `fly mcp` experimental, FRA                                      |
+| ~~Netlify~~        | —         | —                  | —                   | —                 | —               | hard-fail | Sync Functions cap 10s/26s — łamie FR-006 (60s timeout). Background Functions async = łamią UX kontrakt          |
 
 ### Platformy na krótkiej liście
 
@@ -77,19 +77,19 @@ Sześć miesięcy po wdrożeniu na Cloudflare Workers TaskerLight zaliczał kurs
 
 ## Rejestr ryzyka
 
-| Ryzyko | Źródło | Praw. | Wpływ | Łagodzenie |
-|---|---|---|---|---|
-| `@astrojs/cloudflare` v13.x peer-dep churn (regression `require_dist is not a function`) | Devil's advocate | Ś | W | `package.json` ma aktualnie caret (`^13.5.0`) — przed pierwszym deployem prod zmień na tilde (`~13.6.0`); `@cloudflare/vite-plugin` w tym samym range; smoke test `npm run build` po każdym dep bump |
-| Free plan CPU limit (10 ms/wywołanie) za ciasny dla parsowania odpowiedzi AI + walidacji Zod + zapisu do Supabase | Research finding | W | Ś | Przed pierwszym realnym użyciem przejście na Workers Paid (5 USD/mc); na Free testować tylko ścieżki bez klasyfikacji lub z bardzo małymi wsadami |
-| CPU limit 30s default na Paid blokuje 60s sync klasyfikacji przy dużych wsadach | Devil's advocate | N | Ś | Ustaw `"limits": { "cpu_ms": 60000 }` w `wrangler.jsonc` przed pierwszym deployem prod; monitor `wrangler tail` na pierwszej sesji testowej |
-| `wrangler.jsonc` ma `name: "10x-astro-starter"` ze startera — pomyłka przy deploy do złego projektu CF | Research finding | Ś | N | Podmień na `"name": "tasker-light"` w ramach pierwszego deploya |
-| Pre-mortem: panic-pivot na inną platformę w tyg. 3 minie deadline | Pre-mortem | N | W | Bramka decyzyjna w tyg. 1: jeśli ≥2 dni stracone na adapter peer-deps → pivot na Render natychmiast (nie pod koniec deadline). Buffer 3 dni rezerwy. |
-| MCP servers "preview-grade" — API może się zmienić | Devil's advocate | Ś | N | Polegaj na `wrangler` CLI (GA) dla MVP; MCP ewaluacja po m1l5 |
-| Workers Tracing (GA od 2026-01-15) z `observability.enabled: true` w starterze — billing na Paid | Research finding | N | N | Paid (5 USD/mc) zawiera 20 mln eventów/mc; TaskerLight przy <100 req/dzień generuje ~30k eventów/mc = ułamek procenta limitu; zostaw włączone, monitor dashboard po pierwszym miesiącu |
-| `--legacy-peer-deps` ukrywa peer-dep mismatch | Unknown unknowns | Ś | Ś | Nie używać `--legacy-peer-deps` w CI; `npm ci` z lockfile |
-| Brak `.env` fallback w prod = brakujący sekret to 500 silent | Unknown unknowns | N | Ś | Health-check endpoint `/api/health` czyta sekrety przez `astro:env/server`; README checklist `wrangler secret put` przed pierwszym deploy |
-| Edge↔Supabase cross-region latency dla user-ów spoza PL | Unknown unknowns | N | N | Single-user MVP w PL — nieaktualne; w razie scope-up: `[placement] mode = "smart"` |
-| Worker memory limit 128/256MB dla 25MB audio body parsing | Pre-mortem / Research finding | Ś | Ś | Audio upload bezpośrednio do Supabase Storage z presigned URL (Worker nie procesuje body); FR-004 to nice-to-have, w MVP audio może być pominięte |
+| Ryzyko                                                                                                            | Źródło                        | Praw. | Wpływ | Łagodzenie                                                                                                                                                                                           |
+| ----------------------------------------------------------------------------------------------------------------- | ----------------------------- | ----- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@astrojs/cloudflare` v13.x peer-dep churn (regression `require_dist is not a function`)                          | Devil's advocate              | Ś     | W     | `package.json` ma aktualnie caret (`^13.5.0`) — przed pierwszym deployem prod zmień na tilde (`~13.6.0`); `@cloudflare/vite-plugin` w tym samym range; smoke test `npm run build` po każdym dep bump |
+| Free plan CPU limit (10 ms/wywołanie) za ciasny dla parsowania odpowiedzi AI + walidacji Zod + zapisu do Supabase | Research finding              | W     | Ś     | Przed pierwszym realnym użyciem przejście na Workers Paid (5 USD/mc); na Free testować tylko ścieżki bez klasyfikacji lub z bardzo małymi wsadami                                                    |
+| CPU limit 30s default na Paid blokuje 60s sync klasyfikacji przy dużych wsadach                                   | Devil's advocate              | N     | Ś     | Ustaw `"limits": { "cpu_ms": 60000 }` w `wrangler.jsonc` przed pierwszym deployem prod; monitor `wrangler tail` na pierwszej sesji testowej                                                          |
+| `wrangler.jsonc` ma `name: "10x-astro-starter"` ze startera — pomyłka przy deploy do złego projektu CF            | Research finding              | Ś     | N     | Podmień na `"name": "tasker-light"` w ramach pierwszego deploya                                                                                                                                      |
+| Pre-mortem: panic-pivot na inną platformę w tyg. 3 minie deadline                                                 | Pre-mortem                    | N     | W     | Bramka decyzyjna w tyg. 1: jeśli ≥2 dni stracone na adapter peer-deps → pivot na Render natychmiast (nie pod koniec deadline). Buffer 3 dni rezerwy.                                                 |
+| MCP servers "preview-grade" — API może się zmienić                                                                | Devil's advocate              | Ś     | N     | Polegaj na `wrangler` CLI (GA) dla MVP; MCP ewaluacja po m1l5                                                                                                                                        |
+| Workers Tracing (GA od 2026-01-15) z `observability.enabled: true` w starterze — billing na Paid                  | Research finding              | N     | N     | Paid (5 USD/mc) zawiera 20 mln eventów/mc; TaskerLight przy <100 req/dzień generuje ~30k eventów/mc = ułamek procenta limitu; zostaw włączone, monitor dashboard po pierwszym miesiącu               |
+| `--legacy-peer-deps` ukrywa peer-dep mismatch                                                                     | Unknown unknowns              | Ś     | Ś     | Nie używać `--legacy-peer-deps` w CI; `npm ci` z lockfile                                                                                                                                            |
+| Brak `.env` fallback w prod = brakujący sekret to 500 silent                                                      | Unknown unknowns              | N     | Ś     | Health-check endpoint `/api/health` czyta sekrety przez `astro:env/server`; README checklist `wrangler secret put` przed pierwszym deploy                                                            |
+| Edge↔Supabase cross-region latency dla user-ów spoza PL                                                           | Unknown unknowns              | N     | N     | Single-user MVP w PL — nieaktualne; w razie scope-up: `[placement] mode = "smart"`                                                                                                                   |
+| Worker memory limit 128/256MB dla 25MB audio body parsing                                                         | Pre-mortem / Research finding | Ś     | Ś     | Audio upload bezpośrednio do Supabase Storage z presigned URL (Worker nie procesuje body); FR-004 to nice-to-have, w MVP audio może być pominięte                                                    |
 
 > **Rozwiązane w tej sesji** (nie ma już w aktywnym rejestrze): (a) `tech-stack.md` rozjazd `cloudflare-pages` vs adapter v13 — zsynchronizowany na `cloudflare-workers` 2026-06-02; (b) brak `nodejs_compat` flag — bootstrap dostarczył w `wrangler.jsonc`; (c) brak `compatibility_date` — bootstrap ustawił `2026-05-08` (`nodejs_compat` aktywuje v2 semantics dla dat ≥ 2024-09-23, więc obsługa `async_hooks` dla Supabase SSR jest pokryta).
 

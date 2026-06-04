@@ -28,8 +28,8 @@
 W ciągu dnia generuję bardzo wiele myśli — pomysłów, zadań, notatek, decyzji —
 w sytuacjach, w których nie ma fizycznej ani mentalnej możliwości ich strukturalnego
 zapisu: jadąc samochodem, w pociągu, na spacerze, w windzie. Nie mam skutecznej
-metody notowania na bieżąco — takiej, która nie wymagałaby decydowania *w momencie
-nagrania*, czym dana myśl jest (zadanie? notatka? pomysł?) ani w jakiej formie
+metody notowania na bieżąco — takiej, która nie wymagałaby decydowania _w momencie
+nagrania_, czym dana myśl jest (zadanie? notatka? pomysł?) ani w jakiej formie
 ma być zapisana. W efekcie wiele myśli przepada, a ja wielokrotnie wymyślam te
 same pomysły, znów ich nie zapisuję i znów zapominam.
 

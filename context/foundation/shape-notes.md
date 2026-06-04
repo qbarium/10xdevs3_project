@@ -78,7 +78,7 @@ checkpoint:
       decision: "Zakaz logowania klucza = twardy globalny (wszystkie środowiska: prod, test, local dev). Wymaga aktywnego filtra czyszczącego w warstwie loggera i SDK monitorujących błędy (maskowanie ciągów pasujących do formatu sk-...). W local dev: klucze testowe z dedykowanego konta lub mocki w testach. Filtr → spec techniczna."
     - topic: "manual item entry (FR-028, post-Sokrates review)"
       decision: "Ręczne dodawanie itemów z UI (omijające LLM, idące od razu do `accepted`/`nowe`) wchodzi do MVP jako must-have. Uzasadnienie: (1) testowalność UI bez LLM (testy E2E i integracyjne nie wymagają wywołań OpenAI), (2) realny przypadek użycia (user przy komputerze dopisujący pomysł bez wsadu). Wyjątek od FR-024: ręczne dodawanie nie wymaga klucza OpenAI."
-  frs_drafted: 26  # 26 z fazy 4 - FR-014 (USUNIĘTE) - FR-017 (SCALONE z FR-002) + FR-027 (NEW, dziennik sesji importu) + FR-028 (NEW, ręczne dodawanie itemów, dodane post-Sokrates review)
+  frs_drafted: 26 # 26 z fazy 4 - FR-014 (USUNIĘTE) - FR-017 (SCALONE z FR-002) + FR-027 (NEW, dziennik sesji importu) + FR-028 (NEW, ręczne dodawanie itemów, dodane post-Sokrates review)
   quality_check_status: accepted
 ---
 
@@ -274,6 +274,7 @@ Moment, w którym sięga po TaskerLight: po sesji nagraniowej w terenie. Ma na r
 - FR-020: Aplikacja zapisuje wszystkie itemy zwrócone przez LLM bez obcinania ani sztucznego łączenia bytów. Prompt do LLM zawiera instrukcje jakościowe („nie rozbijaj zdań na sub-itemy, łącz powiązane myśli w jeden item") bez konkretnego limitu liczbowego. **Safety net techniczny: 100 itemów per sesja** — jeśli LLM zwróci więcej niż 100, aplikacja traktuje to jako anomalię techniczną (halucynacja modelu): nie zapisuje żadnego itemu, kończy sesję ze statusem `niepowodzenie`, daje userowi opcję „spróbuj ponownie". Limit 100 to safety net, nie jest widoczny dla usera jako limit produktowy. Priority: must-have
   > Sokrates: Rozważone kontrargumenty — silent truncate przy 50 = utrata audit trail, 50 może być za dużo dla walidacji, pre/post-truncate niezdefiniowane. **Rozstrzygnięcie: ZMIANA MODELU OBSŁUGI LIMITU.** (1) **Twardy limit produktowy 50 itemów USUNIĘTY** z FR-020. Aplikacja zapisuje wszystkie itemy zwrócone przez LLM bez obcinania ani sztucznego łączenia bytów. Twarde cięcie po stronie aplikacji lub instrukcja limitu w prompcie do LLM = utrata danych z perspektywy usera + ryzyko popychania modelu do nienaturalnego scalania powiązanych, ale odrębnych itemów. (2) **Safety net techniczny na poziomie 100 itemów** per sesja — założenie architektoniczne chroniące bazę przed wybuchem rekordów w razie halucynacji modelu. Realny wsad to 5–80 itemów; 100 jest praktycznie nieosiągalne w normalnym użyciu. Jeśli LLM zwróci więcej niż 100, aplikacja traktuje to jako anomalię techniczną — **zwraca błąd, NIE zapisuje, daje userowi opcję ponowienia.** Nie jest to limit produktowy widoczny dla usera. (3) **Prompt do LLM zawiera instrukcje jakościowe** („nie rozbijaj zdań na sub-itemy, łącz powiązane myśli w jeden item") bez konkretnego limitu liczbowego. **Implikacja:** FR-020 do przepisania w batchu — zamiana brzmienia.
 - FR-023: Aplikacja używa hardcoded modelu OpenAI dla klasyfikacji tekstu — user nie wybiera modelu w UI. Konkretny model = decyzja w spec technicznej, nie w PRD. Whisper API dla transkrypcji audio (gdy wejdzie nice-to-have audio). Priority: must-have
+
   > Sokrates: Rozważone kontrargumenty — free-tier user OpenAI bez dostępu do flagship modelu, brak flexibility per-user, niejasność jak hardcoded model się aktualizuje. Rozstrzygnięcie: FR stoi z doprecyzowaniem. (1) **Wybór modelu = świadoma decyzja architektoniczna autora aplikacji.** User świadomie wybiera aplikację z BYOK, akceptując że musi mieć adekwatne konto u providera. Brak dostępu do wybranego modelu (np. free tier) → HTTP 403 z OpenAI → komunikat w UI przy konfiguracji klucza i ewentualnie w komunikacie błędu. (2) **Brak konfiguracji modelu per-user** — to NIE konfigurowalność dla user-a, to decyzja produktowa autora (analogicznie jak Notion/ChatGPT nie pytają user-a o model). Choice modelu w profilu — **świadomie poza zakresem, nie-feature**, nie nice-to-have. (3) **Konkretny model konfigurowalny przez zmienne środowiskowe aplikacji** (nie przez panel user-a), aktualizowalny przez redeploy. Daje to autorowi możliwość zmiany modelu (przy deprecation OpenAI, przy nowych modelach, przy zmianie cenowej) bez modyfikacji kodu. Decyzja architektoniczna, nie produktowa.
 
 - FR-027: User ma dostęp do osobnego widoku **dziennika sesji importu** — chronologicznej listy sesji z minimalnym zakresem informacji: rejestr wejścia (treść wklejonego tekstu lub nazwa i typ pliku), łączny status sesji (`przetwarzanie` / `zakończona z itemami` / `zakończona bez itemów` / `niepowodzenie`), liczba wygenerowanych itemów lub komunikat błędu, akcja „spróbuj ponownie" dostępna dla sesji ze statusem `niepowodzenie` (wsad zachowany — brak konieczności wprowadzania od nowa). Per-file rozbicie i podgląd zawartości itemów w obrębie sesji → poza MVP. Priority: must-have
@@ -446,11 +447,11 @@ NOT a PRD section. Captures implementation/testing/deployment intent. Konsumowan
 
 Status: **accepted** (Phase 7 — wszystkie elementy obecne; brak luk wymagających odnotowania jako Open Questions).
 
-| Element | Status | Uwaga |
-|---|---|---|
-| Access Control | present | Auth model + Capabilities + Unauthenticated + BYOK key storage |
-| Business Logic | present | Jednozdaniowa reguła klasyfikacji + 3 akapity wspierające |
-| Project artifacts | present | `shape-notes.md` z pełnym frontmatter (project, context_type, product_type, target_scale, timeline_budget, checkpoint) |
-| Timeline-cost ack | present | `timeline_budget.mvp_weeks = 3` (w budżecie skilla, brak osobnego Timeline acknowledgment wymaganego) |
-| Non-Goals | present | 12 wpisów obejmujących scope avoids i quality avoids |
-| Preserved behavior | n/a | greenfield (sekcja nie dotyczy) |
+| Element            | Status  | Uwaga                                                                                                                  |
+| ------------------ | ------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Access Control     | present | Auth model + Capabilities + Unauthenticated + BYOK key storage                                                         |
+| Business Logic     | present | Jednozdaniowa reguła klasyfikacji + 3 akapity wspierające                                                              |
+| Project artifacts  | present | `shape-notes.md` z pełnym frontmatter (project, context_type, product_type, target_scale, timeline_budget, checkpoint) |
+| Timeline-cost ack  | present | `timeline_budget.mvp_weeks = 3` (w budżecie skilla, brak osobnego Timeline acknowledgment wymaganego)                  |
+| Non-Goals          | present | 12 wpisów obejmujących scope avoids i quality avoids                                                                   |
+| Preserved behavior | n/a     | greenfield (sekcja nie dotyczy)                                                                                        |
