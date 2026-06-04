@@ -226,14 +226,19 @@ Decyzja MVP-week-1: tylko Email provider, OAuth (Google/GitHub) i Magic Link →
 
 ### 7.2 Weryfikacja pierwszego CF-build
 
-- [ ] **[USER]** Trywialny commit (np. dopisek w README) → push do `main`.
-- [ ] **[USER + AGENT]** Obserwacja Cloudflare Dashboard → Builds: status `Building` → `Deploying` → `Success`. **[AGENT]** równolegle: `npx wrangler deployments list` po ~2 min.
-- [ ] **[AGENT]** Po success: `curl <worker-url>/api/health` — 200, znacznik czasowy świeższy niż przed pushem.
+- [x] **[USER]** Push 2 commitów na `main` (`2e39858` + `ce5decc`). ✓ 2026-06-05
+- [x] **[USER + AGENT]** Workers Builds **auto-zbudował i wdrożył**: log „Success! Build completed", `Deployed tasker-light`, Version `83b6dae7`. ✓ 2026-06-05
+- [x] **[AGENT]** `/api/health` na prod → 200, `hasSupabase:true` (aplikacja żywa po auto-deployu). ✓ 2026-06-05
 
 ### 7.3 Preview deployments (opcjonalnie)
 
 - [x] **[USER]** Preview deployments **włączone** („Builds for non-production branches: Enabled") — branch ≠ `main` dostanie preview URL (wpada w wildcard Redirect URLs z Fazy 4.1). ✓ 2026-06-05
-- [ ] **[USER]** Notatka: TaskerLight = single-user MVP, więc bez Cloudflare Access; dostęp gatuje Supabase Auth wewnątrz aplikacji.
+- [x] **[USER]** Notatka: TaskerLight = single-user MVP, więc bez Cloudflare Access; dostęp gatuje Supabase Auth wewnątrz aplikacji. ✓
+
+### 7.4 Branch protection na `main` (bramka CI) ✓ 2026-06-05
+
+- [x] **[AGENT]** Włączone przez `gh api`: `required_status_checks=[ci]`, `required_pull_request_reviews` (0 approvals), `enforce_admins=true`. Direct-push na `main` zablokowany → zmiany **wyłącznie przez PR** z zielonym `ci`. ✓ 2026-06-05
+- **Workflow:** feature branch → commit → push → PR do `main` → CI `ci` zielony → **merge (na „filutek")** → Workers Builds auto-deploy. „Filutek" dalej gatuje wejście na prod.
 
 ---
 
