@@ -64,7 +64,7 @@ Pięć zewnętrznych zależności, które muszą być gotowe **zanim** ruszą ja
 
 - [x] **[USER]** Konto Supabase + projekt cloud istnieją (Status: Healthy, plan Free). ✓
 - [x] **[USER]** Project URL + Project ref zanotowane → `docs/local/deploy-secrets.md`. ✓
-- [ ] **[USER]** **DB password** — potwierdzić, że jest zapisane w password managerze (potrzebne w Fazie 1.5 do `supabase db push`; jeśli zgubione → reset w Settings → Database).
+- [x] **[USER]** **DB password** — zresetowane i w password managerze. (W 1.5 `db push` ostatecznie uwierzytelnił się tokenem z `supabase login`, nie hasłem DB.) ✓ 2026-06-05
 - [x] **[USER → AGENT]** Klucz publiczny chmury pobrany (publishable) i wgrany jako `wrangler secret SUPABASE_KEY` w Fazie 2. ✓ 2026-06-04
 - ℹ️ Uwaga: Supabase Free pauzuje projekt po 7 dniach bezczynności — przed launchem sprawdzić, czy nie spauzowany.
 
@@ -117,7 +117,7 @@ Repo lokalnie jest na branchu **`main`**, ale `.github/workflows/ci.yml` linie 5
 
 - [x] **[AGENT]** `.github/workflows/ci.yml` linie 5+7 — `master` → `main`. ✓ 2026-06-04
 - [x] **[AGENT]** Zdalny default branch = `main` (potwierdzone w 0.4) — nic w GitHub Settings nie trzeba ruszać. ✓
-- [ ] **[AGENT]** Sanity push — zweryfikuje się przy pierwszym pushu na `main` (CI lint+build zielony). DO ZROBIENIA po commicie/pushu.
+- [x] **[AGENT]** Sanity push — CI na `main` **zielony** (run `26981875650`, success, 54s, commit `23f581e`). Lint+build automatycznie przechodzą. ✓ 2026-06-05
 
 ### 1.5 Pierwsza migracja Supabase (placeholder init)
 
@@ -157,7 +157,7 @@ W MVP-week-1 nie tworzymy jeszcze tabel domeny (FR-001..028 wchodzą w M2). Twor
 ### 3.1 Utworzenie `src/pages/api/health.ts`
 
 - [x] **[AGENT]** `src/pages/api/health.ts` — `GET`, `prerender = false`, `astro:env/server`, JSON `{ ok, hasSupabase, runtime, checkedAt }`, bez wycieku wartości sekretów. ✓ 2026-06-05. `npm run build` „Complete!".
-- [ ] **[AGENT]** Smoke HTTP `/api/health` — do wykonania lokalnie (`npm run dev` + curl, oczekiwane `hasSupabase: true`) **lub** zweryfikuje się przy deployu (Faza 5.2 curl prod).
+- [x] **[AGENT]** Smoke HTTP `/api/health` — zweryfikowane na produkcji (Faza 5.2: 200 + `hasSupabase:true`). ✓ 2026-06-05
 
 ---
 
@@ -167,7 +167,7 @@ Wykonywane **przed** Fazą 5 dzięki chicken-and-egg trickowi: worker URL jest d
 
 ### 4.1 Supabase Dashboard → Authentication → URL Configuration
 
-- [ ] **[USER]** Supabase Dashboard → cloud project `tasker-light` → Authentication → URL Configuration:
+- [x] **[USER]** URL Configuration ustawione ✓ 2026-06-05 (Site URL + 3 Redirect URLs poniżej):
   - **Site URL**: `https://tasker-light.<subdomain>.workers.dev` (podstaw `<subdomain>` zapisany w 0.1).
   - **Redirect URLs** (Add URL — każdy w osobnej linii):
     1. `https://tasker-light.<subdomain>.workers.dev/auth/confirm-email`
@@ -179,8 +179,8 @@ Wykonywane **przed** Fazą 5 dzięki chicken-and-egg trickowi: worker URL jest d
 
 Decyzja MVP-week-1: tylko Email provider, OAuth (Google/GitHub) i Magic Link → „Kolejne kroki".
 
-- [ ] **[USER]** Authentication → Providers → Email — `Enable Email provider` **ON**, `Confirm email` **ON** (wymagane dla pełnego smoke flow w Fazie 6).
-- [ ] **[USER]** Authentication → Providers → wszystkie pozostałe (Google, GitHub, Magic Link, Phone, OAuth providers) — pozostawić **OFF** w MVP-week-1.
+- [x] **[USER]** Email provider **Enabled** + `Confirm email` **ON**. ✓ 2026-06-05
+- [x] **[USER]** Pozostałe providery (Phone, OAuth, Magic Link, itd.) **OFF**. ✓ 2026-06-05
 - [ ] **[USER]** Authentication → Email Templates → Confirm signup — opcjonalnie podmień templete na pl-PL (domyślny en-US działa, ale brzydki).
 
 ---
@@ -189,15 +189,14 @@ Decyzja MVP-week-1: tylko Email provider, OAuth (Google/GitHub) i Magic Link →
 
 ### 5.1 Build i deploy
 
-- [ ] **[AGENT]** `npm run build`.
-- [ ] **[AGENT]** `npx wrangler deploy` — output zawiera URL postaci `https://tasker-light.<subdomain>.workers.dev`. **[AGENT]** weryfikuje, że URL zgadza się z tym zapisanym w Fazie 0.1 i wpisanym do Supabase w 4.1.
+- [x] **[USER]** `npm run build` + `npx wrangler deploy` — wdrożone. ✓ 2026-06-05
+- [x] URL = `https://tasker-light.qbarium.workers.dev`, Version `e4a20751`. Worker wypełniony kodem (wcześniej pusta skorupa); wrangler auto-provisionował KV `tasker-light-session` dla sesji. ✓
 
 ### 5.2 Live verification
 
-- [ ] **[AGENT]** W terminalu A: `npx wrangler tail --format json --status error` (live JSON Lines log; pozostaje uruchomione).
-- [ ] **[AGENT]** W terminalu B: `curl <worker-url>/api/health` — oczekiwane 200 + `hasSupabase: true`.
-- [ ] **[AGENT]** Drugi smoke: `curl -I <worker-url>/` — oczekiwane 200 i nagłówek `cf-ray`.
-- [ ] **[AGENT]** Sprawdzenie terminala A — brak logów error podczas powyższych requestów.
+- [x] **[AGENT]** `curl /api/health` na prod → `{"ok":true,"hasSupabase":true,"runtime":"workerd"}` (200). ✓ 2026-06-05
+- [x] **[AGENT]** `curl -I /` → HTTP 200, `Content-Type: text/html`, `CF-RAY: …-WAW` (edge Warszawa). ✓ 2026-06-05
+- [x] **[AGENT]** `wrangler deployments list` → Version `e4a20751` (100%), author qbarium; oba żądania 200 = brak błędów serwerowych. ✓ 2026-06-05
 
 **Bramka:** Jeśli `hasSupabase: false` w prod (a `true` lokalnie) → sekrety nie zostały wgrane prawidłowo, wróć do Fazy 2.2 i `npx wrangler secret list` weryfikuje obecność.
 
@@ -207,10 +206,10 @@ Decyzja MVP-week-1: tylko Email provider, OAuth (Google/GitHub) i Magic Link →
 
 ### 6.1 Pełen przepływ signup → confirm → signin
 
-- [ ] **[USER]** W przeglądarce: `https://tasker-light.<subdomain>.workers.dev/auth/signup` → utworzenie konta testowego (Twój roboczy alias lub e-mail jednorazowy) → otrzymanie maila confirm w skrzynce → kliknięcie linku.
-- [ ] **[USER]** Link confirm przekierowuje na `https://tasker-light.<subdomain>.workers.dev/auth/confirm-email` (NIE na localhost — bo Site URL ustawione w 4.1) → user zalogowany → redirect na `/dashboard`.
-- [ ] **[USER]** Logout (przez `/api/auth/signout`) → ponowny signin → wyświetla dashboard.
-- [ ] **[AGENT]** Podczas testów monitoruje `npx wrangler tail` na błędy serwerowe.
+- [x] **[USER]** Signup na prod utworzył konto (widoczne w Authentication → Users). ✓ 2026-06-05
+- [~] **[USER]** Email-confirm **NIE zweryfikowany** — wbudowany wysyłacz Supabase nie dostarcza (dev-only, bez SMTP). Obejście: **„Confirm email" = OFF**. Pełny flow mailowy → po podpięciu SMTP (kolejne kroki).
+- [x] **[USER]** Signin → **dashboard** działa na produkcji (z „Confirm email" OFF). ✓ 2026-06-05
+- [ ] **[AGENT]** (opcjonalnie) monitoring `wrangler tail` przy dłuższych testach.
 
 **Bramka:** Pełny przepływ działa bez 500/redirect-loop. Jeśli redirect loop na `/dashboard` → sprawdź ciasteczko Supabase w DevTools → Application → Cookies i czy `middleware.ts` widzi usera (log lokalny).
 
@@ -220,15 +219,10 @@ Decyzja MVP-week-1: tylko Email provider, OAuth (Google/GitHub) i Magic Link →
 
 ### 7.1 Podpięcie Workers Builds
 
-- [ ] **[USER]** Cloudflare Dashboard → Workers & Pages → `tasker-light` → Settings → Builds → **Connect to Git**.
-- [ ] **[USER]** OAuth GitHub: autoryzacja Cloudflare na konto/organizację. Wybór repo: `10xdevs3_project` (lub aktualna nazwa).
-- [ ] **[USER]** Konfiguracja:
-  - **Production branch**: `main` (zgodne z decyzją 1.4)
-  - **Build command**: `npm run build`
-  - **Deploy command**: `npx wrangler deploy`
-  - **Root directory**: `/` (default)
-  - **Build variables**: brak (sekrety są w Workers Secrets, dostępne w runtime).
-- [ ] **[USER]** Save & deploy.
+- [x] **[USER]** Workers Builds podpięte **wewnątrz** Workera `tasker-light` (Settings → Build → Connect to Git) → repo `qbarium/10xdevs3_project`. Bez duplikatu projektu. ✓ 2026-06-05
+- [x] **[USER]** Cloudflare GitHub App autoryzowany (least-privilege: tylko repo `10xdevs3_project`). ✓ 2026-06-05
+- [x] **[USER]** Konfiguracja: Production branch `main`, Build `npm run build`, Deploy (prod) `npx wrangler deploy`, Version (preview) `npx wrangler versions upload`, Root `/`, bez build variables (sekrety w Workers Secrets). API token buildów auto-utworzony. ✓ 2026-06-05
+- [x] **[USER]** Connect zapisany — „You can now push a commit to start your first build". ✓ 2026-06-05
 
 ### 7.2 Weryfikacja pierwszego CF-build
 
@@ -238,7 +232,7 @@ Decyzja MVP-week-1: tylko Email provider, OAuth (Google/GitHub) i Magic Link →
 
 ### 7.3 Preview deployments (opcjonalnie)
 
-- [ ] **[USER]** W Workers Builds settings: włącz **Preview deployments** dla branch ≠ `main` — każdy PR dostaje preview URL formatu `<version-id>-tasker-light.<subdomain>.workers.dev`. Już wpadają w wildcard z Fazy 4.1.
+- [x] **[USER]** Preview deployments **włączone** („Builds for non-production branches: Enabled") — branch ≠ `main` dostanie preview URL (wpada w wildcard Redirect URLs z Fazy 4.1). ✓ 2026-06-05
 - [ ] **[USER]** Notatka: TaskerLight = single-user MVP, więc bez Cloudflare Access; dostęp gatuje Supabase Auth wewnątrz aplikacji.
 
 ---
@@ -275,6 +269,7 @@ Nie są wycięte ze scope projektu, tylko świadomie odłożone, by trzymać pie
 - [ ] **Audio upload (FR-004 nice-to-have)** — direct upload do Supabase Storage przez presigned URL z klienta (Worker nie procesuje 25 MB body — memory limit 128/256 MB).
 - [ ] **Smart Placement** — opt-in `"placement": { "mode": "smart" }` w `wrangler.jsonc` jeśli scope rozszerzy się poza single-user PL.
 - [ ] **Health endpoint v2** — `auth.getSession()` z timeoutem 2 s zamiast samego `hasSupabase` flag (faktyczne sprawdzenie połączenia do Supabase).
+- [ ] **Własny SMTP (maile)** — podpiąć dostawcę (Resend/SendGrid/Postmark) w Authentication → Emails → SMTP Settings, żeby maile potwierdzające/reset realnie dochodziły; potem włączyć **„Confirm email" z powrotem ON** (teraz OFF, bo wbudowany wysyłacz nie dostarcza). Stan obecny: signup działa bez weryfikacji maila.
 - [ ] **OAuth providers** (Google/GitHub) — Authentication → Providers w Supabase + Client ID/Secret z konsoli providera (PRD Open Question 1 wymaga decyzji).
 - [ ] **Domena custom** — Cloudflare Workers → Triggers → Custom Domains (gdy MVP wychodzi z workers.dev URL).
 
