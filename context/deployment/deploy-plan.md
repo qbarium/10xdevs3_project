@@ -126,7 +126,7 @@ W MVP-week-1 nie tworzymy jeszcze tabel domeny (FR-001..028 wchodzą w M2). Twor
 - [x] **[AGENT]** `supabase migration new init` → `supabase/migrations/20260604214624_init.sql`. ✓ 2026-06-04
 - [x] **[AGENT]** Placeholder SQL (komentarze; tabele domenowe w M2). ✓ 2026-06-04
 - [x] **[AGENT]** `supabase db reset` — migracja aplikuje się czysto lokalnie. ✓ 2026-06-04
-- [x] **[USER → AGENT]** `supabase db push` → migracja na chmurze („Finished supabase db push"). Uwierzytelnienie **tokenem z `supabase login`** (CLI: „Initialising login role"), **bez hasła DB**. ✓ 2026-06-04 (plik migracji jeszcze niezacommitowany)
+- [x] **[USER → AGENT]** `supabase db push` → migracja na chmurze („Finished supabase db push"). Uwierzytelnienie **tokenem z `supabase login`** (CLI: „Initialising login role"), **bez hasła DB**. ✓ 2026-06-04 (plik migracji `20260604214624_init.sql` zacommitowany w `23f581e` i na `origin/main`)
 
 ---
 
