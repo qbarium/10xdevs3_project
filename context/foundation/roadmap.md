@@ -23,7 +23,7 @@ TaskerLight przyjmuje surowy, nieuporządkowany wsad głosowo-tekstowy i rozdzie
 
 **S-02: Wklej tekst → klasyfikacja → typowane itemy do akceptacji** — pierwszy moment, w którym surowy wsad realnie zamienia się w sklasyfikowane itemy; dowodzi, że klasyfikacja AI poprawnie typuje (najbardziej ryzykowne założenie produktu, mierzone w Success Criteria jako acceptance rate ≥ 70%).
 
-> „Gwiazda przewodnia" = najmniejszy kompleksowy (end-to-end) wycinek, którego pomyślne dostarczenie udowadnia podstawową hipotezę produktu — umieszczony tak wcześnie, jak pozwalają na to Wymagania wstępne, bo wszystko inne ma znaczenie dopiero, gdy to działa. Pełna ścieżka, którą wskazałeś (wklej → klasyfikacja → walidacja → akceptacja/odrzucenie → oznaczenie stanu zadania/notatki/decyzji), domyka się dopiero przez kolejne wycinki łańcucha: S-02 (klasyfikacja → pendingi) → S-03 (akceptacja/odrzucenie) → S-04 (cykl operacyjny zadania). Te trzy są sekwencjonowane jako pierwsze i ciągłe, zgodnie z celem „szybkość uruchomienia".
+> „Gwiazda przewodnia" = najmniejszy kompleksowy (end-to-end) wycinek, którego pomyślne dostarczenie udowadnia podstawową hipotezę produktu — umieszczony tak wcześnie, jak pozwalają na to Wymagania wstępne, bo wszystko inne ma znaczenie dopiero, gdy to działa. Pełna ścieżka, którą wskazałeś (wklej → klasyfikacja → walidacja → akceptacja/odrzucenie → zmiana stanu), domyka się dopiero przez kolejne wycinki łańcucha: S-02 (klasyfikacja → pendingi) → S-03 (akceptacja/odrzucenie) → S-04 (cykl operacyjny zadania). Uwaga zgodna z PRD: w MVP stan operacyjny ma wyłącznie `task` (FR-009) — „oznaczenie notatki jako obsłużona / decyzji jako podjęta" jest poza zakresem; notatki, pomysły i decyzje kończą ścieżkę jako `accepted` w widoku Aktywne. Te wycinki są sekwencjonowane jako pierwsze i ciągłe, zgodnie z celem „szybkość uruchomienia".
 
 ## W skrócie
 
@@ -46,7 +46,7 @@ Pomoc nawigacyjna — grupuje elementy współdzielące łańcuch Wymagań wstę
 
 | Strumień | Temat                          | Łańcuch                                          | Uwaga                                                                          |
 | -------- | ------------------------------ | ----------------------------------------------- | ----------------------------------------------------------------------------- |
-| A        | Klin generacji                 | `F-01` → `S-01` → `S-02` → `S-03` → `S-04`       | Ścieżka must-have „happy path"; rdzeń celu „szybkość uruchomienia".            |
+| A        | Ścieżka generacji              | `F-01` → `S-01` → `S-02` → `S-03` → `S-04`       | Ścieżka must-have „happy path"; rdzeń celu „szybkość uruchomienia".            |
 | B        | Zarządzanie itemami i edycja   | `S-05` → `S-09`                                  | Dołącza do Strumienia A w `S-03`; `S-09` to późne utwardzanie filtrów.        |
 | C        | Cykl kosza                     | `S-06`                                           | Dołącza do Strumienia A w `S-03`; równolegle z `S-04`/`S-05`.                 |
 | D        | Wejścia poboczne i diagnostyka | `S-07` / `S-08`                                  | Oba dołączają do Strumienia A w `S-02`; niezależne, dobre do równoległości.    |
@@ -86,7 +86,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Change ID:** byok-key-config
 - **Odnośniki PRD:** US-06, FR-021, FR-022, FR-024
 - **Wymagania wstępne:** F-01
-- **Równolegle z:** S-02 (po dostarczeniu F-01 — przygotowanie pipeline'u klasyfikacji może iść obok, ale submit i tak wymaga klucza z S-01)
+- **Równolegle z:** — (S-02 zależy od S-01, więc nie jest z nim równoległy)
 - **Blokady:** —
 - **Niewiadome:** —
 - **Ryzyko:** Klucz zapisywany bez walidacji (FR-022, świadomy kompromis) — niepoprawny klucz ujawni się dopiero w S-02 przy pierwszym wywołaniu; wprowadza kolumnę `openai_api_key_encrypted` w profilu (część schematu danych).
