@@ -20,14 +20,14 @@ Mapowanie kanon ↔ GitHub:
 
 - Element roadmapy F-NN / S-NN → **parent Issue** (etykieta `foundation` lub `slice`; gwiazda przewodnia dodatkowo `north-star`).
 - Strumień A–D → **milestone**.
-- Status elementu (`proposed`/`ready`/`in-progress`/`blocked`/`done`) → **pole „Etap"** na tablicy, kolumny `Backlog`/`Ready`/`In Progress`/`Review`/`Done`/`Blocked` (mapowanie 1:1; jedyne miejsce statusu — nie dubluj w etykietach).
+- Status elementu (`proposed`/`ready`/`in-progress`/`blocked`/`done`) → wbudowane **pole „Status"** na tablicy, kolumny `Backlog`/`Todo`/`In Progress`/`Review`/`Done`/`Blocked` (mapowanie: proposed→Backlog, ready→Todo, in-progress→In Progress, in-review→Review, done→Done, blocked→Blocked; jedyne miejsce statusu — nie dubluj w etykietach).
 - Task z `/10x-plan` (`context/changes/<id>/`) → **pod-zgłoszenie** (sub-issue, etykieta `task`) pod właściwym parent Issue, dodane do tablicy.
-- Odhaczona faza w `## Progress` → zamknij pod-zgłoszenie / przesuń kartę do `Zrobione`.
-- `/10x-archive` (status → `done`) → zamknij parent Issue, karta → `Zrobione`.
+- Odhaczona faza w `## Progress` → zamknij pod-zgłoszenie / przesuń kartę do `Done`.
+- `/10x-archive` (status → `done`) → zamknij parent Issue, karta → `Done`.
 
 Reguły operacyjne:
 
-- Nowy lub zmieniony F-NN/S-NN w `roadmap.md` → utwórz/zaktualizuj parent Issue + dodaj do tablicy + ustaw „Etap".
+- Nowy lub zmieniony F-NN/S-NN w `roadmap.md` → utwórz/zaktualizuj parent Issue + dodaj do tablicy + ustaw pole „Status".
 - Rutynowy sync stanu (tworzenie/aktualizacja Issues i pod-zgłoszeń, pole „Etap", zamykanie) jest **dozwolony bez dopytywania** — taki jest cel jednoczesności.
 - **Granica:** operacje destrukcyjne na GitHub (usunięcie Issue / tablicy / pola / milestone) oraz `git push` / PR / merge / deploy / sekrety pozostają **tylko za jawną zgodą** (zgodnie z „Human-in-the-loop" niżej).
 
