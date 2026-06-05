@@ -20,7 +20,7 @@ Mapowanie kanon ↔ GitHub:
 
 - Element roadmapy F-NN / S-NN → **parent Issue** (etykieta `foundation` lub `slice`; gwiazda przewodnia dodatkowo `north-star`).
 - Strumień A–D → **milestone**.
-- Status elementu (`proposed`/`ready`/`in-progress`/`blocked`/`done`) → **pole „Etap"** na tablicy (`Backlog`/`Do realizacji`/`W toku`/`W przeglądzie`/`Zrobione`/`Zablokowane`) — jedyne miejsce statusu (nie dubluj statusu w etykietach).
+- Status elementu (`proposed`/`ready`/`in-progress`/`blocked`/`done`) → **pole „Etap"** na tablicy, kolumny `Backlog`/`Ready`/`In Progress`/`Review`/`Done`/`Blocked` (mapowanie 1:1; jedyne miejsce statusu — nie dubluj w etykietach).
 - Task z `/10x-plan` (`context/changes/<id>/`) → **pod-zgłoszenie** (sub-issue, etykieta `task`) pod właściwym parent Issue, dodane do tablicy.
 - Odhaczona faza w `## Progress` → zamknij pod-zgłoszenie / przesuń kartę do `Zrobione`.
 - `/10x-archive` (status → `done`) → zamknij parent Issue, karta → `Zrobione`.
