@@ -30,9 +30,8 @@ TaskerLight przyjmuje surowy, nieuporządkowany wsad głosowo-tekstowy i rozdzie
 | ID    | Change ID                | Wynik (użytkownik może…)                                                   | Wymagania wstępne | Odnośniki PRD                              | Status   |
 | ----- | ------------------------ | -------------------------------------------------------------------------- | ----------------- | ------------------------------------------ | -------- |
 | F-01  | byok-secret-security     | (fundament) klucze BYOK szyfrowane w spoczynku + maskowane w logach        | —                 | FR-021, FR-026, NFR Klucze/Prywatność      | ready    |
-| F-02  | workers-paid-runtime     | (fundament) runtime utrzymuje 60 s synchronicznej klasyfikacji            | —                 | NFR Klasyfikacja synchroniczna             | ready    |
 | S-01  | byok-key-config          | zapisać, podejrzeć zamaskowany i usunąć własny klucz API; submit bramkowany | F-01              | US-06, FR-021, FR-022, FR-024              | proposed |
-| S-02  | first-gated-generation   | wkleić tekst/plik i zobaczyć typowane itemy jako pendingi do akceptacji     | S-01, F-01, F-02  | US-01, FR-002, FR-003, FR-005, FR-006, FR-015, FR-018, FR-020, FR-023, FR-025 | proposed |
+| S-02  | first-gated-generation   | wkleić tekst/plik i zobaczyć typowane itemy jako pendingi do akceptacji     | S-01, F-01  | US-01, FR-002, FR-003, FR-005, FR-006, FR-015, FR-018, FR-020, FR-023, FR-025 | proposed |
 | S-03  | validation-accept-reject | zaakceptować (z edycją) lub odrzucić pendingi; zaakceptowane → Aktywne      | S-02              | US-02, US-03, FR-007, FR-008, FR-010, FR-012 | proposed |
 | S-04  | task-operational-lifecycle | zmieniać stan operacyjny zadania (nowe/w realizacji/zrealizowane/anulowane) | S-03              | US-04, FR-009                              | proposed |
 | S-05  | unified-list-and-edit    | przeglądać Aktywne/Zakończone/Anulowane (filtr typu) i edytować itemy       | S-03              | FR-008, FR-011                             | proposed |
@@ -48,10 +47,9 @@ Pomoc nawigacyjna — grupuje elementy współdzielące łańcuch Wymagań wstę
 | Strumień | Temat                          | Łańcuch                                          | Uwaga                                                                          |
 | -------- | ------------------------------ | ----------------------------------------------- | ----------------------------------------------------------------------------- |
 | A        | Klin generacji                 | `F-01` → `S-01` → `S-02` → `S-03` → `S-04`       | Ścieżka must-have „happy path"; rdzeń celu „szybkość uruchomienia".            |
-| B        | Runtime klasyfikacji           | `F-02`                                           | Dołącza do Strumienia A w `S-02` (60 s synchroniczna klasyfikacja).           |
-| C        | Zarządzanie itemami i edycja   | `S-05` → `S-09`                                  | Dołącza do Strumienia A w `S-03`; `S-09` to późne utwardzanie filtrów.        |
-| D        | Cykl kosza                     | `S-06`                                           | Dołącza do Strumienia A w `S-03`; równolegle z `S-04`/`S-05`.                 |
-| E        | Wejścia poboczne i diagnostyka | `S-07` / `S-08`                                  | Oba dołączają do Strumienia A w `S-02`; niezależne, dobre do równoległości.    |
+| B        | Zarządzanie itemami i edycja   | `S-05` → `S-09`                                  | Dołącza do Strumienia A w `S-03`; `S-09` to późne utwardzanie filtrów.        |
+| C        | Cykl kosza                     | `S-06`                                           | Dołącza do Strumienia A w `S-03`; równolegle z `S-04`/`S-05`.                 |
+| D        | Wejścia poboczne i diagnostyka | `S-07` / `S-08`                                  | Oba dołączają do Strumienia A w `S-02`; niezależne, dobre do równoległości.    |
 
 ## Baza
 
@@ -62,7 +60,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Backend / API:** częściowy — `src/pages/api/health.ts` + `src/pages/api/auth/{signin,signup,signout}.ts`. Brak endpointów domenowych.
 - **Dane:** częściowy — `@supabase/ssr` + `supabase-js`, `src/lib/supabase.ts` działa; migracja `supabase/migrations/20260604214624_init.sql` to pusty placeholder (brak tabel domenowych); brak `src/types.ts`.
 - **Auth:** obecny — Supabase Auth SSR, `src/middleware.ts` z `PROTECTED_ROUTES=["/dashboard"]`; signin → dashboard działa na produkcji. **FR-001 (login) spełnione przez baseline** — brak osobnego wycinka.
-- **Wdrożenie / infrastruktura:** obecny — Cloudflare Workers live (`tasker-light.qbarium.workers.dev`), Workers Builds auto-deploy na `main`, branch protection, CI zielony. Plan **Free** (przejście na Paid → F-02).
+- **Wdrożenie / infrastruktura:** obecny — Cloudflare Workers live (`tasker-light.qbarium.workers.dev`), Workers Builds auto-deploy na `main`, branch protection, CI zielony. Plan **Free** (Free uciąga klasyfikację, bo 60 s to wall-clock fetch-wait, nie CPU; ewentualny upgrade do Paid jako bramka wydajności dla dużych wsadów → `deploy-plan.md` Faza 8).
 - **Obserwowalność:** częściowy — `observability.enabled` w `wrangler.jsonc` + `wrangler tail`. Brak app-level loggera / error trackingu / filtra maskującego klucze (wymaga F-01 / FR-026).
 
 ## Fundamenty
@@ -74,23 +72,10 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Odnośniki PRD:** FR-021, FR-026, NFR „Klucze API w stanie spoczynku", NFR „Prywatność wsadu"
 - **Odblokowuje:** S-01 (zapis zaszyfrowanego klucza), S-02 (wywołanie dostawcy AI bez wycieku klucza do logów)
 - **Wymagania wstępne:** —
-- **Równolegle z:** F-02
+- **Równolegle z:** —
 - **Blokady:** —
 - **Niewiadome:** Polityka rotacji KEK (PRD OQ7) — Właściciel: spec techniczna. Blokuje: nie (dla MVP wystarcza statyczny KEK w konfiguracji).
 - **Ryzyko:** Twardy globalny guardrail (FR-026, wszystkie środowiska) — jeśli filtr maskujący wejdzie po pierwszym zapisie klucza, ryzyko wycieku do logów w międzyczasie; dlatego sekwencjonowany jako pierwszy.
-- **Status:** ready
-
-### F-02: Runtime klasyfikacji (Workers Paid + limit CPU)
-
-- **Wynik:** (fundament) środowisko utrzymuje pojedyncze synchroniczne wywołanie klasyfikacji do ~60 s (Workers Paid + `"limits": { "cpu_ms": 60000 }`), zamiast łamać się na limicie CPU planu Free.
-- **Change ID:** workers-paid-runtime
-- **Odnośniki PRD:** NFR „Klasyfikacja synchroniczna z timeoutem", `infrastructure.md` §Rejestr ryzyka, `deploy-plan.md` Faza 8
-- **Odblokowuje:** S-02 (60 s synchroniczna klasyfikacja BYOK)
-- **Wymagania wstępne:** —
-- **Równolegle z:** F-01
-- **Blokady:** [USER] upgrade do Workers Paid (5 USD/mc) — decyzja już przewidziana w `deploy-plan.md` Faza 8 i `infrastructure.md`; krok jednostronnie wykonalny przez użytkownika.
-- **Niewiadome:** —
-- **Ryzyko:** Plan Free ma 10 ms CPU/wywołanie — za ciasne na parsowanie odpowiedzi AI + walidację + zapis; bez tego fundamentu S-02 będzie 500'ować na produkcji. Tani, ale wymaga jawnej decyzji kosztowej.
 - **Status:** ready
 
 ## Wycinki
@@ -112,13 +97,13 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Wynik:** użytkownik może wkleić tekst (do 100 000 znaków) lub wrzucić jeden plik `.txt`/`.md` (do 300 KB), kliknąć submit, zobaczyć blokujący wskaźnik aktywności podczas synchronicznej klasyfikacji, a po jej zakończeniu — typowane itemy jako pendingi w widoku „Elementy do akceptacji".
 - **Change ID:** first-gated-generation
 - **Odnośniki PRD:** US-01, FR-002, FR-003, FR-005, FR-006, FR-015, FR-018, FR-020, FR-023, FR-025
-- **Wymagania wstępne:** S-01, F-01, F-02
+- **Wymagania wstępne:** S-01, F-01
 - **Równolegle z:** —
 - **Blokady:** —
 - **Niewiadome:**
   - Konkretny model klasyfikacji (okno ≥ 128k tokenów) — Właściciel: spec techniczna (PRD OQ3). Blokuje: nie.
   - Polityka retry przy błędach 5xx/timeout dostawcy AI — Właściciel: spec techniczna. Blokuje: nie.
-- **Ryzyko:** Najcięższy, najbardziej ryzykowny wycinek — łączy wejście, synchroniczny pipeline klasyfikacji, sesję importu i schemat itemów (model dwóch niezależnych wymiarów: stan akceptacji × stan operacyjny). Sekwencjonowany jako gwiazda przewodnia, bo dowodzi sensu produktu; `/10x-plan` może go podzielić na kilka zmian.
+- **Ryzyko:** Najcięższy, najbardziej ryzykowny wycinek — łączy wejście, synchroniczny pipeline klasyfikacji, sesję importu i schemat itemów (model dwóch niezależnych wymiarów: stan akceptacji × stan operacyjny). Sekwencjonowany jako gwiazda przewodnia, bo dowodzi sensu produktu; `/10x-plan` może go podzielić na kilka zmian. Runtime: 60 s klasyfikacji to wall-clock fetch-wait (nie liczy się do CPU), więc plan Free wystarcza dla typowych wsadów; duże wsady (do 100 itemów, FR-020) mogą przekroczyć 10 ms CPU na Free — monitoruj `wrangler tail`, podnieś do Workers Paid + `cpu_ms` jeśli pojawi się „Exceeded CPU" (`deploy-plan.md` Faza 8). To bramka wydajności, nie twardy prerekwizyt.
 - **Status:** proposed
 
 ### S-03: Walidacja — akceptacja, odrzucenie, edycja w stagingu
@@ -213,9 +198,8 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 | ID mapy drogowej | Change ID                  | Sugerowany tytuł problemu                                  | Gotowe do `/10x-plan` | Uwagi                                              |
 | ---------------- | -------------------------- | --------------------------------------------------------- | --------------------- | -------------------------------------------------- |
 | F-01             | byok-secret-security       | Szyfrowanie klucza BYOK at-rest + filtr maskujący w logach | yes                   | Uruchom `/10x-plan byok-secret-security`            |
-| F-02             | workers-paid-runtime       | Workers Paid + limit cpu_ms 60000 dla klasyfikacji        | yes                   | Wymaga [USER] upgrade do Paid (5 USD/mc)           |
 | S-01             | byok-key-config            | Konfiguracja klucza API BYOK w profilu                    | no                    | Po F-01                                            |
-| S-02             | first-gated-generation     | Wklej/plik → klasyfikacja → pendingi do akceptacji        | no                    | Gwiazda przewodnia; po S-01, F-01, F-02            |
+| S-02             | first-gated-generation     | Wklej/plik → klasyfikacja → pendingi do akceptacji        | no                    | Gwiazda przewodnia; po S-01, F-01            |
 | S-03             | validation-accept-reject   | Walidacja: akceptacja/odrzucenie/edycja w stagingu        | no                    | Po S-02                                            |
 | S-04             | task-operational-lifecycle | Stan operacyjny zadania (Aktywne ↔ Zakończone/Anulowane)  | no                    | Po S-03                                            |
 | S-05             | unified-list-and-edit      | Jednolita lista (Aktywne/Zakończone/Anulowane) + edycja   | no                    | Po S-03; równolegle z S-04/S-06                    |
