@@ -28,7 +28,7 @@ Mapowanie kanon ↔ GitHub:
 Reguły operacyjne:
 
 - Nowy lub zmieniony F-NN/S-NN w `roadmap.md` → utwórz/zaktualizuj parent Issue + dodaj do tablicy + ustaw pole „Status".
-- Rutynowy sync stanu (tworzenie/aktualizacja Issues i pod-zgłoszeń, pole „Etap", zamykanie) jest **dozwolony bez dopytywania** — taki jest cel jednoczesności.
+- Rutynowy sync stanu (tworzenie/aktualizacja Issues i pod-zgłoszeń, pole „Status", zamykanie) jest **dozwolony bez dopytywania** — taki jest cel jednoczesności.
 - **Granica:** operacje destrukcyjne na GitHub (usunięcie Issue / tablicy / pola / milestone) oraz `git push` / PR / merge / deploy / sekrety pozostają **tylko za jawną zgodą** (zgodnie z „Human-in-the-loop" niżej).
 
 ## Safe operations
@@ -83,7 +83,7 @@ Full server-side rendering (`output: "server"` in astro.config.mjs). All pages a
 
 ## CI
 
-GitHub Actions workflow (`.github/workflows/ci.yml`) runs lint + build on every push and PR to master. Requires `SUPABASE_URL` and `SUPABASE_KEY` repository secrets for the build step.
+GitHub Actions workflow (`.github/workflows/ci.yml`) runs lint + build on every push and PR to main. Requires `SUPABASE_URL` and `SUPABASE_KEY` repository secrets for the build step.
 
 <!-- BEGIN @przeprogramowani/10x-cli -->
 
