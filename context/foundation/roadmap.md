@@ -1,0 +1,248 @@
+---
+project: TaskerLight
+version: 1
+status: draft
+created: 2026-06-05
+updated: 2026-06-05
+prd_version: 1
+main_goal: speed
+top_blocker: time
+---
+
+# Mapa drogowa: TaskerLight
+
+> Wywiedziono z `context/foundation/prd.md` (v1) + `tech-stack.md` + `infrastructure.md` + `context/deployment/deploy-plan.md` + automatycznie zbadana baza kodu.
+> Edytuj na miejscu; archiwizuj po zastąpieniu.
+> Poniższe elementy są wymienione w kolejności zależności. Tabela „W skrócie" to indeks.
+
+## Podsumowanie wizji
+
+TaskerLight przyjmuje surowy, nieuporządkowany wsad głosowo-tekstowy i rozdziela go na typowane itemy (`task` / `note` / `idea` / `decision` / `other`) przez zewnętrznego dostawcę AI w modelu BYOK (użytkownik podaje własny klucz API). Sednem produktu jest przesunięcie decyzji „czym jest ta myśl" z momentu zapisu (drogiego, w terenie) do momentu przeglądu (taniego): AI zdejmuje koszt klasyfikacji, ale użytkownik zachowuje kontrolę przez warstwę akceptacji. MVP jest świadomie okrojony — jeden element wsadu na sesję, przetwarzanie synchroniczne z timeoutem ~60 s — by zmieścić się w budżecie 3 tygodni po godzinach z twardym deadline'em 2026-07-05.
+
+## Gwiazda przewodnia
+
+**S-02: Wklej tekst → klasyfikacja → typowane itemy do akceptacji** — pierwszy moment, w którym surowy wsad realnie zamienia się w sklasyfikowane itemy; dowodzi, że klasyfikacja AI poprawnie typuje (najbardziej ryzykowne założenie produktu, mierzone w Success Criteria jako acceptance rate ≥ 70%).
+
+> „Gwiazda przewodnia" = najmniejszy kompleksowy (end-to-end) wycinek, którego pomyślne dostarczenie udowadnia podstawową hipotezę produktu — umieszczony tak wcześnie, jak pozwalają na to Wymagania wstępne, bo wszystko inne ma znaczenie dopiero, gdy to działa. Pełna ścieżka, którą wskazałeś (wklej → klasyfikacja → walidacja → akceptacja/odrzucenie → oznaczenie stanu zadania/notatki/decyzji), domyka się dopiero przez kolejne wycinki łańcucha: S-02 (klasyfikacja → pendingi) → S-03 (akceptacja/odrzucenie) → S-04 (cykl operacyjny zadania). Te trzy są sekwencjonowane jako pierwsze i ciągłe, zgodnie z celem „szybkość uruchomienia".
+
+## W skrócie
+
+| ID    | Change ID                | Wynik (użytkownik może…)                                                   | Wymagania wstępne | Odnośniki PRD                              | Status   |
+| ----- | ------------------------ | -------------------------------------------------------------------------- | ----------------- | ------------------------------------------ | -------- |
+| F-01  | byok-secret-security     | (fundament) klucze BYOK szyfrowane w spoczynku + maskowane w logach        | —                 | FR-021, FR-026, NFR Klucze/Prywatność      | ready    |
+| F-02  | workers-paid-runtime     | (fundament) runtime utrzymuje 60 s synchronicznej klasyfikacji            | —                 | NFR Klasyfikacja synchroniczna             | ready    |
+| S-01  | byok-key-config          | zapisać, podejrzeć zamaskowany i usunąć własny klucz API; submit bramkowany | F-01              | US-06, FR-021, FR-022, FR-024              | proposed |
+| S-02  | first-gated-generation   | wkleić tekst/plik i zobaczyć typowane itemy jako pendingi do akceptacji     | S-01, F-01, F-02  | US-01, FR-002, FR-003, FR-005, FR-006, FR-015, FR-018, FR-020, FR-023, FR-025 | proposed |
+| S-03  | validation-accept-reject | zaakceptować (z edycją) lub odrzucić pendingi; zaakceptowane → Aktywne      | S-02              | US-02, US-03, FR-007, FR-008, FR-010, FR-012 | proposed |
+| S-04  | task-operational-lifecycle | zmieniać stan operacyjny zadania (nowe/w realizacji/zrealizowane/anulowane) | S-03              | US-04, FR-009                              | proposed |
+| S-05  | unified-list-and-edit    | przeglądać Aktywne/Zakończone/Anulowane (filtr typu) i edytować itemy       | S-03              | FR-008, FR-011                             | proposed |
+| S-06  | trash-lifecycle          | przenieść item do kosza, przywrócić i wyczyścić kosz                        | S-03              | US-05, FR-013, FR-016                      | proposed |
+| S-07  | manual-item-entry        | dodać item ręcznie (bez klucza, od razu `accepted`)                         | S-02              | US-08, FR-028                              | proposed |
+| S-08  | import-session-log-retry | przejrzeć dziennik sesji importu i ponowić sesję `niepowodzenie`            | S-02              | US-07, FR-027                              | proposed |
+| S-09  | list-filters-search      | sortować, wyszukiwać i filtrować listy po dacie/sesji                       | S-05              | FR-008 (filtry dodatkowe)                  | proposed |
+
+## Strumienie
+
+Pomoc nawigacyjna — grupuje elementy współdzielące łańcuch Wymagań wstępnych. Kanoniczna kolejność nadal jest w grafie zależności poniżej; ta tabela to proponowana kolejność czytania w równoległych ścieżkach.
+
+| Strumień | Temat                          | Łańcuch                                          | Uwaga                                                                          |
+| -------- | ------------------------------ | ----------------------------------------------- | ----------------------------------------------------------------------------- |
+| A        | Klin generacji                 | `F-01` → `S-01` → `S-02` → `S-03` → `S-04`       | Ścieżka must-have „happy path"; rdzeń celu „szybkość uruchomienia".            |
+| B        | Runtime klasyfikacji           | `F-02`                                           | Dołącza do Strumienia A w `S-02` (60 s synchroniczna klasyfikacja).           |
+| C        | Zarządzanie itemami i edycja   | `S-05` → `S-09`                                  | Dołącza do Strumienia A w `S-03`; `S-09` to późne utwardzanie filtrów.        |
+| D        | Cykl kosza                     | `S-06`                                           | Dołącza do Strumienia A w `S-03`; równolegle z `S-04`/`S-05`.                 |
+| E        | Wejścia poboczne i diagnostyka | `S-07` / `S-08`                                  | Oba dołączają do Strumienia A w `S-02`; niezależne, dobre do równoległości.    |
+
+## Baza
+
+Co już jest na miejscu w bazie kodu na dzień `2026-06-05` (automatycznie zbadane + potwierdzone przez użytkownika).
+Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
+
+- **Frontend:** częściowy — Astro 6.3.1 + React 19 + Tailwind 4 (scaffold); strony `auth/{signin,signup,confirm-email}`, `dashboard`, `index`; komponenty React tylko w `src/components/auth/`. Brak stron/komponentów domenowych.
+- **Backend / API:** częściowy — `src/pages/api/health.ts` + `src/pages/api/auth/{signin,signup,signout}.ts`. Brak endpointów domenowych.
+- **Dane:** częściowy — `@supabase/ssr` + `supabase-js`, `src/lib/supabase.ts` działa; migracja `supabase/migrations/20260604214624_init.sql` to pusty placeholder (brak tabel domenowych); brak `src/types.ts`.
+- **Auth:** obecny — Supabase Auth SSR, `src/middleware.ts` z `PROTECTED_ROUTES=["/dashboard"]`; signin → dashboard działa na produkcji. **FR-001 (login) spełnione przez baseline** — brak osobnego wycinka.
+- **Wdrożenie / infrastruktura:** obecny — Cloudflare Workers live (`tasker-light.qbarium.workers.dev`), Workers Builds auto-deploy na `main`, branch protection, CI zielony. Plan **Free** (przejście na Paid → F-02).
+- **Obserwowalność:** częściowy — `observability.enabled` w `wrangler.jsonc` + `wrangler tail`. Brak app-level loggera / error trackingu / filtra maskującego klucze (wymaga F-01 / FR-026).
+
+## Fundamenty
+
+### F-01: Bezpieczna warstwa sekretu BYOK
+
+- **Wynik:** (fundament) helper szyfrowania/odszyfrowania klucza w spoczynku (KEK z konfiguracji aplikacji) oraz aktywny filtr maskujący ciągi w kształcie klucza w warstwie loggera i raportowania błędów — działa, zanim jakikolwiek klucz zostanie zapisany lub użyty.
+- **Change ID:** byok-secret-security
+- **Odnośniki PRD:** FR-021, FR-026, NFR „Klucze API w stanie spoczynku", NFR „Prywatność wsadu"
+- **Odblokowuje:** S-01 (zapis zaszyfrowanego klucza), S-02 (wywołanie dostawcy AI bez wycieku klucza do logów)
+- **Wymagania wstępne:** —
+- **Równolegle z:** F-02
+- **Blokady:** —
+- **Niewiadome:** Polityka rotacji KEK (PRD OQ7) — Właściciel: spec techniczna. Blokuje: nie (dla MVP wystarcza statyczny KEK w konfiguracji).
+- **Ryzyko:** Twardy globalny guardrail (FR-026, wszystkie środowiska) — jeśli filtr maskujący wejdzie po pierwszym zapisie klucza, ryzyko wycieku do logów w międzyczasie; dlatego sekwencjonowany jako pierwszy.
+- **Status:** ready
+
+### F-02: Runtime klasyfikacji (Workers Paid + limit CPU)
+
+- **Wynik:** (fundament) środowisko utrzymuje pojedyncze synchroniczne wywołanie klasyfikacji do ~60 s (Workers Paid + `"limits": { "cpu_ms": 60000 }`), zamiast łamać się na limicie CPU planu Free.
+- **Change ID:** workers-paid-runtime
+- **Odnośniki PRD:** NFR „Klasyfikacja synchroniczna z timeoutem", `infrastructure.md` §Rejestr ryzyka, `deploy-plan.md` Faza 8
+- **Odblokowuje:** S-02 (60 s synchroniczna klasyfikacja BYOK)
+- **Wymagania wstępne:** —
+- **Równolegle z:** F-01
+- **Blokady:** [USER] upgrade do Workers Paid (5 USD/mc) — decyzja już przewidziana w `deploy-plan.md` Faza 8 i `infrastructure.md`; krok jednostronnie wykonalny przez użytkownika.
+- **Niewiadome:** —
+- **Ryzyko:** Plan Free ma 10 ms CPU/wywołanie — za ciasne na parsowanie odpowiedzi AI + walidację + zapis; bez tego fundamentu S-02 będzie 500'ować na produkcji. Tani, ale wymaga jawnej decyzji kosztowej.
+- **Status:** ready
+
+## Wycinki
+
+### S-01: Konfiguracja klucza BYOK
+
+- **Wynik:** użytkownik może zapisać własny klucz API zewnętrznego dostawcy AI w profilu, podejrzeć go w postaci zamaskowanej (prefiks + ostatnie znaki) i usunąć; akcje wymagające klucza (submit) są zablokowane z komunikatem i linkiem do strony dostawcy, dopóki klucz nie jest skonfigurowany.
+- **Change ID:** byok-key-config
+- **Odnośniki PRD:** US-06, FR-021, FR-022, FR-024
+- **Wymagania wstępne:** F-01
+- **Równolegle z:** S-02 (po dostarczeniu F-01 — przygotowanie pipeline'u klasyfikacji może iść obok, ale submit i tak wymaga klucza z S-01)
+- **Blokady:** —
+- **Niewiadome:** —
+- **Ryzyko:** Klucz zapisywany bez walidacji (FR-022, świadomy kompromis) — niepoprawny klucz ujawni się dopiero w S-02 przy pierwszym wywołaniu; wprowadza kolumnę `openai_api_key_encrypted` w profilu (część schematu danych).
+- **Status:** proposed
+
+### S-02: Pierwsza bramkowana generacja (gwiazda przewodnia)
+
+- **Wynik:** użytkownik może wkleić tekst (do 100 000 znaków) lub wrzucić jeden plik `.txt`/`.md` (do 300 KB), kliknąć submit, zobaczyć blokujący wskaźnik aktywności podczas synchronicznej klasyfikacji, a po jej zakończeniu — typowane itemy jako pendingi w widoku „Elementy do akceptacji".
+- **Change ID:** first-gated-generation
+- **Odnośniki PRD:** US-01, FR-002, FR-003, FR-005, FR-006, FR-015, FR-018, FR-020, FR-023, FR-025
+- **Wymagania wstępne:** S-01, F-01, F-02
+- **Równolegle z:** —
+- **Blokady:** —
+- **Niewiadome:**
+  - Konkretny model klasyfikacji (okno ≥ 128k tokenów) — Właściciel: spec techniczna (PRD OQ3). Blokuje: nie.
+  - Polityka retry przy błędach 5xx/timeout dostawcy AI — Właściciel: spec techniczna. Blokuje: nie.
+- **Ryzyko:** Najcięższy, najbardziej ryzykowny wycinek — łączy wejście, synchroniczny pipeline klasyfikacji, sesję importu i schemat itemów (model dwóch niezależnych wymiarów: stan akceptacji × stan operacyjny). Sekwencjonowany jako gwiazda przewodnia, bo dowodzi sensu produktu; `/10x-plan` może go podzielić na kilka zmian.
+- **Status:** proposed
+
+### S-03: Walidacja — akceptacja, odrzucenie, edycja w stagingu
+
+- **Wynik:** użytkownik może zaznaczyć pendingi (model: per item + „zaznacz wszystkie"), zatwierdzić zaznaczone (z opcjonalną edycją `title`/`description`/`typ`) lub odrzucić; zaakceptowane trafiają do widoku Aktywne, odrzucone do Kosza (poprzedni status `rejected`).
+- **Change ID:** validation-accept-reject
+- **Odnośniki PRD:** US-02, US-03, FR-007, FR-008, FR-010, FR-012
+- **Wymagania wstępne:** S-02
+- **Równolegle z:** S-07, S-08
+- **Blokady:** —
+- **Niewiadome:**
+  - Próg akcji zbiorczej wymagającej potwierdzenia (5? 10?) — Właściciel: spec techniczna / UX (PRD OQ4). Blokuje: nie.
+  - Mapowanie stanów operacyjnych przy zmianie typu itemu — Właściciel: spec techniczna (PRD OQ5). Blokuje: nie.
+  - Realizacja UX edycji (inline/modal/drawer) — Właściciel: spec techniczna / UX (PRD OQ6). Blokuje: nie.
+- **Ryzyko:** Wprowadza ujednolicony model zaznaczania (FR-007) i pierwsze dwa filtry główne listy (Pending → Aktywne/Kosz); zmiana typu w stagingu dotyka mapowania stanów (OQ5), które plan musi rozstrzygnąć.
+- **Status:** proposed
+
+### S-04: Cykl operacyjny zadania
+
+- **Wynik:** użytkownik może zmienić stan operacyjny zadania (`nowe` / `w realizacji` / `zrealizowane` / `anulowane`, wzajemnie przechodnie) per item i zbiorczo; `zrealizowane` przenosi zadanie z Aktywne do Zakończone, `anulowane` do Anulowane.
+- **Change ID:** task-operational-lifecycle
+- **Odnośniki PRD:** US-04, FR-009
+- **Wymagania wstępne:** S-03
+- **Równolegle z:** S-05, S-06
+- **Blokady:** —
+- **Niewiadome:** —
+- **Ryzyko:** Domyka ścieżkę gwiazdy przewodniej (wskazaną przez użytkownika); stan operacyjny dotyczy tylko `task` — itemy nie-`task` (note/idea/decision) nie mają w MVP przejścia „obsłużona/podjęta" (świadome ograniczenie PRD FR-009).
+- **Status:** proposed
+
+### S-05: Jednolita lista i edycja zaakceptowanych itemów
+
+- **Wynik:** użytkownik może przeglądać widoki Aktywne / Zakończone / Anulowane z filtrem typu (Wszystkie / Zadania / Notatki / Pomysły / Decyzje / Inne) i edytować zaakceptowane itemy (`title`, `description`, `typ`).
+- **Change ID:** unified-list-and-edit
+- **Odnośniki PRD:** FR-008, FR-011
+- **Wymagania wstępne:** S-03
+- **Równolegle z:** S-04, S-06
+- **Blokady:** —
+- **Niewiadome:** —
+- **Ryzyko:** Rozbudowuje filtr główny + filtr typu z FR-008 na pełen zestaw widoków zaakceptowanych; bez sortowania/wyszukiwania (te w S-09), by trzymać wycinek wąsko zgodnie z celem „szybkość".
+- **Status:** proposed
+
+### S-06: Cykl życia kosza
+
+- **Wynik:** użytkownik może przenieść zaakceptowany item do kosza (zachowując stan operacyjny), przywrócić go z kosza dokładnie do poprzedniego stanu oraz trwale opróżnić kosz globalną akcją z potwierdzeniem.
+- **Change ID:** trash-lifecycle
+- **Odnośniki PRD:** US-05, FR-013, FR-016
+- **Wymagania wstępne:** S-03
+- **Równolegle z:** S-04, S-05
+- **Blokady:** —
+- **Niewiadome:** —
+- **Ryzyko:** Model dwóch niezależnych wymiarów stanu (akceptacja × operacyjny) musi gwarantować zachowanie stanu operacyjnego przy przenoszeniu i przywracaniu; brak per-item permanent delete (poza MVP).
+- **Status:** proposed
+
+### S-07: Ręczne dodawanie itemu
+
+- **Wynik:** użytkownik może dodać item ręcznie (wybór typu + `title` + `description`) z pominięciem klasyfikacji; item powstaje od razu jako `accepted` / `nowe` i pojawia się w Aktywne. Akcja NIE wymaga klucza API.
+- **Change ID:** manual-item-entry
+- **Odnośniki PRD:** US-08, FR-028
+- **Wymagania wstępne:** S-02
+- **Równolegle z:** S-03, S-04, S-05, S-06, S-08
+- **Blokady:** —
+- **Niewiadome:** —
+- **Ryzyko:** Wyjątek od FR-024 (działa bez klucza) — daje testowalność UI list bez wywołań dostawcy AI; niezależny od łańcucha klasyfikacji, więc dobry kandydat do równoległego uruchomienia (dźwignia przy blokadzie „czas/pojemność").
+- **Status:** proposed
+
+### S-08: Dziennik sesji importu + ponowienie
+
+- **Wynik:** użytkownik może przejrzeć chronologiczny dziennik sesji importu (rejestr wejścia, status, liczba itemów lub błąd) i ponowić sesję ze statusem `niepowodzenie` (np. niepoprawny klucz) bez wprowadzania wsadu od nowa.
+- **Change ID:** import-session-log-retry
+- **Odnośniki PRD:** US-07, FR-027
+- **Wymagania wstępne:** S-02
+- **Równolegle z:** S-03, S-07
+- **Blokady:** —
+- **Niewiadome:** —
+- **Ryzyko:** Polityka retry sprawdza stan klucza przed ponowieniem (klucz usunięty między błędem a retry → komunikat); per-file rozbicie i podgląd itemów poza MVP.
+- **Status:** proposed
+
+### S-09: Filtry dodatkowe list — sortowanie, wyszukiwanie, filtr sesji
+
+- **Wynik:** użytkownik może sortować i filtrować listy po dacie utworzenia/modyfikacji i tytule, wyszukiwać po tytule i opisie oraz filtrować po sesji importu (i w Koszu po poprzednim statusie `rejected`/`deleted`).
+- **Change ID:** list-filters-search
+- **Odnośniki PRD:** FR-008 (warstwa filtrów dodatkowych)
+- **Wymagania wstępne:** S-05
+- **Równolegle z:** S-06
+- **Blokady:** —
+- **Niewiadome:** —
+- **Ryzyko:** Utwardzanie UX na końcu łańcucha — must-have część FR-008, ale sekwencjonowane późno zgodnie z celem „szybkość uruchomienia" (najpierw ścisła ścieżka generacji).
+- **Status:** proposed
+
+## Przekazanie backlogu
+
+| ID mapy drogowej | Change ID                  | Sugerowany tytuł problemu                                  | Gotowe do `/10x-plan` | Uwagi                                              |
+| ---------------- | -------------------------- | --------------------------------------------------------- | --------------------- | -------------------------------------------------- |
+| F-01             | byok-secret-security       | Szyfrowanie klucza BYOK at-rest + filtr maskujący w logach | yes                   | Uruchom `/10x-plan byok-secret-security`            |
+| F-02             | workers-paid-runtime       | Workers Paid + limit cpu_ms 60000 dla klasyfikacji        | yes                   | Wymaga [USER] upgrade do Paid (5 USD/mc)           |
+| S-01             | byok-key-config            | Konfiguracja klucza API BYOK w profilu                    | no                    | Po F-01                                            |
+| S-02             | first-gated-generation     | Wklej/plik → klasyfikacja → pendingi do akceptacji        | no                    | Gwiazda przewodnia; po S-01, F-01, F-02            |
+| S-03             | validation-accept-reject   | Walidacja: akceptacja/odrzucenie/edycja w stagingu        | no                    | Po S-02                                            |
+| S-04             | task-operational-lifecycle | Stan operacyjny zadania (Aktywne ↔ Zakończone/Anulowane)  | no                    | Po S-03                                            |
+| S-05             | unified-list-and-edit      | Jednolita lista (Aktywne/Zakończone/Anulowane) + edycja   | no                    | Po S-03; równolegle z S-04/S-06                    |
+| S-06             | trash-lifecycle            | Kosz: przenieś / przywróć / wyczyść                       | no                    | Po S-03; równolegle z S-04/S-05                    |
+| S-07             | manual-item-entry          | Ręczne dodawanie itemu (bez klucza)                       | no                    | Po S-02; niezależny — kandydat do równoległości    |
+| S-08             | import-session-log-retry   | Dziennik sesji importu + ponowienie                      | no                    | Po S-02; niezależny — kandydat do równoległości    |
+| S-09             | list-filters-search        | Filtry dodatkowe: sort / wyszukiwanie / sesja            | no                    | Po S-05                                            |
+
+## Otwarte pytania dotyczące mapy drogowej
+
+1. **Czy audio jako wsad wejdzie do MVP (FR-004 nice-to-have)?** — Właściciel: decyzja produktowa (PRD OQ2). Blokuje: `roadmap-wide` — jeśli `tak`, odparkowuje wycinek audio (transkrypcja + walidacja magic-bytes + zachowanie single-file synchronicznego); jeśli `nie`, pozostaje w Zaparkowane. Domyślnie odłożone zgodnie z celem „szybkość".
+
+(Niewiadome dotyczące poszczególnych wycinków — model AI, próg akcji zbiorczej, mapowanie stanów przy zmianie typu, UX edycji, rotacja KEK — pozostają przy swoich wycinkach jako niewiadome z `Block: no`; rozstrzyga je `/10x-plan`. Wybór providera auth (PRD OQ1) jest faktycznie rozstrzygnięty przez baseline (Supabase email); OAuth → Zaparkowane.)
+
+## Zaparkowane
+
+- **Audio jako wsad (FR-004, FR-019, nice-to-have)** — Dlaczego: poza ścisłą ścieżką must-have; oś asynchroniczna/transkrypcyjna kosztuje nieproporcjonalnie dużo w budżecie 3 tygodni (PRD OQ2 / Non-Goals).
+- **Email confirm + własny SMTP** — Dlaczego: wbudowany wysyłacz Supabase nie dostarcza maili; „Confirm email" = OFF do czasu podpięcia SMTP (decyzja użytkownika + `deploy-plan.md` Kolejne kroki). Poza MVP.
+- **OAuth providers (Google/GitHub) + custom domain** — Dlaczego: baseline auth = Supabase email wystarcza dla MVP; OAuth i domena custom w `deploy-plan.md` Kolejne kroki.
+- **Multi-file submit i przetwarzanie asynchroniczne** — Dlaczego: PRD Non-Goal; MVP = jeden element wsadu synchronicznie.
+- **Observability/tracing wywołań klasyfikacji** — Dlaczego: PRD Non-Goal; surowy wsad to prywatne myśli, nie wychodzi poza dostawcę AI.
+- **Integracje wychodzące/wchodzące poza dostawcą AI** (dyski, kalendarz, todo, mail, mobilne dyktowanie) — Dlaczego: PRD Non-Goal.
+- **Funkcje domenowe poza klasyfikacją** (parsowanie dat, deduplikacja, projekty, SRS, priorytety, podobne itemy) — Dlaczego: PRD Non-Goal.
+- **Mitygacja prompt injection** — Dlaczego: PRD Non-Goal; ryzyko przeniesione na klucz BYOK użytkownika.
+- **Archiwizacja itemów / per-item permanent delete / auto-cleanup (TTL)** — Dlaczego: PRD Non-Goals.
+- **Choice modelu klasyfikacji w profilu / undo toast / progresywne ostrzeganie pola / zewnętrzny KMS / usuwanie sesji importu** — Dlaczego: PRD Non-Goals.
+
+## Zrobione
+
+(Puste przy pierwszym generowaniu. `/10x-archive` dodaje tutaj wpis — i zmienia `Status` elementu na `done` — gdy zmiana, której `Change ID` odpowiada elementowi mapy drogowej, zostanie zarchiwizowana. NIE wypełniaj wstępnie.)
