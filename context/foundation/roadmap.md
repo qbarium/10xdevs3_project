@@ -14,6 +14,7 @@ top_blocker: time
 > Wywiedziono z `context/foundation/prd.md` (v1) + `tech-stack.md` + `infrastructure.md` + `context/deployment/deploy-plan.md` + automatycznie zbadana baza kodu.
 > Edytuj na miejscu; archiwizuj po zastąpieniu.
 > Poniższe elementy są wymienione w kolejności zależności. Tabela „W skrócie" to indeks.
+> **Stan synchronizowany w GitHub:** Issues #4–#14 + tablica Projects v2 „TaskerLight" (`https://github.com/users/qbarium/projects/3`). Ten plik pozostaje źródłem prawdy; GitHub jest jego synchronizowanym odbiciem — zasada w `CLAUDE.md` („GitHub jako synchronizowany stan projektu").
 
 ## Podsumowanie wizji
 
