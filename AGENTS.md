@@ -4,6 +4,8 @@
 
 TaskerLight — Astro 6 SSR web app with React 19 islands, Tailwind 4, Supabase Auth, deployed to Cloudflare Workers. Architecture detail in `@CLAUDE.md`; local setup in `@README.md`.
 
+This file is a **downstream mirror of `@CLAUDE.md`**: it follows the shared project rules defined there (one-way, `CLAUDE.md` → `AGENTS.md`). Change shared rules in `CLAUDE.md`, then propagate them here — never the reverse.
+
 ## Hard rules
 
 - Never use Next.js directives (`"use client"` etc.) — Astro islands handle client/server split.
@@ -23,6 +25,11 @@ GitHub Issues + the private Projects v2 board "TaskerLight" (`https://github.com
 - `/10x-plan` task (`context/changes/<id>/`) → **sub-issue** (label `task`) under the parent Issue, added to the board.
 - Checked-off phase in `## Progress` → close the sub-issue / move card to `Done`; `/10x-archive` (→ done) → close the parent Issue, card → `Done`.
 - Routine state sync (create/update Issues & sub-issues, Status field, closing) is allowed without asking. Destructive GitHub ops (deleting an Issue/board/field/milestone) and `git push`/PR/merge/deploy/secrets require explicit consent.
+
+## Repo content & commit inclusion
+
+- **`context/blog/` is intentional course documentation** (board screenshots, progress artifacts for the course assessment). Always commit it as-is alongside the work it documents — never treat it as a stray/unrelated path to leave behind, and never delete it.
+- **Course-lesson artifacts ride along with project commits.** Fetching a 10x-cli lesson modifies `CLAUDE.md` (sentinel block), `.claude/.10x-cli-manifest.json`, and `.claude/skills/**`. These are expected project state — commit them on an ongoing basis with the project work they accompany (a dedicated `chore(course): …` commit is acceptable), not left dangling.
 
 ## Commands
 
