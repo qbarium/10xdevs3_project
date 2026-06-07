@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { SUPABASE_URL, SUPABASE_KEY } from "astro:env/server";
+import { SUPABASE_URL, SUPABASE_KEY, BYOK_KEK } from "astro:env/server";
 
 export const prerender = false;
 
@@ -7,11 +7,13 @@ export const prerender = false;
 // konfigurację Supabase, BEZ ujawniania wartości sekretów (tylko flaga boolean).
 export const GET: APIRoute = () => {
   const hasSupabase = Boolean(SUPABASE_URL) && Boolean(SUPABASE_KEY);
+  const hasKek = Boolean(BYOK_KEK);
 
   return new Response(
     JSON.stringify({
       ok: true,
       hasSupabase,
+      hasKek,
       runtime: "workerd",
       checkedAt: new Date().toISOString(),
     }),
