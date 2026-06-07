@@ -326,14 +326,14 @@ Brak migracji DB w F-01 (kolumna klucza wchodzi w S-01). Wprowadzenie sekretu `B
 
 #### Automatyczne
 
-- [x] 3.1 Testy maskera przechodzą (`sk-` zamaskowany, `sk-proj-` zamaskowany, długi nie-sekret przechodzi, token wysokiej entropii zamaskowany, maskowanie w obiekcie): `npm run test`
-- [x] 3.2 Logger odporny na nieserializowalne pola (cykl, `BigInt`) — nie rzuca, daje `[unserializable]`; `reportError` maskuje sekret w polu zagnieżdżonym (`cause`/`config`): `npm run test`
-- [x] 3.3 Lint przechodzi z `no-console: error`: `npm run lint`
-- [x] 3.4 Build przechodzi: `npm run build`
+- [x] 3.1 Testy maskera przechodzą (`sk-` zamaskowany, `sk-proj-` zamaskowany, długi nie-sekret przechodzi, token wysokiej entropii zamaskowany, maskowanie w obiekcie): `npm run test` — 5a91ac0
+- [x] 3.2 Logger odporny na nieserializowalne pola (cykl, `BigInt`) — nie rzuca, daje `[unserializable]`; `reportError` maskuje sekret w polu zagnieżdżonym (`cause`/`config`): `npm run test` — 5a91ac0
+- [x] 3.3 Lint przechodzi z `no-console: error`: `npm run lint` — 5a91ac0
+- [x] 3.4 Build przechodzi: `npm run build` — 5a91ac0
 
 #### Ręczne
 
-- [x] 3.5 `logger.error` z atrapą `sk-` daje `[REDACTED]` w wyjściu
+- [x] 3.5 `logger.error` z atrapą `sk-` daje `[REDACTED]` w wyjściu — 5a91ac0
 
 ### Faza 4: Widoczność konfiguracji
 
