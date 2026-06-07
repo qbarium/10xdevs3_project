@@ -314,13 +314,13 @@ Brak migracji DB w F-01 (kolumna klucza wchodzi w S-01). Wprowadzenie sekretu `B
 
 #### Automatyczne
 
-- [ ] 2.1 Testy crypto przechodzą (roundtrip, różny IV, naruszenie ciphertext, malformed koperta, zły klucz): `npm run test`
-- [ ] 2.2 Build przechodzi: `npm run build`
-- [ ] 2.3 Lint przechodzi: `npm run lint`
+- [x] 2.1 Testy crypto przechodzą (roundtrip, różny IV, naruszenie ciphertext, malformed koperta, zły klucz): `npm run test`
+- [x] 2.2 Build przechodzi: `npm run build`
+- [x] 2.3 Lint przechodzi: `npm run lint`
 
 #### Ręczne
 
-- [ ] 2.4 Wymuszony błąd odszyfrowania nie ujawnia fragmentu KEK ani jawnego tekstu
+- [x] 2.4 Wymuszony błąd odszyfrowania nie ujawnia fragmentu KEK ani jawnego tekstu
 
 ### Faza 3: Logger + masker + egzekucja ESLint
 
