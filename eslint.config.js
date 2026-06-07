@@ -20,7 +20,7 @@ const baseConfig = tseslint.config({
     },
   },
   rules: {
-    "no-console": "warn",
+    "no-console": "error",
     "no-unused-vars": "off",
     "@typescript-eslint/no-unused-vars": [
       "error",
@@ -71,6 +71,7 @@ const astroConfig = tseslint.config({
 export default tseslint.config(
   includeIgnoreFile(gitignorePath),
   baseConfig,
+  { files: ["src/lib/services/logger.ts"], rules: { "no-console": "off" } },
   reactConfig,
   eslintPluginAstro.configs["flat/recommended"],
   ...eslintPluginAstro.configs["flat/jsx-a11y-recommended"],
