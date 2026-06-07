@@ -18,13 +18,15 @@ This file provides guidance to AI Agent when working with code in this repositor
 
 GitHub Issues + tablica Projects v2 („TaskerLight", `https://github.com/users/qbarium/projects/3`) są **synchronizowanym** odbiciem stanu projektu — nie poglądowym. Źródłem prawdy pozostają pliki (`context/foundation/roadmap.md`, `context/changes/<id>/` `## Progress`), ale **każda zmiana stanu w tych plikach musi w tej samej turze zostać odzwierciedlona w GitHubie**. Obowiązuje każdego agenta, w tym kodującego.
 
+**To zasada twarda i NIE PODLEGA DYSKUSJI.** Użytkownik śledzi postęp **na żywo na boardzie**, więc board MUSI w każdej chwili wiernie odzwierciedlać roadmapę i stan faz — rozjazd board↔pliki to błąd do **natychmiastowej naprawy w tej samej turze**, nie do odłożenia „na później". Stałe ID pól/opcji/kart Projects v2 + gotowe komendy `gh project item-edit` / sub-issue GraphQL → **`docs/local/github-board-ops.md`** (czytaj PRZED dotknięciem boardu).
+
 Mapowanie kanon ↔ GitHub:
 
 - Element roadmapy F-NN / S-NN → **parent Issue** (etykieta `foundation` lub `slice`; gwiazda przewodnia dodatkowo `north-star`).
 - Strumień A–D → **milestone**.
 - Status elementu (`proposed`/`ready`/`in-progress`/`blocked`/`done`) → wbudowane **pole „Status"** na tablicy, kolumny `Backlog`/`Todo`/`In Progress`/`Review`/`Done`/`Blocked` (mapowanie: proposed→Backlog, ready→Todo, in-progress→In Progress, in-review→Review, done→Done, blocked→Blocked; jedyne miejsce statusu — nie dubluj w etykietach).
-- Task z `/10x-plan` (`context/changes/<id>/`) → **pod-zgłoszenie** (sub-issue, etykieta `task`) pod właściwym parent Issue, dodane do tablicy.
-- Odhaczona faza w `## Progress` → zamknij pod-zgłoszenie / przesuń kartę do `Done`.
+- Zmiana z `/10x-plan` (`context/changes/<id>/`) → **tyle pod-zgłoszeń (sub-issue, etykieta `task`), ile jest faz w `## Progress`** planu; jedno pod-zgłoszenie = jedna faza, powiązane jako sub-issue parenta (GraphQL `addSubIssue`) i dodane do tablicy. **NIGDY** jedno zbiorcze pod-zgłoszenie na całą zmianę — użytkownik chce obserwować postęp faza po fazie.
+- Pod-zgłoszenia faz **przechodzą przez kolumny boardu wraz z postępem**: start fazy → sub-issue na `In Progress`; odhaczenie fazy w `## Progress` → sub-issue na `Done` i zamknięte. Parent Issue: `In Progress` z pierwszą fazą → `Review` przy otwartym PR → `Done` przy merge / `/10x-archive`.
 - `/10x-archive` (status → `done`) → zamknij parent Issue, karta → `Done`.
 
 Reguły operacyjne:
