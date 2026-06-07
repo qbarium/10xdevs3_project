@@ -298,16 +298,16 @@ Brak migracji DB w F-01 (kolumna klucza wchodzi w S-01). Wprowadzenie sekretu `B
 
 #### Automatyczne
 
-- [x] 1.1 Instalacja zależności bez błędu: `npm install`
-- [x] 1.2 `npm run test` uruchamia Vitest i kończy się sukcesem
-- [x] 1.3 `npx astro sync && npx astro check` przechodzą
-- [x] 1.4 Build przechodzi: `npm run build`
-- [x] 1.5 Lint przechodzi (type-aware lint obejmuje `*.test.ts` i `vitest.config.ts` bez błędu): `npm run lint`
-- [x] 1.6 `.github/workflows/ci.yml` zawiera krok `npm run test` w jobie `ci` (po lint/build)
+- [x] 1.1 Instalacja zależności bez błędu: `npm install` — 11eb8cf
+- [x] 1.2 `npm run test` uruchamia Vitest i kończy się sukcesem — 11eb8cf
+- [x] 1.3 `npx astro sync && npx astro check` przechodzą — 11eb8cf
+- [x] 1.4 Build przechodzi: `npm run build` — 11eb8cf
+- [x] 1.5 Lint przechodzi (type-aware lint obejmuje `*.test.ts` i `vitest.config.ts` bez błędu): `npm run lint` — 11eb8cf
+- [x] 1.6 `.github/workflows/ci.yml` zawiera krok `npm run test` w jobie `ci` (po lint/build) — 11eb8cf
 
 #### Ręczne
 
-- [x] 1.7 `vitest.config.ts` rozwiązuje import `@/...` w przykładowym teście
+- [x] 1.7 `vitest.config.ts` rozwiązuje import `@/...` w przykładowym teście — 11eb8cf
 - [ ] 1.8 CI na pierwszym pushu wykonuje krok testów i jest zielony (push pod zgodą [USER])
 
 ### Faza 2: Warstwa kryptograficzna
