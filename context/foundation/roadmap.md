@@ -30,7 +30,7 @@ TaskerLight przyjmuje surowy, nieuporządkowany wsad głosowo-tekstowy i rozdzie
 
 | ID    | Change ID                | Wynik (użytkownik może…)                                                   | Wymagania wstępne | Odnośniki PRD                              | Status   |
 | ----- | ------------------------ | -------------------------------------------------------------------------- | ----------------- | ------------------------------------------ | -------- |
-| F-01  | byok-secret-security     | (fundament) klucze BYOK szyfrowane w spoczynku + maskowane w logach        | —                 | FR-021, FR-026, NFR Klucze/Prywatność      | in-progress |
+| F-01  | byok-secret-security     | (fundament) klucze BYOK szyfrowane w spoczynku + maskowane w logach        | —                 | FR-021, FR-026, NFR Klucze/Prywatność      | done |
 | S-01  | byok-key-config          | zapisać, podejrzeć zamaskowany i usunąć własny klucz API; submit bramkowany | F-01              | US-06, FR-021, FR-022, FR-024              | proposed |
 | S-02  | first-gated-generation   | wkleić tekst/plik i zobaczyć typowane itemy jako pendingi do akceptacji     | S-01, F-01  | US-01, FR-002, FR-003, FR-005, FR-006, FR-015, FR-018, FR-020, FR-023, FR-025 | proposed |
 | S-03  | validation-accept-reject | zaakceptować (z edycją) lub odrzucić pendingi; zaakceptowane → Aktywne      | S-02              | US-02, US-03, FR-007, FR-008, FR-010, FR-012 | proposed |
@@ -77,7 +77,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Blokady:** —
 - **Niewiadome:** Polityka rotacji KEK (PRD OQ7) — Właściciel: spec techniczna. Blokuje: nie (dla MVP wystarcza statyczny KEK w konfiguracji).
 - **Ryzyko:** Twardy globalny guardrail (FR-026, wszystkie środowiska) — jeśli filtr maskujący wejdzie po pierwszym zapisie klucza, ryzyko wycieku do logów w międzyczasie; dlatego sekwencjonowany jako pierwszy.
-- **Status:** in-progress
+- **Status:** done
 
 ## Wycinki
 

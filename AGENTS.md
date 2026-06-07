@@ -19,11 +19,13 @@ This file is a **downstream mirror of `@CLAUDE.md`**: it follows the shared proj
 
 GitHub Issues + the private Projects v2 board "TaskerLight" (`https://github.com/users/qbarium/projects/3`) are a **synchronized** mirror of project state — not decorative. Files stay the source of truth (`context/foundation/roadmap.md`, each change's `## Progress`), but **every state change in those files must be reflected on GitHub in the same turn**. Applies to every agent, including coding agents.
 
+**This is hard and NON-NEGOTIABLE.** The user tracks progress **live on the board**, so the board MUST faithfully mirror the roadmap and phase state at all times — any board↔file drift is a bug to **fix immediately, in the same turn**, never deferred. Constant Projects v2 field/option/card IDs + ready-made `gh project item-edit` / sub-issue GraphQL commands → **`docs/local/github-board-ops.md`** (read BEFORE touching the board).
+
 - Roadmap item F-NN/S-NN → **parent Issue** (label `foundation`/`slice`; north star also `north-star`).
 - Stream A–D → **milestone**.
 - Item status (`proposed`/`ready`/`in-progress`/`blocked`/`done`) → built-in **Status** field, columns `Backlog`/`Todo`/`In Progress`/`Review`/`Done`/`Blocked` (1:1; the only place for status — don't duplicate in labels).
-- `/10x-plan` task (`context/changes/<id>/`) → **sub-issue** (label `task`) under the parent Issue, added to the board.
-- Checked-off phase in `## Progress` → close the sub-issue / move card to `Done`; `/10x-archive` (→ done) → close the parent Issue, card → `Done`.
+- A `/10x-plan` change (`context/changes/<id>/`) → **as many sub-issues (label `task`) as there are phases in `## Progress`**; one sub-issue per phase, linked as a sub-issue of the parent (GraphQL `addSubIssue`) and added to the board. **NEVER** a single umbrella sub-issue for the whole change — the user wants to watch progress phase by phase.
+- Phase sub-issues **move across board columns with progress**: phase start → its sub-issue to `In Progress`; phase checked off in `## Progress` → sub-issue to `Done` and closed. Parent Issue: `In Progress` with the first phase → `Review` on open PR → `Done` on merge / `/10x-archive`.
 - Routine state sync (create/update Issues & sub-issues, Status field, closing) is allowed without asking. Destructive GitHub ops (deleting an Issue/board/field/milestone) and `git push`/PR/merge/deploy/secrets require explicit consent.
 
 ## Repo content & commit inclusion
