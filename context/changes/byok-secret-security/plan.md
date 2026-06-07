@@ -308,7 +308,7 @@ Brak migracji DB w F-01 (kolumna klucza wchodzi w S-01). Wprowadzenie sekretu `B
 #### Ręczne
 
 - [x] 1.7 `vitest.config.ts` rozwiązuje import `@/...` w przykładowym teście — 11eb8cf
-- [ ] 1.8 CI na pierwszym pushu wykonuje krok testów i jest zielony (push pod zgodą [USER])
+- [x] 1.8 CI na pierwszym pushu wykonuje krok testów i jest zielony (push pod zgodą [USER]) — CI zielony (PR #17, run 27101010607)
 
 ### Faza 2: Warstwa kryptograficzna
 

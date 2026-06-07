@@ -1,7 +1,7 @@
 ---
 change_id: byok-secret-security
 title: Bezpieczna warstwa sekretu BYOK — szyfrowanie at-rest + filtr maskujący w logach
-status: implementing
+status: implemented
 created: 2026-06-07
 updated: 2026-06-07
 archived_at: null
