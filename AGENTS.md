@@ -23,9 +23,9 @@ GitHub Issues + the private Projects v2 board "TaskerLight" (`https://github.com
 
 - Roadmap item F-NN/S-NN → **parent Issue** (label `foundation`/`slice`; north star also `north-star`).
 - Stream A–D → **milestone**.
-- Item status (`proposed`/`ready`/`in-progress`/`blocked`/`done`) → built-in **Status** field, columns `Backlog`/`Todo`/`In Progress`/`Review`/`Done`/`Blocked` (1:1; the only place for status — don't duplicate in labels).
+- Item status (`proposed`/`ready`/`in-progress`/`in-review`/`blocked`/`done`) → built-in **Status** field, columns `Backlog`/`Todo`/`In Progress`/`Review`/`Done`/`Blocked` (1:1; the only place for status — don't duplicate in labels).
 - A `/10x-plan` change (`context/changes/<id>/`) → **as many sub-issues (label `task`) as there are phases in `## Progress`**; one sub-issue per phase, linked as a sub-issue of the parent (GraphQL `addSubIssue`) and added to the board. **NEVER** a single umbrella sub-issue for the whole change — the user wants to watch progress phase by phase.
-- Phase sub-issues **move across board columns with progress**: phase start → its sub-issue to `In Progress`; phase checked off in `## Progress` → sub-issue to `Done` and closed. Parent Issue: `In Progress` with the first phase → `Review` on open PR → `Done` on merge / `/10x-archive`.
+- Phase sub-issues **move across board columns with progress**: phase start → its sub-issue to `In Progress`; phase checked off in `## Progress` → sub-issue to `Done` and closed. Parent Issue: `In Progress` with the first phase → once all phases are implemented (PR open/merged) → `Review`, where it **waits for `/10x-impl-review`** — merging the code alone does NOT move it to `Done`. Only after the review is closed out (triage done; if it produced fixes — after they are merged to `main`) does the parent → `Done`. `/10x-archive` (after `Done`) closes the Issue and moves the change to the archive. **Consequence of the model: all phase sub-issues can be `Done` while the parent is still `Review` — that is correct, not drift.**
 - Routine state sync (create/update Issues & sub-issues, Status field, closing) is allowed without asking. Destructive GitHub ops (deleting an Issue/board/field/milestone) and `git push`/PR/merge/deploy/secrets require explicit consent.
 
 ## Repo content & commit inclusion
