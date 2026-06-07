@@ -58,4 +58,36 @@ describe("logger — maskowanie i odporność", () => {
     expect(read()).toContain("[REDACTED]");
     expect(read()).not.toContain("abcdefghij");
   });
+
+  it("reportError serializuje zwykły błąd i nie rzuca (ścieżka pozytywna F2)", () => {
+    const read = captureConsole("error");
+    expect(() => {
+      reportError(new Error("zwykły błąd bez sekretu"));
+    }).not.toThrow();
+    expect(read()).toContain("zwykły błąd bez sekretu");
+  });
+
+  it("reportError nie rzuca, gdy błąd ma rzucający getter (ścieżka negatywna F2)", () => {
+    const read = captureConsole("error");
+    const hostile = new Error("placeholder");
+    Object.defineProperty(hostile, "message", {
+      get() {
+        throw new Error("getter rzuca");
+      },
+    });
+    expect(() => {
+      reportError(hostile);
+    }).not.toThrow();
+    expect(read()).toContain("[unserializable error]");
+  });
+
+  it("reportError oznacza obcięcie łańcucha cause głębszego niż limit (F4)", () => {
+    const read = captureConsole("error");
+    let err = new Error("najgłębszy");
+    for (let i = 0; i < 10; i++) {
+      err = new Error(`poziom ${i}`, { cause: err });
+    }
+    reportError(err);
+    expect(read()).toContain("[limit głębokości cause]");
+  });
 });

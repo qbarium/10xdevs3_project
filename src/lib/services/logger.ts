@@ -6,7 +6,7 @@ import { maskSecrets, maskUnknown } from "@/lib/services/mask";
 import type { LogFields, LogLevel } from "@/types";
 
 /** Limit rozwijania `cause`, by cykliczny łańcuch przyczyn nie zapętlił serializacji. */
-const MAX_CAUSE_DEPTH = 4;
+const MAX_CAUSE_DEPTH = 8;
 
 function formatFields(fields: LogFields | undefined): string {
   return fields === undefined ? "" : ` ${maskUnknown(fields)}`;
@@ -48,18 +48,27 @@ function serializeError(value: unknown, depth = 0): unknown {
   if (!(value instanceof Error)) {
     return value;
   }
-  const out: Record<string, unknown> = {
-    name: value.name,
-    message: value.message,
-    stack: value.stack,
-  };
-  for (const key of Object.keys(value)) {
-    out[key] = (value as Record<string, unknown>)[key];
+  try {
+    const out: Record<string, unknown> = {
+      name: value.name,
+      message: value.message,
+      stack: value.stack,
+    };
+    for (const key of Object.keys(value)) {
+      out[key] = (value as Record<string, unknown>)[key];
+    }
+    if (value.cause !== undefined && depth < MAX_CAUSE_DEPTH) {
+      out.cause = serializeError(value.cause, depth + 1);
+    } else if (value.cause !== undefined) {
+      // Łańcuch przyczyn dłuższy niż limit — sygnalizuj obcięcie zamiast cichego ucięcia.
+      out.cause = "[limit głębokości cause]";
+    }
+    return out;
+  } catch {
+    // Wrogi kształt błędu (rzucający getter na message/stack/polu enumerowalnym) — logowanie
+    // błędu NIE może samo rzucić (inwariant FR-026). maskUnknown zamaskuje string fallbacku.
+    return "[unserializable error]";
   }
-  if (value.cause !== undefined && depth < MAX_CAUSE_DEPTH) {
-    out.cause = serializeError(value.cause, depth + 1);
-  }
-  return out;
 }
 
 /**

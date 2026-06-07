@@ -29,6 +29,13 @@ describe("mask — maskowanie sekretów", () => {
     expect(maskSecrets("Xq7Seph0Lm2VbN8kZr4TyWuI9oPaJdFgHcEx5")).toBe("[REDACTED]");
   });
 
+  it("maskuje token base64url i base64-standard bez prefiksu (regresja F1)", () => {
+    // base64url z `-`/`_` — bez tej klasy znaki rozbijały token poniżej progu długości
+    expect(maskSecrets("O89Bp7FsBvaQ_PQLLVAzaaXShoWRC1uh6YAekqU0_xY")).toBe("[REDACTED]");
+    // base64-standard z `+`/`/`/`=`
+    expect(maskSecrets("jE8kPq2mZ9Rf7nL0wXAcV1bN3sT4uY6dG+h/kQ==")).toBe("[REDACTED]");
+  });
+
   it("maskuje sekret wewnątrz serializowanego obiektu", () => {
     const out = maskUnknown({ apiKey: "sk-abcdefghijklmnopqrstuvwxyz1234", note: "ok" });
     expect(out).toContain("[REDACTED]");

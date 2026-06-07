@@ -38,7 +38,7 @@ export function maskSecrets(input: string, config: ByokMaskConfig = DEFAULT_MASK
     const prefixedKey = new RegExp(escapeRegExp(prefix) + config.keyChars, "g");
     result = result.replace(prefixedKey, REDACTED);
   }
-  const longToken = new RegExp(`[A-Za-z0-9]{${config.entropyMinLength},}`, "g");
+  const longToken = new RegExp(`[A-Za-z0-9_+/=-]{${config.entropyMinLength},}`, "g");
   result = result.replace(longToken, (token) =>
     shannonBitsPerChar(token) >= config.entropyMinBitsPerChar ? REDACTED : token,
   );
