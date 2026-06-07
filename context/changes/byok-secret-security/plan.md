@@ -339,10 +339,10 @@ Brak migracji DB w F-01 (kolumna klucza wchodzi w S-01). Wprowadzenie sekretu `B
 
 #### Automatyczne
 
-- [x] 4.1 Build przechodzi: `npm run build`
-- [x] 4.2 Lint przechodzi: `npm run lint`
-- [x] 4.3 Testy przechodzą: `npm run test`
+- [x] 4.1 Build przechodzi: `npm run build` — 0ba7dc9
+- [x] 4.2 Lint przechodzi: `npm run lint` — 0ba7dc9
+- [x] 4.3 Testy przechodzą: `npm run test` — 0ba7dc9
 
 #### Ręczne
 
-- [x] 4.4 `GET /api/health` zwraca `hasKek` jako boolean, bez wartości sekretu (przy ustawionym i przy braku `BYOK_KEK`)
+- [x] 4.4 `GET /api/health` zwraca `hasKek` jako boolean, bez wartości sekretu (przy ustawionym i przy braku `BYOK_KEK`) — 0ba7dc9
