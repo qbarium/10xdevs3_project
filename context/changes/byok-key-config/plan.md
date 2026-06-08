@@ -365,25 +365,25 @@ Pierwsza domenowa migracja. Lokalnie `supabase db reset` (idempotentne); na clou
 
 #### Ręczne
 
-- [ ] 2.5 Zapis→status→usuń przez curl/REST zwraca poprawne kody i hint
-- [ ] 2.6 Log z udanego i nieudanego zapisu NIE zawiera fragmentu klucza
-- [ ] 2.7 Zapis przy niepoprawnym KEK → 503 generyczny (bez wycieku)
+- [x] 2.5 Zapis→status→usuń przez curl/REST zwraca poprawne kody i hint
+- [x] 2.6 Log z udanego i nieudanego zapisu NIE zawiera fragmentu klucza
+- [x] 2.7 Zapis przy niepoprawnym KEK → 503 generyczny (bez wycieku)
 
 ### Faza 3: Frontend profilu — strona `/profile` + island
 
 #### Automatyczne
 
-- [x] 3.1 Build/typecheck przechodzi (`npm run build`)
-- [x] 3.2 Linting przechodzi (`npm run lint`)
-- [x] 3.3 Unit hooka/util przechodzi, jeśli wydzielony (`npm test`)
+- [x] 3.1 Build/typecheck przechodzi (`npm run build`) — 52777ba
+- [x] 3.2 Linting przechodzi (`npm run lint`) — 52777ba
+- [x] 3.3 Unit hooka/util przechodzi, jeśli wydzielony (`npm test`) — 52777ba
 
 #### Ręczne
 
-- [x] 3.4 `/profile` bez zalogowania → redirect na signin
-- [x] 3.5 Zapis klucza w UI pokazuje zamaskowany hint bez przeładowania
-- [x] 3.6 „Usuń" wraca do formularza, status „nieskonfigurowany"
-- [x] 3.7 Input password nie ujawnia klucza; pending blokuje przycisk
-- [x] 3.8 `npm audit` czysty po dodaniu komponentów shadcn
+- [x] 3.4 `/profile` bez zalogowania → redirect na signin — 52777ba
+- [x] 3.5 Zapis klucza w UI pokazuje zamaskowany hint bez przeładowania — 52777ba
+- [x] 3.6 „Usuń" wraca do formularza, status „nieskonfigurowany" — 52777ba
+- [x] 3.7 Input password nie ujawnia klucza; pending blokuje przycisk — 52777ba
+- [x] 3.8 `npm audit` czysty po dodaniu komponentów shadcn — 52777ba
 
 ### Faza 4: Bramkowanie US-06 — baner braku klucza
 
