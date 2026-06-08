@@ -389,11 +389,11 @@ Pierwsza domenowa migracja. Lokalnie `supabase db reset` (idempotentne); na clou
 
 #### Automatyczne
 
-- [x] 4.1 Build/typecheck przechodzi (`npm run build`)
-- [x] 4.2 Linting przechodzi (`npm run lint`)
+- [x] 4.1 Build/typecheck przechodzi (`npm run build`) — 9dbc8cd
+- [x] 4.2 Linting przechodzi (`npm run lint`) — 9dbc8cd
 
 #### Ręczne
 
-- [x] 4.3 Dashboard bez klucza → baner z linkiem do OpenAI + do `/profile`
-- [x] 4.4 Po zapisaniu klucza → baner znika
-- [x] 4.5 Linki działają (OpenAI nowa karta; `/profile` wewnętrznie)
+- [x] 4.3 Dashboard bez klucza → baner z linkiem do OpenAI + do `/profile` — 9dbc8cd
+- [x] 4.4 Po zapisaniu klucza → baner znika — 9dbc8cd
+- [x] 4.5 Linki działają (OpenAI nowa karta; `/profile` wewnętrznie) — 9dbc8cd
