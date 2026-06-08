@@ -10,7 +10,7 @@ This file provides guidance to AI Agent when working with code in this repositor
 
 - **Path alias**: `@/*` maps to `./src/*` (tsconfig paths).
 - **Tailwind class merging**: use the `cn()` helper from `@/lib/utils` (clsx + tailwind-merge) for conditional/merged class names. Do not concatenate class strings manually.
-- **API routes**: use uppercase `GET`, `POST` exports; validate input with zod.
+- **API routes**: use uppercase `GET`, `POST` exports; validate structured/multi-field input with zod; single scalar fields may use manual validation (trim + reject empty).
 - **Supabase migrations**: `supabase/migrations/` using naming format `YYYYMMDDHHmmss_short_description.sql`. Always enable RLS on new tables with granular per-operation, per-role policies.
 - **React**: no Next.js directives ("use client" etc.). Extract hooks to `src/components/hooks/`.
 

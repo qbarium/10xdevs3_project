@@ -9,7 +9,7 @@ This file is a **downstream mirror of `@CLAUDE.md`**: it follows the shared proj
 ## Hard rules
 
 - Never use Next.js directives (`"use client"` etc.) — Astro islands handle client/server split.
-- API routes export uppercase `GET`/`POST`/etc. and validate input with `zod` before any side effect.
+- API routes export uppercase `GET`/`POST`/etc.; validate structured/multi-field input with `zod` before any side effect; single scalar fields may use manual validation (trim + reject empty).
 - New Supabase tables ship with RLS enabled and granular per-operation, per-role policies. Migrations live in `supabase/migrations/` named `YYYYMMDDHHmmss_short_description.sql`.
 - Path alias `@/*` → `./src/*`. Use it; never write `../../../`.
 - Tailwind composition goes through `cn()` from `@/lib/utils`. Never concatenate class strings manually.
