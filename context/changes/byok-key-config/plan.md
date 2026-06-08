@@ -365,9 +365,9 @@ Pierwsza domenowa migracja. Lokalnie `supabase db reset` (idempotentne); na clou
 
 #### Ręczne
 
-- [x] 2.5 Zapis→status→usuń przez curl/REST zwraca poprawne kody i hint
-- [x] 2.6 Log z udanego i nieudanego zapisu NIE zawiera fragmentu klucza
-- [x] 2.7 Zapis przy niepoprawnym KEK → 503 generyczny (bez wycieku)
+- [x] 2.5 Zapis→status→usuń przez curl/REST zwraca poprawne kody i hint — c4b35af
+- [x] 2.6 Log z udanego i nieudanego zapisu NIE zawiera fragmentu klucza — c4b35af
+- [x] 2.7 Zapis przy niepoprawnym KEK → 503 generyczny (bez wycieku) — c4b35af
 
 ### Faza 3: Frontend profilu — strona `/profile` + island
 
@@ -389,11 +389,11 @@ Pierwsza domenowa migracja. Lokalnie `supabase db reset` (idempotentne); na clou
 
 #### Automatyczne
 
-- [ ] 4.1 Build/typecheck przechodzi (`npm run build`)
-- [ ] 4.2 Linting przechodzi (`npm run lint`)
+- [x] 4.1 Build/typecheck przechodzi (`npm run build`)
+- [x] 4.2 Linting przechodzi (`npm run lint`)
 
 #### Ręczne
 
-- [ ] 4.3 Dashboard bez klucza → baner z linkiem do OpenAI + do `/profile`
-- [ ] 4.4 Po zapisaniu klucza → baner znika
-- [ ] 4.5 Linki działają (OpenAI nowa karta; `/profile` wewnętrznie)
+- [x] 4.3 Dashboard bez klucza → baner z linkiem do OpenAI + do `/profile`
+- [x] 4.4 Po zapisaniu klucza → baner znika
+- [x] 4.5 Linki działają (OpenAI nowa karta; `/profile` wewnętrznie)

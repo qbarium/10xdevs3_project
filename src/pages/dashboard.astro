@@ -1,27 +1,45 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import MissingKeyBanner from "@/components/profile/MissingKeyBanner.astro";
+import { createClient } from "@/lib/supabase";
+import { getKeyStatus } from "@/lib/services/profile-key";
+import { AI_PROVIDER_KEYS_URL, AI_PROVIDER_NAME } from "@/lib/config/byok";
+
+export const prerender = false;
 
 const { user } = Astro.locals;
+
+// Status klucza liczony serwerowo (klient Supabase z cookies usera → RLS). Baner bramkujący (US-06)
+// pokazujemy, dopóki klucz nie jest skonfigurowany; po zapisie znika przy następnym renderze strony.
+let keyConfigured = false;
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+if (user && supabase) {
+  const status = await getKeyStatus(supabase, user.id);
+  keyConfigured = status.configured;
+}
 ---
 
 <Layout title="Dashboard">
-  <div class="bg-cosmic flex min-h-screen items-center justify-center p-4">
-    <div class="rounded-2xl border border-white/10 bg-white/10 p-8 text-center text-white backdrop-blur-xl">
-      <h1 class="mb-4 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-3xl font-bold text-transparent">
-        Dashboard
-      </h1>
-      <p class="text-blue-100/80">
-        Welcome, <span class="font-semibold text-white">{user?.email}</span>
-      </p>
-      <p class="mt-2 text-sm text-blue-100/50">This page is only for authenticated users.</p>
-      <form method="POST" action="/api/auth/signout" class="mt-6">
-        <button
-          type="submit"
-          class="rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm transition-colors hover:bg-white/20"
-        >
-          Sign out
-        </button>
-      </form>
+  <div class="bg-cosmic flex min-h-screen flex-col p-4">
+    {!keyConfigured && <MissingKeyBanner keysUrl={AI_PROVIDER_KEYS_URL} providerName={AI_PROVIDER_NAME} />}
+    <div class="flex flex-1 items-center justify-center">
+      <div class="rounded-2xl border border-white/10 bg-white/10 p-8 text-center text-white backdrop-blur-xl">
+        <h1 class="mb-4 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-3xl font-bold text-transparent">
+          Dashboard
+        </h1>
+        <p class="text-blue-100/80">
+          Welcome, <span class="font-semibold text-white">{user?.email}</span>
+        </p>
+        <p class="mt-2 text-sm text-blue-100/50">This page is only for authenticated users.</p>
+        <form method="POST" action="/api/auth/signout" class="mt-6">
+          <button
+            type="submit"
+            class="rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm transition-colors hover:bg-white/20"
+          >
+            Sign out
+          </button>
+        </form>
+      </div>
     </div>
   </div>
 </Layout>
