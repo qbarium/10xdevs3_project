@@ -352,7 +352,7 @@ Pierwsza domenowa migracja. Lokalnie `supabase db reset` (idempotentne); na clou
 #### Ręczne
 
 - [x] 1.5 RLS zweryfikowane: user A nie widzi/nie modyfikuje wiersza usera B — 89f1648
-- [ ] 1.6 Migracja wypchnięta na cloud (`supabase db push`) — za jawną zgodą
+- [x] 1.6 Migracja wypchnięta na cloud (`supabase db push`) — za jawną zgodą
 
 ### Faza 2: Backend — display-mask + config + serwis + endpoint
 
