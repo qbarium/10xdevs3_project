@@ -31,7 +31,7 @@ TaskerLight przyjmuje surowy, nieuporządkowany wsad głosowo-tekstowy i rozdzie
 | ID    | Change ID                | Wynik (użytkownik może…)                                                   | Wymagania wstępne | Odnośniki PRD                              | Status   |
 | ----- | ------------------------ | -------------------------------------------------------------------------- | ----------------- | ------------------------------------------ | -------- |
 | F-01  | byok-secret-security     | (fundament) klucze BYOK szyfrowane w spoczynku + maskowane w logach        | —                 | FR-021, FR-026, NFR Klucze/Prywatność      | done |
-| S-01  | byok-key-config          | zapisać, podejrzeć zamaskowany i usunąć własny klucz API; submit bramkowany | F-01              | US-06, FR-021, FR-022, FR-024              | proposed |
+| S-01  | byok-key-config          | zapisać, podejrzeć zamaskowany i usunąć własny klucz API; submit bramkowany | F-01              | US-06, FR-021, FR-022, FR-024              | ready    |
 | S-02  | first-gated-generation   | wkleić tekst/plik i zobaczyć typowane itemy jako pendingi do akceptacji     | S-01, F-01  | US-01, FR-002, FR-003, FR-005, FR-006, FR-015, FR-018, FR-020, FR-023, FR-025 | proposed |
 | S-03  | validation-accept-reject | zaakceptować (z edycją) lub odrzucić pendingi; zaakceptowane → Aktywne      | S-02              | US-02, US-03, FR-007, FR-008, FR-010, FR-012 | proposed |
 | S-04  | task-operational-lifecycle | zmieniać stan operacyjny zadania (nowe/w realizacji/zrealizowane/anulowane) | S-03              | US-04, FR-009                              | proposed |
@@ -91,7 +91,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Blokady:** —
 - **Niewiadome:** —
 - **Ryzyko:** Klucz zapisywany bez walidacji (FR-022, świadomy kompromis) — niepoprawny klucz ujawni się dopiero w S-02 przy pierwszym wywołaniu; wprowadza kolumnę `openai_api_key_encrypted` w profilu (część schematu danych).
-- **Status:** proposed
+- **Status:** ready
 
 ### S-02: Pierwsza bramkowana generacja (gwiazda przewodnia)
 

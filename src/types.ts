@@ -46,3 +46,18 @@ export class DecryptionError extends ByokCryptoError {
     this.name = "DecryptionError";
   }
 }
+
+/** Wiersz tabeli `profiles` (1:1 z auth.users). Kolumny klucza null = klucz nieskonfigurowany. */
+export interface Profile {
+  id: string;
+  api_key_encrypted: EncryptedEnvelope | null;
+  api_key_hint: string | null;
+  api_key_updated_at: string | null;
+}
+
+/** Status klucza BYOK w profilu — bezpieczny do zwrócenia do klienta (bez koperty). */
+export interface ByokKeyStatus {
+  configured: boolean;
+  hint: string | null;
+  updatedAt: string | null;
+}
