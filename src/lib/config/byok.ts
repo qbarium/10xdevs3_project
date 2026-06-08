@@ -14,6 +14,9 @@ export const BYOK_KEY_CHARS = "[A-Za-z0-9_-]{20,}";
 /** Nazwa dostawcy AI używana w komunikatach widocznych dla użytkownika (FR-024). */
 export const AI_PROVIDER_NAME = "OpenAI";
 
+/** URL strony generowania klucza API u dostawcy (US-06, niesekretna konfiguracja nazewnictwa). */
+export const AI_PROVIDER_KEYS_URL = "https://platform.openai.com/api-keys";
+
 /** Minimalna długość tokenu rozważanego przez fallback wysokiej entropii. */
 export const ENTROPY_MIN_LENGTH = 32;
 

@@ -344,24 +344,24 @@ Pierwsza domenowa migracja. Lokalnie `supabase db reset` (idempotentne); na clou
 
 #### Automatyczne
 
-- [x] 1.1 Migracja aplikuje się czysto lokalnie (`npx supabase db reset`)
-- [x] 1.2 Linting przechodzi (`npm run lint`)
-- [x] 1.3 Build/typecheck przechodzi (`npm run build`)
-- [x] 1.4 Integ-test RLS przechodzi (`npm run test:integration`)
+- [x] 1.1 Migracja aplikuje się czysto lokalnie (`npx supabase db reset`) — 89f1648
+- [x] 1.2 Linting przechodzi (`npm run lint`) — 89f1648
+- [x] 1.3 Build/typecheck przechodzi (`npm run build`) — 89f1648
+- [x] 1.4 Integ-test RLS przechodzi (`npm run test:integration`) — 89f1648
 
 #### Ręczne
 
-- [x] 1.5 RLS zweryfikowane: user A nie widzi/nie modyfikuje wiersza usera B
+- [x] 1.5 RLS zweryfikowane: user A nie widzi/nie modyfikuje wiersza usera B — 89f1648
 - [ ] 1.6 Migracja wypchnięta na cloud (`supabase db push`) — za jawną zgodą
 
 ### Faza 2: Backend — display-mask + config + serwis + endpoint
 
 #### Automatyczne
 
-- [ ] 2.1 Unit `maskKeyForDisplay` przechodzi (`npm test`)
-- [ ] 2.2 Integ-test endpointu POST→GET→DELETE przechodzi (`npm run test:integration`)
-- [ ] 2.3 Linting przechodzi (`npm run lint`)
-- [ ] 2.4 Build/typecheck przechodzi (`npm run build`)
+- [x] 2.1 Unit `maskKeyForDisplay` przechodzi (`npm test`)
+- [x] 2.2 Integ-test endpointu POST→GET→DELETE przechodzi (`npm run test:integration`)
+- [x] 2.3 Linting przechodzi (`npm run lint`)
+- [x] 2.4 Build/typecheck przechodzi (`npm run build`)
 
 #### Ręczne
 
