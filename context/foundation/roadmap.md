@@ -3,7 +3,7 @@ project: TaskerLight
 version: 1
 status: draft
 created: 2026-06-05
-updated: 2026-06-05
+updated: 2026-06-08
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -229,5 +229,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Choice modelu klasyfikacji w profilu / undo toast / progresywne ostrzeganie pola / zewnętrzny KMS / usuwanie sesji importu** — Dlaczego: PRD Non-Goals.
 
 ## Zrobione
+
+- **F-01: (fundament) helper szyfrowania/odszyfrowania klucza w spoczynku (KEK z konfiguracji aplikacji) oraz aktywny filtr maskujący ciągi w kształcie klucza w warstwie loggera i raportowania błędów — działa, zanim jakikolwiek klucz zostanie zapisany lub użyty.** — Zarchiwizowano 2026-06-08 → `context/archive/2026-06-07-byok-secret-security/`. Lekcja: —.
 
 (Puste przy pierwszym generowaniu. `/10x-archive` dodaje tutaj wpis — i zmienia `Status` elementu na `done` — gdy zmiana, której `Change ID` odpowiada elementowi mapy drogowej, zostanie zarchiwizowana. NIE wypełniaj wstępnie.)
