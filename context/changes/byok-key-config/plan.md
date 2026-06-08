@@ -358,10 +358,10 @@ Pierwsza domenowa migracja. Lokalnie `supabase db reset` (idempotentne); na clou
 
 #### Automatyczne
 
-- [x] 2.1 Unit `maskKeyForDisplay` przechodzi (`npm test`)
-- [x] 2.2 Integ-test endpointu POST→GET→DELETE przechodzi (`npm run test:integration`)
-- [x] 2.3 Linting przechodzi (`npm run lint`)
-- [x] 2.4 Build/typecheck przechodzi (`npm run build`)
+- [x] 2.1 Unit `maskKeyForDisplay` przechodzi (`npm test`) — 69dc1ec
+- [x] 2.2 Integ-test endpointu POST→GET→DELETE przechodzi (`npm run test:integration`) — 69dc1ec
+- [x] 2.3 Linting przechodzi (`npm run lint`) — 69dc1ec
+- [x] 2.4 Build/typecheck przechodzi (`npm run build`) — 69dc1ec
 
 #### Ręczne
 
@@ -373,17 +373,17 @@ Pierwsza domenowa migracja. Lokalnie `supabase db reset` (idempotentne); na clou
 
 #### Automatyczne
 
-- [ ] 3.1 Build/typecheck przechodzi (`npm run build`)
-- [ ] 3.2 Linting przechodzi (`npm run lint`)
-- [ ] 3.3 Unit hooka/util przechodzi, jeśli wydzielony (`npm test`)
+- [x] 3.1 Build/typecheck przechodzi (`npm run build`)
+- [x] 3.2 Linting przechodzi (`npm run lint`)
+- [x] 3.3 Unit hooka/util przechodzi, jeśli wydzielony (`npm test`)
 
 #### Ręczne
 
-- [ ] 3.4 `/profile` bez zalogowania → redirect na signin
-- [ ] 3.5 Zapis klucza w UI pokazuje zamaskowany hint bez przeładowania
-- [ ] 3.6 „Usuń" wraca do formularza, status „nieskonfigurowany"
-- [ ] 3.7 Input password nie ujawnia klucza; pending blokuje przycisk
-- [ ] 3.8 `npm audit` czysty po dodaniu komponentów shadcn
+- [x] 3.4 `/profile` bez zalogowania → redirect na signin
+- [x] 3.5 Zapis klucza w UI pokazuje zamaskowany hint bez przeładowania
+- [x] 3.6 „Usuń" wraca do formularza, status „nieskonfigurowany"
+- [x] 3.7 Input password nie ujawnia klucza; pending blokuje przycisk
+- [x] 3.8 `npm audit` czysty po dodaniu komponentów shadcn
 
 ### Faza 4: Bramkowanie US-06 — baner braku klucza
 
