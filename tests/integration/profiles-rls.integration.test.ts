@@ -64,4 +64,12 @@ d("profiles RLS — izolacja per-user", () => {
     const check = await A.supabase.from("profiles").select("api_key_hint").eq("id", A.id).single();
     expect(check.data?.api_key_hint).toBe("sk-…AAAA");
   });
+
+  it("anon bez sesji nie czyta profiles (RLS)", async () => {
+    // Klient z kluczem anon, BEZ signUp → rola `anon`. Polityki są `to authenticated`,
+    // więc żaden wiersz nie jest widoczny (RLS filtruje do pustego zbioru, bez błędu).
+    const anon = client();
+    const { data } = await anon.from("profiles").select("id").eq("id", A.id);
+    expect(data).toEqual([]);
+  });
 });

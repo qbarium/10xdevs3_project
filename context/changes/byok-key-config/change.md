@@ -1,7 +1,7 @@
 ---
 change_id: byok-key-config
 title: Konfiguracja klucza BYOK w profilu — zapis szyfrowany, podgląd zamaskowany, usunięcie + bramkowanie
-status: implemented
+status: impl_reviewed
 created: 2026-06-08
 updated: 2026-06-09
 ---

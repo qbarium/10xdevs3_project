@@ -15,7 +15,12 @@ const { user } = Astro.locals;
 let initialStatus: ByokKeyStatus = { configured: false, hint: null, updatedAt: null };
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 if (user && supabase) {
-  initialStatus = await getKeyStatus(supabase, user.id);
+  try {
+    initialStatus = await getKeyStatus(supabase, user.id);
+  } catch {
+    // Przejściowy błąd odczytu DB → łagodna degradacja: pokaż formularz zapisu.
+    initialStatus = { configured: false, hint: null, updatedAt: null };
+  }
 }
 ---
 

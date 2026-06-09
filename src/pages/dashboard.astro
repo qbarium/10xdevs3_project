@@ -14,8 +14,14 @@ const { user } = Astro.locals;
 let keyConfigured = false;
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 if (user && supabase) {
-  const status = await getKeyStatus(supabase, user.id);
-  keyConfigured = status.configured;
+  try {
+    const status = await getKeyStatus(supabase, user.id);
+    keyConfigured = status.configured;
+  } catch {
+    // Przejściowy błąd odczytu DB → łagodna degradacja: traktuj jak brak klucza
+    // (fail-safe — baner bramkujący się pokaże, nigdy fałszywie nie zniknie).
+    keyConfigured = false;
+  }
 }
 ---
 
