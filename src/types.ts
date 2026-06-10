@@ -61,3 +61,52 @@ export interface ByokKeyStatus {
   hint: string | null;
   updatedAt: string | null;
 }
+
+// --- S-02: klasyfikacja (sesje importu + typowane itemy) ---------------------
+// Unie literałowe odwzorowują enumy z migracji `classification_schema`.
+// Ręczne typy (bez `supabase gen types`) — spójne z resztą `types.ts`.
+
+/** Pięć typów itemu z klasyfikacji (enum `item_type`). */
+export type ItemType = "task" | "note" | "idea" | "decision" | "other";
+
+/** Wymiar akceptacji (enum `acceptance_status`). S-02 tworzy tylko `pending`. */
+export type AcceptanceStatus = "pending" | "accepted" | "rejected" | "deleted";
+
+/** Wymiar operacyjny (enum `operational_status`). Tylko dla `task`; inaczej null. */
+export type OperationalStatus = "new" | "in_progress" | "done" | "cancelled";
+
+/** Cykl życia sesji importu (enum `import_session_status`). */
+export type ImportSessionStatus = "processing" | "completed_with_items" | "completed_no_items" | "failed";
+
+/** Wiersz `import_sessions` — osobny byt audit trail na każdy przebieg klasyfikacji. */
+export interface ImportSession {
+  id: string;
+  user_id: string;
+  status: ImportSessionStatus;
+  raw_input: string | null;
+  item_count: number | null;
+  error_message: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Wiersz `items` — typowany item; `import_session_id` null dla itemów ręcznych (S-07). */
+export interface Item {
+  id: string;
+  user_id: string;
+  import_session_id: string | null;
+  type: ItemType;
+  title: string;
+  description: string | null;
+  acceptance_status: AcceptanceStatus;
+  operational_status: OperationalStatus | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Kontrakt zwracany przez klasyfikator — bez pól DB (MVP utrwala tylko te trzy, FR-005). */
+export interface ClassifiedItem {
+  type: ItemType;
+  title: string;
+  description: string;
+}
