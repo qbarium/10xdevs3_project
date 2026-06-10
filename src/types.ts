@@ -90,6 +90,21 @@ export interface ImportSession {
   updated_at: string;
 }
 
+/**
+ * Wiersz `import_files` — plik wsadu powiązany z sesją (PR2, Faza 6). Relacja sesja → wiele plików
+ * (model docelowy); w MVP UI tworzy najwyżej jeden plik na submit. Brak wierszy dla wsadu paste.
+ * Nazwą obiektu w Storage jest `id` (UUID); `file_name` trzyma oryginalną nazwę od usera.
+ */
+export interface ImportFile {
+  id: string;
+  user_id: string;
+  session_id: string;
+  file_path: string; // pełny klucz obiektu: <user_id>/<session_id>/<id>.<ext>
+  file_name: string; // oryginalna nazwa pliku od usera (prezentacja)
+  file_mime: string | null;
+  created_at: string;
+}
+
 /** Wiersz `items` — typowany item; `import_session_id` null dla itemów ręcznych (S-07). */
 export interface Item {
   id: string;

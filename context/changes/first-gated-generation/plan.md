@@ -426,7 +426,7 @@ Strona `/items` — zalążek jednolitej listy (FR-008) z filtrem głównym „E
 
 ### Przegląd
 
-Włączenie Supabase Storage, prywatny bucket na pliki wsadu z RLS per-user, oraz rozszerzenie `import_sessions` o referencję pliku (FR-015). Pierwsza faza ścieżki plikowej — dokłada się do działającego rdzenia z PR1.
+Włączenie Supabase Storage, prywatny bucket na pliki wsadu z RLS per-user, oraz osobna tabela `import_files` (relacja sesja → wiele plików; model docelowy) na referencję pliku (FR-015). Pierwsza faza ścieżki plikowej — dokłada się do działającego rdzenia z PR1.
 
 ### Wymagane zmiany:
 
@@ -436,15 +436,15 @@ Włączenie Supabase Storage, prywatny bucket na pliki wsadu z RLS per-user, ora
 
 **Cel**: prywatny bucket z izolacją per-user przez ścieżkę.
 
-**Kontrakt**: `[storage] enabled = true` w config.toml; migracja tworzy bucket `import-files` (prywatny) i polityki RLS na `storage.objects` ograniczające dostęp do obiektów w prefiksie `${auth.uid()}/...` (per-operacja, rola `authenticated`). Konwencja ścieżki: `<user_id>/<session_id>.<ext>`.
+**Kontrakt**: `[storage] enabled = true` w config.toml; migracja tworzy bucket `import-files` (prywatny) i polityki RLS na `storage.objects` ograniczające dostęp do obiektów w prefiksie `${auth.uid()}/...` (per-operacja, rola `authenticated`). Konwencja ścieżki: `<user_id>/<session_id>/<file_id>.<ext>` (`file_id` = `import_files.id`, UUID; nazwą obiektu w Storage jest `file_id`, nie nazwa od usera).
 
-#### 2. Referencja pliku w sesji
+#### 2. Tabela plików `import_files`
 
-**Pliki**: `supabase/migrations/<YYYYMMDDHHmmss>_import_session_file_ref.sql` (nowy), `src/types.ts`
+**Pliki**: `supabase/migrations/<YYYYMMDDHHmmss>_import_files.sql` (nowy), `src/types.ts`
 
-**Cel**: powiązać sesję z plikiem w storage (audit trail; retencja dziedziczona z sesji).
+**Cel**: powiązać sesję z plikami w storage (audit trail; retencja dziedziczona z sesji). Osobna tabela zamiast kolumn na `import_sessions` — relacja sesja → **wiele plików** (model docelowy). „Jeden plik na submit" w MVP to ograniczenie UI/logiki uploadu, NIE schematu.
 
-**Kontrakt**: `ALTER TABLE import_sessions ADD COLUMN file_path text, ADD COLUMN file_name text, ADD COLUMN file_mime text`. Dla paste pozostają `null`. `ImportSession` w `src/types.ts` rozszerzony o te pola.
+**Kontrakt**: nowa tabela `import_files` (`id` uuid PK, `user_id` uuid FK→`auth.users` ON DELETE CASCADE, `session_id` uuid FK→`import_sessions` ON DELETE CASCADE, `file_path` text not null, `file_name` text not null, `file_mime` text, `created_at` timestamptz); indeksy na `session_id` i `user_id`; RLS ON + cztery polityki per-operacja na `user_id` (wzorzec `items`/`import_sessions`). `file_path` = pełny klucz obiektu `<user_id>/<session_id>/<id>.<ext>`; nazwą obiektu jest `id` (UUID), `file_name` trzyma oryginalną nazwę od usera. `src/types.ts`: `ImportSession` bez pól plikowych; nowy interfejs `ImportFile`. Dla wsadu paste sesja po prostu nie ma wierszy `import_files`.
 
 ### Kryteria sukcesu:
 
@@ -484,7 +484,7 @@ Odczyt i normalizacja plików tekstowych: obowiązkowe UTF-8 (z BOM) i Windows-1
 
 **Cel**: zwalidować i zapisać plik w storage, zwrócić referencję.
 
-**Kontrakt**: `uploadImportFile(supabase, userId, sessionId, file): Promise<{path, name, mime}>` — walidacja rozszerzenia `.txt`/`.md` i rozmiaru ≤ 300 KB (FR-018; przekroczenie → `FileTooLargeError`/`UnsupportedFileTypeError`), zapis pod `<userId>/<sessionId>.<ext>`.
+**Kontrakt**: `uploadImportFile(supabase, userId, sessionId, file): Promise<{id, path, name, mime}>` — generuje `file_id` (UUID), waliduje rozszerzenie `.txt`/`.md` i rozmiar ≤ 300 KB (FR-018; przekroczenie → `FileTooLargeError`/`UnsupportedFileTypeError`), zapisuje obiekt pod `<userId>/<sessionId>/<file_id>.<ext>` i wstawia wiersz `import_files` (RLS po `user_id`).
 
 #### 3. Rozszerzenie endpointu o plik
 
@@ -492,7 +492,7 @@ Odczyt i normalizacja plików tekstowych: obowiązkowe UTF-8 (z BOM) i Windows-1
 
 **Cel**: obsłużyć wsad plikowy w tej samej synchronicznej ścieżce co paste.
 
-**Kontrakt**: rozróżnienie po `Content-Type` (JSON `{text}` vs `multipart/form-data` z plikiem). Dla pliku: utwórz sesję → upload do storage (referencja w sesji) → `decodeFile` → `sanitizeInput` → dalej identyczna ścieżka klasyfikacji jak paste. **Limit wejścia dla pliku to wyłącznie rozmiar 300 KB (FR-018)** — `INPUT_MAX_CHARS` (limit paste, FR-002) NIE jest egzekwowany na zdekodowanej treści: plik ≤ 300 KB idzie do klasyfikacji nawet > 100k znaków, bo mieści się w oknie 128k tokenów `gpt-4o-mini` (górne oszacowanie ~75–100k tokenów wejścia dla 300 KB; monitorować przez `wrangler tail`, kalibrować `OPENAI_MAX_TOKENS`/model jeśli okno zacznie być ciasne). Błędy dekodowania/rozmiaru → sesja `failed` z odpowiednim kodem (lub 400 przed utworzeniem sesji dla walidacji rozmiaru/typu).
+**Kontrakt**: rozróżnienie po `Content-Type` (JSON `{text}` vs `multipart/form-data` z plikiem). Dla pliku: utwórz sesję → upload do storage (wiersz w `import_files`) → `decodeFile` → `sanitizeInput` → dalej identyczna ścieżka klasyfikacji jak paste. **Limit wejścia dla pliku to wyłącznie rozmiar 300 KB (FR-018)** — `INPUT_MAX_CHARS` (limit paste, FR-002) NIE jest egzekwowany na zdekodowanej treści: plik ≤ 300 KB idzie do klasyfikacji nawet > 100k znaków, bo mieści się w oknie 128k tokenów `gpt-4o-mini` (górne oszacowanie ~75–100k tokenów wejścia dla 300 KB; monitorować przez `wrangler tail`, kalibrować `OPENAI_MAX_TOKENS`/model jeśli okno zacznie być ciasne). Błędy dekodowania/rozmiaru → sesja `failed` z odpowiednim kodem (lub 400 przed utworzeniem sesji dla walidacji rozmiaru/typu).
 
 ### Kryteria sukcesu:
 
@@ -682,10 +682,10 @@ PR1: dwie migracje (`classification_schema`, `persist_classification`) — lokal
 
 #### Automatyczne
 
-- [ ] 6.1 Migracje aplikują się czysto (`npx supabase db reset`)
-- [ ] 6.2 Integ-test storage RLS (izolacja per-user) przechodzi (`npm run test:integration`)
-- [ ] 6.3 Linting przechodzi (`npm run lint`)
-- [ ] 6.4 Build/typecheck przechodzi (`npm run build`)
+- [x] 6.1 Migracje aplikują się czysto (`npx supabase db reset`)
+- [x] 6.2 Integ-test storage RLS (izolacja per-user) przechodzi (`npm run test:integration`)
+- [x] 6.3 Linting przechodzi (`npm run lint`)
+- [x] 6.4 Build/typecheck przechodzi (`npm run build`)
 
 #### Ręczne
 
