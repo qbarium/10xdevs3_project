@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { INPUT_MAX_CHARS, sanitizeInput } from "@/lib/text/sanitize";
+import { INPUT_MAX_CHARS, normalizeForInput, sanitizeInput } from "@/lib/text/sanitize";
 
 // Znaki sterujące budujemy przez String.fromCharCode (literały zrobiłyby z pliku binaria).
 
@@ -39,5 +39,21 @@ describe("sanitizeInput (FR-002)", () => {
 
   it("eksportuje limit paste = 100000", () => {
     expect(INPUT_MAX_CHARS).toBe(100_000);
+  });
+});
+
+describe("normalizeForInput (live-edycja w polu, Faza 4)", () => {
+  it("usuwa znaki sterujące i NFC, ale NIE trimuje brzegów", () => {
+    const input = `  a${String.fromCharCode(0, 7)}b  `;
+    expect(normalizeForInput(input)).toBe("  ab  ");
+  });
+
+  it("zachowuje spację na końcu (musi dać się wpisywać)", () => {
+    expect(normalizeForInput("słowo ")).toBe("słowo ");
+  });
+
+  it("składa NFC bez trimowania", () => {
+    const decomposed = `e${String.fromCharCode(0x301)} `;
+    expect(normalizeForInput(decomposed)).toBe("é ");
   });
 });

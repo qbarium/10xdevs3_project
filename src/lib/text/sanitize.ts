@@ -19,11 +19,11 @@ function isStrippableControl(code: number): boolean {
 }
 
 /**
- * Normalizuje wsad: Unicode NFC, usunięcie znaków sterujących (poza TAB i LF; CR usuwany → CRLF staje
- * się LF) oraz trim. Tylko normalizuje, nie waliduje długości. Filtr po kodzie znaku (bez regexu
- * ze znakami sterującymi), iteracja po code pointach (poprawnie dla par surogatów).
+ * Wariant BEZ trim — do live-edycji w polu (client, Faza 4). NFC + usunięcie znaków sterujących
+ * (poza TAB i LF; CR usuwany → CRLF staje się LF), ale zachowuje białe znaki na brzegach — trim na
+ * każdym znaku blokowałby wpisywanie spacji. Filtr po kodzie znaku, iteracja po code pointach.
  */
-export function sanitizeInput(raw: string): string {
+export function normalizeForInput(raw: string): string {
   let out = "";
   for (const ch of raw.normalize("NFC")) {
     const code = ch.codePointAt(0) ?? 0;
@@ -31,5 +31,13 @@ export function sanitizeInput(raw: string): string {
       out += ch;
     }
   }
-  return out.trim();
+  return out;
+}
+
+/**
+ * Normalizuje wsad: Unicode NFC, usunięcie znaków sterujących (poza TAB i LF; CR usuwany → CRLF staje
+ * się LF) oraz trim. Tylko normalizuje, nie waliduje długości.
+ */
+export function sanitizeInput(raw: string): string {
+  return normalizeForInput(raw).trim();
 }

@@ -633,11 +633,11 @@ PR1: dwie migracje (`classification_schema`, `persist_classification`) — lokal
 
 #### Automatyczne
 
-- [x] 3.1 Integ-test endpointu (atomowy zapis, `no_items`, >100, brak klucza) przechodzi (`npm run test:integration`)
-- [x] 3.2 Integ-test RLS itemów/sesji z endpointu przechodzi (`npm run test:integration`)
-- [x] 3.3 Unit endpointu (mapowanie kodów/stanów, higiena logów) przechodzi (`npm test`)
-- [x] 3.4 Linting przechodzi (`npm run lint`)
-- [x] 3.5 Build/typecheck przechodzi (`npm run build`)
+- [x] 3.1 Integ-test endpointu (atomowy zapis, `no_items`, >100, brak klucza) przechodzi (`npm run test:integration`) — 26b0770
+- [x] 3.2 Integ-test RLS itemów/sesji z endpointu przechodzi (`npm run test:integration`) — 26b0770
+- [x] 3.3 Unit endpointu (mapowanie kodów/stanów, higiena logów) przechodzi (`npm test`) — 26b0770
+- [x] 3.4 Linting przechodzi (`npm run lint`) — 26b0770
+- [x] 3.5 Build/typecheck przechodzi (`npm run build`) — 26b0770
 
 #### Ręczne
 
@@ -650,10 +650,10 @@ PR1: dwie migracje (`classification_schema`, `persist_classification`) — lokal
 
 #### Automatyczne
 
-- [ ] 4.1 Unit hooka/util (stan, licznik/limit) przechodzi jeśli wydzielony (`npm test`)
-- [ ] 4.2 `npm audit` czysty po dodaniu `textarea`/`dialog`
-- [ ] 4.3 Linting przechodzi (`npm run lint`)
-- [ ] 4.4 Build/typecheck przechodzi (`npm run build`)
+- [x] 4.1 Unit hooka/util (stan, licznik/limit) przechodzi jeśli wydzielony (`npm test`)
+- [x] 4.2 `npm audit` czysty po dodaniu `textarea`/`dialog`
+- [x] 4.3 Linting przechodzi (`npm run lint`)
+- [x] 4.4 Build/typecheck przechodzi (`npm run build`)
 
 #### Ręczne
 
