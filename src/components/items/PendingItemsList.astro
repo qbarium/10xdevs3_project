@@ -1,0 +1,43 @@
+---
+// Read-only prezentacja typowanych itemów (pendingi). Bez akcji accept/reject/edit — to granica S-03.
+// Etykieta typu po polsku (labels.ts); styl spójny z innymi komponentami .astro (cosmic).
+import type { Item } from "@/types";
+import { itemTypeLabel } from "@/lib/labels";
+
+interface Props {
+  items: Item[];
+}
+
+const { items } = Astro.props;
+
+function elementNoun(n: number): string {
+  if (n === 1) return "element";
+  const tens = n % 100;
+  const units = n % 10;
+  if (units >= 2 && units <= 4 && (tens < 12 || tens > 14)) return "elementy";
+  return "elementów";
+}
+
+const countLabel = `${items.length} ${elementNoun(items.length)} do akceptacji`;
+---
+
+{
+  items.length === 0 ? (
+    <div role="status" class="rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70">
+      Brak elementów do akceptacji.
+    </div>
+  ) : (
+    <div class="flex flex-col gap-3">
+      <p class="text-sm text-white/60">{countLabel}</p>
+      {items.map((item) => (
+        <article class="rounded-xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl">
+          <span class="inline-block rounded-full border border-purple-300/30 bg-purple-400/10 px-2 py-0.5 text-xs font-medium text-purple-100">
+            {itemTypeLabel(item.type)}
+          </span>
+          <h3 class="mt-2 font-semibold text-white/90">{item.title}</h3>
+          {item.description && <p class="mt-1 text-sm whitespace-pre-wrap text-white/70">{item.description}</p>}
+        </article>
+      ))}
+    </div>
+  )
+}

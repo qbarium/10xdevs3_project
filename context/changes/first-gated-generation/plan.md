@@ -650,10 +650,10 @@ PR1: dwie migracje (`classification_schema`, `persist_classification`) — lokal
 
 #### Automatyczne
 
-- [x] 4.1 Unit hooka/util (stan, licznik/limit) przechodzi jeśli wydzielony (`npm test`)
-- [x] 4.2 `npm audit` czysty po dodaniu `textarea`/`dialog`
-- [x] 4.3 Linting przechodzi (`npm run lint`)
-- [x] 4.4 Build/typecheck przechodzi (`npm run build`)
+- [x] 4.1 Unit hooka/util (stan, licznik/limit) przechodzi jeśli wydzielony (`npm test`) — 1f639d9
+- [x] 4.2 `npm audit` czysty po dodaniu `textarea`/`dialog` — 1f639d9
+- [x] 4.3 Linting przechodzi (`npm run lint`) — 1f639d9
+- [x] 4.4 Build/typecheck przechodzi (`npm run build`) — 1f639d9
 
 #### Ręczne
 
@@ -666,9 +666,9 @@ PR1: dwie migracje (`classification_schema`, `persist_classification`) — lokal
 
 #### Automatyczne
 
-- [ ] 5.1 Unit `labels.ts` (mapowanie enum→PL) przechodzi (`npm test`)
-- [ ] 5.2 Linting przechodzi (`npm run lint`)
-- [ ] 5.3 Build/typecheck przechodzi (`npm run build`)
+- [x] 5.1 Unit `labels.ts` (mapowanie enum→PL) przechodzi (`npm test`)
+- [x] 5.2 Linting przechodzi (`npm run lint`)
+- [x] 5.3 Build/typecheck przechodzi (`npm run build`)
 
 #### Ręczne
 
