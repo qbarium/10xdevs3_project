@@ -618,11 +618,11 @@ PR1: dwie migracje (`classification_schema`, `persist_classification`) — lokal
 
 #### Automatyczne
 
-- [x] 2.1 Unit sanityzacji/resolvera/request/schematu/hash przechodzi (`npm test`)
-- [x] 2.2 Unit `classify` z mockiem fetch (happy + 401/5xx/obcięcie) przechodzi (`npm test`)
-- [x] 2.3 `npm audit` czysty po dodaniu `zod`
-- [x] 2.4 Linting przechodzi (`npm run lint`)
-- [x] 2.5 Build/typecheck przechodzi (`npm run build`)
+- [x] 2.1 Unit sanityzacji/resolvera/request/schematu/hash przechodzi (`npm test`) — 10b29a7
+- [x] 2.2 Unit `classify` z mockiem fetch (happy + 401/5xx/obcięcie) przechodzi (`npm test`) — 10b29a7
+- [x] 2.3 `npm audit` czysty po dodaniu `zod` — 10b29a7
+- [x] 2.4 Linting przechodzi (`npm run lint`) — 10b29a7
+- [x] 2.5 Build/typecheck przechodzi (`npm run build`) — 10b29a7
 
 #### Ręczne
 
@@ -633,11 +633,11 @@ PR1: dwie migracje (`classification_schema`, `persist_classification`) — lokal
 
 #### Automatyczne
 
-- [ ] 3.1 Integ-test endpointu (atomowy zapis, `no_items`, >100, brak klucza) przechodzi (`npm run test:integration`)
-- [ ] 3.2 Integ-test RLS itemów/sesji z endpointu przechodzi (`npm run test:integration`)
-- [ ] 3.3 Unit endpointu (mapowanie kodów/stanów, higiena logów) przechodzi (`npm test`)
-- [ ] 3.4 Linting przechodzi (`npm run lint`)
-- [ ] 3.5 Build/typecheck przechodzi (`npm run build`)
+- [x] 3.1 Integ-test endpointu (atomowy zapis, `no_items`, >100, brak klucza) przechodzi (`npm run test:integration`)
+- [x] 3.2 Integ-test RLS itemów/sesji z endpointu przechodzi (`npm run test:integration`)
+- [x] 3.3 Unit endpointu (mapowanie kodów/stanów, higiena logów) przechodzi (`npm test`)
+- [x] 3.4 Linting przechodzi (`npm run lint`)
+- [x] 3.5 Build/typecheck przechodzi (`npm run build`)
 
 #### Ręczne
 

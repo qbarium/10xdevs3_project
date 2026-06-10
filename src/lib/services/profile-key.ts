@@ -52,6 +52,21 @@ export async function getKeyStatus(supabase: SupabaseClient, userId: string): Pr
 }
 
 /**
+ * Zwraca zaszyfrowaną kopertę klucza usera (lub null, gdy brak). Jedyny punkt selekcji
+ * `api_key_encrypted` — używany SERWEROWO przez ścieżkę klasyfikacji (S-02) tuż przed
+ * `decryptApiKey`. NIGDY nie trafia do warstwy odpowiedzi (FR-026).
+ */
+export async function getEncryptedApiKey(supabase: SupabaseClient, userId: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("api_key_encrypted")
+    .eq("id", userId)
+    .maybeSingle<Pick<Profile, "api_key_encrypted">>();
+  if (error) throw new Error("Odczyt klucza nie powiódł się.", { cause: error });
+  return data?.api_key_encrypted ?? null;
+}
+
+/**
  * Usuwa klucz: zeruje kolumny (UPDATE, nie DELETE wiersza). Idempotentne — na braku wiersza
  * UPDATE dopasowuje 0 wierszy bez błędu.
  */
