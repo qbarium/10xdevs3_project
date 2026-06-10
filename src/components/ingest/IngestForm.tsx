@@ -8,6 +8,7 @@ import React, { useState, type ChangeEvent } from "react";
 import { useClassification } from "@/components/hooks/useClassification";
 import { ClassificationModal } from "@/components/ingest/ClassificationModal";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { INPUT_MAX_CHARS, normalizeForInput } from "@/lib/text/sanitize";
@@ -36,34 +37,42 @@ export default function IngestForm({ initialKeyStatus }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <Label htmlFor="ingest-text">Wklej tekst do klasyfikacji</Label>
-      <Textarea
-        id="ingest-text"
-        value={text}
-        onChange={handleChange}
-        disabled={!configured || state === "processing"}
-        placeholder="Wklej luźne myśli, notatki, listę zadań…"
-        className="min-h-48 font-mono text-sm"
-      />
-      <div className="flex items-center justify-between">
-        <span className={cn("text-xs", atLimit ? "text-amber-400" : "text-muted-foreground")}>
-          {text.length.toLocaleString("pl-PL")} / {INPUT_MAX_CHARS.toLocaleString("pl-PL")} znaków
-        </span>
-        <Button type="submit" disabled={!configured || !text.trim() || state === "processing"}>
-          Klasyfikuj
-        </Button>
-      </div>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Klasyfikacja wsadu</CardTitle>
+        <CardDescription>Wklej luźne myśli, notatki lub listę — zamienimy je na typowane itemy.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <Label htmlFor="ingest-text">Tekst do klasyfikacji</Label>
+          <Textarea
+            id="ingest-text"
+            value={text}
+            onChange={handleChange}
+            disabled={!configured || state === "processing"}
+            placeholder="Wklej luźne myśli, notatki, listę zadań…"
+            className="min-h-48 font-mono text-sm"
+          />
+          <div className="flex items-center justify-between">
+            <span className={cn("text-xs", atLimit ? "text-amber-400" : "text-muted-foreground")}>
+              {text.length.toLocaleString("pl-PL")} / {INPUT_MAX_CHARS.toLocaleString("pl-PL")} znaków
+            </span>
+            <Button type="submit" disabled={!configured || !text.trim() || state === "processing"}>
+              Klasyfikuj
+            </Button>
+          </div>
 
-      <ClassificationModal
-        state={state}
-        itemCount={itemCount}
-        errorCode={errorCode}
-        onRetry={() => {
-          void run(text);
-        }}
-        onClose={reset}
-      />
-    </form>
+          <ClassificationModal
+            state={state}
+            itemCount={itemCount}
+            errorCode={errorCode}
+            onRetry={() => {
+              void run(text);
+            }}
+            onClose={reset}
+          />
+        </form>
+      </CardContent>
+    </Card>
   );
 }
