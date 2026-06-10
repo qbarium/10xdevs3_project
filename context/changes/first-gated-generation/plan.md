@@ -610,9 +610,9 @@ PR1: dwie migracje (`classification_schema`, `persist_classification`) — lokal
 
 #### Ręczne
 
-- [ ] 1.5 RLS zweryfikowane: user A nie widzi/nie modyfikuje `items`/`import_sessions` usera B
-- [ ] 1.6 FK `items.import_session_id` istnieje w migracji i wskazuje `import_sessions(id)`
-- [ ] 1.7 Migracja wypchnięta na cloud (`supabase db push`) — za jawną zgodą
+- [x] 1.5 RLS zweryfikowane: user A nie widzi/nie modyfikuje `items`/`import_sessions` usera B
+- [x] 1.6 FK `items.import_session_id` istnieje w migracji i wskazuje `import_sessions(id)`
+- [x] 1.7 Migracja wypchnięta na cloud (`supabase db push`) — za jawną zgodą
 
 ### Faza 2: Warstwa klasyfikacji — config, prompt, resolver, request, walidator, hash
 
@@ -626,8 +626,8 @@ PR1: dwie migracje (`classification_schema`, `persist_classification`) — lokal
 
 #### Ręczne
 
-- [ ] 2.6 Lokalny smoke z realnym kluczem zwraca sensownie typowane itemy
-- [ ] 2.7 Logi z `classify` nie zawierają fragmentu klucza ani treści wsadu
+- [x] 2.6 Lokalny smoke z realnym kluczem zwraca sensownie typowane itemy
+- [x] 2.7 Logi z `classify` nie zawierają fragmentu klucza ani treści wsadu
 
 ### Faza 3: Endpoint klasyfikacji — guard, BYOK, timeout, atomowy zapis
 
@@ -641,10 +641,10 @@ PR1: dwie migracje (`classification_schema`, `persist_classification`) — lokal
 
 #### Ręczne
 
-- [ ] 3.6 Lokalnie (`wrangler dev`, realny klucz) wklejony tekst tworzy sesję + pendingi (`completed_with_items`)
-- [ ] 3.7 Niepoprawny klucz → sesja `failed`/`invalid_key`, bez fragmentu klucza w logu
-- [ ] 3.8 Podmieniony KEK → 503 generyczny, klucz nie wycieka
-- [ ] 3.9 Logi klasyfikacji zawierają wyłącznie metadane
+- [x] 3.6 Lokalnie (`wrangler dev`, realny klucz) wklejony tekst tworzy sesję + pendingi (`completed_with_items`)
+- [x] 3.7 Niepoprawny klucz → sesja `failed`/`invalid_key`, bez fragmentu klucza w logu
+- [x] 3.8 Podmieniony KEK → 503 generyczny, klucz nie wycieka
+- [x] 3.9 Logi klasyfikacji zawierają wyłącznie metadane
 
 ### Faza 4: Frontend paste + 4-stanowy blokujący modal
 
@@ -657,26 +657,26 @@ PR1: dwie migracje (`classification_schema`, `persist_classification`) — lokal
 
 #### Ręczne
 
-- [ ] 4.5 `/ingest` bez zalogowania → redirect; bez klucza → bramka US-06
-- [ ] 4.6 Licznik blokuje przy 100 000 znaków; sanityzacja widoczna przy wklejeniu
-- [ ] 4.7 Submit → modal `processing` blokuje bez anulowania; sukces → auto-przejście do `/items`
-- [ ] 4.8 Stany „bez itemów" i „niepowodzenie" renderują poprawne komunikaty i akcje
+- [x] 4.5 `/ingest` bez zalogowania → redirect; bez klucza → bramka US-06
+- [x] 4.6 Licznik blokuje przy 100 000 znaków; sanityzacja widoczna przy wklejeniu
+- [x] 4.7 Submit → modal `processing` blokuje bez anulowania; sukces → auto-przejście do `/items`
+- [x] 4.8 Stany „bez itemów" i „niepowodzenie" renderują poprawne komunikaty i akcje
 
 ### Faza 5: Widok walidacyjny (read-only lista pendingów)
 
 #### Automatyczne
 
-- [x] 5.1 Unit `labels.ts` (mapowanie enum→PL) przechodzi (`npm test`)
-- [x] 5.2 Linting przechodzi (`npm run lint`)
-- [x] 5.3 Build/typecheck przechodzi (`npm run build`)
+- [x] 5.1 Unit `labels.ts` (mapowanie enum→PL) przechodzi (`npm test`) — e221a3c
+- [x] 5.2 Linting przechodzi (`npm run lint`) — e221a3c
+- [x] 5.3 Build/typecheck przechodzi (`npm run build`) — e221a3c
 
 #### Ręczne
 
-- [ ] 5.4 `/items` pokazuje wszystkie pendingi usera (nie tylko z bieżącej sesji)
-- [ ] 5.5 Itemy: poprawny typ (PL), title, description; brak akcji accept/reject
-- [ ] 5.6 `/items` bez zalogowania → redirect; user widzi tylko swoje pendingi
-- [ ] 5.7 Pusty stan renderuje się poprawnie
-- [ ] 5.8 PR1 potwierdzony lokalnie na `wrangler dev` przed mergem (gate Workers Paid)
+- [x] 5.4 `/items` pokazuje wszystkie pendingi usera (nie tylko z bieżącej sesji)
+- [x] 5.5 Itemy: poprawny typ (PL), title, description; brak akcji accept/reject
+- [x] 5.6 `/items` bez zalogowania → redirect; user widzi tylko swoje pendingi
+- [x] 5.7 Pusty stan renderuje się poprawnie
+- [x] 5.8 PR1 potwierdzony lokalnie na `wrangler dev` przed mergem (gate Workers Paid)
 
 ### Faza 6: Storage + referencja pliku (start PR2)
 
