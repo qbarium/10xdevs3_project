@@ -110,3 +110,46 @@ export interface ClassifiedItem {
   title: string;
   description: string;
 }
+
+// --- S-02: błędy warstwy klasyfikacji LLM -----------------------------------
+// Komunikaty NIGDY nie zawierają treści wsadu ani materiału klucza (FR-026).
+
+/** Bazowy błąd warstwy klasyfikacji. */
+export class ClassifierError extends Error {
+  constructor(message: string, options?: { cause?: unknown }) {
+    super(message, options);
+    this.name = "ClassifierError";
+  }
+}
+
+/** 401 od dostawcy — klucz BYOK niepoprawny lub wygasł (kod UI: invalid_key). */
+export class ClassifierAuthError extends ClassifierError {
+  constructor(message = "Klucz API dostawcy AI jest niepoprawny lub wygasł.", options?: { cause?: unknown }) {
+    super(message, options);
+    this.name = "ClassifierAuthError";
+  }
+}
+
+/** 5xx / 429 / błąd sieci — przejściowy problem po stronie dostawcy. */
+export class ClassifierProviderError extends ClassifierError {
+  constructor(message = "Dostawca AI jest chwilowo niedostępny.", options?: { cause?: unknown }) {
+    super(message, options);
+    this.name = "ClassifierProviderError";
+  }
+}
+
+/** Naruszenie kontraktu odpowiedzi: zły JSON, niezgodność schematu, obcięcie, odmowa. */
+export class ClassifierContractError extends ClassifierError {
+  constructor(message = "Odpowiedź klasyfikatora narusza kontrakt.", options?: { cause?: unknown }) {
+    super(message, options);
+    this.name = "ClassifierContractError";
+  }
+}
+
+/** Wybrany model trafia na nieobsługiwaną w MVP gałąź (Responses / mock bez ciała atrapy). */
+export class UnsupportedModelError extends ClassifierError {
+  constructor(message = "Model rozumujący nie jest obsługiwany w MVP.", options?: { cause?: unknown }) {
+    super(message, options);
+    this.name = "UnsupportedModelError";
+  }
+}

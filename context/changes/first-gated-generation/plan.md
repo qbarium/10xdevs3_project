@@ -603,10 +603,10 @@ PR1: dwie migracje (`classification_schema`, `persist_classification`) — lokal
 
 #### Automatyczne
 
-- [x] 1.1 Migracja aplikuje się czysto lokalnie (`npx supabase db reset`)
-- [x] 1.2 Linting przechodzi (`npm run lint`)
-- [x] 1.3 Build/typecheck przechodzi (`npm run build`)
-- [x] 1.4 Integ-test RLS przechodzi (`npm run test:integration`)
+- [x] 1.1 Migracja aplikuje się czysto lokalnie (`npx supabase db reset`) — 41b6512
+- [x] 1.2 Linting przechodzi (`npm run lint`) — 41b6512
+- [x] 1.3 Build/typecheck przechodzi (`npm run build`) — 41b6512
+- [x] 1.4 Integ-test RLS przechodzi (`npm run test:integration`) — 41b6512
 
 #### Ręczne
 
@@ -618,11 +618,11 @@ PR1: dwie migracje (`classification_schema`, `persist_classification`) — lokal
 
 #### Automatyczne
 
-- [ ] 2.1 Unit sanityzacji/resolvera/request/schematu/hash przechodzi (`npm test`)
-- [ ] 2.2 Unit `classify` z mockiem fetch (happy + 401/5xx/obcięcie) przechodzi (`npm test`)
-- [ ] 2.3 `npm audit` czysty po dodaniu `zod`
-- [ ] 2.4 Linting przechodzi (`npm run lint`)
-- [ ] 2.5 Build/typecheck przechodzi (`npm run build`)
+- [x] 2.1 Unit sanityzacji/resolvera/request/schematu/hash przechodzi (`npm test`)
+- [x] 2.2 Unit `classify` z mockiem fetch (happy + 401/5xx/obcięcie) przechodzi (`npm test`)
+- [x] 2.3 `npm audit` czysty po dodaniu `zod`
+- [x] 2.4 Linting przechodzi (`npm run lint`)
+- [x] 2.5 Build/typecheck przechodzi (`npm run build`)
 
 #### Ręczne
 
