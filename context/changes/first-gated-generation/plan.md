@@ -682,32 +682,32 @@ PR1: dwie migracje (`classification_schema`, `persist_classification`) — lokal
 
 #### Automatyczne
 
-- [x] 6.1 Migracje aplikują się czysto (`npx supabase db reset`)
-- [x] 6.2 Integ-test storage RLS (izolacja per-user) przechodzi (`npm run test:integration`)
-- [x] 6.3 Linting przechodzi (`npm run lint`)
-- [x] 6.4 Build/typecheck przechodzi (`npm run build`)
+- [x] 6.1 Migracje aplikują się czysto (`npx supabase db reset`) — c32547e
+- [x] 6.2 Integ-test storage RLS (izolacja per-user) przechodzi (`npm run test:integration`) — c32547e
+- [x] 6.3 Linting przechodzi (`npm run lint`) — c32547e
+- [x] 6.4 Build/typecheck przechodzi (`npm run build`) — c32547e
 
 #### Ręczne
 
-- [ ] 6.5 Bucket `import-files` istnieje i jest prywatny
-- [ ] 6.6 Upload/odczyt obiektu działa tylko dla właściciela ścieżki
-- [ ] 6.7 Migracje + bucket na cloud — za jawną zgodą
+- [x] 6.5 Bucket `import-files` istnieje i jest prywatny
+- [x] 6.6 Upload/odczyt obiektu działa tylko dla właściciela ścieżki
+- [x] 6.7 Migracje + bucket na cloud — za jawną zgodą
 
 ### Faza 7: Dekodowanie kodowań + upload pliku
 
 #### Automatyczne
 
-- [ ] 7.1 Unit `decodeFile` (UTF-8/BOM/Windows-1250/nieczytelny) przechodzi (`npm test`)
-- [ ] 7.2 Integ-test uploadu (`.txt` → sesja+referencja; >300 KB i zły typ odrzucone) przechodzi (`npm run test:integration`)
-- [ ] 7.3 `npm audit` czysty (jeśli dodano `iconv-lite`)
-- [ ] 7.4 Linting przechodzi (`npm run lint`)
-- [ ] 7.5 Build/typecheck przechodzi (`npm run build`)
+- [x] 7.1 Unit `decodeFile` (UTF-8/BOM/Windows-1250/nieczytelny) przechodzi (`npm test`)
+- [x] 7.2 Integ-test uploadu (`.txt` → sesja+referencja; >300 KB i zły typ odrzucone) przechodzi (`npm run test:integration`)
+- [x] 7.3 `npm audit` czysty (jeśli dodano `iconv-lite`)
+- [x] 7.4 Linting przechodzi (`npm run lint`)
+- [x] 7.5 Build/typecheck przechodzi (`npm run build`)
 
 #### Ręczne
 
-- [ ] 7.6 Plik UTF-8 i Windows-1250 z polskimi znakami klasyfikują się poprawnie
-- [ ] 7.7 Plik > 300 KB i zły typ odrzucone z przyjaznym komunikatem
-- [ ] 7.8 Referencja pliku w sesji; obiekt w storage pod ścieżką usera
+- [x] 7.6 Plik UTF-8 i Windows-1250 z polskimi znakami klasyfikują się poprawnie
+- [x] 7.7 Plik > 300 KB i zły typ odrzucone z przyjaznym komunikatem
+- [x] 7.8 Referencja pliku w sesji; obiekt w storage pod ścieżką usera
 
 ### Faza 8: Frontend drag-and-drop pliku
 
