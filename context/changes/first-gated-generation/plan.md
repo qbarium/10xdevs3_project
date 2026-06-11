@@ -713,9 +713,9 @@ PR1: dwie migracje (`classification_schema`, `persist_classification`) — lokal
 
 #### Automatyczne
 
-- [x] 8.1 Unit walidacji pliku (typ/rozmiar) przechodzi jeśli wydzielony (`npm test`)
-- [x] 8.2 Linting przechodzi (`npm run lint`)
-- [x] 8.3 Build/typecheck przechodzi (`npm run build`)
+- [x] 8.1 Unit walidacji pliku (typ/rozmiar) przechodzi jeśli wydzielony (`npm test`) — 3de6a46
+- [x] 8.2 Linting przechodzi (`npm run lint`) — 3de6a46
+- [x] 8.3 Build/typecheck przechodzi (`npm run build`) — 3de6a46
 
 #### Ręczne
 
