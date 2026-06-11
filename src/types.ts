@@ -168,3 +168,42 @@ export class UnsupportedModelError extends ClassifierError {
     this.name = "UnsupportedModelError";
   }
 }
+
+// --- S-02 PR2: błędy ścieżki plikowej (FR-003, FR-018) ----------------------
+// Komunikaty są bezpieczne do pokazania userowi — nazwa pliku/rozmiar/kodowanie nie są wrażliwe
+// (inaczej niż treść wsadu i klucz, których FR-026 nie pozwala ujawniać).
+
+/** Bazowy błąd walidacji lub odczytu pliku wsadu. */
+export class FileInputError extends Error {
+  constructor(message: string, options?: { cause?: unknown }) {
+    super(message, options);
+    this.name = "FileInputError";
+  }
+}
+
+/** Plik przekracza limit rozmiaru 300 KB (FR-018). */
+export class FileTooLargeError extends FileInputError {
+  constructor(message = "Plik przekracza limit 300 KB.", options?: { cause?: unknown }) {
+    super(message, options);
+    this.name = "FileTooLargeError";
+  }
+}
+
+/** Nieobsługiwany typ pliku — dozwolone wyłącznie `.txt`/`.md` (FR-018). */
+export class UnsupportedFileTypeError extends FileInputError {
+  constructor(message = "Nieobsługiwany typ pliku. Dozwolone rozszerzenia: .txt, .md.", options?: { cause?: unknown }) {
+    super(message, options);
+    this.name = "UnsupportedFileTypeError";
+  }
+}
+
+/** Plik nie dekoduje się w żadnym obsługiwanym kodowaniu (UTF-8 z/bez BOM, Windows-1250; FR-003). */
+export class UnsupportedEncodingError extends FileInputError {
+  constructor(
+    message = "Nie udało się odczytać pliku w obsługiwanym kodowaniu (UTF-8, Windows-1250).",
+    options?: { cause?: unknown },
+  ) {
+    super(message, options);
+    this.name = "UnsupportedEncodingError";
+  }
+}

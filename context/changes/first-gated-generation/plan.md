@@ -697,11 +697,11 @@ PR1: dwie migracje (`classification_schema`, `persist_classification`) — lokal
 
 #### Automatyczne
 
-- [x] 7.1 Unit `decodeFile` (UTF-8/BOM/Windows-1250/nieczytelny) przechodzi (`npm test`)
-- [x] 7.2 Integ-test uploadu (`.txt` → sesja+referencja; >300 KB i zły typ odrzucone) przechodzi (`npm run test:integration`)
-- [x] 7.3 `npm audit` czysty (jeśli dodano `iconv-lite`)
-- [x] 7.4 Linting przechodzi (`npm run lint`)
-- [x] 7.5 Build/typecheck przechodzi (`npm run build`)
+- [x] 7.1 Unit `decodeFile` (UTF-8/BOM/Windows-1250/nieczytelny) przechodzi (`npm test`) — 7daa3c1
+- [x] 7.2 Integ-test uploadu (`.txt` → sesja+referencja; >300 KB i zły typ odrzucone) przechodzi (`npm run test:integration`) — 7daa3c1
+- [x] 7.3 `npm audit` czysty (jeśli dodano `iconv-lite`) — 7daa3c1
+- [x] 7.4 Linting przechodzi (`npm run lint`) — 7daa3c1
+- [x] 7.5 Build/typecheck przechodzi (`npm run build`) — 7daa3c1
 
 #### Ręczne
 
@@ -713,13 +713,13 @@ PR1: dwie migracje (`classification_schema`, `persist_classification`) — lokal
 
 #### Automatyczne
 
-- [ ] 8.1 Unit walidacji pliku (typ/rozmiar) przechodzi jeśli wydzielony (`npm test`)
-- [ ] 8.2 Linting przechodzi (`npm run lint`)
-- [ ] 8.3 Build/typecheck przechodzi (`npm run build`)
+- [x] 8.1 Unit walidacji pliku (typ/rozmiar) przechodzi jeśli wydzielony (`npm test`)
+- [x] 8.2 Linting przechodzi (`npm run lint`)
+- [x] 8.3 Build/typecheck przechodzi (`npm run build`)
 
 #### Ręczne
 
-- [ ] 8.4 Drop pliku `.txt`/`.md` → klasyfikacja → pendingi na `/items`
-- [ ] 8.5 Plik za duży / zły typ → komunikat przed submitem
-- [ ] 8.6 Pole paste i plik wzajemnie się wykluczają (jeden element wsadu)
-- [ ] 8.7 PR2 potwierdzony lokalnie przed mergem
+- [x] 8.4 Drop pliku `.txt`/`.md` → klasyfikacja → pendingi na `/items`
+- [x] 8.5 Plik za duży / zły typ → komunikat przed submitem
+- [x] 8.6 Pole paste i plik wzajemnie się wykluczają (jeden element wsadu)
+- [x] 8.7 PR2 potwierdzony lokalnie przed mergem
