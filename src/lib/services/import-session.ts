@@ -7,11 +7,15 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { ClassifiedItem } from "@/types";
 
-/** Tworzy sesję w stanie `processing`. Id generujemy po stronie klienta (deterministycznie, bez odczytu zwrotnego). */
+/**
+ * Tworzy sesję w stanie `processing`. Id generujemy po stronie klienta (deterministycznie, bez
+ * odczytu zwrotnego). `rawInput` = treść paste; dla wsadu plikowego null (treść żyje w storage +
+ * `import_files`, kolumna `raw_input` jest nullable).
+ */
 export async function createSession(
   supabase: SupabaseClient,
   userId: string,
-  rawInput: string,
+  rawInput: string | null,
 ): Promise<{ id: string }> {
   const id = crypto.randomUUID();
   const { error } = await supabase

@@ -20,11 +20,29 @@ export interface UseClassification {
   sessionId: string | null;
   itemCount: number;
   errorCode: string | null;
-  run: (text: string) => Promise<void>;
+  /** Wsad paste (string) → JSON, albo plik (File) → multipart/form-data. Maszyna stanów identyczna. */
+  run: (input: string | File) => Promise<void>;
   reset: () => void;
 }
 
 const ENDPOINT = "/api/ingest/classify";
+
+/**
+ * Buduje request init wg rodzaju wsadu. Plik → FormData (przeglądarka sama ustawia Content-Type z
+ * boundary — NIE ustawiamy go ręcznie, inaczej brakłoby boundary). Paste → JSON { text }.
+ */
+function buildRequestInit(input: string | File): RequestInit {
+  if (input instanceof File) {
+    const form = new FormData();
+    form.append("file", input);
+    return { method: "POST", body: form };
+  }
+  return {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text: input }),
+  };
+}
 
 export function useClassification(): UseClassification {
   const [state, setState] = useState<ClassificationState>("idle");
@@ -32,15 +50,11 @@ export function useClassification(): UseClassification {
   const [itemCount, setItemCount] = useState(0);
   const [errorCode, setErrorCode] = useState<string | null>(null);
 
-  async function run(text: string): Promise<void> {
+  async function run(input: string | File): Promise<void> {
     setState("processing");
     setErrorCode(null);
     try {
-      const res = await fetch(ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
+      const res = await fetch(ENDPOINT, buildRequestInit(input));
       const data = (await res.json()) as ClassifyResponse;
       setSessionId(data.sessionId ?? null);
 
