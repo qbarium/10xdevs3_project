@@ -3,7 +3,7 @@ project: TaskerLight
 version: 1
 status: draft
 created: 2026-06-05
-updated: 2026-06-09
+updated: 2026-06-12
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -227,6 +227,10 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Mitygacja prompt injection** — Dlaczego: PRD Non-Goal; ryzyko przeniesione na klucz BYOK użytkownika.
 - **Archiwizacja itemów / per-item permanent delete / auto-cleanup (TTL)** — Dlaczego: PRD Non-Goals.
 - **Choice modelu klasyfikacji w profilu / undo toast / progresywne ostrzeganie pola / zewnętrzny KMS / usuwanie sesji importu** — Dlaczego: PRD Non-Goals.
+
+## Done
+
+- **S-01: użytkownik może zapisać własny klucz API zewnętrznego dostawcy AI w profilu, podejrzeć go w postaci zamaskowanej (prefiks + ostatnie znaki) i usunąć; akcje wymagające klucza (submit) są zablokowane z komunikatem i linkiem do strony dostawcy, dopóki klucz nie jest skonfigurowany.** — Zarchiwizowano 2026-06-12 → `context/archive/2026-06-08-byok-key-config/`. Lekcja: —.
 
 ## Zrobione
 
