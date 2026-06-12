@@ -346,6 +346,7 @@ Każdy user może zapisać w profilu własny klucz API zewnętrznego dostawcy AI
 - **Progresywne ostrzeganie pola wklejania** (czerwony licznik przy 80% limitu i podobne). MVP ma tylko widoczny licznik + blokadę przy limicie (FR-002).
 - **Zewnętrzny system zarządzania kluczem szyfrującym aplikacji.** Klucz szyfrujący w konfiguracji aplikacji dla MVP — dług architektoniczny do V2.
 - **Usuwanie sesji importu i powiązanych plików.** W MVP nie istnieje akcja kasowania sesji importu — ani ręczna per-sesja, ani automatyczna (TTL). Struktury danych (sesja importu + storage plików) są zaprojektowane tak, by w przyszłości skasowanie sesji usuwało równocześnie powiązaną zawartość pliku ze storage, ale sama akcja kasowania pozostaje poza MVP.
+- **Reconciliacja / sprzątanie osieroconych obiektów w storage.** Brak cyklicznego skanu uzgadniającego prywatny bucket plików wsadu z tabelą `import_files`: obiekty fizycznie obecne w storage, którym nie odpowiada żaden wiersz `import_files` (np. po nieudanym zapisie referencji po uploadzie, albo wgrane bezpośrednio przez Storage API z pominięciem endpointu), nie są automatycznie wykrywane ani usuwane. **Odrębne od auto-cleanup TTL** (czyszczenie po czasie) i od kaskadowego usuwania plików przy kasowaniu sesji — dotyczy sierot bez wiersza-rodzica. Izolacja per-user (RLS) pozostaje nienaruszona; to dług operacyjny → V2.
 
 ## Open Questions
 

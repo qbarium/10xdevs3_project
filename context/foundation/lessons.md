@@ -22,3 +22,17 @@
 - **Problem**: Przy usuwaniu wiersza `auth.users` kaskada chce skasować `import_sessions`, ale `items` wciąż je referują. `RESTRICT` jest **nieodraczalny i sprawdzany natychmiast** → zgłasza błąd i blokuje całe usunięcie konta, mimo że `items` i tak zniknęłyby własną kaskadą `user_id`. Plan wybrał `restrict` dla ochrony audit trail („nie da się skasować sesji z itemami"), nie dostrzegając kolizji z intencją `on delete cascade` z `auth.users` na tej samej tabeli — sprzeczność wewnątrz jednej migracji.
 - **Rule**: Gdy tabela-dziecko referuje i rodzica, i dziadka, a oba mają kaskadę z tego samego korzenia, NIE używaj `on delete restrict` na FK do rodzica — `RESTRICT` jest nieodraczalny i wywróci kaskadę dziadka. Wybierz akcję świadomie: `set null` (link zrywalny, dziecko zostaje — wymaga nullable FK), `cascade` (dziecko ginie z rodzicem) albo `no action` (domyślny, **odraczalny** do końca instrukcji — przepuszcza kaskadę, a przy samodzielnym `DELETE` nadal chroni przed osieroceniem). Rozstrzygnięcie S-02: `set null` (kolumna i tak nullable pod itemy ręczne z S-07; FR-015 złagodzony do best-effort audit trail).
 - **Applies to**: plan, plan-review, implement, impl-review
+
+## Modeluj schemat wg docelowej kardynalności relacji, nie wg ograniczenia MVP
+
+- **Context**: S-02 (first-gated-generation, Faza 6): referencja pliku wsadu do sesji importu. MVP wymusza „jeden plik na submit", więc kuszące było dodanie kolumn `file_*` wprost na `import_sessions` (1:1).
+- **Problem**: „Jeden plik na submit" to ograniczenie UI/logiki uploadu, NIE domeny — docelowo sesja może mieć wiele plików. Kolumny `file_*` zabetonowałyby 1:1 w schemacie; rozszerzenie do 1:N wymagałoby później migracji rozbijającej kolumny na osobną tabelę.
+- **Rule**: Gdy relacja jest konceptualnie 1:N, modeluj ją osobną tabelą z FK od razu (`import_files` → `import_sessions`), nawet jeśli MVP ogranicza ją do 1:1. Ograniczenie liczby egzekwuj w warstwie aplikacji, nie w kształcie schematu — schemat ma odzwierciedlać domenę, nie chwilowy zakres MVP.
+- **Applies to**: plan, plan-review, implement
+
+## Konfiguracja wrażliwa na bezpieczeństwo: waliduj fail-closed w kodzie, nie ufaj env
+
+- **Context**: Warstwa LLM S-02 (`src/lib/config/ai.ts`): `OPENAI_BASE_URL`/`OPENAI_STORE` jako `envField` `access:"public"` z domyślnymi; odszyfrowany klucz BYOK leci w `Authorization` do `baseUrl` (`classifier.ts`), a `store:false` to inwariant prywatności wsadu. Wychwycone w `/10x-impl-review` (F2).
+- **Problem**: Parametry wrażliwe brane z env bez walidacji (inaczej niż `CLASSIFICATION_HASH_SALT`, fail-closed). Nadpisanie `OPENAI_BASE_URL` wrogą wartością → egress klucza BYOK do dowolnego hosta; `OPENAI_STORE=true` → cicha retencja treści wsadu mimo guardrailu. Env to nie granica zaufania.
+- **Rule**: Parametr konfiguracji, którego błędna wartość łamie inwariant bezpieczeństwa/prywatności (cel egress sekretu, „nie przechowuj", endpoint auth) waliduj **fail-closed w kodzie przy odczycie** — rzuć i odmów, zamiast cicho zaufać env. Allowlistę dozwolonych wartości (np. hostów egress) trzymaj w KODZIE, nie w env (env mogłoby ją rozszerzyć). Realizacja S-02: `assertSafeBaseUrl` (https + allowlista) + `assertNoStore` w `ai.ts`.
+- **Applies to**: implement, impl-review, plan, plan-review
