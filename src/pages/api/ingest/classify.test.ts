@@ -17,6 +17,7 @@ vi.mock("@/lib/services/import-session", () => ({
 vi.mock("@/lib/services/file-upload", () => ({
   assertValidImportFile: vi.fn(),
   uploadImportFile: vi.fn(),
+  MAX_FILE_BYTES: 307_200, // 300 KB — używane przez wczesny odrzut po Content-Length
 }));
 vi.mock("@/lib/text/decode", () => ({ decodeFile: vi.fn() }));
 
@@ -188,6 +189,10 @@ describe("POST /api/ingest/classify", () => {
     expect(((await res.json()) as ResultBody).error).toContain("300 KB");
     expect(vi.mocked(createSession)).not.toHaveBeenCalled();
   });
+
+  // Uwaga: wczesny odrzut po Content-Length (413, guard DoS, classify.ts) NIE jest tu testowany —
+  // Content-Length to nagłówek transportowy ustawiany dopiero przy realnym wysłaniu; syntetyczny
+  // Request w vitest zwraca dla niego null. Guard działa w runtime Workers (realne żądanie ma nagłówek).
 
   it("plik: błąd dekodowania → 200 failed/encoding, bez klasyfikacji", async () => {
     vi.mocked(decodeFile).mockImplementation(() => {

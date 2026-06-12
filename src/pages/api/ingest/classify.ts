@@ -19,7 +19,7 @@ import type { APIRoute } from "astro";
 import { classify } from "@/lib/ai/classifier";
 import { AI_REQUEST_TIMEOUT_MS } from "@/lib/config/ai";
 import { decryptApiKey } from "@/lib/services/byok-crypto";
-import { assertValidImportFile, uploadImportFile } from "@/lib/services/file-upload";
+import { assertValidImportFile, MAX_FILE_BYTES, uploadImportFile } from "@/lib/services/file-upload";
 import { createSession, failSession, finalizeEmpty, persistItems } from "@/lib/services/import-session";
 import { logger, reportError } from "@/lib/services/logger";
 import { getEncryptedApiKey } from "@/lib/services/profile-key";
@@ -41,6 +41,9 @@ export const prerender = false;
 
 /** Techniczny safety net FR-020: > 100 itemów to anomalia, NIE limit produktowy widoczny dla usera. */
 const MAX_ITEMS = 100;
+
+/** Margines na kopertę multipart (boundary + nagłówki części) doliczany do MAX_FILE_BYTES przy wczesnym odrzucie. */
+const MULTIPART_ENVELOPE_MARGIN_BYTES = 16 * 1024;
 
 function json(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), {
@@ -116,6 +119,13 @@ export const POST: APIRoute = async (context) => {
   let pasteText = "";
   let file: File | null = null;
   if (isMultipart) {
+    // Wczesny, best-effort odrzut po Content-Length, zanim serwer zbuforuje całe ciało (guard DoS).
+    // Content-Length obejmuje kopertę multipart, stąd margines. Dokładną walidację rozmiaru pliku robi
+    // assertValidImportFile po formData(). Brak nagłówka (chunked) → Number(null)=0 → check się pomija.
+    const declaredLength = Number(context.request.headers.get("content-length"));
+    if (Number.isFinite(declaredLength) && declaredLength > MAX_FILE_BYTES + MULTIPART_ENVELOPE_MARGIN_BYTES) {
+      return json({ ok: false, error: "Plik przekracza limit 300 KB." }, 413);
+    }
     let field: FormDataEntryValue | null;
     try {
       field = (await context.request.formData()).get("file");
