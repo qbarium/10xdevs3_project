@@ -3,7 +3,7 @@ project: TaskerLight
 version: 1
 status: draft
 created: 2026-06-05
-updated: 2026-06-09
+updated: 2026-06-12
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -32,7 +32,7 @@ TaskerLight przyjmuje surowy, nieuporządkowany wsad głosowo-tekstowy i rozdzie
 | ----- | ------------------------ | -------------------------------------------------------------------------- | ----------------- | ------------------------------------------ | -------- |
 | F-01  | byok-secret-security     | (fundament) klucze BYOK szyfrowane w spoczynku + maskowane w logach        | —                 | FR-021, FR-026, NFR Klucze/Prywatność      | done |
 | S-01  | byok-key-config          | zapisać, podejrzeć zamaskowany i usunąć własny klucz API; submit bramkowany | F-01              | US-06, FR-021, FR-022, FR-024              | done |
-| S-02  | first-gated-generation   | wkleić tekst/plik i zobaczyć typowane itemy jako pendingi do akceptacji     | S-01, F-01  | US-01, FR-002, FR-003, FR-005, FR-006, FR-015, FR-018, FR-020, FR-023, FR-025 | in-progress |
+| S-02  | first-gated-generation   | wkleić tekst/plik i zobaczyć typowane itemy jako pendingi do akceptacji     | S-01, F-01  | US-01, FR-002, FR-003, FR-005, FR-006, FR-015, FR-018, FR-020, FR-023, FR-025 | done |
 | S-03  | validation-accept-reject | zaakceptować (z edycją) lub odrzucić pendingi; zaakceptowane → Aktywne      | S-02              | US-02, US-03, FR-007, FR-008, FR-010, FR-012 | proposed |
 | S-04  | task-operational-lifecycle | zmieniać stan operacyjny zadania (nowe/w realizacji/zrealizowane/anulowane) | S-03              | US-04, FR-009                              | proposed |
 | S-05  | unified-list-and-edit    | przeglądać Aktywne/Zakończone/Anulowane (filtr typu) i edytować itemy       | S-03              | FR-008, FR-011                             | proposed |
@@ -105,7 +105,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
   - Konkretny model klasyfikacji (okno ≥ 128k tokenów) — Właściciel: spec techniczna (PRD OQ3). Blokuje: nie.
   - Polityka retry przy błędach 5xx/timeout dostawcy AI — Właściciel: spec techniczna. Blokuje: nie.
 - **Ryzyko:** Najcięższy, najbardziej ryzykowny wycinek — łączy wejście, synchroniczny pipeline klasyfikacji, sesję importu i schemat itemów (model dwóch niezależnych wymiarów: stan akceptacji × stan operacyjny). Sekwencjonowany jako gwiazda przewodnia, bo dowodzi sensu produktu; `/10x-plan` może go podzielić na kilka zmian. Runtime: 60 s klasyfikacji to wall-clock fetch-wait (nie liczy się do CPU), więc plan Free wystarcza dla typowych wsadów; duże wsady (do 100 itemów, FR-020) mogą przekroczyć 10 ms CPU na Free — monitoruj `wrangler tail`, podnieś do Workers Paid + `cpu_ms` jeśli pojawi się „Exceeded CPU" (`deploy-plan.md` Faza 8). To bramka wydajności, nie twardy prerekwizyt.
-- **Status:** proposed
+- **Status:** done
 
 ### S-03: Walidacja — akceptacja, odrzucenie, edycja w stagingu
 
@@ -227,6 +227,11 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Mitygacja prompt injection** — Dlaczego: PRD Non-Goal; ryzyko przeniesione na klucz BYOK użytkownika.
 - **Archiwizacja itemów / per-item permanent delete / auto-cleanup (TTL)** — Dlaczego: PRD Non-Goals.
 - **Choice modelu klasyfikacji w profilu / undo toast / progresywne ostrzeganie pola / zewnętrzny KMS / usuwanie sesji importu** — Dlaczego: PRD Non-Goals.
+
+## Done
+
+- **S-01: użytkownik może zapisać własny klucz API zewnętrznego dostawcy AI w profilu, podejrzeć go w postaci zamaskowanej (prefiks + ostatnie znaki) i usunąć; akcje wymagające klucza (submit) są zablokowane z komunikatem i linkiem do strony dostawcy, dopóki klucz nie jest skonfigurowany.** — Zarchiwizowano 2026-06-12 → `context/archive/2026-06-08-byok-key-config/`. Lekcja: —.
+- **S-02: użytkownik może wkleić tekst (do 100 000 znaków) lub wrzucić jeden plik `.txt`/`.md` (do 300 KB), kliknąć submit, zobaczyć blokujący wskaźnik aktywności podczas synchronicznej klasyfikacji, a po jej zakończeniu — typowane itemy jako pendingi w widoku „Elementy do akceptacji".** — Zarchiwizowano 2026-06-12 → `context/archive/2026-06-10-first-gated-generation/`. Lekcja: konfiguracja LLM fail-closed + modeluj schemat wg kardynalności (lessons.md); FR-015 złagodzony do best-effort (set null).
 
 ## Zrobione
 
