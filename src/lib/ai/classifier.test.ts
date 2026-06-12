@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // (config/ai.ts + user-hash.ts), więc musi dostarczyć komplet zmiennych warstwy.
 vi.mock("astro:env/server", () => ({
   CLASSIFIER_MODEL: "gpt-4o-mini",
-  OPENAI_BASE_URL: "https://api.test/v1",
+  OPENAI_BASE_URL: "https://api.openai.com/v1", // host allowlistowy (walidacja fail-closed w ai.ts, F2)
   OPENAI_TEMPERATURE: 0.5,
   OPENAI_MAX_TOKENS: 16000,
   OPENAI_STORE: false,
