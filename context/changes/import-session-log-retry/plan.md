@@ -324,8 +324,8 @@ Dokłada akcję „Spróbuj ponownie" jako React island z inline statusem w wier
 
 #### Automatyczne
 
-- [x] 3.1 Build + lint czyste
-- [x] 3.2 /import-sessions w PROTECTED_ROUTES
+- [x] 3.1 Build + lint czyste — 34ff83b
+- [x] 3.2 /import-sessions w PROTECTED_ROUTES — 34ff83b
 
 #### Ręczne
 
@@ -335,7 +335,7 @@ Dokłada akcję „Spróbuj ponownie" jako React island z inline statusem w wier
 
 #### Automatyczne
 
-- [ ] 4.1 Build + lint czyste
+- [x] 4.1 Build + lint czyste
 - [ ] 4.2 (opcjonalnie) test hooka mapującego odpowiedź
 
 #### Ręczne

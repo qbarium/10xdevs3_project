@@ -1,11 +1,12 @@
 ---
-// Read-only prezentacja dziennika sesji importu (S-08, Faza 3). Per sesja: skrócony podgląd wejścia
-// (paste → pierwsze ~120 znaków; plik → nazwa), typ (Wklejka/Plik), status-badge (kolor wg statusu),
-// liczba itemów lub czytelny komunikat błędu. Slot na przycisk retry (Faza 4) renderowany tylko dla
-// sesji `failed`. Styl spójny z PendingItemsList (cosmic). Bez akcji — interaktywność dokłada Faza 4.
+// Prezentacja dziennika sesji importu (S-08). Per sesja: skrócony podgląd wejścia (paste → pierwsze
+// ~120 znaków; plik → nazwa), typ (Wklejka/Plik), status-badge (kolor wg statusu), liczba itemów lub
+// czytelny komunikat błędu. Dla sesji `failed` montowany jest React island RetrySessionButton (Faza 4)
+// na inline ponowienie. Styl spójny z PendingItemsList (cosmic).
 import type { ImportSessionStatus, ImportSessionWithFile } from "@/types";
 import { importSessionStatusLabel } from "@/lib/labels";
 import { ingestErrorMessage } from "@/lib/ingest-errors";
+import { RetrySessionButton } from "@/components/import-sessions/RetrySessionButton";
 
 interface Props {
   sessions: ImportSessionWithFile[];
@@ -87,7 +88,7 @@ function formatDate(iso: string): string {
             {session.status === "failed" && (
               <div class="flex flex-col gap-2">
                 <p class="text-red-200/90">{ingestErrorMessage(session.error_message)}</p>
-                {/* Slot retry (Faza 4): RetrySessionButton montowany dla sesji failed. */}
+                <RetrySessionButton client:load sessionId={session.id} />
               </div>
             )}
           </div>
