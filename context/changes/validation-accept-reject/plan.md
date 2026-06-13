@@ -389,9 +389,9 @@ Brak migracji — schemat S-02 kompletny. `updated_at` ustawiany jawnie w serwis
 
 #### Automatyczne
 
-- [x] 4.1 Lint przechodzi (`npm run lint`)
-- [x] 4.2 Build przechodzi (`npm run build`)
-- [x] 4.3 Testy jednostkowe formularza edycji przechodzą (`npm test`)
+- [x] 4.1 Lint przechodzi (`npm run lint`) — 1ff804f
+- [x] 4.2 Build przechodzi (`npm run build`) — 1ff804f
+- [x] 4.3 Testy jednostkowe formularza edycji przechodzą (`npm test`) — 1ff804f
 
 #### Ręczne
 
