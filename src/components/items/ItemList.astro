@@ -1,0 +1,39 @@
+---
+// Współdzielona read-only prezentacja dowolnej listy itemów (typ + tytuł + opis + etykieta statusu).
+// Używana przez widoki Aktywne i Kosz (S-03). Styl spójny z PendingItemsList (cosmic). Bez akcji —
+// interaktywność (zaznaczanie/edycja) dotyczy wyłącznie pendingów (React island, Faza 3).
+import type { Item } from "@/types";
+import { acceptanceStatusLabel, itemTypeLabel } from "@/lib/labels";
+
+interface Props {
+  items: Item[];
+  emptyLabel?: string;
+}
+
+const { items, emptyLabel = "Brak elementów." } = Astro.props;
+---
+
+{
+  items.length === 0 ? (
+    <div role="status" class="rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70">
+      {emptyLabel}
+    </div>
+  ) : (
+    <div class="flex flex-col gap-3">
+      {items.map((item) => (
+        <article class="rounded-xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="inline-block rounded-full border border-purple-300/30 bg-purple-400/10 px-2 py-0.5 text-xs font-medium text-purple-100">
+              {itemTypeLabel(item.type)}
+            </span>
+            <span class="inline-block rounded-full border border-white/15 bg-white/5 px-2 py-0.5 text-xs font-medium text-white/60">
+              {acceptanceStatusLabel(item.acceptance_status)}
+            </span>
+          </div>
+          <h3 class="mt-2 font-semibold text-white/90">{item.title}</h3>
+          {item.description && <p class="mt-1 text-sm whitespace-pre-wrap text-white/70">{item.description}</p>}
+        </article>
+      ))}
+    </div>
+  )
+}

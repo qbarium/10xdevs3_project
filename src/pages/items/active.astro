@@ -1,40 +1,40 @@
 ---
+// Widok „Aktywne" — read-only lista zaakceptowanych itemów. SSR, chroniony middleware
+// (PROTECTED_ROUTES obejmuje prefiks /items). Dane pobierane serwerowo (klient z cookies usera →
+// RLS izoluje); przejściowy błąd → pusta lista (łagodna degradacja, wzorzec items.astro).
 import Layout from "@/layouts/Layout.astro";
 import Topbar from "@/components/Topbar.astro";
 import MainFilterNav from "@/components/items/MainFilterNav.astro";
-import PendingItemsList from "@/components/items/PendingItemsList.astro";
+import ItemList from "@/components/items/ItemList.astro";
 import { createClient } from "@/lib/supabase";
-import { getPendingItems } from "@/lib/services/items";
+import { getAcceptedItems } from "@/lib/services/items";
 import type { Item } from "@/types";
 
 export const prerender = false;
 
 const { user } = Astro.locals;
 
-// Middleware chroni /items (PROTECTED_ROUTES) — `user` zawsze ustawiony. Pendingi liczymy serwerowo
-// (klient z cookies usera → RLS izoluje). To cel auto-przejścia z modalu klasyfikacji (Faza 4).
 let items: Item[] = [];
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 if (user && supabase) {
   try {
-    items = await getPendingItems(supabase, user.id);
+    items = await getAcceptedItems(supabase, user.id);
   } catch {
-    // Przejściowy błąd odczytu → pusta lista (łagodna degradacja).
     items = [];
   }
 }
 ---
 
-<Layout title="Elementy do akceptacji">
+<Layout title="Aktywne">
   <div class="bg-cosmic min-h-screen p-4">
     <div class="mx-auto max-w-2xl">
       <Topbar />
       <main class="mt-8 flex flex-col gap-6">
         <h1 class="bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-2xl font-bold text-transparent">
-          Elementy do akceptacji
+          Aktywne
         </h1>
         <MainFilterNav />
-        <PendingItemsList items={items} />
+        <ItemList items={items} emptyLabel="Brak aktywnych elementów." />
       </main>
     </div>
   </div>

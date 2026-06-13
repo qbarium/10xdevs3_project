@@ -344,10 +344,10 @@ Brak migracji — schemat S-02 kompletny. `updated_at` ustawiany jawnie w serwis
 
 #### Automatyczne
 
-- [x] 1.1 Lint przechodzi (`npm run lint`)
-- [x] 1.2 Build/typecheck przechodzi (`npm run build`)
-- [x] 1.3 Testy jednostkowe serwisu mutacji przechodzą (`npm test`)
-- [x] 1.4 Testy integracyjne RLS + status-guard + zod przechodzą (`npm run test:integration`)
+- [x] 1.1 Lint przechodzi (`npm run lint`) — c7adb7c
+- [x] 1.2 Build/typecheck przechodzi (`npm run build`) — c7adb7c
+- [x] 1.3 Testy jednostkowe serwisu mutacji przechodzą (`npm test`) — c7adb7c
+- [x] 1.4 Testy integracyjne RLS + status-guard + zod przechodzą (`npm run test:integration`) — c7adb7c
 
 #### Ręczne
 
@@ -359,8 +359,8 @@ Brak migracji — schemat S-02 kompletny. `updated_at` ustawiany jawnie w serwis
 
 #### Automatyczne
 
-- [ ] 2.1 Lint przechodzi (`npm run lint`)
-- [ ] 2.2 Build przechodzi (`npm run build`)
+- [x] 2.1 Lint przechodzi (`npm run lint`)
+- [x] 2.2 Build przechodzi (`npm run build`)
 
 #### Ręczne
 
