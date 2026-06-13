@@ -2,7 +2,7 @@
 // Record<Union, string> wymusza kompletność mapowania w czasie kompilacji — dodanie wartości enum
 // bez etykiety nie skompiluje się.
 
-import type { AcceptanceStatus, ItemType, OperationalStatus } from "@/types";
+import type { AcceptanceStatus, ImportSessionStatus, ItemType, OperationalStatus } from "@/types";
 
 const ITEM_TYPE_LABELS: Record<ItemType, string> = {
   task: "Zadanie",
@@ -26,6 +26,13 @@ const ACCEPTANCE_STATUS_LABELS: Record<AcceptanceStatus, string> = {
   deleted: "Usunięte",
 };
 
+const IMPORT_SESSION_STATUS_LABELS: Record<ImportSessionStatus, string> = {
+  processing: "Przetwarzanie…",
+  completed_with_items: "Gotowe",
+  completed_no_items: "Brak itemów",
+  failed: "Błąd",
+};
+
 export function itemTypeLabel(type: ItemType): string {
   return ITEM_TYPE_LABELS[type];
 }
@@ -36,4 +43,8 @@ export function operationalStatusLabel(status: OperationalStatus): string {
 
 export function acceptanceStatusLabel(status: AcceptanceStatus): string {
   return ACCEPTANCE_STATUS_LABELS[status];
+}
+
+export function importSessionStatusLabel(status: ImportSessionStatus): string {
+  return IMPORT_SESSION_STATUS_LABELS[status];
 }

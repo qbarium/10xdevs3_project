@@ -294,11 +294,11 @@ Dokłada akcję „Spróbuj ponownie" jako React island z inline statusem w wier
 
 #### Automatyczne
 
-- [ ] 1.1 Typecheck/build bez błędów
-- [ ] 1.2 Lint czysty
-- [ ] 1.3 Testy jednostkowe serwisu odczytu + loadSessionInput (paste/plik) przechodzą
-- [ ] 1.4 Test labela (kompletność enuma) przechodzi
-- [ ] 1.5 Testy ingestu z S-02 nadal zielone po ekstrakcji rdzenia
+- [x] 1.1 Typecheck/build bez błędów
+- [x] 1.2 Lint czysty
+- [x] 1.3 Testy jednostkowe serwisu odczytu + loadSessionInput (paste/plik) przechodzą
+- [x] 1.4 Test labela (kompletność enuma) przechodzi
+- [x] 1.5 Testy ingestu z S-02 nadal zielone po ekstrakcji rdzenia
 
 #### Ręczne
 
