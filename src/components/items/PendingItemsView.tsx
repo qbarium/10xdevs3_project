@@ -2,6 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { useItemMutation } from "@/components/hooks/useItemMutation";
+import EditItemDialog from "@/components/items/EditItemDialog";
 import {
   allIds,
   isAllSelected,
@@ -47,6 +48,7 @@ export default function PendingItemsView({ initialItems }: Props) {
   const [items, setItems] = useState<Item[]>(initialItems);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmRequest, setConfirmRequest] = useState<{ action: PendingAction; ids: string[] } | null>(null);
+  const [editing, setEditing] = useState<Item | null>(null);
   const { bulkAccept, bulkReject, pending } = useItemMutation();
 
   const allSelected = isAllSelected(selected.size, items.length);
@@ -93,6 +95,22 @@ export default function PendingItemsView({ initialItems }: Props) {
     const { action, ids } = confirmRequest;
     setConfirmRequest(null);
     void execute(action, ids);
+  }
+
+  // Edycja zapisana — podmiana itemu w miejscu (zostaje pending, nie znika z listy).
+  function handleSaved(updated: Item): void {
+    setItems((prev) => prev.map((current) => (current.id === updated.id ? updated : current)));
+  }
+
+  // 404 podczas edycji (item nie jest już pending) — usuń z listy i z zaznaczenia (poprawka F2).
+  function handleRemoved(id: string): void {
+    setItems((prev) => prev.filter((current) => current.id !== id));
+    setSelected((prev) => {
+      if (!prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
   }
 
   return (
@@ -166,6 +184,15 @@ export default function PendingItemsView({ initialItems }: Props) {
                   <p className="mt-1 text-sm whitespace-pre-wrap text-white/70">{item.description}</p>
                 )}
               </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setEditing(item);
+                }}
+              >
+                Edytuj
+              </Button>
             </article>
           ))}
         </>
@@ -203,6 +230,19 @@ export default function PendingItemsView({ initialItems }: Props) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {editing && (
+        <EditItemDialog
+          key={editing.id}
+          item={editing}
+          open
+          onOpenChange={(open) => {
+            if (!open) setEditing(null);
+          }}
+          onSaved={handleSaved}
+          onNotFound={handleRemoved}
+        />
+      )}
     </div>
   );
 }
