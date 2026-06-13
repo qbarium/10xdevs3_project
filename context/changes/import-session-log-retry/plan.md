@@ -335,7 +335,7 @@ Dokłada akcję „Spróbuj ponownie" jako React island z inline statusem w wier
 
 #### Automatyczne
 
-- [x] 4.1 Build + lint czyste
+- [x] 4.1 Build + lint czyste — d689114
 - [ ] 4.2 (opcjonalnie) test hooka mapującego odpowiedź
 
 #### Ręczne
