@@ -359,8 +359,8 @@ Brak migracji — schemat S-02 kompletny. `updated_at` ustawiany jawnie w serwis
 
 #### Automatyczne
 
-- [x] 2.1 Lint przechodzi (`npm run lint`)
-- [x] 2.2 Build przechodzi (`npm run build`)
+- [x] 2.1 Lint przechodzi (`npm run lint`) — 185a9ea
+- [x] 2.2 Build przechodzi (`npm run build`) — 185a9ea
 
 #### Ręczne
 
@@ -372,10 +372,10 @@ Brak migracji — schemat S-02 kompletny. `updated_at` ustawiany jawnie w serwis
 
 #### Automatyczne
 
-- [ ] 3.1 Lint przechodzi (`npm run lint`)
-- [ ] 3.2 Build przechodzi (`npm run build`)
-- [ ] 3.3 `npm audit` dla `sonner` czysty lub ryzyko zaakceptowane
-- [ ] 3.4 Testy jednostkowe zaznaczania / optimistic-rollback przechodzą (`npm test`)
+- [x] 3.1 Lint przechodzi (`npm run lint`)
+- [x] 3.2 Build przechodzi (`npm run build`)
+- [x] 3.3 `npm audit` dla `sonner` czysty lub ryzyko zaakceptowane
+- [x] 3.4 Testy jednostkowe zaznaczania / optimistic-rollback przechodzą (`npm test`)
 
 #### Ręczne
 

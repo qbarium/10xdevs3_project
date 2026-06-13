@@ -2,7 +2,7 @@
 import Layout from "@/layouts/Layout.astro";
 import Topbar from "@/components/Topbar.astro";
 import MainFilterNav from "@/components/items/MainFilterNav.astro";
-import PendingItemsList from "@/components/items/PendingItemsList.astro";
+import PendingItemsView from "@/components/items/PendingItemsView.tsx";
 import { createClient } from "@/lib/supabase";
 import { getPendingItems } from "@/lib/services/items";
 import type { Item } from "@/types";
@@ -34,7 +34,7 @@ if (user && supabase) {
           Elementy do akceptacji
         </h1>
         <MainFilterNav />
-        <PendingItemsList items={items} />
+        <PendingItemsView client:load initialItems={items} />
       </main>
     </div>
   </div>
