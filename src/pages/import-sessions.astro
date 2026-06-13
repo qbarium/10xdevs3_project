@@ -1,0 +1,84 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Topbar from "@/components/Topbar.astro";
+import SessionsList from "@/components/import-sessions/SessionsList.astro";
+import { createClient } from "@/lib/supabase";
+import { getImportSessions } from "@/lib/services/import-session";
+import type { GetImportSessionsOptions } from "@/lib/services/import-session";
+import type { ImportSessionStatus, ImportSessionWithFile } from "@/types";
+import { importSessionStatusLabel } from "@/lib/labels";
+
+export const prerender = false;
+
+const { user } = Astro.locals;
+
+// Sort/filtr z query-paramów (server-side, lekkie). Whitelist — nieznane wartości → fallback domyślny
+// (sort malejąco, brak filtra statusu). To wąski wariant tylko dla dziennika; pełne filtry to S-09.
+const sortParam = Astro.url.searchParams.get("sort");
+const sort: GetImportSessionsOptions["sort"] = sortParam === "created_asc" ? "created_asc" : "created_desc";
+
+const STATUS_VALUES: ImportSessionStatus[] = ["processing", "completed_with_items", "completed_no_items", "failed"];
+const statusParam = Astro.url.searchParams.get("status");
+const status = STATUS_VALUES.includes(statusParam as ImportSessionStatus)
+  ? (statusParam as ImportSessionStatus)
+  : undefined;
+
+// Middleware chroni /import-sessions (PROTECTED_ROUTES) — `user` zawsze ustawiony. Lista serwerowo
+// (klient z cookies usera → RLS izoluje per-user). Przejściowy błąd odczytu → pusta lista (degradacja).
+let sessions: ImportSessionWithFile[] = [];
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+if (user && supabase) {
+  try {
+    sessions = await getImportSessions(supabase, user.id, { sort, status });
+  } catch {
+    sessions = [];
+  }
+}
+
+const selectClass =
+  "rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-sm text-white/90 focus:border-purple-300/50 focus:outline-none";
+---
+
+<Layout title="Sesje importu">
+  <div class="bg-cosmic min-h-screen p-4">
+    <div class="mx-auto max-w-2xl">
+      <Topbar />
+      <main class="mt-8 flex flex-col gap-6">
+        <h1 class="bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-2xl font-bold text-transparent">
+          Sesje importu
+        </h1>
+
+        <form method="get" class="flex flex-wrap items-end gap-3">
+          <label class="flex flex-col gap-1 text-xs text-white/60">
+            Sortowanie
+            <select name="sort" class:list={[selectClass]}>
+              <option value="created_desc" selected={sort === "created_desc"}>Najnowsze</option>
+              <option value="created_asc" selected={sort === "created_asc"}>Najstarsze</option>
+            </select>
+          </label>
+          <label class="flex flex-col gap-1 text-xs text-white/60">
+            Status
+            <select name="status" class:list={[selectClass]}>
+              <option value="" selected={!status}>Wszystkie</option>
+              {
+                STATUS_VALUES.map((s) => (
+                  <option value={s} selected={status === s}>
+                    {importSessionStatusLabel(s)}
+                  </option>
+                ))
+              }
+            </select>
+          </label>
+          <button
+            type="submit"
+            class="rounded-lg border border-purple-300/30 bg-purple-400/10 px-3 py-1.5 text-sm font-medium text-purple-100 transition-colors hover:bg-purple-400/20"
+          >
+            Zastosuj
+          </button>
+        </form>
+
+        <SessionsList sessions={sessions} />
+      </main>
+    </div>
+  </div>
+</Layout>

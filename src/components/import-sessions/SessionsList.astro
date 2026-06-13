@@ -1,0 +1,98 @@
+---
+// Read-only prezentacja dziennika sesji importu (S-08, Faza 3). Per sesja: skrócony podgląd wejścia
+// (paste → pierwsze ~120 znaków; plik → nazwa), typ (Wklejka/Plik), status-badge (kolor wg statusu),
+// liczba itemów lub czytelny komunikat błędu. Slot na przycisk retry (Faza 4) renderowany tylko dla
+// sesji `failed`. Styl spójny z PendingItemsList (cosmic). Bez akcji — interaktywność dokłada Faza 4.
+import type { ImportSessionStatus, ImportSessionWithFile } from "@/types";
+import { importSessionStatusLabel } from "@/lib/labels";
+import { ingestErrorMessage } from "@/lib/ingest-errors";
+
+interface Props {
+  sessions: ImportSessionWithFile[];
+}
+
+const { sessions } = Astro.props;
+
+const PREVIEW_MAX = 120;
+
+/** Skrócony, jednoliniowy podgląd wejścia: nazwa pliku albo początek paste (białe znaki zwinięte). */
+function inputPreview(session: ImportSessionWithFile): string {
+  if (session.file_name) return session.file_name;
+  const collapsed = (session.raw_input ?? "").replace(/\s+/g, " ").trim();
+  if (!collapsed) return "(pusty wsad)";
+  return collapsed.length > PREVIEW_MAX ? `${collapsed.slice(0, PREVIEW_MAX)}…` : collapsed;
+}
+
+/** Kolor badge'a statusu (tailwind) — wizualne rozróżnienie stanów przebiegu. */
+const STATUS_BADGE: Record<ImportSessionStatus, string> = {
+  processing: "border-amber-300/30 bg-amber-400/10 text-amber-100",
+  completed_with_items: "border-emerald-300/30 bg-emerald-400/10 text-emerald-100",
+  completed_no_items: "border-white/15 bg-white/10 text-white/70",
+  failed: "border-red-300/30 bg-red-400/10 text-red-100",
+};
+
+function itemNoun(n: number): string {
+  if (n === 1) return "item";
+  const tens = n % 100;
+  const units = n % 10;
+  if (units >= 2 && units <= 4 && (tens < 12 || tens > 14)) return "itemy";
+  return "itemów";
+}
+
+/** Data bez zależności od ICU runtime: ISO → „RRRR-MM-DD GG:MM". */
+function formatDate(iso: string): string {
+  return iso.slice(0, 16).replace("T", " ");
+}
+---
+
+{
+  sessions.length === 0 ? (
+    <div role="status" class="rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70">
+      Brak sesji importu. Zaimportuj wsad, aby zobaczyć je tutaj.
+    </div>
+  ) : (
+    <ul class="flex flex-col gap-3">
+      {sessions.map((session) => (
+        <li class="rounded-xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-xs font-medium text-white/70">
+                  {session.file_name ? "Plik" : "Wklejka"}
+                </span>
+                <time class="text-xs text-white/50">{formatDate(session.created_at)}</time>
+              </div>
+              <p class="mt-1 truncate text-sm text-white/90" title={inputPreview(session)}>
+                {inputPreview(session)}
+              </p>
+            </div>
+            <span
+              class:list={[
+                "shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium",
+                STATUS_BADGE[session.status],
+              ]}
+            >
+              {importSessionStatusLabel(session.status)}
+            </span>
+          </div>
+
+          <div class="mt-2 text-sm">
+            {session.status === "completed_with_items" && (
+              <a href="/items" class="text-purple-300 transition-colors hover:text-purple-100 hover:underline">
+                {session.item_count ?? 0} {itemNoun(session.item_count ?? 0)} — przejdź do walidacji
+              </a>
+            )}
+            {session.status === "completed_no_items" && <span class="text-white/60">Brak itemów do akceptacji.</span>}
+            {session.status === "processing" && <span class="text-white/60">Przetwarzanie w toku…</span>}
+            {session.status === "failed" && (
+              <div class="flex flex-col gap-2">
+                <p class="text-red-200/90">{ingestErrorMessage(session.error_message)}</p>
+                {/* Slot retry (Faza 4): RetrySessionButton montowany dla sesji failed. */}
+              </div>
+            )}
+          </div>
+        </li>
+      ))}
+    </ul>
+  )
+}

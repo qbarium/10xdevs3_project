@@ -308,13 +308,13 @@ Dokłada akcję „Spróbuj ponownie" jako React island z inline statusem w wier
 
 #### Automatyczne
 
-- [x] 2.1 Integ.: ścieżka pozytywna (failed → completed, ten sam sessionId)
-- [x] 2.2 Integ.: ścieżka negatywna (klasyfikacja pada ponownie → failed + kod)
-- [x] 2.3 Integ.: klucz usunięty → missing_key, brak klasyfikacji
-- [x] 2.4 Integ.: retry sesji nie-failed → 409 not_retryable
-- [x] 2.5 Integ.: plik re-dekod pada → failed/encoding
-- [x] 2.6 Integ.: RLS cudza sesja → 404
-- [x] 2.7 Lint + typecheck czyste
+- [x] 2.1 Integ.: ścieżka pozytywna (failed → completed, ten sam sessionId) — 4446bff
+- [x] 2.2 Integ.: ścieżka negatywna (klasyfikacja pada ponownie → failed + kod) — 4446bff
+- [x] 2.3 Integ.: klucz usunięty → missing_key, brak klasyfikacji — 4446bff
+- [x] 2.4 Integ.: retry sesji nie-failed → 409 not_retryable — 4446bff
+- [x] 2.5 Integ.: plik re-dekod pada → failed/encoding — 4446bff
+- [x] 2.6 Integ.: RLS cudza sesja → 404 — 4446bff
+- [x] 2.7 Lint + typecheck czyste — 4446bff
 
 #### Ręczne
 
@@ -324,8 +324,8 @@ Dokłada akcję „Spróbuj ponownie" jako React island z inline statusem w wier
 
 #### Automatyczne
 
-- [ ] 3.1 Build + lint czyste
-- [ ] 3.2 /import-sessions w PROTECTED_ROUTES
+- [x] 3.1 Build + lint czyste
+- [x] 3.2 /import-sessions w PROTECTED_ROUTES
 
 #### Ręczne
 
