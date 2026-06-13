@@ -294,11 +294,11 @@ Dokłada akcję „Spróbuj ponownie" jako React island z inline statusem w wier
 
 #### Automatyczne
 
-- [x] 1.1 Typecheck/build bez błędów
-- [x] 1.2 Lint czysty
-- [x] 1.3 Testy jednostkowe serwisu odczytu + loadSessionInput (paste/plik) przechodzą
-- [x] 1.4 Test labela (kompletność enuma) przechodzi
-- [x] 1.5 Testy ingestu z S-02 nadal zielone po ekstrakcji rdzenia
+- [x] 1.1 Typecheck/build bez błędów — 479e46e
+- [x] 1.2 Lint czysty — 479e46e
+- [x] 1.3 Testy jednostkowe serwisu odczytu + loadSessionInput (paste/plik) przechodzą — 479e46e
+- [x] 1.4 Test labela (kompletność enuma) przechodzi — 479e46e
+- [x] 1.5 Testy ingestu z S-02 nadal zielone po ekstrakcji rdzenia — 479e46e
 
 #### Ręczne
 
@@ -308,13 +308,13 @@ Dokłada akcję „Spróbuj ponownie" jako React island z inline statusem w wier
 
 #### Automatyczne
 
-- [ ] 2.1 Integ.: ścieżka pozytywna (failed → completed, ten sam sessionId)
-- [ ] 2.2 Integ.: ścieżka negatywna (klasyfikacja pada ponownie → failed + kod)
-- [ ] 2.3 Integ.: klucz usunięty → missing_key, brak klasyfikacji
-- [ ] 2.4 Integ.: retry sesji nie-failed → 409 not_retryable
-- [ ] 2.5 Integ.: plik re-dekod pada → failed/encoding
-- [ ] 2.6 Integ.: RLS cudza sesja → 404
-- [ ] 2.7 Lint + typecheck czyste
+- [x] 2.1 Integ.: ścieżka pozytywna (failed → completed, ten sam sessionId)
+- [x] 2.2 Integ.: ścieżka negatywna (klasyfikacja pada ponownie → failed + kod)
+- [x] 2.3 Integ.: klucz usunięty → missing_key, brak klasyfikacji
+- [x] 2.4 Integ.: retry sesji nie-failed → 409 not_retryable
+- [x] 2.5 Integ.: plik re-dekod pada → failed/encoding
+- [x] 2.6 Integ.: RLS cudza sesja → 404
+- [x] 2.7 Lint + typecheck czyste
 
 #### Ręczne
 
