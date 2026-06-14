@@ -65,9 +65,12 @@ export function SessionRow({ row }: { row: SessionRowData }) {
 
       <div className="mt-2 text-sm">
         {status === "completed_with_items" && (
-          <a href="/items" className="text-purple-300 transition-colors hover:text-purple-100 hover:underline">
-            {itemCount} {itemNoun(itemCount)} — przejdź do walidacji
-          </a>
+          <p className="text-emerald-200">
+            Wydzielono {itemCount} {itemNoun(itemCount)}.{" "}
+            <a href="/items" className="text-purple-300 underline transition-colors hover:text-purple-100">
+              Przejdź do walidacji
+            </a>
+          </p>
         )}
         {status === "completed_no_items" && <span className="text-white/60">Brak itemów do akceptacji.</span>}
         {status === "processing" && <span className="text-white/60">Przetwarzanie w toku…</span>}
