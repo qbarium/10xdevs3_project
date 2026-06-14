@@ -14,13 +14,20 @@ const ITEM_COLUMNS =
  * RLS, ale jawny. Wspólny trzon dla trzech filtrów głównych (pending / accepted / rejected).
  */
 async function listByAcceptance(supabase: SupabaseClient, userId: string, status: AcceptanceStatus): Promise<Item[]> {
-  const { data, error } = await supabase
-    .from("items")
-    .select(ITEM_COLUMNS)
-    .eq("user_id", userId)
-    .eq("acceptance_status", status)
-    .order("created_at", { ascending: false })
-    .overrideTypes<Item[], { merge: false }>();
+  const base = supabase.from("items").select(ITEM_COLUMNS).eq("user_id", userId).eq("acceptance_status", status);
+  // Pendingi: kolejność tworzenia (stabilna — edycja nie przestawia), `id` jako tie-breaker.
+  // Aktywne/Kosz: najpierw RECENCY AKCJI (`updated_at`) → świeżo zatwierdzone/odrzucone na górze;
+  // w obrębie jednej akcji zbiorczej `updated_at` jest wspólny (jeden statement), więc rozstrzyga
+  // `created_at, id` — IDENTYCZNIE jak na liście pendingów, więc grupa zachowuje wewnętrzną kolejność.
+  // (Paczka z jednego INSERT-u ma wspólny `created_at`; `id` to finalny deterministyczny tie-breaker.)
+  const ordered =
+    status === "pending"
+      ? base.order("created_at", { ascending: false }).order("id", { ascending: true })
+      : base
+          .order("updated_at", { ascending: false })
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: true });
+  const { data, error } = await ordered.overrideTypes<Item[], { merge: false }>();
   if (error) throw new Error("Odczyt itemów nie powiódł się.", { cause: error });
   return data;
 }
