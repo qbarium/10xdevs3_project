@@ -1,7 +1,7 @@
 ---
 change_id: validation-accept-reject
 title: Walidacja — akceptacja, odrzucenie i edycja pendingów w stagingu
-status: implemented
+status: impl_reviewed
 created: 2026-06-13
 updated: 2026-06-14
 ---

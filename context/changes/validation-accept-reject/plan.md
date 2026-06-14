@@ -337,6 +337,15 @@ Brak migracji — schemat S-02 kompletny. `updated_at` ustawiany jawnie w serwis
 - Schemat S-02: `supabase/migrations/20260610052532_classification_schema.sql`
 - Wzorce: `src/pages/api/profile/byok-key.ts`, `src/pages/api/ingest/classify.ts:48-53`, `src/lib/services/items.ts`, `src/components/hooks/useApiKey.ts`
 
+## Addendum implementacyjny (2026-06-14)
+
+Dopracowania UX naniesione po domknięciu faz (commity `f967486`, `fa1bd3e`), mieszczące się w intencji planu — żadna bariera „Czego NIE robimy" nie naruszona. Spisane, by plan pozostał źródłem prawdy (wynik `/10x-impl-review`, F2):
+
+- **Akcje inline per-item** w `PendingItemsView.tsx` — obok akcji zbiorczych każdy pending ma własne „Zatwierdź"/„Odrzuć". Współdzielą tę samą ścieżkę `execute()` (pessimistic + guard `pending`). Utwardzone zamkiem re-entry (F1, 2026-06-14).
+- **Zajawki** — opis itemu skracany (`line-clamp-2`) w widoku listy.
+- **Bramka „niezapisane zmiany"** w `EditItemDialog.tsx` — zamknięcie modala z niezapisaną edycją wymaga potwierdzenia (`confirmDiscard`).
+- **Sort recency** w serwisach odczytu (`items.ts`) — `updated_at DESC, created_at DESC, id ASC` zamiast pierwotnego `order('created_at')`, by świeżo zatwierdzone/odrzucone trafiały na górę Aktywne/Kosz.
+
 ## Progress
 
 > Konwencja: `- [ ]` oczekujące, `- [x]` wykonane. Dodaj ` — <commit sha>`, gdy krok zostanie zrealizowany. Nie zmieniaj nazw tytułów kroków. Zobacz `references/progress-format.md`.

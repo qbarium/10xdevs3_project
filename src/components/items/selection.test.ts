@@ -63,13 +63,13 @@ describe("requiresConfirmation", () => {
   });
 });
 
-describe("removeByIds (optimistic + rollback)", () => {
-  it("optimistic remove usuwa zaznaczone, snapshot pozwala na rollback", () => {
-    const snapshot = [item("a"), item("b"), item("c")];
-    const optimistic = removeByIds(snapshot, new Set(["a", "c"]));
-    expect(optimistic.map((i) => i.id)).toEqual(["b"]);
-    // snapshot nietknięty → rollback przywraca pełną listę
-    expect(snapshot.map((i) => i.id)).toEqual(["a", "b", "c"]);
+describe("removeByIds (usuwanie po sukcesie serwera)", () => {
+  it("usuwa potwierdzone id, nie mutując wejścia", () => {
+    const input = [item("a"), item("b"), item("c")];
+    const next = removeByIds(input, new Set(["a", "c"]));
+    expect(next.map((i) => i.id)).toEqual(["b"]);
+    // wejście nietknięte (czysta funkcja) → bezpieczne w setItems((prev) => removeByIds(prev, ...))
+    expect(input.map((i) => i.id)).toEqual(["a", "b", "c"]);
   });
 
   it("brak dopasowań → lista bez zmian", () => {

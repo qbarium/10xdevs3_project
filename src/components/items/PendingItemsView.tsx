@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { useItemMutation } from "@/components/hooks/useItemMutation";
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Toaster } from "@/components/ui/sonner";
 import { itemTypeLabel } from "@/lib/labels";
+import { cn } from "@/lib/utils";
 import type { Item } from "@/types";
 
 interface Props {
@@ -54,6 +55,9 @@ export default function PendingItemsView({ initialItems }: Props) {
   const [confirmRequest, setConfirmRequest] = useState<{ action: PendingAction; ids: string[] } | null>(null);
   const [editing, setEditing] = useState<Item | null>(null);
   const [inFlightIds, setInFlightIds] = useState<Set<string>>(new Set());
+  // Synchroniczny zamek re-entry akcji (F1). Stan `pending`/`inFlightIds` aktualizuje się dopiero
+  // po re-renderze; ref zmienia się natychmiast, więc blokuje drugie wejście w tym samym tknięciu.
+  const inFlightRef = useRef(false);
   const { bulkAccept, bulkReject, pending } = useItemMutation();
 
   const allSelected = isAllSelected(selected.size, items.length);
@@ -71,11 +75,16 @@ export default function PendingItemsView({ initialItems }: Props) {
   // a usuwane dopiero po sukcesie serwera. Lista nie „miga" — przy błędzie elementy wracają do
   // normalnego stanu, bez znikania i przywracania. Wspólne dla akcji zbiorczych i inline.
   async function execute(action: PendingAction, ids: string[]): Promise<void> {
+    // Zgodne z intencją „jedna akcja naraz" już wyrażoną przez `disabled={pending}` — zamek
+    // domyka wyścig, gdy dwa szybkie kliknięcia padną zanim `pending=true` się przeflushuje.
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
     setInFlightIds(new Set(ids));
     const count = action === "accept" ? await bulkAccept(ids) : await bulkReject(ids);
     if (count === null) {
       toast.error("Nie udało się wykonać akcji. Spróbuj ponownie.");
       setInFlightIds(new Set());
+      inFlightRef.current = false;
       return;
     }
     // Sukces: usuń zaznaczone z listy (wszystkie są już nie-pending) i z zaznaczenia.
@@ -95,6 +104,7 @@ export default function PendingItemsView({ initialItems }: Props) {
       toast("Wybrane elementy były już nieaktualne — lista odświeżona.");
     }
     setInFlightIds(new Set());
+    inFlightRef.current = false;
   }
 
   function requestAction(action: PendingAction): void {
@@ -183,7 +193,10 @@ export default function PendingItemsView({ initialItems }: Props) {
           {items.map((item) => (
             <article
               key={item.id}
-              className={`flex gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl transition-opacity ${inFlightIds.has(item.id) ? "pointer-events-none opacity-50" : ""}`}
+              className={cn(
+                "flex gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl transition-opacity",
+                inFlightIds.has(item.id) && "pointer-events-none opacity-50",
+              )}
             >
               <Checkbox
                 checked={selected.has(item.id)}
@@ -191,7 +204,7 @@ export default function PendingItemsView({ initialItems }: Props) {
                   toggleItem(item.id);
                 }}
                 aria-label={`Zaznacz: ${item.title}`}
-                className={`mt-1 ${CHECKBOX_CLASS}`}
+                className={cn("mt-1", CHECKBOX_CLASS)}
               />
               <div className="min-w-0 flex-1">
                 <span className="inline-block rounded-full border border-purple-300/30 bg-purple-400/10 px-2 py-0.5 text-xs font-medium text-purple-100">

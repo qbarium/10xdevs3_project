@@ -22,28 +22,29 @@ function json(body: unknown, status: number): Response {
 
 export const PATCH: APIRoute = async (context) => {
   const user = context.locals.user;
-  if (!user) return json({ ok: false, code: "unauthorized" }, 401);
+  if (!user) return json({ ok: false, code: "unauthorized", error: "Wymagane logowanie." }, 401);
 
   const idResult = z.uuid().safeParse(context.params.id);
-  if (!idResult.success) return json({ ok: false, code: "bad_request" }, 400);
+  if (!idResult.success) return json({ ok: false, code: "bad_request", error: "Nieprawidłowe żądanie." }, 400);
 
   let parsed;
   try {
     parsed = editItemSchema.safeParse(await context.request.json());
   } catch {
-    return json({ ok: false, code: "bad_request" }, 400);
+    return json({ ok: false, code: "bad_request", error: "Nieprawidłowe żądanie." }, 400);
   }
-  if (!parsed.success) return json({ ok: false, code: "bad_request" }, 400);
+  if (!parsed.success) return json({ ok: false, code: "bad_request", error: "Nieprawidłowe żądanie." }, 400);
 
   const supabase = createClient(context.request.headers, context.cookies);
-  if (!supabase) return json({ ok: false, code: "internal" }, 500);
+  if (!supabase) return json({ ok: false, code: "internal", error: "Błąd serwera." }, 500);
 
   try {
     const item = await editPendingItem(supabase, idResult.data, parsed.data);
     return json({ ok: true, item }, 200);
   } catch (err) {
-    if (err instanceof ItemNotEditableError) return json({ ok: false, code: "not_found" }, 404);
+    if (err instanceof ItemNotEditableError)
+      return json({ ok: false, code: "not_found", error: "Element nie jest już dostępny do edycji." }, 404);
     reportError(err);
-    return json({ ok: false, code: "internal" }, 500);
+    return json({ ok: false, code: "internal", error: "Błąd serwera." }, 500);
   }
 };
