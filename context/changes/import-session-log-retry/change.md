@@ -13,3 +13,7 @@ S-08 (strumień D — wejścia poboczne i diagnostyka). Wymaganie wstępne: S-02
 
 - Plan: `plan.md` · Brief: `plan-brief.md`
 - Parent Issue na GitHub: #12.
+
+## Blockers
+
+⚠️ **NIE domknięte — bloker SSR z weryfikacji ręcznej (2026-06-14).** Rdzeń (dane/endpoint/testy/przegląd) OK, ale widok `/import-sessions` wywala się na SSR („Invalid hook call / `useState` null") — dwie kopie Reacta po refaktorze listy na wyspę React (commit `081227a`). Pełny kontekst, feralne commity, co cofnąć i rekomendowane drogi naprawy → **`follow-ups/review-fixes.md`**. Board: #12 = `Blocked`. NIE archiwizować do czasu naprawy.
