@@ -17,6 +17,7 @@
 import type { APIRoute } from "astro";
 
 import { classifyResultToResponse, runClassification } from "@/lib/ai/classify-core";
+import { json } from "@/lib/http";
 import { decryptApiKey } from "@/lib/services/byok-crypto";
 import { assertValidImportFile, MAX_FILE_BYTES, uploadImportFile } from "@/lib/services/file-upload";
 import { createSession, failSession } from "@/lib/services/import-session";
@@ -31,13 +32,6 @@ export const prerender = false;
 
 /** Margines na kopertę multipart (boundary + nagłówki części) doliczany do MAX_FILE_BYTES przy wczesnym odrzucie. */
 const MULTIPART_ENVELOPE_MARGIN_BYTES = 16 * 1024;
-
-function json(body: unknown, status: number): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
-}
 
 export const POST: APIRoute = async (context) => {
   const user = context.locals.user;

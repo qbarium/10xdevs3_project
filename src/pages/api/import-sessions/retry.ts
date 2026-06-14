@@ -11,6 +11,7 @@
 import type { APIRoute } from "astro";
 
 import { classifyResultToResponse, runClassification } from "@/lib/ai/classify-core";
+import { json } from "@/lib/http";
 import { decryptApiKey } from "@/lib/services/byok-crypto";
 import { failSession, getSessionForRetry, reopenSession } from "@/lib/services/import-session";
 import { logger, reportError } from "@/lib/services/logger";
@@ -20,13 +21,6 @@ import { createClient } from "@/lib/supabase";
 import { KekNotConfiguredError, UnsupportedEncodingError } from "@/types";
 
 export const prerender = false;
-
-function json(body: unknown, status: number): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
-}
 
 export const POST: APIRoute = async (context) => {
   const user = context.locals.user;

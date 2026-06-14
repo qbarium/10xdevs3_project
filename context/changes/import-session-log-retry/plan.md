@@ -238,6 +238,14 @@ Dokłada akcję „Spróbuj ponownie" jako React island z inline statusem w wier
 
 ---
 
+## Aneks implementacyjny (impl-review 2026-06-14)
+
+> Architektura front zrealizowana inaczej niż w Fazach 3/4 — celowy refaktor (commit `081227a`) dla aktualizacji statusu wiersza W MIEJSCU (wymóg „brak migotania + in-place update"):
+>
+> - **Faza 3 §2:** zamiast `SessionsList.astro` (lista SSR w Astro) → wyspa React `SessionsList.tsx` (`client:load`) renderująca `SessionRow.tsx`. Podgląd ≤120 zn liczony serwerowo w `import-sessions.astro` (`rowPreview`) i przekazany jako odchudzone DTO `SessionRowData` (bez pełnego `raw_input` w payloadzie klienta).
+> - **Faza 4 §2/§3:** zamiast wyspy-liścia `RetrySessionButton.tsx` montowanej per wiersz `failed` → logika przycisku wchłonięta w `SessionRow.tsx`; cały wiersz jest komponentem React i nadpisuje status w miejscu (bez `location.reload()`).
+> - **Konsekwencja dev (poza pierwotnym planem):** jedno-wyspowa architektura ujawniła dev-only wyścig optymalizatora Vite (dwie kopie React w SSR) — naprawiony w `astro.config.mjs` (`resolve.dedupe` + `ssr.noExternal`). Problem wyłącznie dev (prod/Rollup niezagrożony, potwierdzone `npm run preview`). Szczegóły: `follow-ups/review-fixes.md`.
+
 ## Strategia testowania
 
 ### Testy jednostkowe:

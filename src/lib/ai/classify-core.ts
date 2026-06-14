@@ -13,6 +13,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { classify } from "@/lib/ai/classifier";
 import { AI_REQUEST_TIMEOUT_MS } from "@/lib/config/ai";
+import { json } from "@/lib/http";
 import { failSession, finalizeEmpty, persistItems } from "@/lib/services/import-session";
 import { logger, reportError } from "@/lib/services/logger";
 import type { ImportSessionStatus } from "@/types";
@@ -86,13 +87,6 @@ export async function runClassification(
   } finally {
     clearTimeout(timer);
   }
-}
-
-function json(body: unknown, status: number): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
 }
 
 /**
