@@ -9,7 +9,7 @@ import { useState } from "react";
 export type RetryState = "idle" | "retrying" | "done" | "error";
 
 /** Odpowiedź endpointu retry (kontrakt identyczny z classify + opcjonalny `error` dla guardów). */
-interface RetryResponse {
+export interface RetryResponse {
   ok?: boolean;
   sessionId?: string;
   status?: string;
@@ -38,6 +38,40 @@ const ENDPOINT = "/api/import-sessions/retry";
 
 const SESSION_STATES = new Set(["completed_with_items", "completed_no_items", "failed"]);
 
+/** Wynik końcowy ponowienia wyprowadzony z odpowiedzi endpointu: stan + result + komunikat błędu żądania. */
+export interface RetryOutcome {
+  state: "done" | "error";
+  result: SessionRetryResult;
+  error: string | null;
+}
+
+/**
+ * Czysta logika mapowania odpowiedzi endpointu retry na stan końcowy hooka (testowalna bez React).
+ * `done` TYLKO gdy HTTP ok (200) i `status` to rozstrzygnięty stan sesji (completed_with_items /
+ * completed_no_items / failed). W przeciwnym razie `error`: twardy 422 `too_many_items` (ok:false),
+ * `missing_key` / `not_retryable` / 404 / 503. `res.ok` odróżnia normalny wynik przebiegu (200, w tym
+ * sesja `failed` po ponownej porażce) od błędu żądania. Błąd sieci (catch) obsługiwany osobno w hooku.
+ */
+export function mapRetryResponse(ok: boolean, data: RetryResponse): RetryOutcome {
+  if (ok && data.status && SESSION_STATES.has(data.status)) {
+    return {
+      state: "done",
+      result: {
+        status: data.status as SessionRetryResult["status"],
+        itemCount: data.itemCount ?? 0,
+        code: data.code ?? null,
+        message: data.error ?? null,
+      },
+      error: null,
+    };
+  }
+  return {
+    state: "error",
+    result: { status: "failed", itemCount: 0, code: data.code ?? "request", message: data.error ?? null },
+    error: data.error ?? null,
+  };
+}
+
 export function useSessionRetry(): UseSessionRetry {
   const [state, setState] = useState<RetryState>("idle");
   const [result, setResult] = useState<SessionRetryResult | null>(null);
@@ -56,23 +90,11 @@ export function useSessionRetry(): UseSessionRetry {
       });
       const data = (await res.json()) as RetryResponse;
 
-      if (res.ok && data.status && SESSION_STATES.has(data.status)) {
-        // Rozstrzygnięty stan sesji (200): sukces z itemami / sukces bez itemów / ponowna porażka.
-        // `res.ok` odróżnia normalny wynik przebiegu (200) od twardego 422 (too_many_items, ok:false),
-        // który należy do gałęzi błędu — choć fallback w islandzie i tak pokaże właściwy komunikat z code.
-        setResult({
-          status: data.status as SessionRetryResult["status"],
-          itemCount: data.itemCount ?? 0,
-          code: data.code ?? null,
-          message: data.error ?? null,
-        });
-        setState("done");
-      } else {
-        // Brak stanu sesji → błąd żądania (missing_key / not_retryable / 404 / 503). Pokaż komunikat.
-        setError(data.error ?? null);
-        setResult({ status: "failed", itemCount: 0, code: data.code ?? "request", message: data.error ?? null });
-        setState("error");
-      }
+      // Mapowanie odpowiedzi → stan końcowy w czystej mapRetryResponse (testowalne bez React, 4.2).
+      const outcome = mapRetryResponse(res.ok, data);
+      setResult(outcome.result);
+      setError(outcome.error);
+      setState(outcome.state);
     } catch {
       setError(null);
       setResult({ status: "failed", itemCount: 0, code: "network", message: null });
