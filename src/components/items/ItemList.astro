@@ -31,7 +31,7 @@ const { items, emptyLabel = "Brak elementów." } = Astro.props;
             </span>
           </div>
           <h3 class="mt-2 font-semibold text-white/90">{item.title}</h3>
-          {item.description && <p class="mt-1 text-sm whitespace-pre-wrap text-white/70">{item.description}</p>}
+          {item.description && <p class="mt-1 line-clamp-2 text-sm text-white/70">{item.description}</p>}
         </article>
       ))}
     </div>

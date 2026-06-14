@@ -32,6 +32,10 @@ type PendingAction = "accept" | "reject";
 
 const ACTION_LABEL: Record<PendingAction, string> = { accept: "Zatwierdź", reject: "Odrzuć" };
 
+// Checkbox wyraźnie widoczny na ciemnym tle „cosmic" (domyślny border-input jest zbyt subtelny).
+const CHECKBOX_CLASS =
+  "size-5 border-white/40 data-[state=checked]:border-purple-400 data-[state=checked]:bg-purple-500 data-[state=checked]:text-white data-[state=indeterminate]:border-purple-400 data-[state=indeterminate]:bg-purple-500 data-[state=indeterminate]:text-white";
+
 /** Polska odmiana rzeczownika „element" wg liczby (1 / 2–4 / pozostałe). */
 function elementNoun(n: number): string {
   if (n === 1) return "element";
@@ -49,6 +53,7 @@ export default function PendingItemsView({ initialItems }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmRequest, setConfirmRequest] = useState<{ action: PendingAction; ids: string[] } | null>(null);
   const [editing, setEditing] = useState<Item | null>(null);
+  const [inFlightIds, setInFlightIds] = useState<Set<string>>(new Set());
   const { bulkAccept, bulkReject, pending } = useItemMutation();
 
   const allSelected = isAllSelected(selected.size, items.length);
@@ -62,22 +67,34 @@ export default function PendingItemsView({ initialItems }: Props) {
     setSelected((prev) => (isAllSelected(prev.size, items.length) ? new Set() : allIds(items)));
   }
 
+  // Weryfikacja PRZED zmianą listy (pessimistic): elementy w locie są tylko WYGASZANE (dim),
+  // a usuwane dopiero po sukcesie serwera. Lista nie „miga" — przy błędzie elementy wracają do
+  // normalnego stanu, bez znikania i przywracania. Wspólne dla akcji zbiorczych i inline.
   async function execute(action: PendingAction, ids: string[]): Promise<void> {
-    const snapshot = items;
-    const snapshotSelection = selected;
-    // Sekwencja optimistic: snapshot → usuń zaznaczone z listy → fetch → commit/rollback.
-    setItems(removeByIds(items, new Set(ids)));
-    setSelected(new Set());
-
-    const ok = action === "accept" ? await bulkAccept(ids) : await bulkReject(ids);
-    if (ok) {
-      const verb = action === "accept" ? "Zatwierdzono" : "Odrzucono";
-      toast.success(`${verb} ${ids.length} ${elementNoun(ids.length)}.`);
-    } else {
-      setItems(snapshot);
-      setSelected(snapshotSelection);
-      toast.error("Nie udało się wykonać akcji. Przywrócono listę.");
+    setInFlightIds(new Set(ids));
+    const count = action === "accept" ? await bulkAccept(ids) : await bulkReject(ids);
+    if (count === null) {
+      toast.error("Nie udało się wykonać akcji. Spróbuj ponownie.");
+      setInFlightIds(new Set());
+      return;
     }
+    // Sukces: usuń zaznaczone z listy (wszystkie są już nie-pending) i z zaznaczenia.
+    const idSet = new Set(ids);
+    setItems((prev) => removeByIds(prev, idSet));
+    setSelected((prev) => {
+      if (!ids.some((id) => prev.has(id))) return prev;
+      const next = new Set(prev);
+      idSet.forEach((id) => next.delete(id));
+      return next;
+    });
+    // Licznik z serwera = liczba FAKTYCZNIE zmienionych (guard pomija itemy zmienione w innej karcie).
+    if (count > 0) {
+      const verb = action === "accept" ? "Zatwierdzono" : "Odrzucono";
+      toast.success(`${verb} ${count} ${elementNoun(count)}.`);
+    } else {
+      toast("Wybrane elementy były już nieaktualne — lista odświeżona.");
+    }
+    setInFlightIds(new Set());
   }
 
   function requestAction(action: PendingAction): void {
@@ -132,6 +149,7 @@ export default function PendingItemsView({ initialItems }: Props) {
                 checked={allSelected ? true : selectedCount > 0 ? "indeterminate" : false}
                 onCheckedChange={toggleAll}
                 aria-label="Zaznacz wszystkie"
+                className={CHECKBOX_CLASS}
               />
               Zaznacz wszystkie
             </label>
@@ -151,7 +169,7 @@ export default function PendingItemsView({ initialItems }: Props) {
               </Button>
               <Button
                 size="sm"
-                variant="destructive"
+                variant="outline"
                 disabled={selectedCount === 0 || pending}
                 onClick={() => {
                   requestAction("reject");
@@ -165,7 +183,7 @@ export default function PendingItemsView({ initialItems }: Props) {
           {items.map((item) => (
             <article
               key={item.id}
-              className="flex gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl"
+              className={`flex gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl transition-opacity ${inFlightIds.has(item.id) ? "pointer-events-none opacity-50" : ""}`}
             >
               <Checkbox
                 checked={selected.has(item.id)}
@@ -173,26 +191,47 @@ export default function PendingItemsView({ initialItems }: Props) {
                   toggleItem(item.id);
                 }}
                 aria-label={`Zaznacz: ${item.title}`}
-                className="mt-1"
+                className={`mt-1 ${CHECKBOX_CLASS}`}
               />
               <div className="min-w-0 flex-1">
                 <span className="inline-block rounded-full border border-purple-300/30 bg-purple-400/10 px-2 py-0.5 text-xs font-medium text-purple-100">
                   {itemTypeLabel(item.type)}
                 </span>
                 <h3 className="mt-2 font-semibold text-white/90">{item.title}</h3>
-                {item.description && (
-                  <p className="mt-1 text-sm whitespace-pre-wrap text-white/70">{item.description}</p>
-                )}
+                {item.description && <p className="mt-1 line-clamp-2 text-sm text-white/70">{item.description}</p>}
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setEditing(item);
-                }}
-              >
-                Edytuj
-              </Button>
+              <div className="flex shrink-0 items-start gap-1">
+                <Button
+                  variant="default"
+                  size="sm"
+                  disabled={pending}
+                  onClick={() => {
+                    void execute("accept", [item.id]);
+                  }}
+                >
+                  Zatwierdź
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={pending}
+                  onClick={() => {
+                    void execute("reject", [item.id]);
+                  }}
+                >
+                  Odrzuć
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-white/60 hover:bg-white/10 hover:text-white"
+                  onClick={() => {
+                    setEditing(item);
+                  }}
+                >
+                  Edytuj
+                </Button>
+              </div>
             </article>
           ))}
         </>
@@ -224,7 +263,7 @@ export default function PendingItemsView({ initialItems }: Props) {
             >
               Anuluj
             </Button>
-            <Button variant={confirmRequest?.action === "reject" ? "destructive" : "default"} onClick={confirmProceed}>
+            <Button variant={confirmRequest?.action === "reject" ? "outline" : "default"} onClick={confirmProceed}>
               {confirmRequest ? ACTION_LABEL[confirmRequest.action] : ""}
             </Button>
           </DialogFooter>

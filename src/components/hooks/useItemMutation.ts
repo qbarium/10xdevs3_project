@@ -25,10 +25,10 @@ export type EditItemResult = { ok: true; item: Item } | { ok: false; reason: "no
 export interface UseItemMutation {
   pending: boolean;
   error: string | null;
-  /** Zatwierdza zaznaczone; `true` przy sukcesie (commit optimistic), `false` → rollback. */
-  bulkAccept: (ids: string[]) => Promise<boolean>;
-  /** Odrzuca zaznaczone; `true` przy sukcesie (commit optimistic), `false` → rollback. */
-  bulkReject: (ids: string[]) => Promise<boolean>;
+  /** Zatwierdza zaznaczone; zwraca liczbę FAKTYCZNIE zmienionych (guard pomija nie-pending), null przy błędzie. */
+  bulkAccept: (ids: string[]) => Promise<number | null>;
+  /** Odrzuca zaznaczone; zwraca liczbę FAKTYCZNIE zmienionych (guard pomija nie-pending), null przy błędzie. */
+  bulkReject: (ids: string[]) => Promise<number | null>;
   /** Edytuje pending; zwraca zaktualizowany item lub powód niepowodzenia (404 / błąd). */
   editItem: (id: string, input: EditItemInput) => Promise<EditItemResult>;
 }
@@ -37,7 +37,9 @@ export function useItemMutation(): UseItemMutation {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function bulk(ids: string[], action: "accept" | "reject"): Promise<boolean> {
+  // Zwraca liczbę faktycznie zmienionych itemów z serwera (guard `pending` pomija nie-uprawnione),
+  // lub null przy błędzie / porażce sieci.
+  async function bulk(ids: string[], action: "accept" | "reject"): Promise<number | null> {
     setPending(true);
     setError(null);
     try {
@@ -49,19 +51,19 @@ export function useItemMutation(): UseItemMutation {
       const data = (await res.json()) as BulkResponse;
       if (!res.ok || !data.ok) {
         setError("Nie udało się wykonać akcji. Spróbuj ponownie.");
-        return false;
+        return null;
       }
-      return true;
+      return data.count ?? data.updatedIds?.length ?? 0;
     } catch {
       setError("Błąd połączenia. Spróbuj ponownie.");
-      return false;
+      return null;
     } finally {
       setPending(false);
     }
   }
 
-  const bulkAccept = (ids: string[]): Promise<boolean> => bulk(ids, "accept");
-  const bulkReject = (ids: string[]): Promise<boolean> => bulk(ids, "reject");
+  const bulkAccept = (ids: string[]): Promise<number | null> => bulk(ids, "accept");
+  const bulkReject = (ids: string[]): Promise<number | null> => bulk(ids, "reject");
 
   async function editItem(id: string, input: EditItemInput): Promise<EditItemResult> {
     setPending(true);
