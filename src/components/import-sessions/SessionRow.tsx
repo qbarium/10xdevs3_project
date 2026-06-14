@@ -12,7 +12,7 @@ import { useSessionRetry } from "@/components/hooks/useSessionRetry";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ingestErrorMessage } from "@/lib/ingest-errors";
-import { importSessionStatusLabel, itemNoun } from "@/lib/labels";
+import { entryNoun, importSessionStatusLabel } from "@/lib/labels";
 import type { ImportSessionStatus } from "@/types";
 
 /** Odchudzone dane wiersza (liczone serwerowo) — bez pełnego `raw_input`, tylko gotowy podgląd. */
@@ -65,14 +65,16 @@ export function SessionRow({ row }: { row: SessionRowData }) {
 
       <div className="mt-2 text-sm">
         {status === "completed_with_items" && (
-          <p className="text-emerald-200">
-            Wydzielono {itemCount} {itemNoun(itemCount)}.{" "}
-            <a href="/items" className="text-purple-300 underline transition-colors hover:text-purple-100">
+          <div className="flex flex-col gap-1">
+            <span className="text-emerald-200">
+              {itemCount} {entryNoun(itemCount)}
+            </span>
+            <a href="/items" className="w-fit text-purple-300 underline transition-colors hover:text-purple-100">
               Przejdź do walidacji
             </a>
-          </p>
+          </div>
         )}
-        {status === "completed_no_items" && <span className="text-white/60">Brak itemów do akceptacji.</span>}
+        {status === "completed_no_items" && <span className="text-white/60">Brak wpisów do akceptacji.</span>}
         {status === "processing" && <span className="text-white/60">Przetwarzanie w toku…</span>}
         {status === "failed" && (
           <div className="flex flex-col gap-2">

@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import type { ClassificationState } from "@/components/hooks/useClassification";
 import { ingestErrorMessage } from "@/lib/ingest-errors";
-import { itemNoun } from "@/lib/labels";
+import { entryNoun } from "@/lib/labels";
 
 interface Props {
   state: ClassificationState;
@@ -30,7 +30,7 @@ interface Props {
 const AUTO_REDIRECT_SECONDS = 4;
 const ITEMS_PATH = "/items";
 
-// Komunikat błędu wg kodu pochodzi ze współdzielonego ingestErrorMessage (S-08); itemNoun z labels.ts.
+// Komunikat błędu wg kodu pochodzi ze współdzielonego ingestErrorMessage (S-08); entryNoun z labels.ts.
 
 function goToItems(): void {
   window.location.href = ITEMS_PATH;
@@ -102,7 +102,7 @@ export function ClassificationModal({ state, itemCount, errorCode, onRetry, onCl
           <>
             <DialogHeader>
               <DialogTitle>
-                Sesja zawiera {itemCount} {itemNoun(itemCount)}
+                Sesja zawiera {itemCount} {entryNoun(itemCount)}
               </DialogTitle>
               <RedirectCountdown />
             </DialogHeader>
@@ -117,7 +117,7 @@ export function ClassificationModal({ state, itemCount, errorCode, onRetry, onCl
         {state === "completed_no_items" && (
           <>
             <DialogHeader>
-              <DialogTitle>Nie znaleziono itemów</DialogTitle>
+              <DialogTitle>Nie znaleziono wpisów</DialogTitle>
               <DialogDescription>
                 Wsad nie zawierał treści do sklasyfikowania. Spróbuj z innym tekstem.
               </DialogDescription>

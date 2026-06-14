@@ -29,7 +29,7 @@ describe("labels (enum → PL)", () => {
   it("importSessionStatusLabel mapuje wszystkie statusy sesji importu (S-08)", () => {
     expect(importSessionStatusLabel("processing")).toBe("Przetwarzanie…");
     expect(importSessionStatusLabel("completed_with_items")).toBe("Gotowe");
-    expect(importSessionStatusLabel("completed_no_items")).toBe("Brak itemów");
+    expect(importSessionStatusLabel("completed_no_items")).toBe("Brak wpisów");
     expect(importSessionStatusLabel("failed")).toBe("Błąd");
     // kompletność enuma
     const all: ImportSessionStatus[] = ["processing", "completed_with_items", "completed_no_items", "failed"];

@@ -29,7 +29,7 @@ const ACCEPTANCE_STATUS_LABELS: Record<AcceptanceStatus, string> = {
 const IMPORT_SESSION_STATUS_LABELS: Record<ImportSessionStatus, string> = {
   processing: "Przetwarzanie…",
   completed_with_items: "Gotowe",
-  completed_no_items: "Brak itemów",
+  completed_no_items: "Brak wpisów",
   failed: "Błąd",
 };
 
@@ -49,11 +49,11 @@ export function importSessionStatusLabel(status: ImportSessionStatus): string {
   return IMPORT_SESSION_STATUS_LABELS[status];
 }
 
-/** Polska odmiana rzeczownika „item" wg liczby (1 → item, 2–4 → itemy, reszta → itemów). */
-export function itemNoun(n: number): string {
-  if (n === 1) return "item";
+/** Polska odmiana rzeczownika „wpis" wg liczby (1 → wpis, 2–4 → wpisy, reszta → wpisów). */
+export function entryNoun(n: number): string {
+  if (n === 1) return "wpis";
   const tens = n % 100;
   const units = n % 10;
-  if (units >= 2 && units <= 4 && (tens < 12 || tens > 14)) return "itemy";
-  return "itemów";
+  if (units >= 2 && units <= 4 && (tens < 12 || tens > 14)) return "wpisy";
+  return "wpisów";
 }

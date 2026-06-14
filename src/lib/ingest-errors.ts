@@ -19,7 +19,7 @@ export function ingestErrorMessage(code: string | null): string {
     case "contract":
       return "Otrzymaliśmy nieprawidłową odpowiedź od modelu. Spróbuj ponownie.";
     case "too_many_items":
-      return "Wsad wygenerował zbyt wiele itemów. Skróć tekst i spróbuj ponownie.";
+      return "Wsad wygenerował zbyt wiele wpisów. Skróć tekst i spróbuj ponownie.";
     case "missing_key":
       return "Brak skonfigurowanego klucza API. Skonfiguruj klucz w profilu.";
     case "storage":
