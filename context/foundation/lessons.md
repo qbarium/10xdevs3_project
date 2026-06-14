@@ -36,3 +36,10 @@
 - **Problem**: Parametry wrażliwe brane z env bez walidacji (inaczej niż `CLASSIFICATION_HASH_SALT`, fail-closed). Nadpisanie `OPENAI_BASE_URL` wrogą wartością → egress klucza BYOK do dowolnego hosta; `OPENAI_STORE=true` → cicha retencja treści wsadu mimo guardrailu. Env to nie granica zaufania.
 - **Rule**: Parametr konfiguracji, którego błędna wartość łamie inwariant bezpieczeństwa/prywatności (cel egress sekretu, „nie przechowuj", endpoint auth) waliduj **fail-closed w kodzie przy odczycie** — rzuć i odmów, zamiast cicho zaufać env. Allowlistę dozwolonych wartości (np. hostów egress) trzymaj w KODZIE, nie w env (env mogłoby ją rozszerzyć). Realizacja S-02: `assertSafeBaseUrl` (https + allowlista) + `assertNoStore` w `ai.ts`.
 - **Applies to**: implement, impl-review, plan, plan-review
+
+## Edycja bez optimistic concurrency = „lost update" — świadome ograniczenie solo-MVP
+
+- **Context**: S-03 (validation-accept-reject), edycja pendingu (`PATCH /api/items/[id]`, `editPendingItem`). Guard UPDATE to `eq('acceptance_status','pending')` — chroni przed edycją itemu, którego AKCEPTACJA zmieniła się gdzie indziej (→ 404), ale NIE przed dwiema równoległymi edycjami tego samego wciąż-`pending` itemu.
+- **Problem**: Dwie karty otwierają dialog edycji tego samego pendingu; obie zapisują → druga nadpisuje pierwszą bez ostrzeżenia (classic lost update). Brak compare-and-swap.
+- **Rule**: Świadomie zaakceptowane jako znane ograniczenie w S-03 — ryzyko znikome (RLS izoluje per-user; wymaga tej samej osoby edytującej ten sam item w 2 kartach naraz; solo-MVP). Utwardzenie (optimistic concurrency: klient wysyła `updated_at` z chwili otwarcia, serwis dokłada `eq('updated_at', oczekiwane)` → 409 „element zmieniony, odśwież") odłożone do **S-05** (`unified-list-and-edit`, które i tak dotyka edycji) lub do momentu pojawienia się realnej współbieżności / multi-device. Decyzja użytkownika 2026-06-14.
+- **Applies to**: plan, plan-review, implement

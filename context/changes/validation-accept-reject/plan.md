@@ -54,6 +54,7 @@ Warstwy backendu (zod → serwis → endpointy → serwisy odczytu) najpierw, by
 ## Krytyczne szczegóły implementacji
 
 - **Sekwencjonowanie stanu (optimistic + rollback):** klient usuwa zaznaczone itemy z listy natychmiast po kliknięciu i zachowuje ich snapshot; dopiero po odpowiedzi serwera commit (toast) lub rollback (przywrócenie itemów + komunikat błędu). Kolejność: snapshot → optimistic remove → fetch → on-error restore. Pominięcie snapshotu uniemożliwia rollback.
+  - **Rewizja po implementacji (2026-06-14, decyzja użytkownika):** zmienione na **pessimistic** — w trakcie żądania itemy są tylko WYGASZANE (dim), a usuwane z listy dopiero po sukcesie serwera. Eliminuje „miganie" listy przy błędzie (nic nie znika → nie ma czego przywracać); natychmiastowy feedback zachowany przez dim. Licznik w toaście pochodzi z REALNEJ liczby zmienionych (serwer), nie z liczby zaznaczonych.
 - **Guard statusu w `WHERE`:** każdy UPDATE (bulk i edit) zawiera `eq('acceptance_status','pending')`. To nie kosmetyka — chroni przed mutacją itemu już zaakceptowanego w innej karcie (stale UI) i realizuje semantykę FR-007 „pozostałe pomijane bez błędu" (item poza zbiorem `pending` po prostu nie pasuje do `WHERE`, `.select()` go nie zwróci).
 - **Ochrona przed nadużyciem rozmiaru:** `bulkActionSchema` ogranicza `ids` do max 100 (safety net spójny z FR-020); odrzucenie nadmiarowego payloadu przed dotknięciem bazy.
 
@@ -321,7 +322,7 @@ Modal edycji pojedynczego pendingu z polami `title`/`description`/`typ`; zapis n
 
 ## Uwagi dotyczące wydajności
 
-- NFR reakcji < 200 ms realizowany przez optimistic update — sieć w tle. Refetch świadomie odrzucony (round-trip + spinner).
+- NFR reakcji < 200 ms realizowany przez optimistic update — sieć w tle. Refetch świadomie odrzucony (round-trip + spinner). (Rewizja 2026-06-14: pessimistic z wygaszeniem — natychmiastowy feedback przez dim, usuwanie po sukcesie; bez migania listy. Patrz „Krytyczne szczegóły implementacji".)
 - Bulk = jeden statement DB (atomowy), nie N round-tripów; max 100 id.
 
 ## Uwagi dotyczące migracji
@@ -351,9 +352,9 @@ Brak migracji — schemat S-02 kompletny. `updated_at` ustawiany jawnie w serwis
 
 #### Ręczne
 
-- [ ] 1.5 `curl` bulk accept zmienia pendingi na `accepted` (Studio)
-- [ ] 1.6 `curl` PATCH edycji derywuje `operational_status` z typu
-- [ ] 1.7 Zły payload (puste ids / zła action / >100 id) → 400 bez dotknięcia bazy
+- [x] 1.5 `curl` bulk accept zmienia pendingi na `accepted` (Studio) — zweryfikowane testem endpointu `bulk.test.ts`
+- [x] 1.6 `curl` PATCH edycji derywuje `operational_status` z typu — zweryfikowane testami `[id].test.ts` + integracja `items-mutation`
+- [x] 1.7 Zły payload (puste ids / zła action / >100 id) → 400 bez dotknięcia bazy — zweryfikowane testem `bulk.test.ts`
 
 ### Faza 2: Widoki Aktywne + Kosz (read-only) + nawigacja filtra głównego
 
@@ -364,9 +365,9 @@ Brak migracji — schemat S-02 kompletny. `updated_at` ustawiany jawnie w serwis
 
 #### Ręczne
 
-- [ ] 2.3 Nawigacja przełącza 3 widoki, aktywny filtr wyróżniony
-- [ ] 2.4 Zaakceptowany item w Aktywne, odrzucony w Koszu (read-only)
-- [ ] 2.5 Niezalogowany na `/items/active`,`/items/trash` → redirect do logowania
+- [x] 2.3 Nawigacja przełącza 3 widoki, aktywny filtr wyróżniony
+- [x] 2.4 Zaakceptowany item w Aktywne, odrzucony w Koszu (read-only)
+- [x] 2.5 Niezalogowany na `/items/active`,`/items/trash` → redirect do logowania
 
 ### Faza 3: Model zaznaczania + akcje accept/reject (React island)
 
@@ -379,11 +380,11 @@ Brak migracji — schemat S-02 kompletny. `updated_at` ustawiany jawnie w serwis
 
 #### Ręczne
 
-- [ ] 3.5 Podzbiór + „Zatwierdź zaznaczone" → znikają < 200 ms + toast + w Aktywne, bez potwierdzenia
-- [ ] 3.6 „Zaznacz wszystkie" + akcja → Dialog z liczbą → po potwierdzeniu w Koszu/Aktywne
-- [ ] 3.7 Symulowany błąd → rollback listy + toast błędu
-- [ ] 3.8 Item zaakceptowany w innej karcie → pominięty bez błędu (guard `pending`)
-- [ ] 3.9 Po zatwierdzeniu/odrzuceniu wszystkich → widoczny komunikat pustej listy
+- [x] 3.5 Podzbiór + „Zatwierdź zaznaczone" → znikają < 200 ms + toast + w Aktywne, bez potwierdzenia
+- [x] 3.6 „Zaznacz wszystkie" + akcja → Dialog z liczbą → po potwierdzeniu w Koszu/Aktywne
+- [x] 3.7 Symulowany błąd → elementy wracają z wygaszenia (lista bez migania) + toast błędu
+- [x] 3.8 Item zaakceptowany w innej karcie → pominięty bez błędu (guard `pending`)
+- [x] 3.9 Po zatwierdzeniu/odrzuceniu wszystkich → widoczny komunikat pustej listy
 
 ### Faza 4: Edycja w stagingu (modal title/description/typ)
 
@@ -395,8 +396,8 @@ Brak migracji — schemat S-02 kompletny. `updated_at` ustawiany jawnie w serwis
 
 #### Ręczne
 
-- [ ] 4.4 Edycja title/description → item zaktualizowany, zostaje pending, toast
-- [ ] 4.5 Zmiana typu task↔note → derywacja `operational_status` (Studio)
-- [ ] 4.6 Pusty title blokuje zapis
-- [ ] 4.7 Pełny przepływ S-02→S-03 (paste→edycja→akceptacja→Aktywne z edycją)
-- [ ] 4.8 Edycja itemu nie-pending → toast 404 + zamknięcie modala, item znika z listy
+- [x] 4.4 Edycja title/description → item zaktualizowany, zostaje pending, toast
+- [x] 4.5 Zmiana typu task↔note → derywacja `operational_status` (Studio)
+- [x] 4.6 Pusty title blokuje zapis
+- [x] 4.7 Pełny przepływ S-02→S-03 (paste→edycja→akceptacja→Aktywne z edycją)
+- [x] 4.8 Edycja itemu nie-pending → toast 404 + zamknięcie modala, item znika z listy
