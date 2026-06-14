@@ -38,7 +38,7 @@ TaskerLight przyjmuje surowy, nieuporządkowany wsad głosowo-tekstowy i rozdzie
 | S-05  | unified-list-and-edit    | przeglądać Aktywne/Zakończone/Anulowane (filtr typu) i edytować itemy       | S-03              | FR-008, FR-011                             | proposed |
 | S-06  | trash-lifecycle          | przenieść item do kosza, przywrócić i wyczyścić kosz                        | S-03              | US-05, FR-013, FR-016                      | proposed |
 | S-07  | manual-item-entry        | dodać item ręcznie (bez klucza, od razu `accepted`)                         | S-02              | US-08, FR-028                              | proposed |
-| S-08  | import-session-log-retry | przejrzeć dziennik sesji importu i ponowić sesję `niepowodzenie`            | S-02              | US-07, FR-027                              | proposed |
+| S-08  | import-session-log-retry | przejrzeć dziennik sesji importu i ponowić sesję `niepowodzenie`            | S-02              | US-07, FR-027                              | done |
 | S-09  | list-filters-search      | sortować, wyszukiwać i filtrować listy po dacie/sesji                       | S-05              | FR-008 (filtry dodatkowe)                  | proposed |
 
 ## Strumienie
@@ -180,7 +180,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Blokady:** —
 - **Niewiadome:** —
 - **Ryzyko:** Polityka retry sprawdza stan klucza przed ponowieniem (klucz usunięty między błędem a retry → komunikat); per-file rozbicie i podgląd itemów poza MVP.
-- **Status:** proposed
+- **Status:** done
 
 ### S-09: Filtry dodatkowe list — sortowanie, wyszukiwanie, filtr sesji
 
@@ -233,6 +233,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **S-01: użytkownik może zapisać własny klucz API zewnętrznego dostawcy AI w profilu, podejrzeć go w postaci zamaskowanej (prefiks + ostatnie znaki) i usunąć; akcje wymagające klucza (submit) są zablokowane z komunikatem i linkiem do strony dostawcy, dopóki klucz nie jest skonfigurowany.** — Zarchiwizowano 2026-06-12 → `context/archive/2026-06-08-byok-key-config/`. Lekcja: —.
 - **S-02: użytkownik może wkleić tekst (do 100 000 znaków) lub wrzucić jeden plik `.txt`/`.md` (do 300 KB), kliknąć submit, zobaczyć blokujący wskaźnik aktywności podczas synchronicznej klasyfikacji, a po jej zakończeniu — typowane itemy jako pendingi w widoku „Elementy do akceptacji".** — Zarchiwizowano 2026-06-12 → `context/archive/2026-06-10-first-gated-generation/`. Lekcja: konfiguracja LLM fail-closed + modeluj schemat wg kardynalności (lessons.md); FR-015 złagodzony do best-effort (set null).
 - **S-03: użytkownik może zaznaczyć pendingi (model: per item + „zaznacz wszystkie"), zatwierdzić zaznaczone (z opcjonalną edycją `title`/`description`/`typ`) lub odrzucić; zaakceptowane trafiają do widoku Aktywne, odrzucone do Kosza (poprzedni status `rejected`).** — Zarchiwizowano 2026-06-14 → `context/archive/2026-06-13-validation-accept-reject/`. Lekcja: edycja bez optimistic concurrency = lost-update (świadome ograniczenie solo-MVP); ujednolicony kształt błędu API `{ok:false,code,error}` (lessons.md).
+- **S-08: użytkownik może przejrzeć chronologiczny dziennik sesji importu (rejestr wejścia, status, liczba itemów lub błąd) i ponowić sesję ze statusem `niepowodzenie` (np. niepoprawny klucz) bez wprowadzania wsadu od nowa.** — Zarchiwizowano 2026-06-14 → `context/archive/2026-06-13-import-session-log-retry/`. Lekcja: dev-only wyścig optimizeDeps Vite — dup-React w SSR (lessons.md).
 
 ## Zrobione
 
