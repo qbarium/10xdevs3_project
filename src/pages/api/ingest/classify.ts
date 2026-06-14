@@ -2,7 +2,8 @@
 //   • paste — JSON { text } (PR1, Faza 3): limit INPUT_MAX_CHARS, raw_input = treść.
 //   • plik  — multipart/form-data { file } (PR2, Faza 7): limit 300 KB ROZMIARU (nie znaków),
 //             upload do storage + wiersz import_files, dekodowanie kodowań, raw_input = null.
-// Po ustaleniu (sessionId, rawText) obie ścieżki schodzą się we wspólnym ogonie classifyAndRespond.
+// Po ustaleniu (sessionId, rawText) obie ścieżki wołają współdzielony rdzeń runClassification
+// (@/lib/ai/classify-core), a wynik mapuje na HTTP classifyResultToResponse (ten sam rdzeń reużywa retry S-08).
 //
 // Sekwencja (PRD cascade): guard locals.user → pozyskanie/walidacja wsadu → klient Supabase (RLS)
 // → odszyfrowanie klucza BYOK → sesja `processing` (+ plik: upload + dekodowanie) → classify()

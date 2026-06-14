@@ -4,7 +4,7 @@
 // czytelny komunikat błędu. Dla sesji `failed` montowany jest React island RetrySessionButton (Faza 4)
 // na inline ponowienie. Styl spójny z PendingItemsList (cosmic).
 import type { ImportSessionStatus, ImportSessionWithFile } from "@/types";
-import { importSessionStatusLabel } from "@/lib/labels";
+import { importSessionStatusLabel, itemNoun } from "@/lib/labels";
 import { ingestErrorMessage } from "@/lib/ingest-errors";
 import { RetrySessionButton } from "@/components/import-sessions/RetrySessionButton";
 
@@ -31,14 +31,6 @@ const STATUS_BADGE: Record<ImportSessionStatus, string> = {
   completed_no_items: "border-white/15 bg-white/10 text-white/70",
   failed: "border-red-300/30 bg-red-400/10 text-red-100",
 };
-
-function itemNoun(n: number): string {
-  if (n === 1) return "item";
-  const tens = n % 100;
-  const units = n % 10;
-  if (units >= 2 && units <= 4 && (tens < 12 || tens > 14)) return "itemy";
-  return "itemów";
-}
 
 /** Data bez zależności od ICU runtime: ISO → „RRRR-MM-DD GG:MM". */
 function formatDate(iso: string): string {

@@ -1,9 +1,9 @@
 ---
 change_id: import-session-log-retry
 title: Dziennik sesji importu + ponowienie sesji failed
-status: implemented
+status: impl_reviewed
 created: 2026-06-13
-updated: 2026-06-13
+updated: 2026-06-14
 archived_at: null
 ---
 

@@ -48,3 +48,12 @@ export function acceptanceStatusLabel(status: AcceptanceStatus): string {
 export function importSessionStatusLabel(status: ImportSessionStatus): string {
   return IMPORT_SESSION_STATUS_LABELS[status];
 }
+
+/** Polska odmiana rzeczownika „item" wg liczby (1 → item, 2–4 → itemy, reszta → itemów). */
+export function itemNoun(n: number): string {
+  if (n === 1) return "item";
+  const tens = n % 100;
+  const units = n % 10;
+  if (units >= 2 && units <= 4 && (tens < 12 || tens > 14)) return "itemy";
+  return "itemów";
+}

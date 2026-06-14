@@ -10,18 +10,10 @@ import { useSessionRetry } from "@/components/hooks/useSessionRetry";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ingestErrorMessage } from "@/lib/ingest-errors";
+import { itemNoun } from "@/lib/labels";
 
 interface Props {
   sessionId: string;
-}
-
-/** Polska odmiana rzeczownika „item" wg liczby. */
-function itemNoun(n: number): string {
-  if (n === 1) return "item";
-  const tens = n % 100;
-  const units = n % 10;
-  if (units >= 2 && units <= 4 && (tens < 12 || tens > 14)) return "itemy";
-  return "itemów";
 }
 
 export function RetrySessionButton({ sessionId }: Props) {

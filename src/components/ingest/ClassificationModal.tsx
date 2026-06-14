@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import type { ClassificationState } from "@/components/hooks/useClassification";
 import { ingestErrorMessage } from "@/lib/ingest-errors";
+import { itemNoun } from "@/lib/labels";
 
 interface Props {
   state: ClassificationState;
@@ -29,14 +30,7 @@ interface Props {
 const AUTO_REDIRECT_SECONDS = 4;
 const ITEMS_PATH = "/items";
 
-/** Polska odmiana rzeczownika „item” wg liczby. */
-function itemNoun(n: number): string {
-  if (n === 1) return "item";
-  const tens = n % 100;
-  const units = n % 10;
-  if (units >= 2 && units <= 4 && (tens < 12 || tens > 14)) return "itemy";
-  return "itemów";
-}
+// Komunikat błędu wg kodu pochodzi ze współdzielonego ingestErrorMessage (S-08); itemNoun z labels.ts.
 
 function goToItems(): void {
   window.location.href = ITEMS_PATH;

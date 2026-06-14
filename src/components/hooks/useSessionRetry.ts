@@ -56,8 +56,10 @@ export function useSessionRetry(): UseSessionRetry {
       });
       const data = (await res.json()) as RetryResponse;
 
-      if (data.status && SESSION_STATES.has(data.status)) {
+      if (res.ok && data.status && SESSION_STATES.has(data.status)) {
         // Rozstrzygnięty stan sesji (200): sukces z itemami / sukces bez itemów / ponowna porażka.
+        // `res.ok` odróżnia normalny wynik przebiegu (200) od twardego 422 (too_many_items, ok:false),
+        // który należy do gałęzi błędu — choć fallback w islandzie i tak pokaże właściwy komunikat z code.
         setResult({
           status: data.status as SessionRetryResult["status"],
           itemCount: data.itemCount ?? 0,
