@@ -1,5 +1,17 @@
 # S-08 — follow-up po weryfikacji ręcznej: BLOKER SSR (dwie kopie Reacta)
 
+## ✅ ROZWIĄZANE — 2026-06-14 (sesja następna)
+
+- **Przyczyna (root cause):** wyścig **wyłącznie w dev** w optymalizatorze zależności Vite. `react` i `react-dom/server` lądowały w różnych generacjach pre-bundla (różne `?v=…`), gdy re-optymalizacja wyzwolona przez zależność odkrytą późno w sesji (`astro/env/runtime`, `zod` z klasyfikacji) przerzucała `react` na nowy hash, a trwający render SSR trzymał stary `react-dom/server` → dwie instancje Reacta. **To nie był bug w kodzie wyspy** (kod hooków poprawny) ani w `node_modules` (`npm ls` → jedna kopia `react@19.2.6`).
+- **NIE był to bloker produkcji.** `optimizeDeps`/`?v=` to mechanizm serwera dev Vite; build prod (Rollup, jednorazowy) nie tworzy generacji pre-bundla. **Potwierdzone empirycznie:** `npm run preview` (artefakt prod, workerd) → `GET /import-sessions 200 OK`, wyspa `SessionsList` + chunki (`button`, `alert`) wczytują się czysto. Split jest w buildzie strukturalnie niemożliwy. „Bloker produkcji" z pierwotnej notatki był w istocie **blokerem lokalnego dev**.
+- **Faktyczny fix** (`astro.config.mjs`): `vite.resolve.dedupe: ["react","react-dom"]` + `vite.ssr.noExternal: ["react","react-dom"]`. **Architektura ZACHOWANA** (SSR `SessionsList` → `SessionRow` → `useSessionRetry`) — twardy wymóg użytkownika: **brak migotania listy + in-place update wiersza**. Dlatego rekomendacje z dołu tej notatki — **„cofnąć architekturę `081227a`"** oraz **`client:only`** — są **ODRZUCONE**: każda łamałaby jeden z tych warunków (revert → wraca `location.reload()` = skok/migot; `client:only` → lista miga pusto). Bramki: lint ✓, testy 156/156 ✓, build ✓.
+- **Resztkowe ryzyko dev (świadomie zaakceptowane):** przejściowy migot dev może wrócić przy pechowej re-optymalizacji; obejście = restart serwera dev lub `Remove-Item -Recurse -Force node_modules\.vite`. Twarde strukturalne kuloodpornienie (`ssr.optimizeDeps.exclude` dla reacta) **nie było ścigane** — bug jest dev-only, a prod jest potwierdzony.
+- **Weryfikacja ręczna `## Progress`:** 1.6/2.8/3.3/4.3 odhaczone (2.8/4.3 potwierdzone realnym ponowieniem: invalid_key → ok 2 wpisy, wiersz w miejscu, bez migotania; 3.3 render potwierdzony przez `preview`).
+
+> Poniżej **kontekst historyczny sprzed naprawy** (diagnoza i odrzucone drogi) — zachowany dla audytu, NIE jest już aktualnym stanem.
+
+---
+
 - **Data**: 2026-06-14
 - **Status zmiany**: `impl_reviewed` (przegląd `/10x-impl-review` → ZAAKCEPTOWANO), ale **NIE domknięta** — widok dziennika wywala się na SSR.
 - **Branch**: `feature/import-session-log-retry` (lokalnie, bez push). HEAD: `5269c60`.

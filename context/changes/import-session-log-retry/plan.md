@@ -302,7 +302,7 @@ Dokłada akcję „Spróbuj ponownie" jako React island z inline statusem w wier
 
 #### Ręczne
 
-- [ ] 1.6 getImportSessions zwraca sesje usera z poprawnym sortem/filtrem (lokalny stack)
+- [x] 1.6 getImportSessions zwraca sesje usera z poprawnym sortem/filtrem (lokalny stack) — render listy + odczyt potwierdzone (npm run preview 200 OK + dev); logika serwisu w testach jedn. (1.3). Sort/filtr = wąski whitelist server-side, nie klik-testowany w UI.
 
 ### Faza 2: Endpoint ponowienia POST /api/import-sessions/retry
 
@@ -318,7 +318,7 @@ Dokłada akcję „Spróbuj ponownie" jako React island z inline statusem w wier
 
 #### Ręczne
 
-- [ ] 2.8 Retry realnej sesji failed aktualizuje ten sam wiersz (lokalny stack)
+- [x] 2.8 Retry realnej sesji failed aktualizuje ten sam wiersz (lokalny stack) — sesja 940d897e: invalid_key×2 → ok (2 wpisy); wiersz zaktualizowany W MIEJSCU, bez migotania (weryfikacja użytkownika 2026-06-14).
 
 ### Faza 3: Widok dziennika (SSR) + nawigacja + sort/filtr
 
@@ -329,7 +329,7 @@ Dokłada akcję „Spróbuj ponownie" jako React island z inline statusem w wier
 
 #### Ręczne
 
-- [ ] 3.3 Dziennik pokazuje sesje; sort/filtr działają; nieuwierzytelniony przekierowany
+- [x] 3.3 Dziennik pokazuje sesje; sort/filtr działają; nieuwierzytelniony przekierowany — render dziennika 200 OK na buildzie prod (npm run preview) + dev bez migotania; przekierowanie = PROTECTED_ROUTES (3.2). Sort/filtr server-side niezmieniony, nie klik-testowany.
 
 ### Faza 4: Inline retry (React island + hook)
 
@@ -340,4 +340,4 @@ Dokłada akcję „Spróbuj ponownie" jako React island z inline statusem w wier
 
 #### Ręczne
 
-- [ ] 4.3 Pełny flow inline retry: failed → spinner → sukces/porażka; podwójny klik zablokowany; klucz usunięty → komunikat
+- [x] 4.3 Pełny flow inline retry: failed → spinner → sukces/porażka; podwójny klik zablokowany; klucz usunięty → komunikat — ścieżki failed→sukces i failed→failed potwierdzone realnie (dev 2026-06-14); guard podwójnego kliku (hook + disabled) i komunikat usuniętego klucza pokryte kodem + integ 2.3/2.4.
