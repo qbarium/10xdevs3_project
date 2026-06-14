@@ -3,7 +3,7 @@ project: TaskerLight
 version: 1
 status: draft
 created: 2026-06-05
-updated: 2026-06-12
+updated: 2026-06-14
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -120,7 +120,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
   - Mapowanie stanów operacyjnych przy zmianie typu itemu — Właściciel: spec techniczna (PRD OQ5). Blokuje: nie.
   - Realizacja UX edycji (inline/modal/drawer) — Właściciel: spec techniczna / UX (PRD OQ6). Blokuje: nie.
 - **Ryzyko:** Wprowadza ujednolicony model zaznaczania (FR-007) i pierwsze dwa filtry główne listy (Pending → Aktywne/Kosz); zmiana typu w stagingu dotyka mapowania stanów (OQ5), które plan musi rozstrzygnąć.
-- **Status:** proposed
+- **Status:** done
 
 ### S-04: Cykl operacyjny zadania
 
@@ -232,6 +232,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 
 - **S-01: użytkownik może zapisać własny klucz API zewnętrznego dostawcy AI w profilu, podejrzeć go w postaci zamaskowanej (prefiks + ostatnie znaki) i usunąć; akcje wymagające klucza (submit) są zablokowane z komunikatem i linkiem do strony dostawcy, dopóki klucz nie jest skonfigurowany.** — Zarchiwizowano 2026-06-12 → `context/archive/2026-06-08-byok-key-config/`. Lekcja: —.
 - **S-02: użytkownik może wkleić tekst (do 100 000 znaków) lub wrzucić jeden plik `.txt`/`.md` (do 300 KB), kliknąć submit, zobaczyć blokujący wskaźnik aktywności podczas synchronicznej klasyfikacji, a po jej zakończeniu — typowane itemy jako pendingi w widoku „Elementy do akceptacji".** — Zarchiwizowano 2026-06-12 → `context/archive/2026-06-10-first-gated-generation/`. Lekcja: konfiguracja LLM fail-closed + modeluj schemat wg kardynalności (lessons.md); FR-015 złagodzony do best-effort (set null).
+- **S-03: użytkownik może zaznaczyć pendingi (model: per item + „zaznacz wszystkie"), zatwierdzić zaznaczone (z opcjonalną edycją `title`/`description`/`typ`) lub odrzucić; zaakceptowane trafiają do widoku Aktywne, odrzucone do Kosza (poprzedni status `rejected`).** — Zarchiwizowano 2026-06-14 → `context/archive/2026-06-13-validation-accept-reject/`. Lekcja: edycja bez optimistic concurrency = lost-update (świadome ograniczenie solo-MVP); ujednolicony kształt błędu API `{ok:false,code,error}` (lessons.md).
 
 ## Zrobione
 
