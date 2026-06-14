@@ -91,6 +91,17 @@ d("items-mutation — RLS + status-guard + derywacja (integracja)", () => {
     expect(await statusOf(A.supabase, acceptedId)).toBe("accepted"); // niezmieniony (guard)
   });
 
+  it("bulk accept pomija item odrzucony w innej karcie, zmienia tylko pending (scenariusz 3.8)", async () => {
+    const rejectedId = await insertItem(A.supabase, A.id, { acceptance_status: "rejected" });
+    const pendingId = await insertItem(A.supabase, A.id, { acceptance_status: "pending" });
+
+    const res = await setAcceptanceStatus(A.supabase, [rejectedId, pendingId], "accepted");
+
+    expect(res.updatedIds).toEqual([pendingId]); // tylko pending → count = 1, nie 2
+    expect(await statusOf(A.supabase, rejectedId)).toBe("rejected"); // odrzucony NIE nadpisany na accepted
+    expect(await statusOf(A.supabase, pendingId)).toBe("accepted");
+  });
+
   it("edit utrwala pola i derywuje operational_status z typu (note→task→note)", async () => {
     const noteId = await insertItem(A.supabase, A.id, { type: "note", operational_status: null });
 
