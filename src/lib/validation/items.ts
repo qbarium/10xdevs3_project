@@ -1,0 +1,38 @@
+// Jedno źródło prawdy o kształcie wielopolowych payloadów akcji zbiorczej i edycji itemu
+// (hard rule: wejście wielopolowe → zod PRZED jakimkolwiek efektem ubocznym). Enumy `type`
+// reużywają `ITEM_TYPES` z warstwy klasyfikacji — `satisfies readonly ItemType[]` tam wiąże
+// tuple z unią `ItemType` z `@/types`, więc spójność jest egzekwowana kompilacyjnie w 1 miejscu.
+
+import { z } from "zod";
+
+import { ITEM_TYPES } from "@/lib/ai/schema";
+
+/**
+ * Payload akcji zbiorczej zatwierdź/odrzuć. `ids` to UUID-y zaznaczonych pendingów; `.max(100)`
+ * to safety net spójny z FR-020 (i progiem 100/sesja z S-02) — odrzuca nadmiarowy payload, zanim
+ * dotknie bazy. `action` decyduje o docelowym `acceptance_status` (accepted|rejected).
+ */
+export const bulkActionSchema = z.object({
+  ids: z.array(z.uuid()).min(1).max(100),
+  action: z.enum(["accept", "reject"]),
+});
+export type BulkActionInput = z.infer<typeof bulkActionSchema>;
+
+/**
+ * Payload edycji pendingu w stagingu. `title` wymagany (trim + reject pusty). `description`
+ * nullable — pusty/whitespace normalizujemy do `null` (kolumna nullable). `type` z pięciu wartości
+ * `ItemType`; derywacja `operational_status` z typu należy do serwisu, nie do schematu.
+ */
+export const editItemSchema = z.object({
+  title: z.string().trim().min(1),
+  description: z
+    .string()
+    .nullable()
+    .transform((value) => {
+      if (value === null) return null;
+      const trimmed = value.trim();
+      return trimmed === "" ? null : trimmed;
+    }),
+  type: z.enum(ITEM_TYPES),
+});
+export type EditItemInput = z.infer<typeof editItemSchema>;
