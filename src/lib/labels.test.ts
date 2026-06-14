@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { acceptanceStatusLabel, itemTypeLabel, operationalStatusLabel } from "@/lib/labels";
+import { acceptanceStatusLabel, importSessionStatusLabel, itemTypeLabel, operationalStatusLabel } from "@/lib/labels";
+import type { ImportSessionStatus } from "@/types";
 
 describe("labels (enum → PL)", () => {
   it("itemTypeLabel mapuje wszystkie pięć typów", () => {
@@ -23,5 +24,15 @@ describe("labels (enum → PL)", () => {
     expect(acceptanceStatusLabel("accepted")).toBe("Zaakceptowane");
     expect(acceptanceStatusLabel("rejected")).toBe("Odrzucone");
     expect(acceptanceStatusLabel("deleted")).toBe("Usunięte");
+  });
+
+  it("importSessionStatusLabel mapuje wszystkie statusy sesji importu (S-08)", () => {
+    expect(importSessionStatusLabel("processing")).toBe("Przetwarzanie…");
+    expect(importSessionStatusLabel("completed_with_items")).toBe("Gotowe");
+    expect(importSessionStatusLabel("completed_no_items")).toBe("Brak wpisów");
+    expect(importSessionStatusLabel("failed")).toBe("Błąd");
+    // kompletność enuma
+    const all: ImportSessionStatus[] = ["processing", "completed_with_items", "completed_no_items", "failed"];
+    for (const status of all) expect(importSessionStatusLabel(status)).toBeTruthy();
   });
 });

@@ -12,6 +12,22 @@ export default defineConfig({
   integrations: [react(), sitemap()],
   vite: {
     plugins: [tailwindcss()],
+    // Jedna fizyczna kopia Reacta we wszystkich importach (klient + SSR).
+    resolve: {
+      dedupe: ["react", "react-dom"],
+    },
+    ssr: {
+      // Bundluj Reacta DO grafu SSR zamiast serwować go z wersjonowanych chunków optymalizatora
+      // dev (node_modules/.vite/deps_ssr/*?v=<hash>). To wyjmuje react/react-dom/react-dom-server
+      // z mechanizmu generacji `?v=` Vite. Bez tego re-optymalizacja JAKIEJKOLWIEK innej zależności
+      // odkrytej w trakcie sesji (np. astro/env/runtime, zod z klasyfikacji) reloadowała deps i
+      // potrafiła zostawić `react` w nowej generacji, a `react-dom/server` w starej — w tym samym
+      // renderze SSR → dwie instancje Reacta → „Invalid hook call / more than one copy of React".
+      // Crash trafiał wyspę z hookiem (SessionsList → SessionRow → useSessionRetry). Problem
+      // WYŁĄCZNIE dev — optimizeDeps nie istnieje w buildzie Rollupa. Patrz
+      // context/changes/import-session-log-retry/follow-ups/review-fixes.md.
+      noExternal: ["react", "react-dom"],
+    },
   },
   adapter: cloudflare(),
   env: {

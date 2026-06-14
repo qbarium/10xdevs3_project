@@ -16,6 +16,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { ClassificationState } from "@/components/hooks/useClassification";
+import { ingestErrorMessage } from "@/lib/ingest-errors";
+import { entryNoun } from "@/lib/labels";
 
 interface Props {
   state: ClassificationState;
@@ -28,34 +30,7 @@ interface Props {
 const AUTO_REDIRECT_SECONDS = 4;
 const ITEMS_PATH = "/items";
 
-/** Komunikat dla użytkownika wg kodu błędu (bez szczegółów technicznych). */
-function errorMessage(code: string | null): string {
-  switch (code) {
-    case "invalid_key":
-      return "Klucz API OpenAI jest niepoprawny lub wygasł — sprawdź ustawienia w profilu.";
-    case "timeout":
-      return "Klasyfikacja przekroczyła limit czasu (60 s). Spróbuj ponownie.";
-    case "provider":
-      return "Dostawca AI jest chwilowo niedostępny. Spróbuj ponownie za chwilę.";
-    case "contract":
-      return "Otrzymaliśmy nieprawidłową odpowiedź od modelu. Spróbuj ponownie.";
-    case "too_many_items":
-      return "Wsad wygenerował zbyt wiele itemów. Skróć tekst i spróbuj ponownie.";
-    case "missing_key":
-      return "Brak skonfigurowanego klucza API. Skonfiguruj klucz w profilu.";
-    default:
-      return "Coś poszło nie tak podczas klasyfikacji. Spróbuj ponownie.";
-  }
-}
-
-/** Polska odmiana rzeczownika „item” wg liczby. */
-function itemNoun(n: number): string {
-  if (n === 1) return "item";
-  const tens = n % 100;
-  const units = n % 10;
-  if (units >= 2 && units <= 4 && (tens < 12 || tens > 14)) return "itemy";
-  return "itemów";
-}
+// Komunikat błędu wg kodu pochodzi ze współdzielonego ingestErrorMessage (S-08); entryNoun z labels.ts.
 
 function goToItems(): void {
   window.location.href = ITEMS_PATH;
@@ -127,7 +102,7 @@ export function ClassificationModal({ state, itemCount, errorCode, onRetry, onCl
           <>
             <DialogHeader>
               <DialogTitle>
-                Sesja zawiera {itemCount} {itemNoun(itemCount)}
+                Sesja zawiera {itemCount} {entryNoun(itemCount)}
               </DialogTitle>
               <RedirectCountdown />
             </DialogHeader>
@@ -142,7 +117,7 @@ export function ClassificationModal({ state, itemCount, errorCode, onRetry, onCl
         {state === "completed_no_items" && (
           <>
             <DialogHeader>
-              <DialogTitle>Nie znaleziono itemów</DialogTitle>
+              <DialogTitle>Nie znaleziono wpisów</DialogTitle>
               <DialogDescription>
                 Wsad nie zawierał treści do sklasyfikowania. Spróbuj z innym tekstem.
               </DialogDescription>
@@ -159,7 +134,7 @@ export function ClassificationModal({ state, itemCount, errorCode, onRetry, onCl
           <>
             <DialogHeader>
               <DialogTitle>Klasyfikacja nie powiodła się</DialogTitle>
-              <DialogDescription>{errorMessage(errorCode)}</DialogDescription>
+              <DialogDescription>{ingestErrorMessage(errorCode)}</DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button type="button" onClick={onRetry}>

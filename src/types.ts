@@ -105,6 +105,15 @@ export interface ImportFile {
   created_at: string;
 }
 
+/**
+ * Sesja importu wzbogacona o pola pliku do wyświetlenia w dzienniku (S-08). `file_name`/`file_mime`
+ * pochodzą z LEFT JOIN `import_files`; null dla wsadu paste lub gdy brak rekordu pliku.
+ */
+export interface ImportSessionWithFile extends ImportSession {
+  file_name: string | null;
+  file_mime: string | null;
+}
+
 /** Wiersz `items` — typowany item; `import_session_id` null dla itemów ręcznych (S-07). */
 export interface Item {
   id: string;

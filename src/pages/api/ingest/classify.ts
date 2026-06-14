@@ -2,7 +2,8 @@
 //   • paste — JSON { text } (PR1, Faza 3): limit INPUT_MAX_CHARS, raw_input = treść.
 //   • plik  — multipart/form-data { file } (PR2, Faza 7): limit 300 KB ROZMIARU (nie znaków),
 //             upload do storage + wiersz import_files, dekodowanie kodowań, raw_input = null.
-// Po ustaleniu (sessionId, rawText) obie ścieżki schodzą się we wspólnym ogonie classifyAndRespond.
+// Po ustaleniu (sessionId, rawText) obie ścieżki wołają współdzielony rdzeń runClassification
+// (@/lib/ai/classify-core), a wynik mapuje na HTTP classifyResultToResponse (ten sam rdzeń reużywa retry S-08).
 //
 // Sekwencja (PRD cascade): guard locals.user → pozyskanie/walidacja wsadu → klient Supabase (RLS)
 // → odszyfrowanie klucza BYOK → sesja `processing` (+ plik: upload + dekodowanie) → classify()
@@ -13,99 +14,24 @@
 // UI to jeden z czterech normalnych stanów przebiegu (FR-006), nie awaria transportu. Żaden komunikat
 // ani log nie zawiera klucza ani treści wsadu (FR-026); logujemy wyłącznie metadane.
 
-import type { SupabaseClient } from "@supabase/supabase-js";
 import type { APIRoute } from "astro";
 
-import { classify } from "@/lib/ai/classifier";
-import { AI_REQUEST_TIMEOUT_MS } from "@/lib/config/ai";
+import { classifyResultToResponse, runClassification } from "@/lib/ai/classify-core";
+import { json } from "@/lib/http";
 import { decryptApiKey } from "@/lib/services/byok-crypto";
 import { assertValidImportFile, MAX_FILE_BYTES, uploadImportFile } from "@/lib/services/file-upload";
-import { createSession, failSession, finalizeEmpty, persistItems } from "@/lib/services/import-session";
+import { createSession, failSession } from "@/lib/services/import-session";
 import { logger, reportError } from "@/lib/services/logger";
 import { getEncryptedApiKey } from "@/lib/services/profile-key";
 import { createClient } from "@/lib/supabase";
 import { decodeFile } from "@/lib/text/decode";
 import { INPUT_MAX_CHARS, sanitizeInput } from "@/lib/text/sanitize";
-import {
-  ClassifierAuthError,
-  ClassifierContractError,
-  ClassifierProviderError,
-  FileTooLargeError,
-  KekNotConfiguredError,
-  UnsupportedEncodingError,
-  UnsupportedFileTypeError,
-  UnsupportedModelError,
-} from "@/types";
+import { FileTooLargeError, KekNotConfiguredError, UnsupportedEncodingError, UnsupportedFileTypeError } from "@/types";
 
 export const prerender = false;
 
-/** Techniczny safety net FR-020: > 100 itemów to anomalia, NIE limit produktowy widoczny dla usera. */
-const MAX_ITEMS = 100;
-
 /** Margines na kopertę multipart (boundary + nagłówki części) doliczany do MAX_FILE_BYTES przy wczesnym odrzucie. */
 const MULTIPART_ENVELOPE_MARGIN_BYTES = 16 * 1024;
-
-function json(body: unknown, status: number): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
-}
-
-/** Mapuje wyjątek klasyfikacji na krótki kod stanu UI (bez szczegółów wrażliwych). */
-function mapClassifyError(err: unknown): string {
-  if (err instanceof DOMException && err.name === "AbortError") return "timeout";
-  if (err instanceof ClassifierAuthError) return "invalid_key";
-  if (err instanceof ClassifierProviderError) return "provider";
-  if (err instanceof ClassifierContractError) return "contract";
-  if (err instanceof UnsupportedModelError) return "unsupported_model";
-  reportError(err); // nieoczekiwany błąd — zaloguj pełny (zamaskowany), zwróć generyczny kod
-  return "unknown";
-}
-
-/**
- * Wspólny ogon obu ścieżek: klasyfikuje wsad z twardym timeoutem 60 s (wall-clock fetch-wait) i
- * mapuje wynik na cztery stany sesji. Sesja istnieje już w stanie `processing` — błąd → failSession.
- * clearTimeout w finally.
- */
-async function classifyAndRespond(
-  supabase: SupabaseClient,
-  userId: string,
-  sessionId: string,
-  rawText: string,
-  apiKey: string,
-): Promise<Response> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => {
-    controller.abort();
-  }, AI_REQUEST_TIMEOUT_MS);
-  try {
-    const items = await classify(rawText, { apiKey, userId, signal: controller.signal });
-
-    if (items.length > MAX_ITEMS) {
-      await failSession(supabase, sessionId, "too_many_items");
-      logger.warn("classify: safety net > 100", { sessionId, count: items.length });
-      return json({ ok: false, sessionId, status: "failed", code: "too_many_items" }, 422);
-    }
-    if (items.length === 0) {
-      await finalizeEmpty(supabase, sessionId);
-      return json({ ok: true, sessionId, status: "completed_no_items", itemCount: 0 }, 200);
-    }
-    const itemCount = await persistItems(supabase, sessionId, items);
-    return json({ ok: true, sessionId, status: "completed_with_items", itemCount }, 200);
-  } catch (err) {
-    const code = mapClassifyError(err);
-    try {
-      await failSession(supabase, sessionId, code);
-    } catch (failErr) {
-      reportError(failErr); // nie maskuj pierwotnej przyczyny — to log dodatkowy
-    }
-    logger.warn("classify: failed", { sessionId, code });
-    return json({ ok: true, sessionId, status: "failed", code }, 200);
-  } finally {
-    clearTimeout(timer);
-  }
-}
 
 export const POST: APIRoute = async (context) => {
   const user = context.locals.user;
@@ -225,5 +151,6 @@ export const POST: APIRoute = async (context) => {
     }
   }
 
-  return classifyAndRespond(supabase, user.id, sessionId, rawText, apiKey);
+  const result = await runClassification(supabase, { sessionId, apiKey, userId: user.id, text: rawText });
+  return classifyResultToResponse(sessionId, result);
 };

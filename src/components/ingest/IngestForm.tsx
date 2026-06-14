@@ -75,7 +75,7 @@ export default function IngestForm({ initialKeyStatus }: Props) {
       <CardHeader>
         <CardTitle>Klasyfikacja wsadu</CardTitle>
         <CardDescription>
-          Wklej luźne myśli, notatki lub listę — albo wrzuć plik .txt/.md. Zamienimy je na typowane itemy. Podwójny Esc
+          Wklej luźne myśli, notatki lub listę — albo wrzuć plik .txt/.md. Zamienimy je na typowane wpisy. Podwójny Esc
           czyści pole.
         </CardDescription>
       </CardHeader>

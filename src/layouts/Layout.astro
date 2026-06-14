@@ -11,7 +11,10 @@ const { title = "10x Astro Starter" } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en">
+<!-- color-scheme: dark INLINE na <html> — aplikacja jest ciemna, więc natywne kontrolki (popup
+     <select>, scrollbary, pola) mają renderować się ciemno. Inline, bo scoped <style> Astro nie
+     trafia pewnie na <html> (brak atrybutu cid), a motyw CSS w :root jest jasny. -->
+<html lang="en" style="color-scheme: dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
