@@ -1,7 +1,8 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import Topbar from "@/components/Topbar.astro";
-import SessionsList from "@/components/import-sessions/SessionsList.astro";
+import { SessionsList } from "@/components/import-sessions/SessionsList";
+import type { SessionRowData } from "@/components/import-sessions/SessionRow";
 import { createClient } from "@/lib/supabase";
 import { getImportSessions } from "@/lib/services/import-session";
 import type { GetImportSessionsOptions } from "@/lib/services/import-session";
@@ -34,6 +35,25 @@ if (user && supabase) {
     sessions = [];
   }
 }
+
+// Odchudzone DTO wiersza liczone serwerowo: gotowy podgląd ≤120 zn. (bez pełnego raw_input w payloadzie
+// klienta), sformatowana data, status/itemCount/errorCode. To trafia do wyspy React (SessionsList).
+const PREVIEW_MAX = 120;
+function rowPreview(s: ImportSessionWithFile): string {
+  if (s.file_name) return s.file_name;
+  const collapsed = (s.raw_input ?? "").replace(/\s+/g, " ").trim();
+  if (!collapsed) return "(pusty wsad)";
+  return collapsed.length > PREVIEW_MAX ? `${collapsed.slice(0, PREVIEW_MAX)}…` : collapsed;
+}
+const rows: SessionRowData[] = sessions.map((s) => ({
+  id: s.id,
+  isFile: Boolean(s.file_name),
+  preview: rowPreview(s),
+  dateLabel: s.created_at.slice(0, 16).replace("T", " "),
+  status: s.status,
+  itemCount: s.item_count,
+  errorCode: s.error_message,
+}));
 
 const selectClass =
   "rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-sm text-white/90 focus:border-purple-300/50 focus:outline-none";
@@ -77,7 +97,7 @@ const selectClass =
           </button>
         </form>
 
-        <SessionsList sessions={sessions} />
+        <SessionsList client:load rows={rows} />
       </main>
     </div>
   </div>
