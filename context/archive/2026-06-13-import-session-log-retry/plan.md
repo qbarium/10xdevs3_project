@@ -344,7 +344,7 @@ Dokłada akcję „Spróbuj ponownie" jako React island z inline statusem w wier
 #### Automatyczne
 
 - [x] 4.1 Build + lint czyste — d689114
-- [ ] 4.2 (opcjonalnie) test hooka mapującego odpowiedź
+- [x] 4.2 (opcjonalnie) test hooka mapującego odpowiedź (mapRetryResponse — 8 przypadków: stany sesji / 422 too_many_items / missing_key / not_retryable / fallback) — e82f696
 
 #### Ręczne
 
