@@ -55,11 +55,9 @@ const rows: SessionRowData[] = sessions.map((s) => ({
   errorCode: s.error_message,
 }));
 
+// Ciemny popup natywnych selectów zapewnia globalne `html { color-scheme: dark }` w Layout.
 const selectClass =
   "rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-sm text-white/90 focus:border-purple-300/50 focus:outline-none";
-// Natywna lista opcji jest rysowana przez przeglądarkę (nie nasz CSS) — kolor/tło ustawiamy WPROST na
-// <option>, inaczej biały tekst selecta zlewa się z jasnym tłem natywnego dropdownu (opcje niewidoczne).
-const optionClass = "bg-slate-900 text-white";
 ---
 
 <Layout title="Sesje importu">
@@ -75,21 +73,17 @@ const optionClass = "bg-slate-900 text-white";
           <label class="flex flex-col gap-1 text-xs text-white/60">
             Sortowanie
             <select name="sort" class:list={[selectClass]}>
-              <option value="created_desc" class:list={[optionClass]} selected={sort === "created_desc"}>
-                Najnowsze
-              </option>
-              <option value="created_asc" class:list={[optionClass]} selected={sort === "created_asc"}>
-                Najstarsze
-              </option>
+              <option value="created_desc" selected={sort === "created_desc"}>Najnowsze</option>
+              <option value="created_asc" selected={sort === "created_asc"}>Najstarsze</option>
             </select>
           </label>
           <label class="flex flex-col gap-1 text-xs text-white/60">
             Status
             <select name="status" class:list={[selectClass]}>
-              <option value="" class:list={[optionClass]} selected={!status}>Wszystkie</option>
+              <option value="" selected={!status}>Wszystkie</option>
               {
                 STATUS_VALUES.map((s) => (
-                  <option value={s} class:list={[optionClass]} selected={status === s}>
+                  <option value={s} selected={status === s}>
                     {importSessionStatusLabel(s)}
                   </option>
                 ))
