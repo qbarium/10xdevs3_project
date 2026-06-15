@@ -34,7 +34,7 @@ TaskerLight przyjmuje surowy, nieuporządkowany wsad głosowo-tekstowy i rozdzie
 | S-01  | byok-key-config          | zapisać, podejrzeć zamaskowany i usunąć własny klucz API; submit bramkowany | F-01              | US-06, FR-021, FR-022, FR-024              | done |
 | S-02  | first-gated-generation   | wkleić tekst/plik i zobaczyć typowane itemy jako pendingi do akceptacji     | S-01, F-01  | US-01, FR-002, FR-003, FR-005, FR-006, FR-015, FR-018, FR-020, FR-023, FR-025 | done |
 | S-03  | validation-accept-reject | zaakceptować (z edycją) lub odrzucić pendingi; zaakceptowane → Aktywne      | S-02              | US-02, US-03, FR-007, FR-008, FR-010, FR-012 | done |
-| S-04  | task-operational-lifecycle | zmieniać stan operacyjny itemu dowolnego typu (nowe/w realizacji/zrealizowane/anulowane) | S-03              | US-04, FR-009                              | proposed |
+| S-04  | task-operational-lifecycle | zmieniać stan operacyjny itemu dowolnego typu (nowe/w realizacji/zrealizowane/anulowane) | S-03              | US-04, FR-009                              | done |
 | S-05  | unified-list-and-edit    | przeglądać Aktywne/Zakończone/Anulowane (filtr typu) i edytować itemy       | S-03              | FR-008, FR-011                             | proposed |
 | S-06  | trash-lifecycle          | przenieść item do kosza, przywrócić i wyczyścić kosz                        | S-03              | US-05, FR-013, FR-016                      | proposed |
 | S-07  | manual-item-entry        | dodać item ręcznie (bez klucza, od razu `accepted`)                         | S-02              | US-08, FR-028                              | proposed |
@@ -132,7 +132,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Blokady:** —
 - **Niewiadome:** —
 - **Ryzyko:** Domyka ścieżkę gwiazdy przewodniej (wskazaną przez użytkownika). **Decyzja projektowa 2026-06-15 (wyłom z pierwotnego FR-009 task-only):** stan operacyjny rozszerzony na wszystkie typy itemów, z etykietami per-typ; `done` dowolnego typu → widok Zakończone. Koszt: migracja backfill `NULL→'new'` + zmiana RPC `persist_classification` (szczegóły w planie zmiany `task-operational-lifecycle`). FR-009 w PRD do zaktualizowania osobno.
-- **Status:** proposed
+- **Status:** done
 
 ### S-05: Jednolita lista i edycja zaakceptowanych itemów
 
@@ -234,6 +234,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **S-02: użytkownik może wkleić tekst (do 100 000 znaków) lub wrzucić jeden plik `.txt`/`.md` (do 300 KB), kliknąć submit, zobaczyć blokujący wskaźnik aktywności podczas synchronicznej klasyfikacji, a po jej zakończeniu — typowane itemy jako pendingi w widoku „Elementy do akceptacji".** — Zarchiwizowano 2026-06-12 → `context/archive/2026-06-10-first-gated-generation/`. Lekcja: konfiguracja LLM fail-closed + modeluj schemat wg kardynalności (lessons.md); FR-015 złagodzony do best-effort (set null).
 - **S-03: użytkownik może zaznaczyć pendingi (model: per item + „zaznacz wszystkie"), zatwierdzić zaznaczone (z opcjonalną edycją `title`/`description`/`typ`) lub odrzucić; zaakceptowane trafiają do widoku Aktywne, odrzucone do Kosza (poprzedni status `rejected`).** — Zarchiwizowano 2026-06-14 → `context/archive/2026-06-13-validation-accept-reject/`. Lekcja: edycja bez optimistic concurrency = lost-update (świadome ograniczenie solo-MVP); ujednolicony kształt błędu API `{ok:false,code,error}` (lessons.md).
 - **S-08: użytkownik może przejrzeć chronologiczny dziennik sesji importu (rejestr wejścia, status, liczba itemów lub błąd) i ponowić sesję ze statusem `niepowodzenie` (np. niepoprawny klucz) bez wprowadzania wsadu od nowa.** — Zarchiwizowano 2026-06-14 → `context/archive/2026-06-13-import-session-log-retry/`. Lekcja: dev-only wyścig optimizeDeps Vite — dup-React w SSR (lessons.md).
+- **S-04: użytkownik może zmienić stan operacyjny itemu dowolnego typu (`nowe` / `w realizacji` / `zrealizowane` / `anulowane`, wzajemnie przechodnie) per item i zbiorczo; `zrealizowane` przenosi item z Aktywne do Zakończone, `anulowane` do Anulowane. Etykiety stanu są per-typ (np. `zrealizowane`: zadanie „Zrobione", notatka „Obsłużona", decyzja „Podjęta", pomysł „Obsłużony").** — Zarchiwizowano 2026-06-15 → `context/archive/2026-06-15-task-operational-lifecycle/`. Lekcja: —.
 
 ## Zrobione
 

@@ -14,6 +14,7 @@ interface BulkResponse {
   ok?: boolean;
   updatedIds?: string[];
   count?: number;
+  status?: OperationalStatus;
 }
 interface EditResponse {
   ok?: boolean;
