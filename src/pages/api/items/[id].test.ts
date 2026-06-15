@@ -30,7 +30,13 @@ const sampleItem: Item = {
   updated_at: "2026-01-01T00:00:00Z",
 };
 
-const validBody = { title: "Nowy", description: null, type: "note", expectedUpdatedAt: "2026-01-01T00:00:00Z" };
+const validBody = {
+  title: "Nowy",
+  description: null,
+  type: "note",
+  operationalStatus: "new",
+  expectedUpdatedAt: "2026-01-01T00:00:00Z",
+};
 
 function ctx(
   body: unknown,
@@ -76,21 +82,27 @@ describe("PATCH /api/items/[id]", () => {
     expect(vi.mocked(editItem)).toHaveBeenCalledWith(
       expect.anything(),
       UUID,
-      { title: "Nowy", description: null, type: "note" },
+      { title: "Nowy", description: null, type: "note", operationalStatus: "new" },
       "2026-01-01T00:00:00Z",
     );
   });
 
   it("pusty title → 400, serwis nie wywołany", async () => {
     const res = await PATCH(
-      ctx({ title: "   ", description: null, type: "note", expectedUpdatedAt: "2026-01-01T00:00:00Z" }),
+      ctx({
+        title: "   ",
+        description: null,
+        type: "note",
+        operationalStatus: "new",
+        expectedUpdatedAt: "2026-01-01T00:00:00Z",
+      }),
     );
     expect(res.status).toBe(400);
     expect(vi.mocked(editItem)).not.toHaveBeenCalled();
   });
 
   it("brak expectedUpdatedAt → 400, serwis nie wywołany", async () => {
-    const res = await PATCH(ctx({ title: "Nowy", description: null, type: "note" }));
+    const res = await PATCH(ctx({ title: "Nowy", description: null, type: "note", operationalStatus: "new" }));
     expect(res.status).toBe(400);
     expect(vi.mocked(editItem)).not.toHaveBeenCalled();
   });

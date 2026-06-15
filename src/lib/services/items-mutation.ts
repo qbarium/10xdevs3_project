@@ -96,8 +96,10 @@ export async function setOperationalStatus(
 }
 
 /**
- * Edycja pojedynczego itemu (title/description/type) dla `pending` ORAZ `accepted` (S-05). Payload
- * NIE zawiera `operational_status` — edycja zachowuje postęp accepted (decyzja #3). Compare-and-swap:
+ * Edycja pojedynczego itemu (title/description/type/operationalStatus) dla `pending` ORAZ `accepted`
+ * (S-05). `operational_status` jest ustawiany JAWNIE z wejścia — UI prefilluje bieżącą wartość, więc
+ * edycja treści bez tknięcia selektora zachowuje stan; cichy reset przez auto-derywację (`→'new'`,
+ * pierwotne ryzyko decyzji #3) nie wraca, bo zapisujemy wartość podaną, nie derywowaną. Compare-and-swap:
  * UPDATE strzeże `in('acceptance_status', ['pending','accepted'])` + `eq('updated_at', expectedUpdatedAt)`,
  * więc trafia tylko w edytowalny wiersz o niezmienionym znaczniku.
  *
@@ -118,6 +120,7 @@ export async function editItem(
       title: input.title,
       description: input.description,
       type: input.type,
+      operational_status: input.operationalStatus,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)

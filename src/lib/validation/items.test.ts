@@ -37,39 +37,59 @@ describe("bulkActionSchema", () => {
 });
 
 describe("editItemSchema", () => {
-  it("akceptuje pełny payload i trimuje title", () => {
-    const r = editItemSchema.safeParse({ title: "  Tytuł  ", description: "opis", type: "task" });
+  it("akceptuje pełny payload (z operationalStatus) i trimuje title", () => {
+    const r = editItemSchema.safeParse({
+      title: "  Tytuł  ",
+      description: "opis",
+      type: "task",
+      operationalStatus: "in_progress",
+    });
     expect(r.success).toBe(true);
     if (r.success) {
       expect(r.data.title).toBe("Tytuł");
       expect(r.data.description).toBe("opis");
       expect(r.data.type).toBe("task");
+      expect(r.data.operationalStatus).toBe("in_progress");
     }
   });
 
   it("odrzuca pusty title (po trim)", () => {
-    expect(editItemSchema.safeParse({ title: "   ", description: null, type: "note" }).success).toBe(false);
+    expect(
+      editItemSchema.safeParse({ title: "   ", description: null, type: "note", operationalStatus: "new" }).success,
+    ).toBe(false);
   });
 
   it("normalizuje pusty/whitespace description → null", () => {
-    const r = editItemSchema.safeParse({ title: "T", description: "   ", type: "note" });
+    const r = editItemSchema.safeParse({ title: "T", description: "   ", type: "note", operationalStatus: "new" });
     expect(r.success).toBe(true);
     if (r.success) expect(r.data.description).toBeNull();
   });
 
   it("akceptuje description null", () => {
-    const r = editItemSchema.safeParse({ title: "T", description: null, type: "idea" });
+    const r = editItemSchema.safeParse({ title: "T", description: null, type: "idea", operationalStatus: "done" });
     expect(r.success).toBe(true);
     if (r.success) expect(r.data.description).toBeNull();
   });
 
   it("odrzuca nieznany type", () => {
-    expect(editItemSchema.safeParse({ title: "T", description: null, type: "task2" }).success).toBe(false);
+    expect(
+      editItemSchema.safeParse({ title: "T", description: null, type: "task2", operationalStatus: "new" }).success,
+    ).toBe(false);
+  });
+
+  it("odrzuca brak operationalStatus", () => {
+    expect(editItemSchema.safeParse({ title: "T", description: null, type: "note" }).success).toBe(false);
+  });
+
+  it("odrzuca nieznany operationalStatus", () => {
+    expect(
+      editItemSchema.safeParse({ title: "T", description: null, type: "note", operationalStatus: "archived" }).success,
+    ).toBe(false);
   });
 });
 
 describe("editItemBodySchema", () => {
-  const base = { title: "T", description: null, type: "note" as const };
+  const base = { title: "T", description: null, type: "note" as const, operationalStatus: "new" as const };
 
   it("akceptuje pełny payload z expectedUpdatedAt (Z)", () => {
     const r = editItemBodySchema.safeParse({ ...base, expectedUpdatedAt: "2026-01-01T00:00:00Z" });

@@ -17,8 +17,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ITEM_TYPES } from "@/lib/ai/schema";
-import { itemTypeLabel } from "@/lib/labels";
-import type { Item, ItemType } from "@/types";
+import { itemTypeLabel, operationalStatusLabel } from "@/lib/labels";
+import { OPERATIONAL_STATUSES } from "@/lib/validation/items";
+import type { Item, ItemType, OperationalStatus } from "@/types";
 
 interface Props {
   item: Item;
@@ -32,25 +33,38 @@ interface Props {
   onConflict?: (id: string) => void;
 }
 
-// Modal edycji itemu (title/description/typ) dla pendingów ORAZ zaakceptowanych (S-05). Zapis
-// natychmiastowy — akceptacja to osobna akcja (FR-010); edycja NIE dotyka stanu operacyjnego (serwer,
-// Faza 1). `item.updated_at` jedzie jako `expectedUpdatedAt` (optimistic concurrency → 409 przy
-// rozjeździe). Zamknięcie z niezapisanymi zmianami jest bramkowane pytaniem (ochrona przed utratą danych).
+// Modal edycji itemu (title/description/typ + stan operacyjny dla zaakceptowanych) — jedyne miejsce
+// per-itemowej edycji (S-05, rewizja UX). Zapis natychmiastowy — akceptacja to osobna akcja (FR-010).
+// Stan operacyjny edytujemy tu JAWNIE (selektor prefilluje bieżącą wartość → edycja treści go zachowuje);
+// dla pendingów selektor jest ukryty (cykl życia zaczyna się po akceptacji). `item.updated_at` jedzie
+// jako `expectedUpdatedAt` (optimistic concurrency → 409). Zamknięcie z niezapisanymi zmianami bramkuje pytanie.
 export default function EditItemDialog({ item, open, onOpenChange, onSaved, onNotFound, onConflict }: Props) {
   const [title, setTitle] = useState(item.title);
   const [description, setDescription] = useState(item.description ?? "");
   const [type, setType] = useState<ItemType>(item.type);
+  const [operationalStatus, setOperationalStatus] = useState<OperationalStatus>(item.operational_status ?? "new");
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const { editItem, pending } = useItemMutation();
 
+  // Stan operacyjny edytowalny tylko dla zaakceptowanych — pending jest przed cyklem życia.
+  const canEditStatus = item.acceptance_status === "accepted";
+
   // Pola inicjalizowane z propsów; reset przy zmianie itemu zapewnia remount przez `key={item.id}`.
   const titleInvalid = !isTitleValid(title);
-  const isDirty = title !== item.title || description !== (item.description ?? "") || type !== item.type;
+  const isDirty =
+    title !== item.title ||
+    description !== (item.description ?? "") ||
+    type !== item.type ||
+    operationalStatus !== (item.operational_status ?? "new");
 
   async function handleSave(): Promise<void> {
     if (titleInvalid) return;
     // `item.updated_at` to znacznik z chwili otwarcia dialogu — serwer porówna go (compare-and-swap).
-    const result = await editItem(item.id, buildEditPayload(title, description, type), item.updated_at);
+    const result = await editItem(
+      item.id,
+      buildEditPayload(title, description, type, operationalStatus),
+      item.updated_at,
+    );
     if (result.ok) {
       toast.success("Zapisano zmiany.");
       onSaved(result.item);
@@ -139,6 +153,29 @@ export default function EditItemDialog({ item, open, onOpenChange, onSaved, onNo
                 </SelectContent>
               </Select>
             </div>
+
+            {canEditStatus && (
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="edit-status">Stan</Label>
+                <Select
+                  value={operationalStatus}
+                  onValueChange={(value) => {
+                    setOperationalStatus(value as OperationalStatus);
+                  }}
+                >
+                  <SelectTrigger id="edit-status">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {OPERATIONAL_STATUSES.map((value) => (
+                      <SelectItem key={value} value={value}>
+                        {operationalStatusLabel(value, type)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           <DialogFooter>

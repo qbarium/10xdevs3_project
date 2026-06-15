@@ -14,21 +14,26 @@ import type { Item, OperationalStatus } from "@/types";
 interface Props {
   item: Item;
   disabled?: boolean;
-  onChange: (target: OperationalStatus) => void;
+  /** Brak `onChange` → badge tylko do odczytu (lista; zmiana stanu odbywa się w dialogu edycji). */
+  onChange?: (target: OperationalStatus) => void;
 }
 
-const BADGE_CLASS =
-  "inline-flex items-center gap-1 rounded-full border border-blue-300/30 bg-blue-400/10 px-2 py-0.5 text-xs font-medium text-blue-100 transition hover:bg-blue-400/20 disabled:cursor-not-allowed disabled:opacity-50";
+const BADGE_BASE =
+  "inline-flex items-center gap-1 rounded-full border border-blue-300/30 bg-blue-400/10 px-2 py-0.5 text-xs font-medium text-blue-100";
+const BADGE_INTERACTIVE = "transition hover:bg-blue-400/20 disabled:cursor-not-allowed disabled:opacity-50";
 
-// Klikalny badge stanu operacyjnego: pokazuje bieżący stan (etykieta per-typ) i otwiera menu
-// kontekstowe z kuracją przejść (OPERATIONAL_TRANSITIONS). Klik pozycji → onChange(target). Gdy
-// `disabled` (żądanie w locie) — trigger nieaktywny. Kuracja (UX) ≠ walidacja (dane dopuszczają 4 stany).
+// Badge stanu operacyjnego. Z `onChange` jest KLIKALNY: pokazuje bieżący stan (etykieta per-typ) i
+// otwiera menu z kuracją przejść (OPERATIONAL_TRANSITIONS) → onChange(target). BEZ `onChange` (lub bez
+// stanu) jest STATYCZNY (tylko etykieta) — używany na liście, gdzie edycję stanu przejęła formatka.
+// Kuracja (UX) ≠ walidacja (dane dopuszczają 4 stany).
 export default function OperationalStatusBadge({ item, disabled = false, onChange }: Props) {
   const status = item.operational_status;
 
-  // Brak stanu (teoretyczne — po backfillu nie występuje) → statyczny badge bez menu.
-  if (!status) {
-    return <span className={cn(BADGE_CLASS, "cursor-default")}>{operationalStatusLabel("new", item.type)}</span>;
+  // Tryb tylko-do-odczytu: brak callbacku zmiany albo brak stanu (teoretyczne — po backfillu nie występuje).
+  if (!onChange || !status) {
+    return (
+      <span className={cn(BADGE_BASE, "cursor-default")}>{operationalStatusLabel(status ?? "new", item.type)}</span>
+    );
   }
 
   return (
@@ -36,7 +41,7 @@ export default function OperationalStatusBadge({ item, disabled = false, onChang
       <DropdownMenuTrigger
         type="button"
         disabled={disabled}
-        className={BADGE_CLASS}
+        className={cn(BADGE_BASE, BADGE_INTERACTIVE)}
         aria-label={`Zmień stan: ${item.title}`}
       >
         {operationalStatusLabel(status, item.type)}

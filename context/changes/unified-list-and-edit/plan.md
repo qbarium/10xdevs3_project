@@ -68,7 +68,7 @@ Kolejność backend → edycja → filtr buduje pełen pion edycji, zanim warstw
 ## Krytyczne szczegóły implementacji
 
 - **Optimistic concurrency wymaga rozróżnienia 404 vs 409 dwukrokowo.** Pojedynczy UPDATE z guardem `acceptance_status IN ('pending','accepted') AND updated_at = <oczekiwane>` zwracający 0 wierszy jest **niejednoznaczny**: item mógł nie istnieć / być nieedytowalny (→ 404) albo być nieaktualny (→ 409). Po 0-wierszowym UPDATE wykonaj follow-up SELECT po `id` (RLS-scoped): jeśli wiersz istnieje i ma status edytowalny, lecz inne `updated_at` → **409 conflict**; w przeciwnym razie → **404 not editable**. Bez tego rozróżnienia UI nie odróżni „ktoś nadpisał" od „item zniknął".
-- **Edycja NIE modyfikuje `operational_status`** (decyzja #3). Usuń `deriveOperationalStatus` z payloadu UPDATE w ścieżce edycji. Dla pendingów to no-op (są `'new'`), dla accepted zachowuje postęp. To nieoczywiste, bo dziś S-03 jawnie ustawia stan przy edycji — pokusa „rozszerz guard i zostaw resztę" wprowadziłaby regresję.
+- **Edycja a `operational_status`.** Pierwotnie (decyzja #3): edycja NIE modyfikuje stanu — usunięcie auto-derywacji `deriveOperationalStatus → 'new'` z payloadu UPDATE (re-derywacja zresetowałaby postęp accepted). **ZMIANA (rewizja UX 2026-06-16, decyzja #7):** stan jest edytowalny JAWNIE w dialogu (selektor dla accepted, prefill bieżącej wartości); serwer zapisuje wartość **podaną**, nie derywowaną. Kluczowy inwariant „brak cichego resetu" trzyma się: edycja samej treści wysyła niezmieniony stan, a pierwotnie groźna auto-derywacja `→'new'` nadal nie istnieje. Per-itemowy badge stanu na liście stał się tylko do odczytu (zmiana stanu = dialog albo bulk-toolbar).
 
 ## Faza 1: Backend — edycja zaakceptowanych + optimistic concurrency
 
@@ -317,9 +317,9 @@ Brak. Schemat (`updated_at`, `operational_status` dla wszystkich typów) wystarc
 
 #### Automatyczne
 
-- [x] 3.1 Lint przechodzi: `npm run lint`
-- [x] 3.2 Testy jednostkowe przechodzą (w tym `type-filter.test.ts`): `npm test`
-- [x] 3.3 Build przechodzi: `npm run build`
+- [x] 3.1 Lint przechodzi: `npm run lint` — ac29fc4
+- [x] 3.2 Testy jednostkowe przechodzą (w tym `type-filter.test.ts`): `npm test` — ac29fc4
+- [x] 3.3 Build przechodzi: `npm run build` — ac29fc4
 
 #### Ręczne
 

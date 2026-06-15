@@ -20,7 +20,7 @@ export const bulkActionSchema = z.object({
 export type BulkActionInput = z.infer<typeof bulkActionSchema>;
 
 /** Cztery stany operacyjne związane kompilacyjnie z unią `OperationalStatus` (wzorzec `ITEM_TYPES`). */
-const OPERATIONAL_STATUSES = [
+export const OPERATIONAL_STATUSES = [
   "new",
   "in_progress",
   "done",
@@ -40,10 +40,12 @@ export const operationalActionSchema = z.object({
 export type OperationalActionInput = z.infer<typeof operationalActionSchema>;
 
 /**
- * Pola edycji itemu (title/description/type) — rdzeń wspólny dla pendingów i zaakceptowanych (S-05).
- * `title` wymagany (trim + reject pusty). `description` nullable — pusty/whitespace normalizujemy do
- * `null` (kolumna nullable). `type` z pięciu wartości `ItemType`. `operational_status` NIE jest tu
- * obecny: od S-05 edycja go nie dotyka (decyzja #3), więc nie ma czego derywować ani walidować.
+ * Pola edycji itemu (title/description/type/operationalStatus) — rdzeń wspólny dla pendingów i
+ * zaakceptowanych (S-05). `title` wymagany (trim + reject pusty). `description` nullable —
+ * pusty/whitespace normalizujemy do `null` (kolumna nullable). `type` z pięciu wartości `ItemType`.
+ * `operationalStatus` (S-05, rewizja UX) jedzie JAWNIE z dialogu — UI prefilluje bieżącą wartość, więc
+ * edycja treści bez tknięcia selektora zachowuje stan; pierwotne ryzyko decyzji #3 (cichy reset przez
+ * auto-derywację `→'new'`) nie wraca, bo serwer zapisuje wartość podaną, a nie derywowaną z typu.
  * Ten typ (`EditItemInput`) pozostaje rdzeniem konsumowanym przez `buildEditPayload` i serwis —
  * `expectedUpdatedAt` żyje osobno w `editItemBodySchema`, by nie wyciekać do budowy payloadu w UI.
  */
@@ -58,6 +60,7 @@ export const editItemSchema = z.object({
       return trimmed === "" ? null : trimmed;
     }),
   type: z.enum(ITEM_TYPES),
+  operationalStatus: z.enum(OPERATIONAL_STATUSES),
 });
 export type EditItemInput = z.infer<typeof editItemSchema>;
 

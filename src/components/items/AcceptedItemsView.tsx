@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useItemMutation } from "@/components/hooks/useItemMutation";
 import EditItemDialog from "@/components/items/EditItemDialog";
 import OperationalStatusBadge from "@/components/items/OperationalStatusBadge";
-import { reconcileAfterChange, type AcceptedView } from "@/components/items/operational-view";
+import { matchesView, reconcileAfterChange, type AcceptedView } from "@/components/items/operational-view";
 import { allIds, isAllSelected, requiresConfirmation, toggleSelection } from "@/components/items/selection";
 import TypeFilter from "@/components/items/TypeFilter";
 import { applyTypeFilter, type TypeFilterValue } from "@/components/items/type-filter";
@@ -51,9 +51,10 @@ function elementNoun(n: number): string {
 }
 
 // Interaktywny island widoków accepted (Aktywne/Zakończone/Anulowane). Reużywa wzorce PendingItemsView:
-// model zaznaczania (selection.ts) + pessimistic dim + Dialog confirm na select-all + toast. Jednostka
-// akcji to stan operacyjny: per-item przez klikalny OperationalStatusBadge (kuracja przejść), bulk przez
-// 4 przyciski. Po sukcesie reconcileAfterChange usuwa itemy, których nowy stan wypada poza predykat widoku.
+// model zaznaczania (selection.ts) + pessimistic dim + Dialog confirm na select-all + toast. Edycja
+// per-item (w tym stan operacyjny) odbywa się w EditItemDialog — badge typu i stanu na liście są tylko
+// do odczytu (rewizja UX S-05). Zmiana stanu wielu itemów naraz: bulk przez 4 przyciski. Po zmianie stanu
+// (bulk lub edycja) reconcile usuwa itemy, których nowy stan wypada poza predykat widoku.
 export default function AcceptedItemsView({ initialItems, view }: Props) {
   const [items, setItems] = useState<Item[]>(initialItems);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -132,12 +133,23 @@ export default function AcceptedItemsView({ initialItems, view }: Props) {
     void execute(target, ids);
   }
 
-  // Edycja zapisana — podmiana itemu w miejscu. Edycja NIE dotyka `operational_status` (serwer),
-  // więc item zostaje w bieżącym widoku operacyjnym (Aktywne/Zakończone/Anulowane), tylko z nowymi polami.
+  // Edycja zapisana. Stan operacyjny mógł zmienić się w dialogu, więc jeśli NOWY stan wypada poza
+  // predykat bieżącego widoku (np. Aktywne → Zrobione), item znika z listy — spójnie z bulkiem
+  // (reconcileAfterChange). W przeciwnym razie podmiana w miejscu z nowymi polami.
   function handleSaved(updated: Item): void {
+    if (!matchesView(updated.operational_status, view)) {
+      setItems((prev) => prev.filter((current) => current.id !== updated.id));
+      setSelected((prev) => {
+        if (!prev.has(updated.id)) return prev;
+        const next = new Set(prev);
+        next.delete(updated.id);
+        return next;
+      });
+      return;
+    }
     setItems((prev) => prev.map((current) => (current.id === updated.id ? updated : current)));
-    // Przy aktywnym filtrze: jeśli nowy typ nie pasuje, przypnij item — zostaje widoczny do przełączenia
-    // filtra / odświeżenia (decyzja #6), zamiast znikać natychmiast po zapisie.
+    // Przy aktywnym filtrze typu: jeśli nowy typ nie pasuje, przypnij item — zostaje widoczny do
+    // przełączenia filtra / odświeżenia (decyzja #6), zamiast znikać natychmiast po zapisie.
     if (typeFilter !== "all" && updated.type !== typeFilter) {
       setPinnedIds((prev) => new Set(prev).add(updated.id));
     }
@@ -245,13 +257,7 @@ export default function AcceptedItemsView({ initialItems, view }: Props) {
                       <span className="inline-block rounded-full border border-purple-300/30 bg-purple-400/10 px-2 py-0.5 text-xs font-medium text-purple-100">
                         {itemTypeLabel(item.type)}
                       </span>
-                      <OperationalStatusBadge
-                        item={item}
-                        disabled={pending}
-                        onChange={(target) => {
-                          void execute(target, [item.id]);
-                        }}
-                      />
+                      <OperationalStatusBadge item={item} />
                       <Button
                         variant="ghost"
                         size="sm"

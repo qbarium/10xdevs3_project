@@ -95,25 +95,34 @@ describe("setOperationalStatus", () => {
 describe("editItem", () => {
   const STAMP = "2026-01-01T00:00:00Z";
 
-  it("edycja accepted: guard IN pending|accepted + compare-and-swap, payload BEZ operational_status, zwraca wiersz", async () => {
-    // accepted z postępem in_progress — kluczowe: edycja go NIE zeruje (decyzja #3).
-    const row = { id: "x", type: "task", operational_status: "in_progress", acceptance_status: "accepted", title: "T" };
+  it("edycja accepted: guard IN pending|accepted + compare-and-swap, payload USTAWIA operational_status z wejścia", async () => {
+    const row = { id: "x", type: "task", operational_status: "done", acceptance_status: "accepted", title: "T" };
     const { supabase, calls } = mockSupabase({ data: row, error: null });
-    const res = await editItem(supabase, "x", { title: "T", description: null, type: "task" }, STAMP);
+    const res = await editItem(
+      supabase,
+      "x",
+      { title: "T", description: null, type: "task", operationalStatus: "done" },
+      STAMP,
+    );
 
     expect(res).toBe(row);
     const payload = firstArgOf(calls, "update");
     expect(payload.title).toBe("T");
     expect(payload.type).toBe("task");
-    expect("operational_status" in payload).toBe(false); // edycja NIE dotyka stanu operacyjnego
+    expect(payload.operational_status).toBe("done"); // jawnie z wejścia (UI prefilluje bieżącą wartość)
     expect(calls.filter(([m]) => m === "in")).toContainEqual(["in", ["acceptance_status", ["pending", "accepted"]]]);
     expect(calls.filter(([m]) => m === "eq")).toContainEqual(["eq", ["updated_at", STAMP]]);
   });
 
-  it("edycja pending: sukces, payload bez operational_status", async () => {
+  it("edycja niezmieniająca stanu wysyła bieżącą wartość (zachowanie postępu)", async () => {
     const { supabase, calls } = mockSupabase({ data: { id: "x" }, error: null });
-    await editItem(supabase, "x", { title: "T", description: null, type: "note" }, STAMP);
-    expect("operational_status" in firstArgOf(calls, "update")).toBe(false);
+    await editItem(
+      supabase,
+      "x",
+      { title: "T", description: null, type: "note", operationalStatus: "in_progress" },
+      STAMP,
+    );
+    expect(firstArgOf(calls, "update").operational_status).toBe("in_progress");
   });
 
   it("0 wierszy + follow-up SELECT zwraca edytowalny wiersz (rozjazd updated_at) → ItemConflictError", async () => {
@@ -122,7 +131,7 @@ describe("editItem", () => {
       { data: { acceptance_status: "accepted" }, error: null }, // SELECT: wiersz wciąż edytowalny
     ]);
     await expect(
-      editItem(supabase, "x", { title: "T", description: null, type: "note" }, "STALE"),
+      editItem(supabase, "x", { title: "T", description: null, type: "note", operationalStatus: "new" }, "STALE"),
     ).rejects.toBeInstanceOf(ItemConflictError);
   });
 
@@ -132,7 +141,7 @@ describe("editItem", () => {
       { data: null, error: null },
     ]);
     await expect(
-      editItem(supabase, "x", { title: "T", description: null, type: "note" }, STAMP),
+      editItem(supabase, "x", { title: "T", description: null, type: "note", operationalStatus: "new" }, STAMP),
     ).rejects.toBeInstanceOf(ItemNotEditableError);
   });
 
@@ -142,7 +151,7 @@ describe("editItem", () => {
       { data: { acceptance_status: "rejected" }, error: null },
     ]);
     await expect(
-      editItem(supabase, "x", { title: "T", description: null, type: "note" }, STAMP),
+      editItem(supabase, "x", { title: "T", description: null, type: "note", operationalStatus: "new" }, STAMP),
     ).rejects.toBeInstanceOf(ItemNotEditableError);
   });
 });

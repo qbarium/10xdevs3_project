@@ -122,8 +122,8 @@ d("items-mutation — RLS + status-guard + derywacja (integracja)", () => {
     expect(await statusOf(A.supabase, pendingId)).toBe("accepted");
   });
 
-  it("edit accepted ZACHOWUJE operational_status i utrwala pola (S-05, decyzja #3)", async () => {
-    // accepted z postępem `in_progress` — edycja typu/pól NIE może go zresetować.
+  it("edit accepted z bieżącym stanem ZACHOWUJE postęp i utrwala pola (S-05)", async () => {
+    // accepted z postępem `in_progress` — wysłanie bieżącego stanu (prefill UI) NIE resetuje postępu.
     const acceptedId = await insertItem(A.supabase, A.id, {
       type: "note",
       acceptance_status: "accepted",
@@ -134,7 +134,7 @@ d("items-mutation — RLS + status-guard + derywacja (integracja)", () => {
     const updated = await editItem(
       A.supabase,
       acceptedId,
-      { title: "Nowy", description: "opis", type: "task" },
+      { title: "Nowy", description: "opis", type: "task", operationalStatus: "in_progress" },
       before.updated_at,
     );
     expect(updated.type).toBe("task");
@@ -144,6 +144,23 @@ d("items-mutation — RLS + status-guard + derywacja (integracja)", () => {
     expect(updated.operational_status).toBe("in_progress"); // KLUCZOWE: postęp zachowany
   });
 
+  it("edit accepted może JAWNIE zmienić stan operacyjny (rewizja UX: stan edytowalny w dialogu)", async () => {
+    const acceptedId = await insertItem(A.supabase, A.id, {
+      type: "task",
+      acceptance_status: "accepted",
+      operational_status: "new",
+    });
+    const before = await rowOf(A.supabase, acceptedId);
+
+    const updated = await editItem(
+      A.supabase,
+      acceptedId,
+      { title: "T", description: null, type: "task", operationalStatus: "done" },
+      before.updated_at,
+    );
+    expect(updated.operational_status).toBe("done"); // jawnie zmieniony z 'new' na 'done'
+  });
+
   it("edit pending działa tym samym guardem (IN pending|accepted)", async () => {
     const pendingId = await insertItem(A.supabase, A.id, { type: "idea", operational_status: "new" });
     const before = await rowOf(A.supabase, pendingId);
@@ -151,7 +168,7 @@ d("items-mutation — RLS + status-guard + derywacja (integracja)", () => {
     const updated = await editItem(
       A.supabase,
       pendingId,
-      { title: "P2", description: null, type: "task" },
+      { title: "P2", description: null, type: "task", operationalStatus: "new" },
       before.updated_at,
     );
     expect(updated.title).toBe("P2");
@@ -164,10 +181,20 @@ d("items-mutation — RLS + status-guard + derywacja (integracja)", () => {
     const original = await rowOf(A.supabase, id);
 
     // pierwsza edycja przesuwa `updated_at`
-    await editItem(A.supabase, id, { title: "A", description: null, type: "task" }, original.updated_at);
+    await editItem(
+      A.supabase,
+      id,
+      { title: "A", description: null, type: "task", operationalStatus: "new" },
+      original.updated_at,
+    );
     // druga z NIEAKTUALNYM (oryginalnym) znacznikiem → konflikt, bez cichego nadpisania
     await expect(
-      editItem(A.supabase, id, { title: "B", description: null, type: "task" }, original.updated_at),
+      editItem(
+        A.supabase,
+        id,
+        { title: "B", description: null, type: "task", operationalStatus: "new" },
+        original.updated_at,
+      ),
     ).rejects.toBeInstanceOf(ItemConflictError);
   });
 
@@ -175,7 +202,12 @@ d("items-mutation — RLS + status-guard + derywacja (integracja)", () => {
     const rejectedId = await insertItem(A.supabase, A.id, { acceptance_status: "rejected" });
     const row = await rowOf(A.supabase, rejectedId);
     await expect(
-      editItem(A.supabase, rejectedId, { title: "X", description: null, type: "note" }, row.updated_at),
+      editItem(
+        A.supabase,
+        rejectedId,
+        { title: "X", description: null, type: "note", operationalStatus: "new" },
+        row.updated_at,
+      ),
     ).rejects.toBeInstanceOf(ItemNotEditableError);
   });
 });
