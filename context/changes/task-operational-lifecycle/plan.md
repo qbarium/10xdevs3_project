@@ -378,8 +378,8 @@ Verby generyczne (per-typ nadpisania verbów poza zakresem — patrz „Czego NI
 
 #### Ręczne
 
-- [ ] 1.5 Studio: istniejące accepted nie-`task` mają `operational_status='new'` po migracji
-- [ ] 1.6 Etykieta per-typ poprawna (note + done → „Obsłużona")
+- [x] 1.5 Studio: istniejące accepted nie-`task` mają `operational_status='new'` po migracji
+- [x] 1.6 Etykieta per-typ poprawna (note + done → „Obsłużona")
 
 ### Faza 2: Backend mutacji stanu operacyjnego
 
@@ -392,9 +392,9 @@ Verby generyczne (per-typ nadpisania verbów poza zakresem — patrz „Czego NI
 
 #### Ręczne
 
-- [ ] 2.5 `curl` POST `/api/items/operational` `{status:"done"}` zmienia accepted (Studio)
-- [ ] 2.6 Zły payload (puste ids / zły status / >100 id) → 400 bez dotknięcia bazy
-- [ ] 2.7 `id` pending w payloadzie → pominięty (count < liczba ids)
+- [x] 2.5 `curl` POST `/api/items/operational` `{status:"done"}` zmienia accepted (Studio)
+- [x] 2.6 Zły payload (puste ids / zły status / >100 id) → 400 bez dotknięcia bazy
+- [x] 2.7 `id` pending w payloadzie → pominięty (count < liczba ids)
 
 ### Faza 3: Widoki + nawigacja (read-only)
 
@@ -405,10 +405,10 @@ Verby generyczne (per-typ nadpisania verbów poza zakresem — patrz „Czego NI
 
 #### Ręczne
 
-- [ ] 3.3 Nawigacja 5 pozycji, aktywna wyróżniona na każdej trasie
-- [ ] 3.4 done→Zakończone, cancelled→Anulowane, new/in_progress→Aktywne (rozłącznie)
-- [ ] 3.5 Badge operacyjny per-typ na liście (note done → „Obsłużona")
-- [ ] 3.6 Niezalogowany na `/items/done`, `/items/cancelled` → redirect
+- [x] 3.3 Nawigacja 5 pozycji, aktywna wyróżniona na każdej trasie
+- [x] 3.4 done→Zakończone, cancelled→Anulowane, new/in_progress→Aktywne (rozłącznie)
+- [x] 3.5 Badge operacyjny per-typ na liście (note done → „Obsłużona")
+- [x] 3.6 Niezalogowany na `/items/done`, `/items/cancelled` → redirect
 
 ### Faza 4: Interaktywny island (badge-menu + bulk)
 
@@ -421,9 +421,9 @@ Verby generyczne (per-typ nadpisania verbów poza zakresem — patrz „Czego NI
 
 #### Ręczne
 
-- [ ] 4.5 Aktywne: badge zadania → menu → „Zrealizuj" → znika z Aktywne (< 200 ms) + toast + w Zakończone
-- [ ] 4.6 Aktywne: badge notatki → „Zrealizuj" → w Zakończone jako „Obsłużona"
-- [ ] 4.7 Bulk: podzbiór + „Zrobione" → znikają, w Zakończone; select-all + „Anulowane" → Dialog z liczbą → w Anulowane
-- [ ] 4.8 Zakończone „Otwórz ponownie" / Anulowane „Przywróć" → wracają do Aktywne (`nowe`)
-- [ ] 4.9 Symulowany błąd → item wraca z wygaszenia (bez migania) + toast błędu
-- [ ] 4.10 Pełny przepływ S-02→S-03→S-04 (paste→klasyfikacja→akceptacja→zmiana stanu→Zakończone)
+- [x] 4.5 Aktywne: badge zadania → menu → „Zrealizuj" → znika z Aktywne (< 200 ms) + toast + w Zakończone
+- [x] 4.6 Aktywne: badge notatki → „Zrealizuj" → w Zakończone jako „Obsłużona"
+- [x] 4.7 Bulk: podzbiór + „Zrobione" → znikają, w Zakończone; select-all + „Anulowane" → Dialog z liczbą → w Anulowane
+- [x] 4.8 Zakończone „Otwórz ponownie" / Anulowane „Przywróć" → wracają do Aktywne (`nowe`)
+- [x] 4.9 Symulowany błąd → item wraca z wygaszenia (bez migania) + toast błędu
+- [x] 4.10 Pełny przepływ S-02→S-03→S-04 (paste→klasyfikacja→akceptacja→zmiana stanu→Zakończone)
