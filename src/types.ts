@@ -72,7 +72,10 @@ export type ItemType = "task" | "note" | "idea" | "decision" | "other";
 /** Wymiar akceptacji (enum `acceptance_status`). S-02 tworzy tylko `pending`. */
 export type AcceptanceStatus = "pending" | "accepted" | "rejected" | "deleted";
 
-/** Wymiar operacyjny (enum `operational_status`). Tylko dla `task`; inaczej null. */
+/**
+ * Wymiar operacyjny (enum `operational_status`). Od S-04 dla WSZYSTKICH typów (wyłom z FR-009);
+ * kolumna pozostaje nullable, ale aplikacja i RPC zawsze ustawiają wartość (backfill `NULL→'new'`).
+ */
 export type OperationalStatus = "new" | "in_progress" | "done" | "cancelled";
 
 /** Cykl życia sesji importu (enum `import_session_status`). */

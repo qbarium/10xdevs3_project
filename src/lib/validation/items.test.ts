@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { bulkActionSchema, editItemSchema } from "@/lib/validation/items";
+import { bulkActionSchema, editItemSchema, operationalActionSchema } from "@/lib/validation/items";
 
 const UUID = "11111111-1111-4111-8111-111111111111";
 
@@ -65,5 +65,35 @@ describe("editItemSchema", () => {
 
   it("odrzuca nieznany type", () => {
     expect(editItemSchema.safeParse({ title: "T", description: null, type: "task2" }).success).toBe(false);
+  });
+});
+
+describe("operationalActionSchema", () => {
+  it("akceptuje poprawny payload dla każdego z 4 stanów (przechodniość na danych)", () => {
+    for (const status of ["new", "in_progress", "done", "cancelled"] as const) {
+      expect(operationalActionSchema.safeParse({ ids: [UUID], status }).success).toBe(true);
+    }
+  });
+
+  it("odrzuca pustą listę ids", () => {
+    expect(operationalActionSchema.safeParse({ ids: [], status: "done" }).success).toBe(false);
+  });
+
+  it("odrzuca > 100 id (safety net)", () => {
+    const ids = Array.from({ length: 101 }, () => UUID);
+    expect(operationalActionSchema.safeParse({ ids, status: "done" }).success).toBe(false);
+  });
+
+  it("akceptuje dokładnie 100 id", () => {
+    const ids = Array.from({ length: 100 }, () => UUID);
+    expect(operationalActionSchema.safeParse({ ids, status: "cancelled" }).success).toBe(true);
+  });
+
+  it("odrzuca nie-UUID w ids", () => {
+    expect(operationalActionSchema.safeParse({ ids: ["nie-uuid"], status: "new" }).success).toBe(false);
+  });
+
+  it("odrzuca nieznany status", () => {
+    expect(operationalActionSchema.safeParse({ ids: [UUID], status: "archived" }).success).toBe(false);
   });
 });

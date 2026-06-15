@@ -21,11 +21,14 @@ export class ItemNotEditableError extends Error {
 }
 
 /**
- * Jedyne miejsce derywacji `operational_status` z typu w warstwie aplikacji: `task` → `new`,
- * pozostałe → `null`. Spójne z RPC `persist_classification` (S-02) — pendingi-taski powstają z `new`.
+ * Jedyne miejsce derywacji `operational_status` z typu w warstwie aplikacji. Od S-04 stan
+ * operacyjny obejmuje WSZYSTKIE typy (świadomy wyłom z FR-009), więc każdy item — niezależnie
+ * od typu — powstaje i jest edytowany z `'new'`. Spójne z RPC `persist_classification` po migracji
+ * `operational_status_all_types` (wcześniej `'new'` dostawał tylko `task`). Parametr `_type`
+ * zachowany w sygnaturze pod przyszłą derywację per-typ (architektura etykiet per-typ z S-04).
  */
-export function deriveOperationalStatus(type: ItemType): OperationalStatus | null {
-  return type === "task" ? "new" : null;
+export function deriveOperationalStatus(_type: ItemType): OperationalStatus {
+  return "new";
 }
 
 /**
@@ -47,6 +50,30 @@ export async function setAcceptanceStatus(
     .select("id")
     .overrideTypes<{ id: string }[], { merge: false }>();
   if (error) throw new Error("Zmiana statusu akceptacji nie powiodła się.", { cause: error });
+  return { updatedIds: data.map((row) => row.id) };
+}
+
+/**
+ * Zbiorcza zmiana `operational_status` accepted itemów jednym atomowym statementem (S-04). Klon
+ * `setAcceptanceStatus` z innym polem i guardem: WHERE strzeże `accepted` (NIE `pending`) — itemy
+ * nie-`accepted` w `ids` nie pasują, `.select` ich nie zwróci, więc `updatedIds` to dokładnie
+ * wiersze faktycznie zmienione (reszta pominięta bez błędu — FR-007). Brak warunku na `type`:
+ * po S-04 wszystkie typy mają stan. `status` może być dowolnym z 4 (przechodniość na danych);
+ * kuracja widocznych przejść to warstwa UX (Faza 4).
+ */
+export async function setOperationalStatus(
+  supabase: SupabaseClient,
+  ids: string[],
+  status: OperationalStatus,
+): Promise<{ updatedIds: string[] }> {
+  const { data, error } = await supabase
+    .from("items")
+    .update({ operational_status: status, updated_at: new Date().toISOString() })
+    .in("id", ids)
+    .eq("acceptance_status", "accepted")
+    .select("id")
+    .overrideTypes<{ id: string }[], { merge: false }>();
+  if (error) throw new Error("Zmiana stanu operacyjnego nie powiodła się.", { cause: error });
   return { updatedIds: data.map((row) => row.id) };
 }
 

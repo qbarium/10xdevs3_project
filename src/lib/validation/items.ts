@@ -6,6 +6,7 @@
 import { z } from "zod";
 
 import { ITEM_TYPES } from "@/lib/ai/schema";
+import type { OperationalStatus } from "@/types";
 
 /**
  * Payload akcji zbiorczej zatwierdź/odrzuć. `ids` to UUID-y zaznaczonych pendingów; `.max(100)`
@@ -17,6 +18,26 @@ export const bulkActionSchema = z.object({
   action: z.enum(["accept", "reject"]),
 });
 export type BulkActionInput = z.infer<typeof bulkActionSchema>;
+
+/** Cztery stany operacyjne związane kompilacyjnie z unią `OperationalStatus` (wzorzec `ITEM_TYPES`). */
+const OPERATIONAL_STATUSES = [
+  "new",
+  "in_progress",
+  "done",
+  "cancelled",
+] as const satisfies readonly OperationalStatus[];
+
+/**
+ * Payload zbiorczej zmiany stanu operacyjnego (S-04). `ids` jak w `bulkActionSchema` (UUID-y,
+ * 1..100 — safety net przed bazą). `status` dopuszcza WSZYSTKIE 4 stany: przechodniość żyje na
+ * warstwie danych (FR-009 „wzajemnie przechodnie"), a kuracja widocznych przejść to osobny moduł
+ * UX (Faza 4), nie walidacja.
+ */
+export const operationalActionSchema = z.object({
+  ids: z.array(z.uuid()).min(1).max(100),
+  status: z.enum(OPERATIONAL_STATUSES),
+});
+export type OperationalActionInput = z.infer<typeof operationalActionSchema>;
 
 /**
  * Payload edycji pendingu w stagingu. `title` wymagany (trim + reject pusty). `description`

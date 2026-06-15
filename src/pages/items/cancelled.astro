@@ -1,15 +1,14 @@
 ---
-// Widok „Aktywne" — read-only lista zaakceptowanych itemów ze stanem operacyjnym `new`/`in_progress`
-// (S-04 zawęża z wszystkich accepted; done/cancelled mają osobne widoki). SSR, chroniony middleware
-// (PROTECTED_ROUTES obejmuje prefiks /items). Dane serwerowo (klient z cookies usera → RLS izoluje);
-// przejściowy błąd → pusta lista (łagodna degradacja, wzorzec items.astro). Interaktywność (badge-menu
-// + bulk) dochodzi w Fazie 4 — tu read-only z badge stanu per-typ.
+// Widok „Anulowane" — read-only lista zaakceptowanych itemów ze stanem operacyjnym `cancelled` (S-04).
+// SSR, chroniony middleware (PROTECTED_ROUTES obejmuje prefiks /items). Dane serwerowo (klient
+// z cookies usera → RLS izoluje); przejściowy błąd → pusta lista (łagodna degradacja, wzorzec
+// items.astro). Interaktywność (badge-menu + bulk) dochodzi w Fazie 4 — tu read-only z badge per-typ.
 import Layout from "@/layouts/Layout.astro";
 import Topbar from "@/components/Topbar.astro";
 import MainFilterNav from "@/components/items/MainFilterNav.astro";
 import AcceptedItemsView from "@/components/items/AcceptedItemsView.tsx";
 import { createClient } from "@/lib/supabase";
-import { getActiveItems } from "@/lib/services/items";
+import { getCancelledItems } from "@/lib/services/items";
 import type { Item } from "@/types";
 
 export const prerender = false;
@@ -20,23 +19,23 @@ let items: Item[] = [];
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 if (user && supabase) {
   try {
-    items = await getActiveItems(supabase, user.id);
+    items = await getCancelledItems(supabase, user.id);
   } catch {
     items = [];
   }
 }
 ---
 
-<Layout title="Aktywne">
+<Layout title="Anulowane">
   <div class="bg-cosmic min-h-screen p-4">
     <div class="mx-auto max-w-2xl">
       <Topbar />
       <main class="mt-8 flex flex-col gap-6">
         <h1 class="bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-2xl font-bold text-transparent">
-          Aktywne
+          Anulowane
         </h1>
         <MainFilterNav />
-        <AcceptedItemsView client:load initialItems={items} view="active" />
+        <AcceptedItemsView client:load initialItems={items} view="cancelled" />
       </main>
     </div>
   </div>

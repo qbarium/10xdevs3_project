@@ -4,7 +4,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { AcceptanceStatus, Item } from "@/types";
+import type { AcceptanceStatus, Item, OperationalStatus } from "@/types";
 
 const ITEM_COLUMNS =
   "id, user_id, import_session_id, type, title, description, acceptance_status, operational_status, created_at, updated_at";
@@ -37,12 +37,48 @@ export function getPendingItems(supabase: SupabaseClient, userId: string): Promi
   return listByAcceptance(supabase, userId, "pending");
 }
 
-/** Zaakceptowane itemy usera (widok „Aktywne", S-03). */
-export function getAcceptedItems(supabase: SupabaseClient, userId: string): Promise<Item[]> {
-  return listByAcceptance(supabase, userId, "accepted");
-}
-
 /** Odrzucone itemy usera (widok „Kosz", S-03; read-only — przenieś/przywróć/wyczyść → S-06). */
 export function getRejectedItems(supabase: SupabaseClient, userId: string): Promise<Item[]> {
   return listByAcceptance(supabase, userId, "rejected");
+}
+
+/**
+ * Zaakceptowane itemy usera zawężone predykatem stanu operacyjnego, sortowane jak pozostałe widoki
+ * accepted (recency akcji → `updated_at DESC`, potem `created_at DESC, id ASC`). Trzy widoki filtra
+ * głównego S-04 (Aktywne/Zakończone/Anulowane) różni wyłącznie zbiór `operational_status` — rozłączny,
+ * bo każdy item ma dokładnie jeden stan. Indeks `(user_id, acceptance_status, operational_status)`
+ * pokrywa ten filtr (migracja S-04).
+ */
+async function listAcceptedByOperational(
+  supabase: SupabaseClient,
+  userId: string,
+  operational: OperationalStatus[],
+): Promise<Item[]> {
+  const { data, error } = await supabase
+    .from("items")
+    .select(ITEM_COLUMNS)
+    .eq("user_id", userId)
+    .eq("acceptance_status", "accepted")
+    .in("operational_status", operational)
+    .order("updated_at", { ascending: false })
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: true })
+    .overrideTypes<Item[], { merge: false }>();
+  if (error) throw new Error("Odczyt itemów nie powiódł się.", { cause: error });
+  return data;
+}
+
+/** Aktywne: accepted ze stanem `new`/`in_progress` (widok „Aktywne", S-04). */
+export function getActiveItems(supabase: SupabaseClient, userId: string): Promise<Item[]> {
+  return listAcceptedByOperational(supabase, userId, ["new", "in_progress"]);
+}
+
+/** Zakończone: accepted ze stanem `done` (widok „Zakończone", S-04). */
+export function getDoneItems(supabase: SupabaseClient, userId: string): Promise<Item[]> {
+  return listAcceptedByOperational(supabase, userId, ["done"]);
+}
+
+/** Anulowane: accepted ze stanem `cancelled` (widok „Anulowane", S-04). */
+export function getCancelledItems(supabase: SupabaseClient, userId: string): Promise<Item[]> {
+  return listAcceptedByOperational(supabase, userId, ["cancelled"]);
 }

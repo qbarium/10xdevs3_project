@@ -6,6 +6,7 @@ import {
   editPendingItem,
   ItemNotEditableError,
   setAcceptanceStatus,
+  setOperationalStatus,
 } from "@/lib/services/items-mutation";
 
 // Mock łańcucha query-buildera Supabase: każda metoda zwraca ten sam `builder` (i rejestruje
@@ -39,11 +40,11 @@ describe("deriveOperationalStatus", () => {
   it("task → new", () => {
     expect(deriveOperationalStatus("task")).toBe("new");
   });
-  it("note/idea/decision/other → null", () => {
-    expect(deriveOperationalStatus("note")).toBeNull();
-    expect(deriveOperationalStatus("idea")).toBeNull();
-    expect(deriveOperationalStatus("decision")).toBeNull();
-    expect(deriveOperationalStatus("other")).toBeNull();
+  it("note/idea/decision/other → new (S-04: wszystkie typy mają stan operacyjny)", () => {
+    expect(deriveOperationalStatus("note")).toBe("new");
+    expect(deriveOperationalStatus("idea")).toBe("new");
+    expect(deriveOperationalStatus("decision")).toBe("new");
+    expect(deriveOperationalStatus("other")).toBe("new");
   });
 });
 
@@ -64,6 +65,23 @@ describe("setAcceptanceStatus", () => {
   });
 });
 
+describe("setOperationalStatus", () => {
+  it("buduje guarded UPDATE (accepted) i zwraca tylko zmienione id", async () => {
+    const { supabase, calls } = mockSupabase({ data: [{ id: "a" }], error: null });
+    const res = await setOperationalStatus(supabase, ["a", "b"], "done");
+
+    expect(res.updatedIds).toEqual(["a"]); // "b" pominięty (guard accepted) — nie ma go w data
+    expect(calls.filter(([m]) => m === "eq")).toContainEqual(["eq", ["acceptance_status", "accepted"]]);
+    expect(calls.filter(([m]) => m === "in")).toContainEqual(["in", ["id", ["a", "b"]]]);
+    expect(firstArgOf(calls, "update").operational_status).toBe("done");
+  });
+
+  it("rzuca na błąd serwera", async () => {
+    const { supabase } = mockSupabase({ data: null, error: { message: "boom" } });
+    await expect(setOperationalStatus(supabase, ["a"], "cancelled")).rejects.toThrow();
+  });
+});
+
 describe("editPendingItem", () => {
   it("derywuje operational_status=new dla task i zwraca wiersz", async () => {
     const row = { id: "x", type: "task", operational_status: "new", title: "T" };
@@ -76,10 +94,10 @@ describe("editPendingItem", () => {
     expect(calls.filter(([m]) => m === "eq")).toContainEqual(["eq", ["acceptance_status", "pending"]]);
   });
 
-  it("derywuje operational_status=null dla note", async () => {
+  it("derywuje operational_status=new dla note (S-04: wszystkie typy)", async () => {
     const { supabase, calls } = mockSupabase({ data: { id: "x" }, error: null });
     await editPendingItem(supabase, "x", { title: "T", description: null, type: "note" });
-    expect(firstArgOf(calls, "update").operational_status).toBeNull();
+    expect(firstArgOf(calls, "update").operational_status).toBe("new");
   });
 
   it("brak wiersza (maybeSingle → null) → ItemNotEditableError", async () => {

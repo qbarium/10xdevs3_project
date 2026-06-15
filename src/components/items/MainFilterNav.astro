@@ -1,15 +1,17 @@
 ---
-// Single-select nawigacja między trzema widokami listy (FR-008 filtr główny — podzbiór 3 z 5
-// docelowych filtrów; Zakończone/Anulowane → S-04). Aktywny stan wyróżniony wg dokładnego
-// dopasowania `Astro.url.pathname` (exact, nie startsWith — inaczej /items podświetlałoby się
-// także na /items/active). Osadzona na trzech stronach widoków. Klasy warunkowe przez natywną
-// dyrektywę `class:list` (wzorzec .astro, np. Banner.astro).
+// Single-select nawigacja filtra głównego — 5 z 5 docelowych widoków (FR-008 kompletny; S-04
+// dokłada Zakończone/Anulowane). Aktywny stan wyróżniony wg dokładnego dopasowania
+// `Astro.url.pathname` (exact, nie startsWith — inaczej /items podświetlałoby się także na
+// /items/active). Osadzona na pięciu stronach widoków. Klasy warunkowe przez natywną dyrektywę
+// `class:list` (wzorzec .astro, np. Banner.astro).
 
 const pathname = Astro.url.pathname;
 
 const links = [
   { href: "/items", label: "Elementy do akceptacji" },
   { href: "/items/active", label: "Aktywne" },
+  { href: "/items/done", label: "Zakończone" },
+  { href: "/items/cancelled", label: "Anulowane" },
   { href: "/items/trash", label: "Kosz" },
 ];
 

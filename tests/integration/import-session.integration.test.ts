@@ -58,7 +58,8 @@ d("import-session serwis + RPC (S-02 Faza 3)", () => {
       .eq("item_count", 2);
     expect(sess.count).toBe(1);
 
-    // task → operational_status 'new'; note → null; oba 'pending'.
+    // S-04: RPC persist_classification wstawia 'new' dla KAŻDEGO typu (było: tylko task, note → null);
+    // oba itemy 'pending'.
     const taskNew = await A.supabase
       .from("items")
       .select("id", { count: "exact", head: true })
@@ -67,13 +68,13 @@ d("import-session serwis + RPC (S-02 Faza 3)", () => {
       .eq("operational_status", "new");
     expect(taskNew.count).toBe(1);
 
-    const noteNull = await A.supabase
+    const noteNew = await A.supabase
       .from("items")
       .select("id", { count: "exact", head: true })
       .eq("import_session_id", id)
       .eq("type", "note")
-      .is("operational_status", null);
-    expect(noteNull.count).toBe(1);
+      .eq("operational_status", "new");
+    expect(noteNew.count).toBe(1);
 
     const pending = await A.supabase
       .from("items")

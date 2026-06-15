@@ -19,6 +19,16 @@ const OPERATIONAL_STATUS_LABELS: Record<OperationalStatus, string> = {
   cancelled: "Anulowane",
 };
 
+// Nadpisania etykiet stanu operacyjnego per typ itemu (S-04, wyłom z FR-009). Punkt rozszerzenia
+// pod przyszłe definiowanie etykiet per-typ; brak wpisu → fallback do generycznej etykiety
+// z OPERATIONAL_STATUS_LABELS. Obecnie tylko testowe nadpisania stanu `done`.
+const OPERATIONAL_STATUS_LABELS_BY_TYPE: Partial<Record<ItemType, Partial<Record<OperationalStatus, string>>>> = {
+  note: { done: "Obsłużona" },
+  idea: { done: "Obsłużony" },
+  decision: { done: "Podjęta" },
+  other: { done: "Obsłużone" },
+};
+
 const ACCEPTANCE_STATUS_LABELS: Record<AcceptanceStatus, string> = {
   pending: "Do akceptacji",
   accepted: "Zaakceptowane",
@@ -37,7 +47,16 @@ export function itemTypeLabel(type: ItemType): string {
   return ITEM_TYPE_LABELS[type];
 }
 
-export function operationalStatusLabel(status: OperationalStatus): string {
+/**
+ * Etykieta stanu operacyjnego. Z `type` zwraca nadpisanie per-typ (np. `note` + `done` →
+ * „Obsłużona"), a w razie jego braku — generyczną etykietę. Bez `type` zachowuje dotychczasowe
+ * zachowanie (kompatybilność wsteczna istniejących callerów).
+ */
+export function operationalStatusLabel(status: OperationalStatus, type?: ItemType): string {
+  if (type) {
+    const override = OPERATIONAL_STATUS_LABELS_BY_TYPE[type]?.[status];
+    if (override) return override;
+  }
   return OPERATIONAL_STATUS_LABELS[status];
 }
 
