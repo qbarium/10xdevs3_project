@@ -1,7 +1,7 @@
 ---
 change_id: task-operational-lifecycle
 title: Stan operacyjny itemu — Aktywne/Zakończone/Anulowane (wszystkie typy)
-status: implemented
+status: impl_reviewed
 created: 2026-06-15
 updated: 2026-06-15
 archived_at: null
