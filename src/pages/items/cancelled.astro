@@ -6,7 +6,7 @@
 import Layout from "@/layouts/Layout.astro";
 import Topbar from "@/components/Topbar.astro";
 import MainFilterNav from "@/components/items/MainFilterNav.astro";
-import ItemList from "@/components/items/ItemList.astro";
+import AcceptedItemsView from "@/components/items/AcceptedItemsView.tsx";
 import { createClient } from "@/lib/supabase";
 import { getCancelledItems } from "@/lib/services/items";
 import type { Item } from "@/types";
@@ -35,7 +35,7 @@ if (user && supabase) {
           Anulowane
         </h1>
         <MainFilterNav />
-        <ItemList items={items} operationalBadge emptyLabel="Brak anulowanych elementów." />
+        <AcceptedItemsView client:load initialItems={items} view="cancelled" />
       </main>
     </div>
   </div>

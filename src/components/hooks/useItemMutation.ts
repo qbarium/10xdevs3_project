@@ -5,9 +5,10 @@
 import { useState } from "react";
 
 import type { EditItemInput } from "@/lib/validation/items";
-import type { Item } from "@/types";
+import type { Item, OperationalStatus } from "@/types";
 
 const BULK_ENDPOINT = "/api/items/bulk";
+const OPERATIONAL_ENDPOINT = "/api/items/operational";
 
 interface BulkResponse {
   ok?: boolean;
@@ -29,6 +30,8 @@ export interface UseItemMutation {
   bulkAccept: (ids: string[]) => Promise<number | null>;
   /** Odrzuca zaznaczone; zwraca liczbę FAKTYCZNIE zmienionych (guard pomija nie-pending), null przy błędzie. */
   bulkReject: (ids: string[]) => Promise<number | null>;
+  /** Zmienia stan operacyjny zaznaczonych accepted; zwraca liczbę FAKTYCZNIE zmienionych (guard pomija nie-accepted), null przy błędzie. */
+  setOperationalStatus: (ids: string[], status: OperationalStatus) => Promise<number | null>;
   /** Edytuje pending; zwraca zaktualizowany item lub powód niepowodzenia (404 / błąd). */
   editItem: (id: string, input: EditItemInput) => Promise<EditItemResult>;
 }
@@ -65,6 +68,31 @@ export function useItemMutation(): UseItemMutation {
   const bulkAccept = (ids: string[]): Promise<number | null> => bulk(ids, "accept");
   const bulkReject = (ids: string[]): Promise<number | null> => bulk(ids, "reject");
 
+  // Zmiana stanu operacyjnego accepted itemów (S-04). Wzorzec jak `bulk`: zwraca realną liczbę
+  // zmienionych z serwera (guard `accepted` pomija nie-uprawnione) lub null przy błędzie / porażce sieci.
+  async function setOperationalStatus(ids: string[], status: OperationalStatus): Promise<number | null> {
+    setPending(true);
+    setError(null);
+    try {
+      const res = await fetch(OPERATIONAL_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids, status }),
+      });
+      const data = (await res.json()) as BulkResponse;
+      if (!res.ok || !data.ok) {
+        setError("Nie udało się wykonać akcji. Spróbuj ponownie.");
+        return null;
+      }
+      return data.count ?? data.updatedIds?.length ?? 0;
+    } catch {
+      setError("Błąd połączenia. Spróbuj ponownie.");
+      return null;
+    } finally {
+      setPending(false);
+    }
+  }
+
   async function editItem(id: string, input: EditItemInput): Promise<EditItemResult> {
     setPending(true);
     setError(null);
@@ -92,5 +120,5 @@ export function useItemMutation(): UseItemMutation {
     }
   }
 
-  return { pending, error, bulkAccept, bulkReject, editItem };
+  return { pending, error, bulkAccept, bulkReject, setOperationalStatus, editItem };
 }
