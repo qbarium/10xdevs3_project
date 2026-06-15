@@ -290,9 +290,9 @@ Brak. Schemat (`updated_at`, `operational_status` dla wszystkich typów) wystarc
 
 #### Automatyczne
 
-- [x] 1.1 Lint przechodzi: `npm run lint`
-- [x] 1.2 Testy jednostkowe przechodzą: `npm test`
-- [x] 1.3 Build przechodzi: `npm run build`
+- [x] 1.1 Lint przechodzi: `npm run lint` — e79baad
+- [x] 1.2 Testy jednostkowe przechodzą: `npm test` — e79baad
+- [x] 1.3 Build przechodzi: `npm run build` — e79baad
 
 #### Ręczne
 
@@ -303,9 +303,9 @@ Brak. Schemat (`updated_at`, `operational_status` dla wszystkich typów) wystarc
 
 #### Automatyczne
 
-- [ ] 2.1 Lint przechodzi: `npm run lint`
-- [ ] 2.2 Testy jednostkowe przechodzą: `npm test`
-- [ ] 2.3 Build przechodzi: `npm run build`
+- [x] 2.1 Lint przechodzi: `npm run lint`
+- [x] 2.2 Testy jednostkowe przechodzą: `npm test`
+- [x] 2.3 Build przechodzi: `npm run build`
 
 #### Ręczne
 

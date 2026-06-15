@@ -24,16 +24,19 @@ interface Props {
   item: Item;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Sukces zapisu — wołane z zaktualizowanym itemem (podmiana w stanie islandu, item zostaje pending). */
+  /** Sukces zapisu — wołane z zaktualizowanym itemem (podmiana w stanie islandu; stan operacyjny zachowany). */
   onSaved: (updated: Item) => void;
-  /** 404 (item nie jest już pending) — wołane, by usunąć item z listy islandu (poprawka F2). */
+  /** 404 (item nie istnieje / nieedytowalny) — wołane, by usunąć item z listy islandu. */
   onNotFound: (id: string) => void;
+  /** 409 (równoległa edycja — compare-and-swap odrzucił zapis) — sygnał do rodzica o odświeżenie widoku. */
+  onConflict?: (id: string) => void;
 }
 
-// Modal edycji pendingu (title/description/typ). Zapis natychmiastowy — item zostaje `pending`,
-// akceptacja to osobna akcja (FR-010). Derywację operational_status z typu robi serwer (Faza 1).
-// Zamknięcie z niezapisanymi zmianami jest bramkowane pytaniem (ochrona przed utratą danych).
-export default function EditItemDialog({ item, open, onOpenChange, onSaved, onNotFound }: Props) {
+// Modal edycji itemu (title/description/typ) dla pendingów ORAZ zaakceptowanych (S-05). Zapis
+// natychmiastowy — akceptacja to osobna akcja (FR-010); edycja NIE dotyka stanu operacyjnego (serwer,
+// Faza 1). `item.updated_at` jedzie jako `expectedUpdatedAt` (optimistic concurrency → 409 przy
+// rozjeździe). Zamknięcie z niezapisanymi zmianami jest bramkowane pytaniem (ochrona przed utratą danych).
+export default function EditItemDialog({ item, open, onOpenChange, onSaved, onNotFound, onConflict }: Props) {
   const [title, setTitle] = useState(item.title);
   const [description, setDescription] = useState(item.description ?? "");
   const [type, setType] = useState<ItemType>(item.type);
@@ -46,7 +49,8 @@ export default function EditItemDialog({ item, open, onOpenChange, onSaved, onNo
 
   async function handleSave(): Promise<void> {
     if (titleInvalid) return;
-    const result = await editItem(item.id, buildEditPayload(title, description, type));
+    // `item.updated_at` to znacznik z chwili otwarcia dialogu — serwer porówna go (compare-and-swap).
+    const result = await editItem(item.id, buildEditPayload(title, description, type), item.updated_at);
     if (result.ok) {
       toast.success("Zapisano zmiany.");
       onSaved(result.item);
@@ -54,6 +58,10 @@ export default function EditItemDialog({ item, open, onOpenChange, onSaved, onNo
     } else if (result.reason === "not_found") {
       toast.error("Element nie jest już dostępny do edycji.");
       onNotFound(item.id);
+      onOpenChange(false);
+    } else if (result.reason === "conflict") {
+      toast.error("Element został zmieniony w innym miejscu — odśwież i spróbuj ponownie.");
+      onConflict?.(item.id);
       onOpenChange(false);
     } else {
       toast.error("Nie udało się zapisać zmian. Spróbuj ponownie.");

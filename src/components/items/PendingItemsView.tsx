@@ -140,6 +140,12 @@ export default function PendingItemsView({ initialItems }: Props) {
     });
   }
 
+  // 409 (ten sam pending edytowany równolegle w innej karcie — compare-and-swap, S-05) — przeładuj
+  // widok SSR, by pokazać aktualny stan zamiast cichego nadpisania.
+  function handleConflict(): void {
+    window.location.reload();
+  }
+
   return (
     <div className="flex flex-col gap-3">
       <Toaster />
@@ -293,6 +299,7 @@ export default function PendingItemsView({ initialItems }: Props) {
           }}
           onSaved={handleSaved}
           onNotFound={handleRemoved}
+          onConflict={handleConflict}
         />
       )}
     </div>

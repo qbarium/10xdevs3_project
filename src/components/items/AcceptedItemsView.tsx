@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { useItemMutation } from "@/components/hooks/useItemMutation";
+import EditItemDialog from "@/components/items/EditItemDialog";
 import OperationalStatusBadge from "@/components/items/OperationalStatusBadge";
 import { reconcileAfterChange, type AcceptedView } from "@/components/items/operational-view";
 import { allIds, isAllSelected, requiresConfirmation, toggleSelection } from "@/components/items/selection";
@@ -55,6 +56,7 @@ export default function AcceptedItemsView({ initialItems, view }: Props) {
   const [items, setItems] = useState<Item[]>(initialItems);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmRequest, setConfirmRequest] = useState<{ target: OperationalStatus; ids: string[] } | null>(null);
+  const [editing, setEditing] = useState<Item | null>(null);
   const [inFlightIds, setInFlightIds] = useState<Set<string>>(new Set());
   // Synchroniczny zamek re-entry (jak PendingItemsView): stan aktualizuje się po re-renderze, ref od razu.
   const inFlightRef = useRef(false);
@@ -118,6 +120,29 @@ export default function AcceptedItemsView({ initialItems, view }: Props) {
     const { target, ids } = confirmRequest;
     setConfirmRequest(null);
     void execute(target, ids);
+  }
+
+  // Edycja zapisana — podmiana itemu w miejscu. Edycja NIE dotyka `operational_status` (serwer),
+  // więc item zostaje w bieżącym widoku operacyjnym (Aktywne/Zakończone/Anulowane), tylko z nowymi polami.
+  function handleSaved(updated: Item): void {
+    setItems((prev) => prev.map((current) => (current.id === updated.id ? updated : current)));
+  }
+
+  // 404 (item nieedytowalny / zniknął) — usuń z listy i z zaznaczenia.
+  function handleRemoved(id: string): void {
+    setItems((prev) => prev.filter((current) => current.id !== id));
+    setSelected((prev) => {
+      if (!prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  }
+
+  // 409 (równoległa edycja gdzie indziej) — przeładuj widok SSR, by pokazać aktualny stan.
+  // Ścieżka wyjątkowa, świadomie poza budżetem NFR 200 ms.
+  function handleConflict(): void {
+    window.location.reload();
   }
 
   return (
@@ -191,6 +216,16 @@ export default function AcceptedItemsView({ initialItems, view }: Props) {
                       void execute(target, [item.id]);
                     }}
                   />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="ml-auto text-white/60 hover:bg-white/10 hover:text-white"
+                    onClick={() => {
+                      setEditing(item);
+                    }}
+                  >
+                    Edytuj
+                  </Button>
                 </div>
                 <h3 className="mt-2 font-semibold text-white/90">{item.title}</h3>
                 {item.description && <p className="mt-1 line-clamp-2 text-sm text-white/70">{item.description}</p>}
@@ -232,6 +267,20 @@ export default function AcceptedItemsView({ initialItems, view }: Props) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {editing && (
+        <EditItemDialog
+          key={editing.id}
+          item={editing}
+          open
+          onOpenChange={(open) => {
+            if (!open) setEditing(null);
+          }}
+          onSaved={handleSaved}
+          onNotFound={handleRemoved}
+          onConflict={handleConflict}
+        />
+      )}
     </div>
   );
 }
