@@ -37,11 +37,6 @@ export function getPendingItems(supabase: SupabaseClient, userId: string): Promi
   return listByAcceptance(supabase, userId, "pending");
 }
 
-/** Zaakceptowane itemy usera (widok „Aktywne", S-03). */
-export function getAcceptedItems(supabase: SupabaseClient, userId: string): Promise<Item[]> {
-  return listByAcceptance(supabase, userId, "accepted");
-}
-
 /** Odrzucone itemy usera (widok „Kosz", S-03; read-only — przenieś/przywróć/wyczyść → S-06). */
 export function getRejectedItems(supabase: SupabaseClient, userId: string): Promise<Item[]> {
   return listByAcceptance(supabase, userId, "rejected");

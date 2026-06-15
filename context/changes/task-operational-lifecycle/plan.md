@@ -385,9 +385,9 @@ Verby generyczne (per-typ nadpisania verbów poza zakresem — patrz „Czego NI
 
 #### Automatyczne
 
-- [x] 2.1 Lint przechodzi (`npm run lint`)
-- [x] 2.2 Build/typecheck przechodzi (`npm run build`)
-- [x] 2.3 Testy jednostkowe (`operationalActionSchema`; guard `accepted` w `setOperationalStatus`) przechodzą (`npm test`)
+- [x] 2.1 Lint przechodzi (`npm run lint`) — 34a71b4
+- [x] 2.2 Build/typecheck przechodzi (`npm run build`) — 34a71b4
+- [x] 2.3 Testy jednostkowe (`operationalActionSchema`; guard `accepted` w `setOperationalStatus`) przechodzą (`npm test`) — 34a71b4
 - [ ] 2.4 Testy integracyjne (RLS; guard `accepted`; rozłączne podzbiory odczytu) przechodzą (`npm run test:integration`)
 
 #### Ręczne
@@ -400,8 +400,8 @@ Verby generyczne (per-typ nadpisania verbów poza zakresem — patrz „Czego NI
 
 #### Automatyczne
 
-- [ ] 3.1 Lint przechodzi (`npm run lint`)
-- [ ] 3.2 Build przechodzi (`npm run build`)
+- [x] 3.1 Lint przechodzi (`npm run lint`)
+- [x] 3.2 Build przechodzi (`npm run build`)
 
 #### Ręczne
 

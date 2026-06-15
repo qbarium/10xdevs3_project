@@ -3,14 +3,17 @@
 // Używana przez widoki Aktywne i Kosz (S-03). Styl spójny z widokiem pendingów (cosmic). Bez akcji —
 // interaktywność (zaznaczanie/edycja) dotyczy wyłącznie pendingów (React island, Faza 3).
 import type { Item } from "@/types";
-import { acceptanceStatusLabel, itemTypeLabel } from "@/lib/labels";
+import { acceptanceStatusLabel, itemTypeLabel, operationalStatusLabel } from "@/lib/labels";
 
 interface Props {
   items: Item[];
   emptyLabel?: string;
+  // Gdy true, obok typu pokazuje badge stanu operacyjnego (etykieta per-typ) zamiast statusu
+  // akceptacji — widoki accepted (Aktywne/Zakończone/Anulowane, S-04), gdzie akceptacja jest stała.
+  operationalBadge?: boolean;
 }
 
-const { items, emptyLabel = "Brak elementów." } = Astro.props;
+const { items, emptyLabel = "Brak elementów.", operationalBadge = false } = Astro.props;
 ---
 
 {
@@ -26,9 +29,15 @@ const { items, emptyLabel = "Brak elementów." } = Astro.props;
             <span class="inline-block rounded-full border border-purple-300/30 bg-purple-400/10 px-2 py-0.5 text-xs font-medium text-purple-100">
               {itemTypeLabel(item.type)}
             </span>
-            <span class="inline-block rounded-full border border-white/15 bg-white/5 px-2 py-0.5 text-xs font-medium text-white/60">
-              {acceptanceStatusLabel(item.acceptance_status)}
-            </span>
+            {operationalBadge && item.operational_status ? (
+              <span class="inline-block rounded-full border border-blue-300/30 bg-blue-400/10 px-2 py-0.5 text-xs font-medium text-blue-100">
+                {operationalStatusLabel(item.operational_status, item.type)}
+              </span>
+            ) : (
+              <span class="inline-block rounded-full border border-white/15 bg-white/5 px-2 py-0.5 text-xs font-medium text-white/60">
+                {acceptanceStatusLabel(item.acceptance_status)}
+              </span>
+            )}
           </div>
           <h3 class="mt-2 font-semibold text-white/90">{item.title}</h3>
           {item.description && <p class="mt-1 line-clamp-2 text-sm text-white/70">{item.description}</p>}
