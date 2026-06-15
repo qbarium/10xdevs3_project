@@ -3,7 +3,7 @@ project: TaskerLight
 version: 1
 status: draft
 created: 2026-06-05
-updated: 2026-06-14
+updated: 2026-06-15
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -24,7 +24,7 @@ TaskerLight przyjmuje surowy, nieuporządkowany wsad głosowo-tekstowy i rozdzie
 
 **S-02: Wklej tekst → klasyfikacja → typowane itemy do akceptacji** — pierwszy moment, w którym surowy wsad realnie zamienia się w sklasyfikowane itemy; dowodzi, że klasyfikacja AI poprawnie typuje (najbardziej ryzykowne założenie produktu, mierzone w Success Criteria jako acceptance rate ≥ 70%).
 
-> „Gwiazda przewodnia" = najmniejszy kompleksowy (end-to-end) wycinek, którego pomyślne dostarczenie udowadnia podstawową hipotezę produktu — umieszczony tak wcześnie, jak pozwalają na to Wymagania wstępne, bo wszystko inne ma znaczenie dopiero, gdy to działa. Pełna ścieżka, którą wskazałeś (wklej → klasyfikacja → walidacja → akceptacja/odrzucenie → zmiana stanu), domyka się dopiero przez kolejne wycinki łańcucha: S-02 (klasyfikacja → pendingi) → S-03 (akceptacja/odrzucenie) → S-04 (cykl operacyjny zadania). Uwaga zgodna z PRD: w MVP stan operacyjny ma wyłącznie `task` (FR-009) — „oznaczenie notatki jako obsłużona / decyzji jako podjęta" jest poza zakresem; notatki, pomysły i decyzje kończą ścieżkę jako `accepted` w widoku Aktywne. Te wycinki są sekwencjonowane jako pierwsze i ciągłe, zgodnie z celem „szybkość uruchomienia".
+> „Gwiazda przewodnia" = najmniejszy kompleksowy (end-to-end) wycinek, którego pomyślne dostarczenie udowadnia podstawową hipotezę produktu — umieszczony tak wcześnie, jak pozwalają na to Wymagania wstępne, bo wszystko inne ma znaczenie dopiero, gdy to działa. Pełna ścieżka, którą wskazałeś (wklej → klasyfikacja → walidacja → akceptacja/odrzucenie → zmiana stanu), domyka się dopiero przez kolejne wycinki łańcucha: S-02 (klasyfikacja → pendingi) → S-03 (akceptacja/odrzucenie) → S-04 (cykl operacyjny itemu). **Decyzja projektowa 2026-06-15:** stan operacyjny obejmuje **wszystkie typy** itemów (rozszerzenie pierwotnego FR-009 task-only) — „oznaczenie notatki jako obsłużona / decyzji jako podjęta / pomysłu jako obsłużony" WCHODZI do zakresu, z etykietami stanu per-typ; `zrealizowane`/obsłużone dowolnego typu trafia do widoku Zakończone. Te wycinki są sekwencjonowane jako pierwsze i ciągłe, zgodnie z celem „szybkość uruchomienia".
 
 ## W skrócie
 
@@ -34,7 +34,7 @@ TaskerLight przyjmuje surowy, nieuporządkowany wsad głosowo-tekstowy i rozdzie
 | S-01  | byok-key-config          | zapisać, podejrzeć zamaskowany i usunąć własny klucz API; submit bramkowany | F-01              | US-06, FR-021, FR-022, FR-024              | done |
 | S-02  | first-gated-generation   | wkleić tekst/plik i zobaczyć typowane itemy jako pendingi do akceptacji     | S-01, F-01  | US-01, FR-002, FR-003, FR-005, FR-006, FR-015, FR-018, FR-020, FR-023, FR-025 | done |
 | S-03  | validation-accept-reject | zaakceptować (z edycją) lub odrzucić pendingi; zaakceptowane → Aktywne      | S-02              | US-02, US-03, FR-007, FR-008, FR-010, FR-012 | done |
-| S-04  | task-operational-lifecycle | zmieniać stan operacyjny zadania (nowe/w realizacji/zrealizowane/anulowane) | S-03              | US-04, FR-009                              | proposed |
+| S-04  | task-operational-lifecycle | zmieniać stan operacyjny itemu dowolnego typu (nowe/w realizacji/zrealizowane/anulowane) | S-03              | US-04, FR-009                              | proposed |
 | S-05  | unified-list-and-edit    | przeglądać Aktywne/Zakończone/Anulowane (filtr typu) i edytować itemy       | S-03              | FR-008, FR-011                             | proposed |
 | S-06  | trash-lifecycle          | przenieść item do kosza, przywrócić i wyczyścić kosz                        | S-03              | US-05, FR-013, FR-016                      | proposed |
 | S-07  | manual-item-entry        | dodać item ręcznie (bez klucza, od razu `accepted`)                         | S-02              | US-08, FR-028                              | proposed |
@@ -122,16 +122,16 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Ryzyko:** Wprowadza ujednolicony model zaznaczania (FR-007) i pierwsze dwa filtry główne listy (Pending → Aktywne/Kosz); zmiana typu w stagingu dotyka mapowania stanów (OQ5), które plan musi rozstrzygnąć.
 - **Status:** done
 
-### S-04: Cykl operacyjny zadania
+### S-04: Cykl operacyjny itemu (wszystkie typy)
 
-- **Wynik:** użytkownik może zmienić stan operacyjny zadania (`nowe` / `w realizacji` / `zrealizowane` / `anulowane`, wzajemnie przechodnie) per item i zbiorczo; `zrealizowane` przenosi zadanie z Aktywne do Zakończone, `anulowane` do Anulowane.
+- **Wynik:** użytkownik może zmienić stan operacyjny itemu **dowolnego typu** (`nowe` / `w realizacji` / `zrealizowane` / `anulowane`, wzajemnie przechodnie) per item i zbiorczo; `zrealizowane` przenosi item z Aktywne do Zakończone, `anulowane` do Anulowane. Etykiety stanu są per-typ (np. `zrealizowane`: zadanie „Zrobione", notatka „Obsłużona", decyzja „Podjęta", pomysł „Obsłużony").
 - **Change ID:** task-operational-lifecycle
 - **Odnośniki PRD:** US-04, FR-009
 - **Wymagania wstępne:** S-03
 - **Równolegle z:** S-05, S-06
 - **Blokady:** —
 - **Niewiadome:** —
-- **Ryzyko:** Domyka ścieżkę gwiazdy przewodniej (wskazaną przez użytkownika); stan operacyjny dotyczy tylko `task` — itemy nie-`task` (note/idea/decision) nie mają w MVP przejścia „obsłużona/podjęta" (świadome ograniczenie PRD FR-009).
+- **Ryzyko:** Domyka ścieżkę gwiazdy przewodniej (wskazaną przez użytkownika). **Decyzja projektowa 2026-06-15 (wyłom z pierwotnego FR-009 task-only):** stan operacyjny rozszerzony na wszystkie typy itemów, z etykietami per-typ; `done` dowolnego typu → widok Zakończone. Koszt: migracja backfill `NULL→'new'` + zmiana RPC `persist_classification` (szczegóły w planie zmiany `task-operational-lifecycle`). FR-009 w PRD do zaktualizowania osobno.
 - **Status:** proposed
 
 ### S-05: Jednolita lista i edycja zaakceptowanych itemów
