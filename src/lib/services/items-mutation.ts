@@ -1,18 +1,23 @@
 // Mutacje `items` nad klientem Supabase z RLS (cookies usera, NIE service_role): zbiorcza zmiana
-// `acceptance_status` oraz edycja pendingu. KAŻDY UPDATE jest status-guarded (`eq('acceptance_status',
-// 'pending')`) — guard realizuje FR-007 ("działa tylko na uprawnionych, reszta pomijana bez błędu")
-// i chroni przed mutacją itemu zaakceptowanego w innej karcie (stale UI). RLS dokłada `user_id`
-// (polityka `items_update_own` ma klauzulę USING) — izolacja per-user bez jawnego filtra.
+// `acceptance_status`/`operational_status` oraz edycja itemu (pending|accepted, S-05). Każdy UPDATE
+// jest status-guarded — bulki strzegą `eq('acceptance_status', …)`, a edycja `in('acceptance_status',
+// ['pending','accepted'])` — guard realizuje FR-007 ("działa tylko na uprawnionych, reszta pomijana
+// bez błędu") i chroni przed mutacją itemu zmienionego w innej karcie (stale UI). Edycja dokłada
+// compare-and-swap na `updated_at` (optimistic concurrency → 409). RLS dokłada `user_id` (polityka
+// `items_update_own` ma klauzulę USING) — izolacja per-user bez jawnego filtra.
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { EditItemInput } from "@/lib/validation/items";
-import type { Item, ItemType, OperationalStatus } from "@/types";
+import type { AcceptanceStatus, Item, ItemType, OperationalStatus } from "@/types";
 
 const ITEM_COLUMNS =
   "id, user_id, import_session_id, type, title, description, acceptance_status, operational_status, created_at, updated_at";
 
-/** Rzucane, gdy edytowany item nie jest już `pending` (nie-własny lub zaakceptowany w innej karcie). */
+/** Statusy akceptacji, w których item jest edytowalny (S-05): `pending` ORAZ `accepted`. */
+const EDITABLE_ACCEPTANCE: readonly AcceptanceStatus[] = ["pending", "accepted"];
+
+/** Rzucane, gdy edytowany item nie istnieje, jest nie-własny lub ma nieedytowalny status (`rejected`/`deleted`). */
 export class ItemNotEditableError extends Error {
   constructor() {
     super("Item nie istnieje lub nie jest już edytowalny.");
@@ -21,11 +26,24 @@ export class ItemNotEditableError extends Error {
 }
 
 /**
- * Jedyne miejsce derywacji `operational_status` z typu w warstwie aplikacji. Od S-04 stan
- * operacyjny obejmuje WSZYSTKIE typy (świadomy wyłom z FR-009), więc każdy item — niezależnie
- * od typu — powstaje i jest edytowany z `'new'`. Spójne z RPC `persist_classification` po migracji
- * `operational_status_all_types` (wcześniej `'new'` dostawał tylko `task`). Parametr `_type`
- * zachowany w sygnaturze pod przyszłą derywację per-typ (architektura etykiet per-typ z S-04).
+ * Rzucane, gdy item istnieje i JEST edytowalny, ale jego `updated_at` rozjechał się z oczekiwanym
+ * (równoległa edycja gdzie indziej) — compare-and-swap odrzuca cichy zapis. Endpoint → 409. Odróżnia
+ * „ktoś nadpisał w międzyczasie" od „item zniknął/niedostępny" (`ItemNotEditableError` → 404).
+ */
+export class ItemConflictError extends Error {
+  constructor() {
+    super("Item został zmieniony w innym miejscu — odśwież i spróbuj ponownie.");
+    this.name = "ItemConflictError";
+  }
+}
+
+/**
+ * Kanoniczne miejsce derywacji `operational_status` z typu w warstwie aplikacji — przy TWORZENIU
+ * itemu. Od S-04 stan operacyjny obejmuje WSZYSTKIE typy (świadomy wyłom z FR-009), więc każdy item —
+ * niezależnie od typu — powstaje z `'new'`. Spójne z RPC `persist_classification` po migracji
+ * `operational_status_all_types` (wcześniej `'new'` dostawał tylko `task`). UWAGA (S-05): edycja
+ * itemu NIE wywołuje już tej funkcji — `editItem` celowo nie dotyka `operational_status` (decyzja #3),
+ * by zachować postęp accepted. Parametr `_type` zachowany pod przyszłą derywację per-typ (etykiety S-04).
  */
 export function deriveOperationalStatus(_type: ItemType): OperationalStatus {
   return "new";
@@ -78,25 +96,45 @@ export async function setOperationalStatus(
 }
 
 /**
- * Edycja pojedynczego pendingu (title/description/type). Derywuje `operational_status` z typu.
- * Guard `pending` → gdy item nie jest już edytowalny, `.maybeSingle()` zwraca `null` (bez błędu),
- * co mapujemy na `ItemNotEditableError` (endpoint → 404). Zwraca pełny, zaktualizowany wiersz.
+ * Edycja pojedynczego itemu (title/description/type) dla `pending` ORAZ `accepted` (S-05). Payload
+ * NIE zawiera `operational_status` — edycja zachowuje postęp accepted (decyzja #3). Compare-and-swap:
+ * UPDATE strzeże `in('acceptance_status', ['pending','accepted'])` + `eq('updated_at', expectedUpdatedAt)`,
+ * więc trafia tylko w edytowalny wiersz o niezmienionym znaczniku.
+ *
+ * 0 wierszy jest NIEJEDNOZNACZNE (item nie istnieje/nieedytowalny vs nieaktualny `updated_at`), więc
+ * rozróżniamy follow-up SELECT-em po `id` (RLS-scoped): wiersz istnieje i ma edytowalny status, lecz
+ * UPDATE go nie złapał ⇒ jedyną przyczyną mógł być rozjazd `updated_at` ⇒ `ItemConflictError` (→409);
+ * w przeciwnym razie ⇒ `ItemNotEditableError` (→404). Zwraca pełny, zaktualizowany wiersz.
  */
-export async function editPendingItem(supabase: SupabaseClient, id: string, input: EditItemInput): Promise<Item> {
+export async function editItem(
+  supabase: SupabaseClient,
+  id: string,
+  input: EditItemInput,
+  expectedUpdatedAt: string,
+): Promise<Item> {
   const { data, error } = await supabase
     .from("items")
     .update({
       title: input.title,
       description: input.description,
       type: input.type,
-      operational_status: deriveOperationalStatus(input.type),
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)
-    .eq("acceptance_status", "pending")
+    .in("acceptance_status", EDITABLE_ACCEPTANCE)
+    .eq("updated_at", expectedUpdatedAt)
     .select(ITEM_COLUMNS)
     .maybeSingle<Item>();
   if (error) throw new Error("Edycja itemu nie powiodła się.", { cause: error });
-  if (!data) throw new ItemNotEditableError();
-  return data;
+  if (data) return data;
+
+  // Dyskryminacja 0-wierszowego UPDATE: SELECT po `id` (RLS dokłada user_id — obcy item → null).
+  const { data: existing, error: selectError } = await supabase
+    .from("items")
+    .select("acceptance_status")
+    .eq("id", id)
+    .maybeSingle<{ acceptance_status: AcceptanceStatus }>();
+  if (selectError) throw new Error("Edycja itemu nie powiodła się.", { cause: selectError });
+  if (existing && EDITABLE_ACCEPTANCE.includes(existing.acceptance_status)) throw new ItemConflictError();
+  throw new ItemNotEditableError();
 }

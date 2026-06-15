@@ -1,16 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Test handlera PATCH /api/items/[id] (jak classify.test.ts): mock createClient + serwis. Sprawdza
-// guard auth, walidację UUID i payloadu (400 bez serwisu), happy path (1.6) oraz mapowanie
-// ItemNotEditableError → 404. Derywacja operational_status i zapis do bazy: test integracyjny.
+// guard auth, walidację UUID i payloadu (400 bez serwisu), happy path, oraz mapowanie błędów serwisu:
+// ItemConflictError → 409, ItemNotEditableError → 404. Realny compare-and-swap i zapis: test integracyjny.
 vi.mock("@/lib/supabase", () => ({ createClient: vi.fn(() => ({})) }));
 vi.mock("@/lib/services/items-mutation", () => ({
-  editPendingItem: vi.fn(),
+  editItem: vi.fn(),
+  ItemConflictError: class ItemConflictError extends Error {},
   ItemNotEditableError: class ItemNotEditableError extends Error {},
 }));
 vi.mock("@/lib/services/logger", () => ({ reportError: vi.fn() }));
 
-import { editPendingItem, ItemNotEditableError } from "@/lib/services/items-mutation";
+import { editItem, ItemConflictError, ItemNotEditableError } from "@/lib/services/items-mutation";
 import { PATCH } from "@/pages/api/items/[id]";
 import type { Item } from "@/types";
 
@@ -29,7 +30,7 @@ const sampleItem: Item = {
   updated_at: "2026-01-01T00:00:00Z",
 };
 
-const validBody = { title: "Nowy", description: null, type: "note" };
+const validBody = { title: "Nowy", description: null, type: "note", expectedUpdatedAt: "2026-01-01T00:00:00Z" };
 
 function ctx(
   body: unknown,
@@ -49,51 +50,67 @@ function ctx(
 
 describe("PATCH /api/items/[id]", () => {
   beforeEach(() => {
-    vi.mocked(editPendingItem).mockResolvedValue(sampleItem);
+    vi.mocked(editItem).mockResolvedValue(sampleItem);
   });
   afterEach(() => vi.clearAllMocks());
 
   it("brak zalogowania → 401", async () => {
     const res = await PATCH(ctx(validBody, { user: null }));
     expect(res.status).toBe(401);
-    expect(vi.mocked(editPendingItem)).not.toHaveBeenCalled();
+    expect(vi.mocked(editItem)).not.toHaveBeenCalled();
   });
 
   it("niepoprawny UUID w ścieżce → 400, serwis nie wywołany", async () => {
     const res = await PATCH(ctx(validBody, { id: "nie-uuid" }));
     expect(res.status).toBe(400);
-    expect(vi.mocked(editPendingItem)).not.toHaveBeenCalled();
+    expect(vi.mocked(editItem)).not.toHaveBeenCalled();
   });
 
-  // 1.6 — poprawna edycja przechodzi do serwisu i zwraca item
-  it("poprawna edycja → 200 {ok, item}, serwis z parsed payloadem", async () => {
+  // Poprawna edycja: pola edycji idą jako `input`, `expectedUpdatedAt` jako osobny argument serwisu.
+  it("poprawna edycja → 200 {ok, item}, serwis z (input, expectedUpdatedAt)", async () => {
     const res = await PATCH(ctx(validBody));
     expect(res.status).toBe(200);
     const body = (await res.json()) as { ok: boolean; item: Item };
     expect(body.ok).toBe(true);
     expect(body.item.id).toBe(UUID);
-    expect(vi.mocked(editPendingItem)).toHaveBeenCalledWith(expect.anything(), UUID, {
-      title: "Nowy",
-      description: null,
-      type: "note",
-    });
+    expect(vi.mocked(editItem)).toHaveBeenCalledWith(
+      expect.anything(),
+      UUID,
+      { title: "Nowy", description: null, type: "note" },
+      "2026-01-01T00:00:00Z",
+    );
   });
 
   it("pusty title → 400, serwis nie wywołany", async () => {
-    const res = await PATCH(ctx({ title: "   ", description: null, type: "note" }));
+    const res = await PATCH(
+      ctx({ title: "   ", description: null, type: "note", expectedUpdatedAt: "2026-01-01T00:00:00Z" }),
+    );
     expect(res.status).toBe(400);
-    expect(vi.mocked(editPendingItem)).not.toHaveBeenCalled();
+    expect(vi.mocked(editItem)).not.toHaveBeenCalled();
+  });
+
+  it("brak expectedUpdatedAt → 400, serwis nie wywołany", async () => {
+    const res = await PATCH(ctx({ title: "Nowy", description: null, type: "note" }));
+    expect(res.status).toBe(400);
+    expect(vi.mocked(editItem)).not.toHaveBeenCalled();
+  });
+
+  it("ItemConflictError → 409 conflict", async () => {
+    vi.mocked(editItem).mockRejectedValue(new ItemConflictError());
+    const res = await PATCH(ctx(validBody));
+    expect(res.status).toBe(409);
+    expect(((await res.json()) as { code: string }).code).toBe("conflict");
   });
 
   it("ItemNotEditableError → 404 not_found", async () => {
-    vi.mocked(editPendingItem).mockRejectedValue(new ItemNotEditableError());
+    vi.mocked(editItem).mockRejectedValue(new ItemNotEditableError());
     const res = await PATCH(ctx(validBody));
     expect(res.status).toBe(404);
     expect(((await res.json()) as { code: string }).code).toBe("not_found");
   });
 
   it("inny rzut serwisu → 500 generyczne", async () => {
-    vi.mocked(editPendingItem).mockRejectedValue(new Error("boom"));
+    vi.mocked(editItem).mockRejectedValue(new Error("boom"));
     const res = await PATCH(ctx(validBody));
     expect(res.status).toBe(500);
   });

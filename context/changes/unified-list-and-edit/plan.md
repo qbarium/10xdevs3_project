@@ -290,9 +290,9 @@ Brak. Schemat (`updated_at`, `operational_status` dla wszystkich typów) wystarc
 
 #### Automatyczne
 
-- [ ] 1.1 Lint przechodzi: `npm run lint`
-- [ ] 1.2 Testy jednostkowe przechodzą: `npm test`
-- [ ] 1.3 Build przechodzi: `npm run build`
+- [x] 1.1 Lint przechodzi: `npm run lint`
+- [x] 1.2 Testy jednostkowe przechodzą: `npm test`
+- [x] 1.3 Build przechodzi: `npm run build`
 
 #### Ręczne
 
