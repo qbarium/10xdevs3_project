@@ -54,6 +54,30 @@ export async function setAcceptanceStatus(
 }
 
 /**
+ * Zbiorcza zmiana `operational_status` accepted itemów jednym atomowym statementem (S-04). Klon
+ * `setAcceptanceStatus` z innym polem i guardem: WHERE strzeże `accepted` (NIE `pending`) — itemy
+ * nie-`accepted` w `ids` nie pasują, `.select` ich nie zwróci, więc `updatedIds` to dokładnie
+ * wiersze faktycznie zmienione (reszta pominięta bez błędu — FR-007). Brak warunku na `type`:
+ * po S-04 wszystkie typy mają stan. `status` może być dowolnym z 4 (przechodniość na danych);
+ * kuracja widocznych przejść to warstwa UX (Faza 4).
+ */
+export async function setOperationalStatus(
+  supabase: SupabaseClient,
+  ids: string[],
+  status: OperationalStatus,
+): Promise<{ updatedIds: string[] }> {
+  const { data, error } = await supabase
+    .from("items")
+    .update({ operational_status: status, updated_at: new Date().toISOString() })
+    .in("id", ids)
+    .eq("acceptance_status", "accepted")
+    .select("id")
+    .overrideTypes<{ id: string }[], { merge: false }>();
+  if (error) throw new Error("Zmiana stanu operacyjnego nie powiodła się.", { cause: error });
+  return { updatedIds: data.map((row) => row.id) };
+}
+
+/**
  * Edycja pojedynczego pendingu (title/description/type). Derywuje `operational_status` z typu.
  * Guard `pending` → gdy item nie jest już edytowalny, `.maybeSingle()` zwraca `null` (bez błędu),
  * co mapujemy na `ItemNotEditableError` (endpoint → 404). Zwraca pełny, zaktualizowany wiersz.

@@ -6,6 +6,7 @@ import {
   editPendingItem,
   ItemNotEditableError,
   setAcceptanceStatus,
+  setOperationalStatus,
 } from "@/lib/services/items-mutation";
 
 // Mock łańcucha query-buildera Supabase: każda metoda zwraca ten sam `builder` (i rejestruje
@@ -61,6 +62,23 @@ describe("setAcceptanceStatus", () => {
   it("rzuca na błąd serwera", async () => {
     const { supabase } = mockSupabase({ data: null, error: { message: "boom" } });
     await expect(setAcceptanceStatus(supabase, ["a"], "rejected")).rejects.toThrow();
+  });
+});
+
+describe("setOperationalStatus", () => {
+  it("buduje guarded UPDATE (accepted) i zwraca tylko zmienione id", async () => {
+    const { supabase, calls } = mockSupabase({ data: [{ id: "a" }], error: null });
+    const res = await setOperationalStatus(supabase, ["a", "b"], "done");
+
+    expect(res.updatedIds).toEqual(["a"]); // "b" pominięty (guard accepted) — nie ma go w data
+    expect(calls.filter(([m]) => m === "eq")).toContainEqual(["eq", ["acceptance_status", "accepted"]]);
+    expect(calls.filter(([m]) => m === "in")).toContainEqual(["in", ["id", ["a", "b"]]]);
+    expect(firstArgOf(calls, "update").operational_status).toBe("done");
+  });
+
+  it("rzuca na błąd serwera", async () => {
+    const { supabase } = mockSupabase({ data: null, error: { message: "boom" } });
+    await expect(setOperationalStatus(supabase, ["a"], "cancelled")).rejects.toThrow();
   });
 });
 
