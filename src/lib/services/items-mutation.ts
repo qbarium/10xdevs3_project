@@ -21,11 +21,14 @@ export class ItemNotEditableError extends Error {
 }
 
 /**
- * Jedyne miejsce derywacji `operational_status` z typu w warstwie aplikacji: `task` → `new`,
- * pozostałe → `null`. Spójne z RPC `persist_classification` (S-02) — pendingi-taski powstają z `new`.
+ * Jedyne miejsce derywacji `operational_status` z typu w warstwie aplikacji. Od S-04 stan
+ * operacyjny obejmuje WSZYSTKIE typy (świadomy wyłom z FR-009), więc każdy item — niezależnie
+ * od typu — powstaje i jest edytowany z `'new'`. Spójne z RPC `persist_classification` po migracji
+ * `operational_status_all_types` (wcześniej `'new'` dostawał tylko `task`). Parametr `_type`
+ * zachowany w sygnaturze pod przyszłą derywację per-typ (architektura etykiet per-typ z S-04).
  */
-export function deriveOperationalStatus(type: ItemType): OperationalStatus | null {
-  return type === "task" ? "new" : null;
+export function deriveOperationalStatus(_type: ItemType): OperationalStatus {
+  return "new";
 }
 
 /**

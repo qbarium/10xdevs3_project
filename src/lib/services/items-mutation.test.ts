@@ -39,11 +39,11 @@ describe("deriveOperationalStatus", () => {
   it("task → new", () => {
     expect(deriveOperationalStatus("task")).toBe("new");
   });
-  it("note/idea/decision/other → null", () => {
-    expect(deriveOperationalStatus("note")).toBeNull();
-    expect(deriveOperationalStatus("idea")).toBeNull();
-    expect(deriveOperationalStatus("decision")).toBeNull();
-    expect(deriveOperationalStatus("other")).toBeNull();
+  it("note/idea/decision/other → new (S-04: wszystkie typy mają stan operacyjny)", () => {
+    expect(deriveOperationalStatus("note")).toBe("new");
+    expect(deriveOperationalStatus("idea")).toBe("new");
+    expect(deriveOperationalStatus("decision")).toBe("new");
+    expect(deriveOperationalStatus("other")).toBe("new");
   });
 });
 
@@ -76,10 +76,10 @@ describe("editPendingItem", () => {
     expect(calls.filter(([m]) => m === "eq")).toContainEqual(["eq", ["acceptance_status", "pending"]]);
   });
 
-  it("derywuje operational_status=null dla note", async () => {
+  it("derywuje operational_status=new dla note (S-04: wszystkie typy)", async () => {
     const { supabase, calls } = mockSupabase({ data: { id: "x" }, error: null });
     await editPendingItem(supabase, "x", { title: "T", description: null, type: "note" });
-    expect(firstArgOf(calls, "update").operational_status).toBeNull();
+    expect(firstArgOf(calls, "update").operational_status).toBe("new");
   });
 
   it("brak wiersza (maybeSingle → null) → ItemNotEditableError", async () => {

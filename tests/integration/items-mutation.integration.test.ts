@@ -102,8 +102,8 @@ d("items-mutation — RLS + status-guard + derywacja (integracja)", () => {
     expect(await statusOf(A.supabase, pendingId)).toBe("accepted");
   });
 
-  it("edit utrwala pola i derywuje operational_status z typu (note→task→note)", async () => {
-    const noteId = await insertItem(A.supabase, A.id, { type: "note", operational_status: null });
+  it("edit utrwala pola i derywuje operational_status='new' dla każdego typu (S-04)", async () => {
+    const noteId = await insertItem(A.supabase, A.id, { type: "note", operational_status: "new" });
 
     const toTask = await editPendingItem(A.supabase, noteId, { title: "Nowy", description: "opis", type: "task" });
     expect(toTask.type).toBe("task");
@@ -112,8 +112,9 @@ d("items-mutation — RLS + status-guard + derywacja (integracja)", () => {
     expect(toTask.description).toBe("opis");
     expect(toTask.acceptance_status).toBe("pending"); // edycja NIE akceptuje
 
+    // S-04: zmiana z powrotem na `note` NIE zeruje stanu — wszystkie typy mają operational_status.
     const backToNote = await editPendingItem(A.supabase, noteId, { title: "Nowy", description: null, type: "note" });
-    expect(backToNote.operational_status).toBeNull();
+    expect(backToNote.operational_status).toBe("new");
     expect(backToNote.description).toBeNull();
   });
 
