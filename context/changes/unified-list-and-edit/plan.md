@@ -303,9 +303,9 @@ Brak. Schemat (`updated_at`, `operational_status` dla wszystkich typów) wystarc
 
 #### Automatyczne
 
-- [x] 2.1 Lint przechodzi: `npm run lint`
-- [x] 2.2 Testy jednostkowe przechodzą: `npm test`
-- [x] 2.3 Build przechodzi: `npm run build`
+- [x] 2.1 Lint przechodzi: `npm run lint` — b3cffaf
+- [x] 2.2 Testy jednostkowe przechodzą: `npm test` — b3cffaf
+- [x] 2.3 Build przechodzi: `npm run build` — b3cffaf
 
 #### Ręczne
 
@@ -317,9 +317,9 @@ Brak. Schemat (`updated_at`, `operational_status` dla wszystkich typów) wystarc
 
 #### Automatyczne
 
-- [ ] 3.1 Lint przechodzi: `npm run lint`
-- [ ] 3.2 Testy jednostkowe przechodzą (w tym `type-filter.test.ts`): `npm test`
-- [ ] 3.3 Build przechodzi: `npm run build`
+- [x] 3.1 Lint przechodzi: `npm run lint`
+- [x] 3.2 Testy jednostkowe przechodzą (w tym `type-filter.test.ts`): `npm test`
+- [x] 3.3 Build przechodzi: `npm run build`
 
 #### Ręczne
 

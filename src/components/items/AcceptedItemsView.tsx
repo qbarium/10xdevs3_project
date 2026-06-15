@@ -6,6 +6,8 @@ import EditItemDialog from "@/components/items/EditItemDialog";
 import OperationalStatusBadge from "@/components/items/OperationalStatusBadge";
 import { reconcileAfterChange, type AcceptedView } from "@/components/items/operational-view";
 import { allIds, isAllSelected, requiresConfirmation, toggleSelection } from "@/components/items/selection";
+import TypeFilter from "@/components/items/TypeFilter";
+import { applyTypeFilter, type TypeFilterValue } from "@/components/items/type-filter";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -57,12 +59,20 @@ export default function AcceptedItemsView({ initialItems, view }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmRequest, setConfirmRequest] = useState<{ target: OperationalStatus; ids: string[] } | null>(null);
   const [editing, setEditing] = useState<Item | null>(null);
+  const [typeFilter, setTypeFilter] = useState<TypeFilterValue>("all");
+  // „Przypięte" id: itemy, które po edycji zmieniającej typ wypadły z aktywnego filtra, ale mają zostać
+  // widoczne do najbliższego przełączenia filtra / odświeżenia (decyzja #6). Czyszczone przy zmianie filtra.
+  const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
   const [inFlightIds, setInFlightIds] = useState<Set<string>>(new Set());
   // Synchroniczny zamek re-entry (jak PendingItemsView): stan aktualizuje się po re-renderze, ref od razu.
   const inFlightRef = useRef(false);
   const { setOperationalStatus, pending } = useItemMutation();
 
-  const allSelected = isAllSelected(selected.size, items.length);
+  // Lista renderowana = itemy przefiltrowane po typie (z wyłomem „przypiętych"). Zaznaczanie i licznik
+  // operują na WIDOCZNYCH itemach; invariant „selected ⊆ widoczne" utrzymuje czyszczenie selekcji przy
+  // zmianie filtra (zaznaczać można tylko widoczne, a edycja zmieniająca typ przypina item w widoku).
+  const visibleItems = applyTypeFilter(items, typeFilter, pinnedIds);
+  const allSelected = isAllSelected(selected.size, visibleItems.length);
   const selectedCount = selected.size;
 
   function toggleItem(id: string): void {
@@ -70,7 +80,7 @@ export default function AcceptedItemsView({ initialItems, view }: Props) {
   }
 
   function toggleAll(): void {
-    setSelected((prev) => (isAllSelected(prev.size, items.length) ? new Set() : allIds(items)));
+    setSelected((prev) => (isAllSelected(prev.size, visibleItems.length) ? new Set() : allIds(visibleItems)));
   }
 
   // Pessimistic: itemy w locie są WYGASZANE (dim), a nadawanie nowego stanu / usuwanie z listy
@@ -108,7 +118,7 @@ export default function AcceptedItemsView({ initialItems, view }: Props) {
   function requestBulk(target: OperationalStatus): void {
     const ids = [...selected];
     if (ids.length === 0) return;
-    if (requiresConfirmation(ids.length, items.length)) {
+    if (requiresConfirmation(ids.length, visibleItems.length)) {
       setConfirmRequest({ target, ids });
     } else {
       void execute(target, ids);
@@ -126,6 +136,19 @@ export default function AcceptedItemsView({ initialItems, view }: Props) {
   // więc item zostaje w bieżącym widoku operacyjnym (Aktywne/Zakończone/Anulowane), tylko z nowymi polami.
   function handleSaved(updated: Item): void {
     setItems((prev) => prev.map((current) => (current.id === updated.id ? updated : current)));
+    // Przy aktywnym filtrze: jeśli nowy typ nie pasuje, przypnij item — zostaje widoczny do przełączenia
+    // filtra / odświeżenia (decyzja #6), zamiast znikać natychmiast po zapisie.
+    if (typeFilter !== "all" && updated.type !== typeFilter) {
+      setPinnedIds((prev) => new Set(prev).add(updated.id));
+    }
+  }
+
+  // Zmiana filtra typu: wyczyść „przypięte" (przestają obowiązywać) oraz selekcję (utrzymanie invariantu
+  // selected ⊆ widoczne — zaznaczać można tylko widoczne itemy).
+  function handleFilterChange(next: TypeFilterValue): void {
+    setTypeFilter(next);
+    setPinnedIds(new Set());
+    setSelected(new Set());
   }
 
   // 404 (item nieedytowalny / zniknął) — usuń z listy i z zaznaczenia.
@@ -158,80 +181,95 @@ export default function AcceptedItemsView({ initialItems, view }: Props) {
         </div>
       ) : (
         <>
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-            <label className="flex items-center gap-2 text-sm text-white/80">
-              <Checkbox
-                checked={allSelected ? true : selectedCount > 0 ? "indeterminate" : false}
-                onCheckedChange={toggleAll}
-                aria-label="Zaznacz wszystkie"
-                className={CHECKBOX_CLASS}
-              />
-              Zaznacz wszystkie
-            </label>
-            <span className="text-sm text-white/50">
-              {selectedCount > 0 ? `Zaznaczono: ${selectedCount}` : `${items.length} ${elementNoun(items.length)}`}
-            </span>
-            <div className="ml-auto flex flex-wrap gap-2">
-              {BULK_TARGETS.map((target) => (
-                <Button
-                  key={target}
-                  size="sm"
-                  variant="outline"
-                  disabled={selectedCount === 0 || pending}
-                  onClick={() => {
-                    requestBulk(target);
-                  }}
-                >
-                  {operationalStatusLabel(target)}
-                </Button>
-              ))}
-            </div>
-          </div>
+          <TypeFilter value={typeFilter} onChange={handleFilterChange} />
 
-          {items.map((item) => (
-            <article
-              key={item.id}
-              className={cn(
-                "flex gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl transition-opacity",
-                inFlightIds.has(item.id) && "pointer-events-none opacity-50",
-              )}
+          {visibleItems.length === 0 ? (
+            <div
+              role="status"
+              className="rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70"
             >
-              <Checkbox
-                checked={selected.has(item.id)}
-                onCheckedChange={() => {
-                  toggleItem(item.id);
-                }}
-                aria-label={`Zaznacz: ${item.title}`}
-                className={cn("mt-1", CHECKBOX_CLASS)}
-              />
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-block rounded-full border border-purple-300/30 bg-purple-400/10 px-2 py-0.5 text-xs font-medium text-purple-100">
-                    {itemTypeLabel(item.type)}
-                  </span>
-                  <OperationalStatusBadge
-                    item={item}
-                    disabled={pending}
-                    onChange={(target) => {
-                      void execute(target, [item.id]);
-                    }}
+              Brak elementów tego typu w tym widoku.
+            </div>
+          ) : (
+            <>
+              <div className="flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                <label className="flex items-center gap-2 text-sm text-white/80">
+                  <Checkbox
+                    checked={allSelected ? true : selectedCount > 0 ? "indeterminate" : false}
+                    onCheckedChange={toggleAll}
+                    aria-label="Zaznacz wszystkie"
+                    className={CHECKBOX_CLASS}
                   />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="ml-auto text-white/60 hover:bg-white/10 hover:text-white"
-                    onClick={() => {
-                      setEditing(item);
-                    }}
-                  >
-                    Edytuj
-                  </Button>
+                  Zaznacz wszystkie
+                </label>
+                <span className="text-sm text-white/50">
+                  {selectedCount > 0
+                    ? `Zaznaczono: ${selectedCount}`
+                    : `${visibleItems.length} ${elementNoun(visibleItems.length)}`}
+                </span>
+                <div className="ml-auto flex flex-wrap gap-2">
+                  {BULK_TARGETS.map((target) => (
+                    <Button
+                      key={target}
+                      size="sm"
+                      variant="outline"
+                      disabled={selectedCount === 0 || pending}
+                      onClick={() => {
+                        requestBulk(target);
+                      }}
+                    >
+                      {operationalStatusLabel(target)}
+                    </Button>
+                  ))}
                 </div>
-                <h3 className="mt-2 font-semibold text-white/90">{item.title}</h3>
-                {item.description && <p className="mt-1 line-clamp-2 text-sm text-white/70">{item.description}</p>}
               </div>
-            </article>
-          ))}
+
+              {visibleItems.map((item) => (
+                <article
+                  key={item.id}
+                  className={cn(
+                    "flex gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl transition-opacity",
+                    inFlightIds.has(item.id) && "pointer-events-none opacity-50",
+                  )}
+                >
+                  <Checkbox
+                    checked={selected.has(item.id)}
+                    onCheckedChange={() => {
+                      toggleItem(item.id);
+                    }}
+                    aria-label={`Zaznacz: ${item.title}`}
+                    className={cn("mt-1", CHECKBOX_CLASS)}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-block rounded-full border border-purple-300/30 bg-purple-400/10 px-2 py-0.5 text-xs font-medium text-purple-100">
+                        {itemTypeLabel(item.type)}
+                      </span>
+                      <OperationalStatusBadge
+                        item={item}
+                        disabled={pending}
+                        onChange={(target) => {
+                          void execute(target, [item.id]);
+                        }}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="ml-auto text-white/60 hover:bg-white/10 hover:text-white"
+                        onClick={() => {
+                          setEditing(item);
+                        }}
+                      >
+                        Edytuj
+                      </Button>
+                    </div>
+                    <h3 className="mt-2 font-semibold text-white/90">{item.title}</h3>
+                    {item.description && <p className="mt-1 line-clamp-2 text-sm text-white/70">{item.description}</p>}
+                  </div>
+                </article>
+              ))}
+            </>
+          )}
         </>
       )}
 
