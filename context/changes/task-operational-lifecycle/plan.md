@@ -414,10 +414,10 @@ Verby generyczne (per-typ nadpisania verbów poza zakresem — patrz „Czego NI
 
 #### Automatyczne
 
-- [x] 4.1 Lint przechodzi (`npm run lint`)
-- [x] 4.2 Build przechodzi (`npm run build`)
-- [x] 4.3 `npm audit` dla `dropdown-menu` czysty / brak nowej zależności npm
-- [x] 4.4 Testy jednostkowe (kuracja przejść; usuwanie poza predykat widoku; bulk z docelowym stanem) przechodzą (`npm test`)
+- [x] 4.1 Lint przechodzi (`npm run lint`) — 522784b
+- [x] 4.2 Build przechodzi (`npm run build`) — 522784b
+- [x] 4.3 `npm audit` dla `dropdown-menu` czysty / brak nowej zależności npm — 522784b
+- [x] 4.4 Testy jednostkowe (kuracja przejść; usuwanie poza predykat widoku; bulk z docelowym stanem) przechodzą (`npm test`) — 522784b
 
 #### Ręczne
 
