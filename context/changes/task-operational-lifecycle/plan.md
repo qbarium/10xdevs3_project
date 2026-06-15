@@ -374,7 +374,7 @@ Verby generyczne (per-typ nadpisania verbów poza zakresem — patrz „Czego NI
 - [x] 1.1 Lint przechodzi (`npm run lint`) — 96e1234
 - [x] 1.2 Build/typecheck przechodzi (`npm run build`) — 96e1234
 - [x] 1.3 Testy jednostkowe (derywacja `'new'` wszystkie typy; `operationalStatusLabel` per-typ) przechodzą (`npm test`) — 96e1234
-- [ ] 1.4 Testy integracyjne (migracja + brak NULL po backfillu + RPC `'new'` dla `note`) przechodzą (`npm run test:integration`)
+- [x] 1.4 Testy integracyjne (migracja + brak NULL po backfillu + RPC `'new'` dla `note`) przechodzą (`npm run test:integration`)
 
 #### Ręczne
 
@@ -388,7 +388,7 @@ Verby generyczne (per-typ nadpisania verbów poza zakresem — patrz „Czego NI
 - [x] 2.1 Lint przechodzi (`npm run lint`) — 34a71b4
 - [x] 2.2 Build/typecheck przechodzi (`npm run build`) — 34a71b4
 - [x] 2.3 Testy jednostkowe (`operationalActionSchema`; guard `accepted` w `setOperationalStatus`) przechodzą (`npm test`) — 34a71b4
-- [ ] 2.4 Testy integracyjne (RLS; guard `accepted`; rozłączne podzbiory odczytu) przechodzą (`npm run test:integration`)
+- [x] 2.4 Testy integracyjne (RLS; guard `accepted`; rozłączne podzbiory odczytu) przechodzą (`npm run test:integration`)
 
 #### Ręczne
 
