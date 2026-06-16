@@ -1,11 +1,12 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { editPendingItem, ItemNotEditableError, setAcceptanceStatus } from "@/lib/services/items-mutation";
+import { editItem, ItemConflictError, ItemNotEditableError, setAcceptanceStatus } from "@/lib/services/items-mutation";
 
 // Mutacje `items` przeciw lokalnemu Supabase. Dwóch userów przez signUp (config.toml
 // enable_confirmations=false → sesja od razu). Sprawdzamy: izolację RLS (B nie rusza itemów A),
-// status-guard `pending` w bulk UPDATE, oraz derywację operational_status z typu przy edycji.
+// status-guard `pending` w bulk UPDATE, oraz edycję S-05: accepted edytowalny, `operational_status`
+// zachowany przy edycji, compare-and-swap na `updated_at` (nieaktualny → ItemConflictError).
 
 const URL = process.env.SUPABASE_TEST_URL ?? "";
 const ANON = process.env.SUPABASE_TEST_ANON_KEY ?? "";
@@ -59,6 +60,25 @@ async function statusOf(supabase: SupabaseClient, id: string): Promise<string> {
   return data.acceptance_status;
 }
 
+interface ItemRow {
+  acceptance_status: string;
+  operational_status: string | null;
+  type: string;
+  title: string;
+  description: string | null;
+  updated_at: string;
+}
+
+async function rowOf(supabase: SupabaseClient, id: string): Promise<ItemRow> {
+  const { data, error } = await supabase
+    .from("items")
+    .select("acceptance_status, operational_status, type, title, description, updated_at")
+    .eq("id", id)
+    .single<ItemRow>();
+  if (error) throw error;
+  return data;
+}
+
 d("items-mutation — RLS + status-guard + derywacja (integracja)", () => {
   let A: Awaited<ReturnType<typeof signUpClient>>;
   let B: Awaited<ReturnType<typeof signUpClient>>;
@@ -102,26 +122,117 @@ d("items-mutation — RLS + status-guard + derywacja (integracja)", () => {
     expect(await statusOf(A.supabase, pendingId)).toBe("accepted");
   });
 
-  it("edit utrwala pola i derywuje operational_status='new' dla każdego typu (S-04)", async () => {
-    const noteId = await insertItem(A.supabase, A.id, { type: "note", operational_status: "new" });
+  it("edit accepted z bieżącym stanem ZACHOWUJE postęp i utrwala pola (S-05)", async () => {
+    // accepted z postępem `in_progress` — wysłanie bieżącego stanu (prefill UI) NIE resetuje postępu.
+    const acceptedId = await insertItem(A.supabase, A.id, {
+      type: "note",
+      acceptance_status: "accepted",
+      operational_status: "in_progress",
+    });
+    const before = await rowOf(A.supabase, acceptedId);
 
-    const toTask = await editPendingItem(A.supabase, noteId, { title: "Nowy", description: "opis", type: "task" });
-    expect(toTask.type).toBe("task");
-    expect(toTask.operational_status).toBe("new");
-    expect(toTask.title).toBe("Nowy");
-    expect(toTask.description).toBe("opis");
-    expect(toTask.acceptance_status).toBe("pending"); // edycja NIE akceptuje
-
-    // S-04: zmiana z powrotem na `note` NIE zeruje stanu — wszystkie typy mają operational_status.
-    const backToNote = await editPendingItem(A.supabase, noteId, { title: "Nowy", description: null, type: "note" });
-    expect(backToNote.operational_status).toBe("new");
-    expect(backToNote.description).toBeNull();
+    const updated = await editItem(
+      A.supabase,
+      acceptedId,
+      { title: "Nowy", description: "opis", type: "task", operationalStatus: "in_progress" },
+      before.updated_at,
+    );
+    expect(updated.type).toBe("task");
+    expect(updated.title).toBe("Nowy");
+    expect(updated.description).toBe("opis");
+    expect(updated.acceptance_status).toBe("accepted"); // edycja NIE akceptuje ani nie cofa
+    expect(updated.operational_status).toBe("in_progress"); // KLUCZOWE: postęp zachowany
   });
 
-  it("edit nie-pending itemu → ItemNotEditableError", async () => {
-    const acceptedId = await insertItem(A.supabase, A.id, { acceptance_status: "accepted" });
+  it("edit accepted może JAWNIE zmienić stan operacyjny (rewizja UX: stan edytowalny w dialogu)", async () => {
+    const acceptedId = await insertItem(A.supabase, A.id, {
+      type: "task",
+      acceptance_status: "accepted",
+      operational_status: "new",
+    });
+    const before = await rowOf(A.supabase, acceptedId);
+
+    const updated = await editItem(
+      A.supabase,
+      acceptedId,
+      { title: "T", description: null, type: "task", operationalStatus: "done" },
+      before.updated_at,
+    );
+    expect(updated.operational_status).toBe("done"); // jawnie zmieniony z 'new' na 'done'
+  });
+
+  it("edit pending działa tym samym guardem (IN pending|accepted)", async () => {
+    const pendingId = await insertItem(A.supabase, A.id, { type: "idea", operational_status: "new" });
+    const before = await rowOf(A.supabase, pendingId);
+
+    const updated = await editItem(
+      A.supabase,
+      pendingId,
+      { title: "P2", description: null, type: "task", operationalStatus: "new" },
+      before.updated_at,
+    );
+    expect(updated.title).toBe("P2");
+    expect(updated.description).toBeNull();
+    expect(updated.acceptance_status).toBe("pending");
+  });
+
+  it("nieaktualny updated_at (równoległa edycja) → ItemConflictError", async () => {
+    const id = await insertItem(A.supabase, A.id, { acceptance_status: "accepted", operational_status: "new" });
+    const original = await rowOf(A.supabase, id);
+
+    // pierwsza edycja przesuwa `updated_at`
+    await editItem(
+      A.supabase,
+      id,
+      { title: "A", description: null, type: "task", operationalStatus: "new" },
+      original.updated_at,
+    );
+    // druga z NIEAKTUALNYM (oryginalnym) znacznikiem → konflikt, bez cichego nadpisania
     await expect(
-      editPendingItem(A.supabase, acceptedId, { title: "X", description: null, type: "note" }),
+      editItem(
+        A.supabase,
+        id,
+        { title: "B", description: null, type: "task", operationalStatus: "new" },
+        original.updated_at,
+      ),
+    ).rejects.toBeInstanceOf(ItemConflictError);
+  });
+
+  it("edit nieedytowalnego (rejected) → ItemNotEditableError", async () => {
+    const rejectedId = await insertItem(A.supabase, A.id, { acceptance_status: "rejected" });
+    const row = await rowOf(A.supabase, rejectedId);
+    await expect(
+      editItem(
+        A.supabase,
+        rejectedId,
+        { title: "X", description: null, type: "note", operationalStatus: "new" },
+        row.updated_at,
+      ),
     ).rejects.toBeInstanceOf(ItemNotEditableError);
+  });
+
+  it("B nie edytuje itemu A (RLS → ItemNotEditableError, item A bez zmian)", async () => {
+    // Symetria pokrycia z bulk: ścieżka editItem też musi być izolowana per-user. Pod RLS B-a follow-up
+    // SELECT po `id` zwraca null (item A niewidoczny) ⇒ ItemNotEditableError, a wiersz A pozostaje nietknięty.
+    const acceptedId = await insertItem(A.supabase, A.id, {
+      acceptance_status: "accepted",
+      operational_status: "in_progress",
+      title: "A-oryginał",
+    });
+    const before = await rowOf(A.supabase, acceptedId);
+
+    await expect(
+      editItem(
+        B.supabase,
+        acceptedId,
+        { title: "Wrogi zapis", description: "hack", type: "note", operationalStatus: "done" },
+        before.updated_at,
+      ),
+    ).rejects.toBeInstanceOf(ItemNotEditableError);
+
+    const after = await rowOf(A.supabase, acceptedId);
+    expect(after.title).toBe("A-oryginał"); // brak cichego nadpisania
+    expect(after.operational_status).toBe("in_progress");
+    expect(after.updated_at).toBe(before.updated_at); // wiersz nietknięty
   });
 });

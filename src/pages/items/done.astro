@@ -7,6 +7,7 @@ import Layout from "@/layouts/Layout.astro";
 import Topbar from "@/components/Topbar.astro";
 import MainFilterNav from "@/components/items/MainFilterNav.astro";
 import AcceptedItemsView from "@/components/items/AcceptedItemsView.tsx";
+import { parseTypeFilter, TYPE_FILTER_COOKIE } from "@/components/items/type-filter";
 import { createClient } from "@/lib/supabase";
 import { getDoneItems } from "@/lib/services/items";
 import type { Item } from "@/types";
@@ -24,6 +25,9 @@ if (user && supabase) {
     items = [];
   }
 }
+
+// Filtr typu z cookie (per widok) — SSR renderuje od razu poprawnie przefiltrowaną listę (bez przeskoku).
+const initialTypeFilter = parseTypeFilter(Astro.cookies.get(TYPE_FILTER_COOKIE)?.value);
 ---
 
 <Layout title="Zakończone">
@@ -35,7 +39,7 @@ if (user && supabase) {
           Zakończone
         </h1>
         <MainFilterNav />
-        <AcceptedItemsView client:load initialItems={items} view="done" />
+        <AcceptedItemsView client:load initialItems={items} view="done" initialTypeFilter={initialTypeFilter} />
       </main>
     </div>
   </div>

@@ -21,8 +21,11 @@ interface EditResponse {
   item?: Item;
 }
 
-/** Wynik edycji: rozróżnia sukces, „nie do edycji" (404 — item nie jest już pending) i ogólny błąd. */
-export type EditItemResult = { ok: true; item: Item } | { ok: false; reason: "not_found" | "failed" };
+/**
+ * Wynik edycji: sukces; „nie do edycji" (404 — item nie istnieje / nieedytowalny); „konflikt"
+ * (409 — równoległa edycja, compare-and-swap na `updated_at` odrzucił zapis); ogólny błąd.
+ */
+export type EditItemResult = { ok: true; item: Item } | { ok: false; reason: "not_found" | "conflict" | "failed" };
 
 export interface UseItemMutation {
   pending: boolean;
@@ -33,8 +36,8 @@ export interface UseItemMutation {
   bulkReject: (ids: string[]) => Promise<number | null>;
   /** Zmienia stan operacyjny zaznaczonych accepted; zwraca liczbę FAKTYCZNIE zmienionych (guard pomija nie-accepted), null przy błędzie. */
   setOperationalStatus: (ids: string[], status: OperationalStatus) => Promise<number | null>;
-  /** Edytuje pending; zwraca zaktualizowany item lub powód niepowodzenia (404 / błąd). */
-  editItem: (id: string, input: EditItemInput) => Promise<EditItemResult>;
+  /** Edytuje pending/accepted z compare-and-swap (`expectedUpdatedAt`); zwraca item lub powód (404 / 409 / błąd). */
+  editItem: (id: string, input: EditItemInput, expectedUpdatedAt: string) => Promise<EditItemResult>;
 }
 
 export function useItemMutation(): UseItemMutation {
@@ -94,18 +97,22 @@ export function useItemMutation(): UseItemMutation {
     }
   }
 
-  async function editItem(id: string, input: EditItemInput): Promise<EditItemResult> {
+  async function editItem(id: string, input: EditItemInput, expectedUpdatedAt: string): Promise<EditItemResult> {
     setPending(true);
     setError(null);
     try {
       const res = await fetch(`/api/items/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input),
+        body: JSON.stringify({ ...input, expectedUpdatedAt }),
       });
       if (res.status === 404) {
         setError("Element nie jest już dostępny do edycji.");
         return { ok: false, reason: "not_found" };
+      }
+      if (res.status === 409) {
+        setError("Element został zmieniony w innym miejscu — odśwież i spróbuj ponownie.");
+        return { ok: false, reason: "conflict" };
       }
       const data = (await res.json()) as EditResponse;
       if (!res.ok || !data.ok || !data.item) {

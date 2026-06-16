@@ -3,23 +3,33 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   deriveOperationalStatus,
-  editPendingItem,
+  editItem,
+  ItemConflictError,
   ItemNotEditableError,
   setAcceptanceStatus,
   setOperationalStatus,
 } from "@/lib/services/items-mutation";
 
 // Mock łańcucha query-buildera Supabase: każda metoda zwraca ten sam `builder` (i rejestruje
-// argumenty), a `builder` jest thenable rozwiązywalny do skonfigurowanego `{ data, error }`.
-// Pozwala zweryfikować, że serwis buduje guarded UPDATE (`eq('acceptance_status','pending')`)
-// i poprawnie mapuje wynik — bez realnej bazy (to pokrywają testy integracyjne).
+// argumenty), a `builder` jest thenable rozwiązywalny do skonfigurowanego wyniku. Pozwala zweryfikować,
+// że serwis buduje guarded UPDATE i poprawnie mapuje wynik — bez realnej bazy (to pokrywają testy
+// integracyjne). `result` może być POJEDYNCZY (reużyty na każdy await) albo LISTĄ konsumowaną
+// sekwencyjnie — to drugie odwzorowuje dwukrokowy UPDATE→SELECT w `editItem` (różne wyniki per zapytanie).
+interface Result {
+  data: unknown;
+  error: unknown;
+}
 type Call = [string, unknown[]];
 
-function mockSupabase(result: { data: unknown; error: unknown }) {
+function mockSupabase(result: Result | Result[]) {
+  const queue = Array.isArray(result) ? [...result] : null;
+  const fallback: Result = Array.isArray(result) ? result[result.length - 1] : result;
   const calls: Call[] = [];
   const builder: Record<string, unknown> = {
-    then: (onFulfilled: (v: unknown) => unknown, onRejected?: (e: unknown) => unknown) =>
-      Promise.resolve(result).then(onFulfilled, onRejected),
+    then: (onFulfilled: (v: unknown) => unknown, onRejected?: (e: unknown) => unknown) => {
+      const r = queue && queue.length > 0 ? (queue.shift() ?? fallback) : fallback;
+      return Promise.resolve(r).then(onFulfilled, onRejected);
+    },
   };
   for (const method of ["from", "update", "in", "eq", "select", "order", "overrideTypes", "maybeSingle"]) {
     builder[method] = vi.fn((...args: unknown[]) => {
@@ -82,28 +92,66 @@ describe("setOperationalStatus", () => {
   });
 });
 
-describe("editPendingItem", () => {
-  it("derywuje operational_status=new dla task i zwraca wiersz", async () => {
-    const row = { id: "x", type: "task", operational_status: "new", title: "T" };
+describe("editItem", () => {
+  const STAMP = "2026-01-01T00:00:00Z";
+
+  it("edycja accepted: guard IN pending|accepted + compare-and-swap, payload USTAWIA operational_status z wejścia", async () => {
+    const row = { id: "x", type: "task", operational_status: "done", acceptance_status: "accepted", title: "T" };
     const { supabase, calls } = mockSupabase({ data: row, error: null });
-    const res = await editPendingItem(supabase, "x", { title: "T", description: null, type: "task" });
+    const res = await editItem(
+      supabase,
+      "x",
+      { title: "T", description: null, type: "task", operationalStatus: "done" },
+      STAMP,
+    );
 
     expect(res).toBe(row);
-    expect(firstArgOf(calls, "update").operational_status).toBe("new");
-    expect(firstArgOf(calls, "update").type).toBe("task");
-    expect(calls.filter(([m]) => m === "eq")).toContainEqual(["eq", ["acceptance_status", "pending"]]);
+    const payload = firstArgOf(calls, "update");
+    expect(payload.title).toBe("T");
+    expect(payload.type).toBe("task");
+    expect(payload.operational_status).toBe("done"); // jawnie z wejścia (UI prefilluje bieżącą wartość)
+    expect(calls.filter(([m]) => m === "in")).toContainEqual(["in", ["acceptance_status", ["pending", "accepted"]]]);
+    expect(calls.filter(([m]) => m === "eq")).toContainEqual(["eq", ["updated_at", STAMP]]);
   });
 
-  it("derywuje operational_status=new dla note (S-04: wszystkie typy)", async () => {
+  it("edycja niezmieniająca stanu wysyła bieżącą wartość (zachowanie postępu)", async () => {
     const { supabase, calls } = mockSupabase({ data: { id: "x" }, error: null });
-    await editPendingItem(supabase, "x", { title: "T", description: null, type: "note" });
-    expect(firstArgOf(calls, "update").operational_status).toBe("new");
+    await editItem(
+      supabase,
+      "x",
+      { title: "T", description: null, type: "note", operationalStatus: "in_progress" },
+      STAMP,
+    );
+    expect(firstArgOf(calls, "update").operational_status).toBe("in_progress");
   });
 
-  it("brak wiersza (maybeSingle → null) → ItemNotEditableError", async () => {
-    const { supabase } = mockSupabase({ data: null, error: null });
+  it("0 wierszy + follow-up SELECT zwraca edytowalny wiersz (rozjazd updated_at) → ItemConflictError", async () => {
+    const { supabase } = mockSupabase([
+      { data: null, error: null }, // UPDATE: compare-and-swap nie trafił
+      { data: { acceptance_status: "accepted" }, error: null }, // SELECT: wiersz wciąż edytowalny
+    ]);
     await expect(
-      editPendingItem(supabase, "x", { title: "T", description: null, type: "note" }),
+      editItem(supabase, "x", { title: "T", description: null, type: "note", operationalStatus: "new" }, "STALE"),
+    ).rejects.toBeInstanceOf(ItemConflictError);
+  });
+
+  it("0 wierszy + follow-up SELECT pusty (item zniknął/nie-własny) → ItemNotEditableError", async () => {
+    const { supabase } = mockSupabase([
+      { data: null, error: null },
+      { data: null, error: null },
+    ]);
+    await expect(
+      editItem(supabase, "x", { title: "T", description: null, type: "note", operationalStatus: "new" }, STAMP),
+    ).rejects.toBeInstanceOf(ItemNotEditableError);
+  });
+
+  it("0 wierszy + follow-up SELECT zwraca status nieedytowalny (rejected) → ItemNotEditableError", async () => {
+    const { supabase } = mockSupabase([
+      { data: null, error: null },
+      { data: { acceptance_status: "rejected" }, error: null },
+    ]);
+    await expect(
+      editItem(supabase, "x", { title: "T", description: null, type: "note", operationalStatus: "new" }, STAMP),
     ).rejects.toBeInstanceOf(ItemNotEditableError);
   });
 });

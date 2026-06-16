@@ -20,7 +20,7 @@ export const bulkActionSchema = z.object({
 export type BulkActionInput = z.infer<typeof bulkActionSchema>;
 
 /** Cztery stany operacyjne związane kompilacyjnie z unią `OperationalStatus` (wzorzec `ITEM_TYPES`). */
-const OPERATIONAL_STATUSES = [
+export const OPERATIONAL_STATUSES = [
   "new",
   "in_progress",
   "done",
@@ -40,9 +40,14 @@ export const operationalActionSchema = z.object({
 export type OperationalActionInput = z.infer<typeof operationalActionSchema>;
 
 /**
- * Payload edycji pendingu w stagingu. `title` wymagany (trim + reject pusty). `description`
- * nullable — pusty/whitespace normalizujemy do `null` (kolumna nullable). `type` z pięciu wartości
- * `ItemType`; derywacja `operational_status` z typu należy do serwisu, nie do schematu.
+ * Pola edycji itemu (title/description/type/operationalStatus) — rdzeń wspólny dla pendingów i
+ * zaakceptowanych (S-05). `title` wymagany (trim + reject pusty). `description` nullable —
+ * pusty/whitespace normalizujemy do `null` (kolumna nullable). `type` z pięciu wartości `ItemType`.
+ * `operationalStatus` (S-05, rewizja UX) jedzie JAWNIE z dialogu — UI prefilluje bieżącą wartość, więc
+ * edycja treści bez tknięcia selektora zachowuje stan; pierwotne ryzyko decyzji #3 (cichy reset przez
+ * auto-derywację `→'new'`) nie wraca, bo serwer zapisuje wartość podaną, a nie derywowaną z typu.
+ * Ten typ (`EditItemInput`) pozostaje rdzeniem konsumowanym przez `buildEditPayload` i serwis —
+ * `expectedUpdatedAt` żyje osobno w `editItemBodySchema`, by nie wyciekać do budowy payloadu w UI.
  */
 export const editItemSchema = z.object({
   title: z.string().trim().min(1),
@@ -55,5 +60,18 @@ export const editItemSchema = z.object({
       return trimmed === "" ? null : trimmed;
     }),
   type: z.enum(ITEM_TYPES),
+  operationalStatus: z.enum(OPERATIONAL_STATUSES),
 });
 export type EditItemInput = z.infer<typeof editItemSchema>;
+
+/**
+ * Payload PATCH `/api/items/[id]` = pola edycji + `expectedUpdatedAt` dla optimistic concurrency
+ * (S-05, lekcja „lost update"). `expectedUpdatedAt` to `updated_at` z chwili otwarcia dialogu; serwer
+ * dokłada compare-and-swap `.eq('updated_at', expectedUpdatedAt)` i przy rozjeździe zwraca 409. Format
+ * ISO 8601 z offsetem — dokładnie kształt `updated_at` z PostgREST (`…Z` lub `…+00:00`). Trzymany
+ * ROZŁĄCZNIE od `editItemSchema`, by `EditItemInput` (i `buildEditPayload`) nie zyskał pola znacznika.
+ */
+export const editItemBodySchema = editItemSchema.extend({
+  expectedUpdatedAt: z.iso.datetime({ offset: true }),
+});
+export type EditItemBodyInput = z.infer<typeof editItemBodySchema>;
