@@ -342,9 +342,9 @@ Brak migracji ani zmian RLS — schemat (`deleted`, polityka `items_delete_own`)
 
 #### Automatyczne
 
-- [x] 3.1 Lint (type-checked) przechodzi: `npm run lint`
-- [x] 3.2 Build produkcyjny przechodzi: `npm run build`
-- [x] 3.3 Testy jednostkowe bez regresji: `npm run test`
+- [x] 3.1 Lint (type-checked) przechodzi: `npm run lint` — b096571
+- [x] 3.2 Build produkcyjny przechodzi: `npm run build` — b096571
+- [x] 3.3 Testy jednostkowe bez regresji: `npm run test` — b096571
 
 #### Ręczne
 
