@@ -8,7 +8,7 @@ Dodajemy ścieżkę ręcznego tworzenia jednego itemu z pominięciem klasyfikacj
 
 - **Schemat gotowy, bez migracji.** `items.import_session_id` jest `nullable` (`on delete set null`), `acceptance_status` ma default `'pending'` (musimy podać `'accepted'` jawnie), `operational_status` nullable. Polityka RLS `items_insert_own` (`with check auth.uid() = user_id`) już pozwala zalogowanemu wstawić własny wiersz. `supabase/migrations/20260610052532_classification_schema.sql:49-111`.
 - **Brak endpointu tworzącego.** Istnieją `src/pages/api/items/bulk.ts` (POST accept/reject), `operational.ts` (POST stan), `[id].ts` (PATCH edycja). Testy endpointów są co-located (`bulk.test.ts`, `[id].test.ts`). Brak `index.ts`.
-- **Warstwa serwisu/walidacji gotowa do rozszerzenia.** `src/lib/services/items-mutation.ts` ma `deriveOperationalStatus(type) → 'new'` (S-04) oraz wzorzec mutacji z jawnym `updated_at`. `src/lib/validation/items.ts` ma `editItemSchema`, enumy `ITEM_TYPES` / `OPERATIONAL_STATUSES`.
+- **Warstwa serwisu/walidacji gotowa do rozszerzenia.** `src/lib/services/items-mutation.ts` ma `deriveOperationalStatus(type) → 'new'` (S-04) oraz wzorzec mutacji z jawnym `updated_at`. `src/lib/validation/items.ts` ma `editItemSchema` i enum `OPERATIONAL_STATUSES`; `ITEM_TYPES` mieszka w `@/lib/ai/schema` (`validation/items.ts` tylko je importuje, bez re-eksportu — nowe pliki importują z `@/lib/ai/schema`).
 - **UI z istniejących klocków.** `src/components/items/EditItemDialog.tsx` to gotowy wzorzec (Input/Textarea/Select + `isTitleValid` + toast + obsługa błędów). Hook `src/components/hooks/useItemMutation.ts`. Słownik `src/lib/labels.ts` (`itemTypeLabel`). Komplet shadcn (Dialog/Select/Input/Textarea/sonner) obecny → zero nowych zależności.
 - **Bramka klucza BYOK** siedzi wyłącznie na `src/pages/api/ingest/classify.ts` (409 `missing_key`); `src/middleware.ts` sprawdza tylko auth. Ręczne dodawanie jest bezkluczowe „z natury" — trzeba tylko nie odziedziczyć bramki.
 - **Widok Aktywne** to `AcceptedItemsView` (`src/components/items/AcceptedItemsView.tsx`) renderowany przez `src/pages/items/active.astro`. Ten sam komponent obsługuje też Zakończone/Anulowane — ma stan `items`, `typeFilter` (cookie), `pinnedIds` (trzyma item widoczny mimo niezgodnego filtra typu).
@@ -66,7 +66,7 @@ Kontrakt walidacji + serwis + endpoint `POST /api/items`, testowalny przez `curl
 
 **Cel**: Funkcja wstawiająca pojedynczy item ręczny z niezmiennikami ustalonymi po stronie serwera; zwraca utworzony wiersz.
 
-**Kontrakt**: `createManualItem(supabase, userId, input: CreateItemInput): Promise<Item>`. INSERT do `items`: `user_id: userId`, `import_session_id: null`, `type`, `title`, `description`, `acceptance_status: 'accepted'`, `operational_status: deriveOperationalStatus(input.type)`, `updated_at: new Date().toISOString()` (reszta z defaultów). `.select('*').single()` → `Item`; błąd → `throw new Error(..., { cause })`. Reużywa istniejącego `deriveOperationalStatus`.
+**Kontrakt**: `createManualItem(supabase, userId, input: CreateItemInput): Promise<Item>`. INSERT do `items`: `user_id: userId`, `import_session_id: null`, `type`, `title`, `description`, `acceptance_status: 'accepted'`, `operational_status: deriveOperationalStatus(input.type)`, `updated_at: new Date().toISOString()` (reszta z defaultów). `.select(ITEM_COLUMNS).single()` (reużyj jawnej stałej `ITEM_COLUMNS` z `items-mutation.ts:14` — NIE `'*'`, dla stabilnego kształtu `Item` jak `editItem`/`items.ts`) → `Item`; błąd → `throw new Error(..., { cause })`. Reużywa istniejącego `deriveOperationalStatus`.
 
 #### 3. Endpoint
 
@@ -116,7 +116,7 @@ Modal dodawania (reuse wzorca `EditItemDialog`), metoda hooka `createItem`, przy
 
 **Cel**: Czysta funkcja budująca payload tworzenia z pól formularza + odczyt/zapis „ostatnio użytego typu".
 
-**Kontrakt**: `buildCreatePayload(title, description, type): CreateItemInput` (trim `title`, `description` pusty → `null`). `readLastItemType(): ItemType` — czyta `localStorage['tl_lastitemtype']`, waliduje względem `ITEM_TYPES`, fallback `'task'`. `writeLastItemType(type)`.
+**Kontrakt**: `buildCreatePayload(title, description, type): CreateItemInput` (trim `title`, `description` pusty → `null`). `readLastItemType(): ItemType` — czyta `localStorage['tl_lastitemtype']`, waliduje względem `ITEM_TYPES` (import z `@/lib/ai/schema`, jak `EditItemDialog.tsx:20`), fallback `'task'`. `writeLastItemType(type)`.
 
 #### 2. Hook mutacji
 
@@ -138,9 +138,9 @@ Modal dodawania (reuse wzorca `EditItemDialog`), metoda hooka `createItem`, przy
 
 **Plik**: `src/components/items/AcceptedItemsView.tsx`
 
-**Cel**: Przycisk „Dodaj item" w nagłówku (tylko Aktywne) + obsługa utworzenia: insert + pin + focus.
+**Cel**: Przycisk „Dodaj item" w TRWAŁYM nagłówku widoku (tylko Aktywne; widoczny TAKŻE przy pustej liście) + obsługa utworzenia: insert + pin + focus.
 
-**Kontrakt**: Nowy prop `canAdd: boolean`. Gdy `canAdd` — render `Button` „Dodaj item" w rzędzie akcji + `<AddItemDialog>`. Stan `addOpen`, `focusId: string | null`. `onCreated(item)`: w jednym update — dołóż `item` na początek `items` i dodaj `item.id` do `pinnedIds`; ustaw `focusId = item.id`; zamknij dialog. `useEffect` na `focusId`: znajdź element po referencji/`data-item-id`, `scrollIntoView({block:'nearest'})` + `focus()`, wyczyść `focusId`. Element itemu musi mieć stabilny uchwyt (ref po id lub `data-item-id` + `tabIndex={-1}`).
+**Kontrakt**: Nowy prop `canAdd: boolean`. Gdy `canAdd` — render `Button` „Dodaj item" w **trwałym rzędzie nagłówka renderowanym PRZED gałęzią `items.length === 0 ? …`** (`AcceptedItemsView.tsx:177-188`) + `<AddItemDialog>` — tak by przycisk był widoczny niezależnie od pustki listy/filtra (dziś pusty widok renderuje wyłącznie div statusu, linie 181-198; pusty wynik filtra — linie 192-198). To OSOBNY rząd niż pasek bulk, który zostaje pod warunkiem `visibleItems.length > 0` (zależy od selekcji widocznych itemów). Stan `addOpen`, `focusId: string | null`. `onCreated(item)`: w jednym update — dołóż `item` na początek `items` i dodaj `item.id` do `pinnedIds`; ustaw `focusId = item.id`; zamknij dialog. `useEffect` na `focusId`: znajdź element po referencji/`data-item-id`, `scrollIntoView({block:'nearest'})` + `focus()`, wyczyść `focusId`. Element itemu musi mieć stabilny uchwyt (ref po id lub `data-item-id` + `tabIndex={-1}`).
 
 #### 5. Przekazanie propsu ze strony
 
@@ -214,10 +214,10 @@ Brak migracji — schemat (`items`, RLS INSERT, nullable `import_session_id`) go
 
 #### Automatyczne
 
-- [ ] 1.1 Lint przechodzi: `npm run lint`
-- [ ] 1.2 Build przechodzi: `npm run build`
-- [ ] 1.3 Testy jednostkowe przechodzą: `npm test`
-- [ ] 1.4 Testy integracyjne przechodzą: `npm run test:integration`
+- [x] 1.1 Lint przechodzi: `npm run lint`
+- [x] 1.2 Build przechodzi: `npm run build`
+- [x] 1.3 Testy jednostkowe przechodzą: `npm test`
+- [x] 1.4 Testy integracyjne przechodzą: `npm run test:integration`
 - [ ] 1.5 Doraźne (curl + zapytanie do bazy): POST poprawny → 201 + `accepted`/`new`/`null session`; zły payload → 400; bez auth → 401; sesja bez klucza → 201; wiersz potwierdzony w bazie
 
 ### Faza 2: Frontend — modal + akcja w Aktywne + UX po zapisie

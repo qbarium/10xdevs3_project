@@ -8,7 +8,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { EditItemInput } from "@/lib/validation/items";
+import type { CreateItemInput, EditItemInput } from "@/lib/validation/items";
 import type { AcceptanceStatus, Item, ItemType, OperationalStatus } from "@/types";
 
 const ITEM_COLUMNS =
@@ -47,6 +47,39 @@ export class ItemConflictError extends Error {
  */
 export function deriveOperationalStatus(_type: ItemType): OperationalStatus {
   return "new";
+}
+
+/**
+ * Tworzy pojedynczy item RĘCZNY (S-07) z niezmiennikami ustalonymi po stronie SERWERA, nie klienta:
+ * `acceptance_status='accepted'` (pomija kolejkę pendingów i klasyfikację AI — item od razu na liście
+ * Aktywne), `operational_status` z `deriveOperationalStatus(type)` (=`'new'`), `import_session_id=NULL`
+ * (item ręczny nie należy do żadnej sesji importu — FR-027), `user_id` z sesji. Klient przysyła WYŁĄCZNIE
+ * `title`/`description`/`type` (`CreateItemInput`), więc payloadu nie da się podrobić, by wstawić item w
+ * obcym stanie — fail-closed. `updated_at` jawnie (wzorzec mutacji S-04, spójny z `editItem`). RLS dokłada
+ * izolację per-user (polityka `items_insert_own` z `with check auth.uid() = user_id`). `.select(ITEM_COLUMNS)
+ * .single()` zwraca pełny, stabilny kształt `Item` (jak `editItem`/`items.ts`), NIE `'*'`.
+ */
+export async function createManualItem(
+  supabase: SupabaseClient,
+  userId: string,
+  input: CreateItemInput,
+): Promise<Item> {
+  const { data, error } = await supabase
+    .from("items")
+    .insert({
+      user_id: userId,
+      import_session_id: null,
+      type: input.type,
+      title: input.title,
+      description: input.description,
+      acceptance_status: "accepted",
+      operational_status: deriveOperationalStatus(input.type),
+      updated_at: new Date().toISOString(),
+    })
+    .select(ITEM_COLUMNS)
+    .single<Item>();
+  if (error) throw new Error("Utworzenie itemu nie powiodło się.", { cause: error });
+  return data;
 }
 
 /**
