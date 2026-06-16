@@ -165,12 +165,6 @@ export default function AcceptedItemsView({ initialItems, view }: Props) {
     });
   }
 
-  // 409 (równoległa edycja gdzie indziej) — przeładuj widok SSR, by pokazać aktualny stan.
-  // Ścieżka wyjątkowa, świadomie poza budżetem NFR 200 ms.
-  function handleConflict(): void {
-    window.location.reload();
-  }
-
   return (
     <div className="flex flex-col gap-3">
       <Toaster />
@@ -313,7 +307,6 @@ export default function AcceptedItemsView({ initialItems, view }: Props) {
           }}
           onSaved={handleSaved}
           onNotFound={handleRemoved}
-          onConflict={handleConflict}
         />
       )}
     </div>

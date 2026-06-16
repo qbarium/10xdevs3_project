@@ -30,8 +30,6 @@ interface Props {
   onSaved: (updated: Item) => void;
   /** 404 (item nie istnieje / nieedytowalny) — wołane, by usunąć item z listy islandu. */
   onNotFound: (id: string) => void;
-  /** 409 (równoległa edycja — compare-and-swap odrzucił zapis) — sygnał do rodzica o odświeżenie widoku. */
-  onConflict?: (id: string) => void;
 }
 
 // Modal edycji itemu (title/description/typ + stan operacyjny dla zaakceptowanych) — jedyne miejsce
@@ -41,7 +39,7 @@ interface Props {
 // jako `expectedUpdatedAt` (optimistic concurrency → 409). Przełącznik rozmiaru (Maximize/Minimize)
 // rozszerza okno na obszar listy (poniżej górnej nawigacji) dla długich itemów. Zamknięcie z niezapisanymi
 // zmianami bramkuje pytanie.
-export default function EditItemDialog({ item, open, onOpenChange, onSaved, onNotFound, onConflict }: Props) {
+export default function EditItemDialog({ item, open, onOpenChange, onSaved, onNotFound }: Props) {
   const [title, setTitle] = useState(item.title);
   const [description, setDescription] = useState(item.description ?? "");
   const [type, setType] = useState<ItemType>(item.type);
@@ -93,8 +91,18 @@ export default function EditItemDialog({ item, open, onOpenChange, onSaved, onNo
       onNotFound(item.id);
       onOpenChange(false);
     } else if (result.reason === "conflict") {
-      toast.error("Element został zmieniony w innym miejscu — odśwież i spróbuj ponownie.");
-      onConflict?.(item.id);
+      // Auto-reload kasował dymek natychmiast („mignięcie"), bo twardy reload czyści stan sonnera.
+      // Zamiast tego pokazujemy trwalszy komunikat (10 s) z akcją „Odśwież" — użytkownik odświeża,
+      // gdy przeczyta (spójnie z treścią „odśwież, aby zobaczyć aktualną wersję").
+      toast.error("Element został zmieniony w innym miejscu. Odśwież, aby zobaczyć aktualną wersję.", {
+        duration: 10000,
+        action: {
+          label: "Odśwież",
+          onClick: () => {
+            window.location.reload();
+          },
+        },
+      });
       onOpenChange(false);
     } else {
       toast.error("Nie udało się zapisać zmian. Spróbuj ponownie.");
