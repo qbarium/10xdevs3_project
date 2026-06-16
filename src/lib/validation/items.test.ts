@@ -13,6 +13,14 @@ describe("bulkActionSchema", () => {
     expect(bulkActionSchema.safeParse({ ids: [UUID], action: "reject" }).success).toBe(true);
   });
 
+  it("akceptuje trash (S-06)", () => {
+    expect(bulkActionSchema.safeParse({ ids: [UUID], action: "trash" }).success).toBe(true);
+  });
+
+  it("akceptuje restore (S-06)", () => {
+    expect(bulkActionSchema.safeParse({ ids: [UUID], action: "restore" }).success).toBe(true);
+  });
+
   it("odrzuca pustą listę ids", () => {
     expect(bulkActionSchema.safeParse({ ids: [], action: "accept" }).success).toBe(false);
   });

@@ -43,6 +43,27 @@ export function getRejectedItems(supabase: SupabaseClient, userId: string): Prom
 }
 
 /**
+ * Itemy usera w koszu (S-06): OBA statusy kosza — `rejected` (odrzucone w stagingu) ORAZ `deleted`
+ * (zaakceptowane przeniesione do kosza). Karmi wyspę `TrashItemsView`, w której pod-filtr rozróżnia
+ * pochodzenie. Sortowanie jak pozostałe widoki nie-pending (recency akcji → `updated_at DESC`, potem
+ * `created_at DESC, id ASC`), więc świeżo przeniesiony/odrzucony item ląduje na górze. `listByAcceptance`
+ * nie pasuje (bierze pojedynczy status), więc to osobny statement z `.in(...)`.
+ */
+export async function getTrashItems(supabase: SupabaseClient, userId: string): Promise<Item[]> {
+  const { data, error } = await supabase
+    .from("items")
+    .select(ITEM_COLUMNS)
+    .eq("user_id", userId)
+    .in("acceptance_status", ["rejected", "deleted"])
+    .order("updated_at", { ascending: false })
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: true })
+    .overrideTypes<Item[], { merge: false }>();
+  if (error) throw new Error("Odczyt itemów nie powiódł się.", { cause: error });
+  return data;
+}
+
+/**
  * Zaakceptowane itemy usera zawężone predykatem stanu operacyjnego, sortowane jak pozostałe widoki
  * accepted (recency akcji → `updated_at DESC`, potem `created_at DESC, id ASC`). Trzy widoki filtra
  * głównego S-04 (Aktywne/Zakończone/Anulowane) różni wyłącznie zbiór `operational_status` — rozłączny,

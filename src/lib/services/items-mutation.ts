@@ -96,6 +96,77 @@ export async function setOperationalStatus(
 }
 
 /**
+ * Przeniesienie zaakceptowanych itemów do kosza (S-06, FR-013) jednym atomowym statementem. Guard
+ * `accepted` w WHERE → tylko zaakceptowane przeskakują na `deleted`; itemy w innym stanie nie pasują,
+ * `.select` ich nie zwróci, więc `updatedIds` to dokładnie wiersze faktycznie przeniesione (reszta
+ * pominięta bez błędu — FR-007). `updated_at=now()` wypycha item na górę docelowych widoków (sortowanie
+ * po `updated_at DESC`). Stan operacyjny NIETKNIĘTY — kosz i stan operacyjny to dwa niezależne wymiary
+ * (FR-009), więc po przywróceniu item wraca dokładnie do swojego stanu.
+ */
+export async function moveToTrash(supabase: SupabaseClient, ids: string[]): Promise<{ updatedIds: string[] }> {
+  const { data, error } = await supabase
+    .from("items")
+    .update({ acceptance_status: "deleted", updated_at: new Date().toISOString() })
+    .in("id", ids)
+    .eq("acceptance_status", "accepted")
+    .select("id")
+    .overrideTypes<{ id: string }[], { merge: false }>();
+  if (error) throw new Error("Przeniesienie do kosza nie powiodło się.", { cause: error });
+  return { updatedIds: data.map((row) => row.id) };
+}
+
+/**
+ * Przywrócenie itemów z kosza (S-06, FR-013) — DWUKIERUNKOWE, cofa ostatnią tranzycję akceptacji.
+ * Mieszana selekcja (rejected + deleted) wymaga DWÓCH guarded UPDATE-ów, każdy strzeżony bieżącym
+ * statusem źródłowym: `deleted → accepted` ORAZ `rejected → pending`. Restore jest deterministyczny z
+ * samego statusu (jedyne źródło `deleted` to move-to-trash z `accepted`; jedyne źródło `rejected` to
+ * reject z `pending`), więc nie potrzeba kolumny „previous_status". `updatedIds` to suma obu — wiersze
+ * faktycznie przywrócone (reszta pominięta bez błędu — FR-007). Oba UPDATE-y NIE są wspólnie
+ * transakcyjne (świadome ograniczenie solo-MVP): gdy drugi rzuci po zatwierdzeniu pierwszego, endpoint
+ * zwróci 500, ale stan per-item pozostaje spójny (każdy w prawidłowym statusie) — bez korupcji.
+ */
+export async function restoreFromTrash(supabase: SupabaseClient, ids: string[]): Promise<{ updatedIds: string[] }> {
+  const now = new Date().toISOString();
+  const { data: restoredDeleted, error: deletedError } = await supabase
+    .from("items")
+    .update({ acceptance_status: "accepted", updated_at: now })
+    .in("id", ids)
+    .eq("acceptance_status", "deleted")
+    .select("id")
+    .overrideTypes<{ id: string }[], { merge: false }>();
+  if (deletedError) throw new Error("Przywrócenie z kosza nie powiodło się.", { cause: deletedError });
+
+  const { data: restoredRejected, error: rejectedError } = await supabase
+    .from("items")
+    .update({ acceptance_status: "pending", updated_at: now })
+    .in("id", ids)
+    .eq("acceptance_status", "rejected")
+    .select("id")
+    .overrideTypes<{ id: string }[], { merge: false }>();
+  if (rejectedError) throw new Error("Przywrócenie z kosza nie powiodło się.", { cause: rejectedError });
+
+  return { updatedIds: [...restoredDeleted, ...restoredRejected].map((row) => row.id) };
+}
+
+/**
+ * Trwałe opróżnienie kosza usera (S-06, FR-016) — PIERWSZY i jedyny twardy DELETE w aplikacji (reszta
+ * cyklu życia to soft-delete przez `acceptance_status`). Kasuje WSZYSTKIE wiersze kosza (`rejected` +
+ * `deleted`); RLS (`items_delete_own`, `(select auth.uid()) = user_id`) dokłada izolację per-user, więc
+ * bez jawnego filtra `user_id` user kasuje wyłącznie swój kosz. Brak `ids` — operacja globalna, nie na
+ * liście. `deletedCount` z `.select("id")` (liczba faktycznie skasowanych wierszy) zasila komunikat UI.
+ */
+export async function emptyTrash(supabase: SupabaseClient): Promise<{ deletedCount: number }> {
+  const { data, error } = await supabase
+    .from("items")
+    .delete()
+    .in("acceptance_status", ["rejected", "deleted"])
+    .select("id")
+    .overrideTypes<{ id: string }[], { merge: false }>();
+  if (error) throw new Error("Opróżnienie kosza nie powiodło się.", { cause: error });
+  return { deletedCount: data.length };
+}
+
+/**
  * Edycja pojedynczego itemu (title/description/type/operationalStatus) dla `pending` ORAZ `accepted`
  * (S-05). `operational_status` jest ustawiany JAWNIE z wejścia — UI prefilluje bieżącą wartość, więc
  * edycja treści bez tknięcia selektora zachowuje stan; cichy reset przez auto-derywację (`→'new'`,

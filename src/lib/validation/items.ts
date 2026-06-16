@@ -9,13 +9,16 @@ import { ITEM_TYPES } from "@/lib/ai/schema";
 import type { OperationalStatus } from "@/types";
 
 /**
- * Payload akcji zbiorczej zatwierdź/odrzuć. `ids` to UUID-y zaznaczonych pendingów; `.max(100)`
+ * Payload akcji zbiorczej operującej na liście id. `ids` to UUID-y zaznaczonych itemów; `.max(100)`
  * to safety net spójny z FR-020 (i progiem 100/sesja z S-02) — odrzuca nadmiarowy payload, zanim
- * dotknie bazy. `action` decyduje o docelowym `acceptance_status` (accepted|rejected).
+ * dotknie bazy. `action` wybiera mutację w endpoincie: `accept`/`reject` → `setAcceptanceStatus`;
+ * `trash` → `moveToTrash` (accepted → deleted, S-06); `restore` → `restoreFromTrash` (dwukierunkowe:
+ * deleted → accepted ORAZ rejected → pending, S-06). Twardy DELETE „wyczyść kosz" (FR-016) NIE jedzie
+ * tędy — to osobny endpoint bez `ids` (operacja globalna).
  */
 export const bulkActionSchema = z.object({
   ids: z.array(z.uuid()).min(1).max(100),
-  action: z.enum(["accept", "reject"]),
+  action: z.enum(["accept", "reject", "trash", "restore"]),
 });
 export type BulkActionInput = z.infer<typeof bulkActionSchema>;
 

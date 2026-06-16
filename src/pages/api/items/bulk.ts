@@ -5,7 +5,7 @@
 
 import type { APIRoute } from "astro";
 
-import { setAcceptanceStatus } from "@/lib/services/items-mutation";
+import { moveToTrash, restoreFromTrash, setAcceptanceStatus } from "@/lib/services/items-mutation";
 import { reportError } from "@/lib/services/logger";
 import { createClient } from "@/lib/supabase";
 import { bulkActionSchema } from "@/lib/validation/items";
@@ -35,9 +35,16 @@ export const POST: APIRoute = async (context) => {
   if (!supabase) return json({ ok: false, code: "internal", error: "Błąd serwera." }, 500);
 
   const { ids, action } = parsed.data;
-  const status = action === "accept" ? "accepted" : "rejected";
   try {
-    const { updatedIds } = await setAcceptanceStatus(supabase, ids, status);
+    // Każda gałąź zwraca `{ updatedIds }` (guard statusem w serwisie → tylko uprawnione wiersze).
+    let updatedIds: string[];
+    if (action === "trash") {
+      ({ updatedIds } = await moveToTrash(supabase, ids));
+    } else if (action === "restore") {
+      ({ updatedIds } = await restoreFromTrash(supabase, ids));
+    } else {
+      ({ updatedIds } = await setAcceptanceStatus(supabase, ids, action === "accept" ? "accepted" : "rejected"));
+    }
     return json({ ok: true, action, updatedIds, count: updatedIds.length }, 200);
   } catch (err) {
     reportError(err);

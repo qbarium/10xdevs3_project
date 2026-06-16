@@ -48,7 +48,7 @@ Backend reużywa atomowy wzorzec `UPDATE ... .in().eq().select("id")`. API: rozs
 
 ## Krytyczne szczegóły implementacji
 
-- **Restore = DWA guarded UPDATE-y, nie jeden `setAcceptanceStatus`.** Mieszana selekcja (rejected + deleted) wymaga dwóch statementów, każdy guardowany bieżącym statusem: `... .eq("acceptance_status","deleted")` → `accepted` oraz `... .eq("acceptance_status","rejected")` → `pending`. Każdy atomowy; `updatedIds` to suma obu. Guard gwarantuje, że item przeskoczy tylko z właściwego stanu źródłowego — bezpieczne przy częściowym trafieniu i zgodne z FR-007 („reszta pominięta bez błędu").
+- **Restore = DWA guarded UPDATE-y, nie jeden `setAcceptanceStatus`.** Mieszana selekcja (rejected + deleted) wymaga dwóch statementów, każdy guardowany bieżącym statusem: `... .eq("acceptance_status","deleted")` → `accepted` oraz `... .eq("acceptance_status","rejected")` → `pending`. Każdy atomowy; `updatedIds` to suma obu. Guard gwarantuje, że item przeskoczy tylko z właściwego stanu źródłowego — bezpieczne przy częściowym trafieniu i zgodne z FR-007 („reszta pominięta bez błędu"). Oba UPDATE-y **nie są wspólnie transakcyjne**: gdy pierwszy się zatwierdzi, a drugi rzuci, endpoint zwróci 500 z częściowo przywróconym koszem — UI dostaje `null` (toast błędu, lista nieodświeżona), ale po reloadzie stan jest spójny per-item (każdy w prawidłowym statusie), bez korupcji. Świadomie akceptowalne dla solo-MVP (jak deferowana optimistic concurrency w `lessons.md`); pełna transakcyjność (RPC / funkcja SQL) poza zakresem.
 - **„Wyczyść kosz" to PIERWSZY twardy DELETE w aplikacji.** Reszta cyklu życia to soft-delete przez `acceptance_status`. RLS `items_delete_own` już to dopuszcza — żadnej migracji. Kasujemy `WHERE acceptance_status IN ('rejected','deleted')` (RLS dokłada `user_id`).
 - **`updated_at` ustawiamy na `now()` przy move i restore** — widoki nie-pending sortują po `updated_at DESC`, więc świeżo przeniesiony/przywrócony item ląduje na górze docelowej listy (spójnie z accept/reject z S-03).
 - **Liczba w potwierdzeniu „Wyczyść kosz" = łączny stan kosza usera (rejected + deleted), ponad filtrami typu i rejected/deleted.** Wyspa trzyma w stanie wszystkie itemy kosza (`initialItems`), więc `items.length` to prawda; dialog musi to jasno zakomunikować, by uniknąć pułapki „widziałem 2, skasowało 10".
@@ -70,7 +70,8 @@ Wniesienie zmiany kontraktu do PRD (restore dwukierunkowy) oraz dodanie warstwy 
 **Kontrakt**: Zmień cztery miejsca, zachowując styl i numerację:
 - Guardrail „Item lifecycle jest jednokierunkowy…" (`:51`) → przeredaguj: restore cofa ostatnią tranzycję w wymiarze akceptacji (`deleted→accepted`, `rejected→pending`); jedyne nieodwracalne usunięcie to „wyczyść kosz".
 - US-03 AC (`:89`) „nie można go już zaakceptować (lifecycle nie wraca do `pending`)" → zastąp zapisem, że odrzucony item można przywrócić z Kosza do „Elementy do akceptacji".
-- FR-012 (`:255`) i FR-013 (`:259`) → dopisz, że przywracanie obejmuje także `rejected` (→ `pending`), z notką „🔁 Decyzja projektowa 2026-06-16".
+- FR-013 (`:259`) → dopisz, że przywracanie obejmuje także `rejected` (→ `pending`), z notką „🔁 Decyzja projektowa 2026-06-16".
+- FR-012 (`:255`) → **przeredaguj klauzulę trwałości** (nie samo „dopisz"): zastąp zapis „Status `rejected` zachowany na zawsze (audit trail) — usuwany dopiero akcją „wyczyść kosz" (FR-016)" zapisem, że item `rejected` opuszcza stan odrzucenia **albo** przez przywrócenie z Kosza (→ `pending`, ponowne wejście do bramy walidacji), **albo** trwale przez „wyczyść kosz" (FR-016). Inaczej dopisana notka o restore zaprzeczy zachowanej klauzuli „zachowany na zawsze". Notka „🔁 Decyzja projektowa 2026-06-16".
 
 #### 2. Odczyt kosza — `getTrashItems`
 
@@ -78,7 +79,7 @@ Wniesienie zmiany kontraktu do PRD (restore dwukierunkowy) oraz dodanie warstwy 
 
 **Cel**: Zwrócić itemy usera w koszu (oba statusy) dla nowej wyspy, z sortowaniem jak pozostałe widoki nie-pending.
 
-**Kontrakt**: `getTrashItems(supabase, userId): Promise<Item[]>` — `SELECT ITEM_COLUMNS WHERE user_id=? AND acceptance_status IN ('rejected','deleted')` z `order('updated_at',desc).order('created_at',desc).order('id',asc)`. Reużyj `ITEM_COLUMNS`; nie usuwaj `getRejectedItems`, jeśli nie ma innych konsumentów — zastąp jego użycie w `trash.astro` (Faza 2).
+**Kontrakt**: `getTrashItems(supabase, userId): Promise<Item[]>` — `SELECT ITEM_COLUMNS WHERE user_id=? AND acceptance_status IN ('rejected','deleted')` z `order('updated_at',desc).order('created_at',desc).order('id',asc)`. Reużyj `ITEM_COLUMNS`. `getRejectedItems` ma jedynego konsumenta (`trash.astro:21`) — po jego zamianie w Fazie 2 staje się martwym kodem, więc **usuń `getRejectedItems`** z `items.ts` wraz z tą zamianą.
 
 #### 3. Mutacje kosza — move / restore / empty
 
@@ -178,7 +179,7 @@ Zamiana read-only widoku Kosza na interaktywną wyspę: pod-filtr rejected/delet
 
 **Cel**: Logika usuwania przywróconych itemów z listy kosza i pomocnicze filtrowanie pod-statusu.
 
-**Kontrakt**: `removeByIds(items, ids)` (lub reużyj istniejący z `selection.ts` jeśli jest) do usunięcia przywróconych; `applyTrashSubFilter(items, sub: "all"|"rejected"|"deleted")` zawężający po `acceptance_status`.
+**Kontrakt**: `applyTrashSubFilter(items, sub: "all"|"rejected"|"deleted")` zawężający po `acceptance_status` — **jedyny nowy helper w tym pliku**. Do usuwania przywróconych z listy **reużyj `removeByIds` z `selection.ts`** (`:34`, już istnieje, używany przez `AcceptedItemsView`) — nie duplikuj go w `trash-view.ts`.
 
 #### 4. Wyspa `TrashItemsView`
 
@@ -201,7 +202,7 @@ Zamiana read-only widoku Kosza na interaktywną wyspę: pod-filtr rejected/delet
 
 **Cel**: Załadować oba statusy i zamontować wyspę zamiast read-only listy.
 
-**Kontrakt**: `getRejectedItems` → `getTrashItems`; odczyt cookie filtra typu SERWEROWO (mirror `active.astro`) → `initialTypeFilter`; renderuj `<TrashItemsView client:load initialItems={items} initialTypeFilter={...} />` zamiast `ItemList`. Zachowaj `Layout`/`Topbar`/`MainFilterNav`.
+**Kontrakt**: `getRejectedItems` → `getTrashItems` (i **usuń `getRejectedItems`** z `items.ts` — po tej zamianie brak innych konsumentów); odczyt cookie filtra typu SERWEROWO (mirror `active.astro`) → `initialTypeFilter`; renderuj `<TrashItemsView client:load initialItems={items} initialTypeFilter={...} />` zamiast `ItemList`. Zachowaj `Layout`/`Topbar`/`MainFilterNav`.
 
 ### Kryteria sukcesu:
 
@@ -293,7 +294,7 @@ Unity mockują Supabase, więc NIE dowodzą RLS — izolacja per-user przy tward
 
 ## Uwagi dotyczące migracji
 
-Brak migracji ani zmian RLS — schemat (`deleted`, polityka `items_delete_own`) jest gotowy od S-02/S-04. „Wyczyść kosz" to jedyny twardy DELETE; istniejąca polityka DELETE go autoryzuje per-user.
+Brak migracji ani zmian RLS — schemat (`deleted`, polityka `items_delete_own`) jest gotowy od S-02/S-04. „Wyczyść kosz" to jedyny twardy DELETE; istniejąca polityka DELETE go autoryzuje per-user. Uwaga: komentarz w zastosowanej migracji (`20260610052532_classification_schema.sql:15` — „twardego DELETE wiersza nie używamy w MVP") jest **odtąd historyczny i NIE edytujemy zastosowanej migracji** (historia niezmienna); aktualną prawdę o twardym DELETE niosą `## Analiza stanu obecnego` tego planu oraz polityka `items_delete_own`.
 
 ## Referencje
 
@@ -310,9 +311,9 @@ Brak migracji ani zmian RLS — schemat (`deleted`, polityka `items_delete_own`)
 
 #### Automatyczne
 
-- [ ] 1.1 Lint (type-checked) przechodzi: `npm run lint`
-- [ ] 1.2 Build produkcyjny przechodzi: `npm run build`
-- [ ] 1.3 Testy jednostkowe przechodzą: `npm run test` (validation trash/restore + bulk handler + empty handler)
+- [x] 1.1 Lint (type-checked) przechodzi: `npm run lint`
+- [x] 1.2 Build produkcyjny przechodzi: `npm run build`
+- [x] 1.3 Testy jednostkowe przechodzą: `npm run test` (validation trash/restore + bulk handler + empty handler)
 
 #### Ręczne
 
