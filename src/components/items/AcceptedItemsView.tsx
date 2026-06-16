@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { useItemMutation } from "@/components/hooks/useItemMutation";
@@ -7,7 +7,7 @@ import OperationalStatusBadge from "@/components/items/OperationalStatusBadge";
 import { reconcileAfterChange, type AcceptedView } from "@/components/items/operational-view";
 import { allIds, isAllSelected, requiresConfirmation, toggleSelection } from "@/components/items/selection";
 import TypeFilter from "@/components/items/TypeFilter";
-import { applyTypeFilter, type TypeFilterValue } from "@/components/items/type-filter";
+import { applyTypeFilter, TYPE_FILTER_VALUES, type TypeFilterValue } from "@/components/items/type-filter";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -68,6 +68,22 @@ export default function AcceptedItemsView({ initialItems, view }: Props) {
   // Synchroniczny zamek re-entry (jak PendingItemsView): stan aktualizuje się po re-renderze, ref od razu.
   const inFlightRef = useRef(false);
   const { setOperationalStatus, pending } = useItemMutation();
+
+  // Filtr typu to stan kliencki poza URL (decyzja #1). Persystujemy go w sessionStorage (per widok), by
+  // przeżył odświeżenie strony (np. „Odśwież" z toasta konfliktu) bez wprowadzania query paramów/linkowalności.
+  const filterStorageKey = `tasker.typeFilter.${view}`;
+
+  // Przywróć zapisany filtr po montażu — client-only (sessionStorage nie istnieje w SSR; start z "all"
+  // po obu stronach unika hydration mismatch, efekt podmienia wartość dopiero po hydracji).
+  useEffect(() => {
+    const stored = sessionStorage.getItem(filterStorageKey);
+    if (stored !== null && (TYPE_FILTER_VALUES as readonly string[]).includes(stored)) {
+      // Celowy setState w efekcie: sync z sessionStorage (browser-only) PO montażu — alternatywa
+      // (lazy initializer useState) czytałaby storage przy hydracji → hydration mismatch z HTML z SSR.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTypeFilter(stored as TypeFilterValue);
+    }
+  }, [filterStorageKey]);
 
   // Lista renderowana = itemy przefiltrowane po typie (z wyłomem „przypiętych"). Zaznaczanie i licznik
   // operują na WIDOCZNYCH itemach; invariant „selected ⊆ widoczne" utrzymuje czyszczenie selekcji przy
@@ -152,6 +168,7 @@ export default function AcceptedItemsView({ initialItems, view }: Props) {
     setTypeFilter(next);
     setPinnedIds(new Set());
     setSelected(new Set());
+    sessionStorage.setItem(filterStorageKey, next);
   }
 
   // 404 (item nieedytowalny / zniknął) — usuń z listy i z zaznaczenia.
