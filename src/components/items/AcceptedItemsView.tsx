@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useItemMutation } from "@/components/hooks/useItemMutation";
 import EditItemDialog from "@/components/items/EditItemDialog";
 import OperationalStatusBadge from "@/components/items/OperationalStatusBadge";
-import { matchesView, reconcileAfterChange, type AcceptedView } from "@/components/items/operational-view";
+import { reconcileAfterChange, type AcceptedView } from "@/components/items/operational-view";
 import { allIds, isAllSelected, requiresConfirmation, toggleSelection } from "@/components/items/selection";
 import TypeFilter from "@/components/items/TypeFilter";
 import { applyTypeFilter, type TypeFilterValue } from "@/components/items/type-filter";
@@ -133,23 +133,14 @@ export default function AcceptedItemsView({ initialItems, view }: Props) {
     void execute(target, ids);
   }
 
-  // Edycja zapisana. Stan operacyjny mógł zmienić się w dialogu, więc jeśli NOWY stan wypada poza
-  // predykat bieżącego widoku (np. Aktywne → Zrobione), item znika z listy — spójnie z bulkiem
-  // (reconcileAfterChange). W przeciwnym razie podmiana w miejscu z nowymi polami.
+  // Edycja zapisana — podmiana itemu w miejscu z nowymi polami. Edytowany item ZOSTAJE widoczny do
+  // odświeżenia / przełączenia (decyzja #6) — także gdy zmieniony stan operacyjny lub typ wypada poza
+  // bieżący widok/filtr. NIE znika spod kursora; przepada dopiero po reloadzie SSR (który ładuje listę
+  // wg widoku). To celowy wyłom z czystej derywacji — inaczej niż bulk, który usuwa od razu.
   function handleSaved(updated: Item): void {
-    if (!matchesView(updated.operational_status, view)) {
-      setItems((prev) => prev.filter((current) => current.id !== updated.id));
-      setSelected((prev) => {
-        if (!prev.has(updated.id)) return prev;
-        const next = new Set(prev);
-        next.delete(updated.id);
-        return next;
-      });
-      return;
-    }
     setItems((prev) => prev.map((current) => (current.id === updated.id ? updated : current)));
-    // Przy aktywnym filtrze typu: jeśli nowy typ nie pasuje, przypnij item — zostaje widoczny do
-    // przełączenia filtra / odświeżenia (decyzja #6), zamiast znikać natychmiast po zapisie.
+    // Przy aktywnym filtrze typu: jeśli nowy typ nie pasuje, przypnij item — inaczej `applyTypeFilter`
+    // by go ukrył; przypięty zostaje widoczny do przełączenia filtra / odświeżenia (decyzja #6).
     if (typeFilter !== "all" && updated.type !== typeFilter) {
       setPinnedIds((prev) => new Set(prev).add(updated.id));
     }
