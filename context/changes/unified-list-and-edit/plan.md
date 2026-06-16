@@ -296,8 +296,8 @@ Brak. Schemat (`updated_at`, `operational_status` dla wszystkich typów) wystarc
 
 #### Ręczne
 
-- [ ] 1.4 Edycja zaakceptowanego itemu zmienia pola i zachowuje stan operacyjny
-- [ ] 1.5 Równoległa edycja z nieaktualnym `updated_at` zwraca 409 (brak cichego nadpisania)
+- [x] 1.4 Edycja zaakceptowanego itemu zmienia pola i zachowuje stan operacyjny
+- [x] 1.5 Równoległa edycja z nieaktualnym `updated_at` zwraca 409 (brak cichego nadpisania)
 
 ### Faza 2: Frontend — edycja w widokach zaakceptowanych
 
@@ -309,9 +309,9 @@ Brak. Schemat (`updated_at`, `operational_status` dla wszystkich typów) wystarc
 
 #### Ręczne
 
-- [ ] 2.4 Przycisk „Edytuj" w Aktywne/Zakończone/Anulowane otwiera dialog; zapis aktualizuje wiersz w miejscu
-- [ ] 2.5 Zmiana typu zachowuje stan operacyjny i widok główny
-- [ ] 2.6 Konflikt (409) pokazuje komunikat „element zmieniony — odśwież" i odświeża widok
+- [x] 2.4 Przycisk „Edytuj" w Aktywne/Zakończone/Anulowane otwiera dialog; zapis aktualizuje wiersz w miejscu
+- [x] 2.5 Zmiana typu zachowuje stan operacyjny i widok główny
+- [x] 2.6 Konflikt (409) pokazuje komunikat „element zmieniony — odśwież" i odświeża widok
 
 ### Faza 3: Frontend — filtr typu na widokach zaakceptowanych
 
@@ -323,6 +323,6 @@ Brak. Schemat (`updated_at`, `operational_status` dla wszystkich typów) wystarc
 
 #### Ręczne
 
-- [ ] 3.4 Kliknięcie typu natychmiast zawęża listę; „Wszystkie" przywraca pełną
-- [ ] 3.5 Edycja zmieniająca typ przy aktywnym filtrze — item zostaje widoczny do przełączenia/odświeżenia
-- [ ] 3.6 „Zaznacz wszystkie" zaznacza tylko widoczne; pusty filtr pokazuje komunikat
+- [x] 3.4 Kliknięcie typu natychmiast zawęża listę; „Wszystkie" przywraca pełną
+- [x] 3.5 Edycja zmieniająca typ przy aktywnym filtrze — item zostaje widoczny do przełączenia/odświeżenia
+- [x] 3.6 „Zaznacz wszystkie" zaznacza tylko widoczne; pusty filtr pokazuje komunikat

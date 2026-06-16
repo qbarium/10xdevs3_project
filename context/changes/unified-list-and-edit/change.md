@@ -1,7 +1,7 @@
 ---
 change_id: unified-list-and-edit
 title: Jednolita lista (filtr typu) + edycja zaakceptowanych itemów
-status: implementing
+status: implemented
 created: 2026-06-15
 updated: 2026-06-16
 ---
