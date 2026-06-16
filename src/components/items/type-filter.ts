@@ -29,13 +29,13 @@ export function applyTypeFilter(
 }
 
 /**
- * Persystencja filtra przez COOKIE (nie URL — decyzja #1), per widok (niezależne filtry). Cookie jest
- * czytelne SERWEROWO, więc SSR renderuje od razu poprawnie przefiltrowaną listę — bez przeskoku po
- * hydracji (inaczej niż sessionStorage, niewidoczny dla serwera). Nazwa per widok izoluje filtry.
+ * Persystencja filtra przez COOKIE (nie URL — decyzja #1), WSPÓLNA dla widoków zaakceptowanych
+ * (Aktywne/Zakończone/Anulowane). Jeden cookie → filtr jest spójny przy przełączaniu widoków (nie
+ * skacze na nieaktualną wartość per-widok) i przeżywa odświeżenie. Czytany SERWEROWO, więc SSR
+ * renderuje od razu poprawnie przefiltrowaną listę — bez przeskoku po hydracji (inaczej niż
+ * sessionStorage, niewidoczny dla serwera).
  */
-export function typeFilterCookieName(view: string): string {
-  return `tl_tf_${view}`;
-}
+export const TYPE_FILTER_COOKIE = "tl_typefilter";
 
 /** Waliduje surową wartość (z cookie / dowolnego źródła) → poprawny `TypeFilterValue` lub fallback "all". */
 export function parseTypeFilter(value: string | undefined | null): TypeFilterValue {

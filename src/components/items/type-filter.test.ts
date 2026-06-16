@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   applyTypeFilter,
   parseTypeFilter,
+  TYPE_FILTER_COOKIE,
   TYPE_FILTER_VALUES,
-  typeFilterCookieName,
 } from "@/components/items/type-filter";
 import type { Item, ItemType } from "@/types";
 
@@ -68,11 +68,9 @@ describe("applyTypeFilter", () => {
   });
 });
 
-describe("typeFilterCookieName", () => {
-  it("nazwa cookie per widok", () => {
-    expect(typeFilterCookieName("active")).toBe("tl_tf_active");
-    expect(typeFilterCookieName("done")).toBe("tl_tf_done");
-    expect(typeFilterCookieName("cancelled")).toBe("tl_tf_cancelled");
+describe("TYPE_FILTER_COOKIE", () => {
+  it("jeden wspólny cookie dla widoków zaakceptowanych", () => {
+    expect(TYPE_FILTER_COOKIE).toBe("tl_typefilter");
   });
 });
 

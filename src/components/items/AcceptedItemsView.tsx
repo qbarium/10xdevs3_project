@@ -7,7 +7,7 @@ import OperationalStatusBadge from "@/components/items/OperationalStatusBadge";
 import { reconcileAfterChange, type AcceptedView } from "@/components/items/operational-view";
 import { allIds, isAllSelected, requiresConfirmation, toggleSelection } from "@/components/items/selection";
 import TypeFilter from "@/components/items/TypeFilter";
-import { applyTypeFilter, typeFilterCookieName, type TypeFilterValue } from "@/components/items/type-filter";
+import { applyTypeFilter, TYPE_FILTER_COOKIE, type TypeFilterValue } from "@/components/items/type-filter";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -154,9 +154,10 @@ export default function AcceptedItemsView({ initialItems, view, initialTypeFilte
     setTypeFilter(next);
     setPinnedIds(new Set());
     setSelected(new Set());
-    // Cookie (session, poza URL) — serwer odczyta go przy następnym SSR (refresh) i wyrenderuje od razu
-    // poprawnie przefiltrowaną listę, bez przeskoku po hydracji.
-    document.cookie = `${typeFilterCookieName(view)}=${next}; path=/; SameSite=Lax`;
+    // Wspólny cookie (session, poza URL) — serwer odczyta go przy każdym SSR (refresh ORAZ nawigacja
+    // między widokami) i wyrenderuje od razu poprawnie przefiltrowaną listę, bez przeskoku ani skoku na
+    // nieaktualny filtr innego widoku.
+    document.cookie = `${TYPE_FILTER_COOKIE}=${next}; path=/; SameSite=Lax`;
   }
 
   // 404 (item nieedytowalny / zniknął) — usuń z listy i z zaznaczenia.
