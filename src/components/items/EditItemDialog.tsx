@@ -160,10 +160,13 @@ export default function EditItemDialog({ item, open, onOpenChange, onSaved, onNo
 
             <div className={descriptionFieldClass}>
               <Label htmlFor="edit-description">Opis</Label>
-              {/* field-sizing-fixed: bez auto-rozrostu przy Enterze; scroll w kontrolce + uchwyt `resize`
-                  w OBU osiach. Domyślne wymiary (w-[32rem] / min-h-28) to minimum; max 90vw / 65vh.
-                  Okno (w-auto) rośnie wraz z polem w pionie i w poziomie. */}
+              {/* field-sizing-fixed: bez auto-rozrostu przy Enterze; w trybie normalnym uchwyt `resize`
+                  w OBU osiach (domyślne w-[32rem] / min-h-28, max 90vw / 65vh), w rozszerzonym wypełnia
+                  wolną wysokość/szerokość (flex-1 / w-full). `key` zależny od trybu REMONTUJE textarea przy
+                  przełączeniu — czyści inline width/height zapisane przez ręczny resize (inaczej inline style
+                  nadpisałby klasy i textarea nie wypełniłaby okna po wcześniejszym ręcznym skalowaniu). */}
               <Textarea
+                key={expanded ? "desc-expanded" : "desc-normal"}
                 id="edit-description"
                 value={description}
                 className={descriptionClass}
