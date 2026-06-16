@@ -1,3 +1,4 @@
+import { Maximize2Icon, Minimize2Icon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -37,17 +38,31 @@ interface Props {
 // per-itemowej edycji (S-05, rewizja UX). Zapis natychmiastowy — akceptacja to osobna akcja (FR-010).
 // Stan operacyjny edytujemy tu JAWNIE (selektor prefilluje bieżącą wartość → edycja treści go zachowuje);
 // dla pendingów selektor jest ukryty (cykl życia zaczyna się po akceptacji). `item.updated_at` jedzie
-// jako `expectedUpdatedAt` (optimistic concurrency → 409). Zamknięcie z niezapisanymi zmianami bramkuje pytanie.
+// jako `expectedUpdatedAt` (optimistic concurrency → 409). Przełącznik rozmiaru (Maximize/Minimize)
+// rozszerza okno na obszar listy (poniżej górnej nawigacji) dla długich itemów. Zamknięcie z niezapisanymi
+// zmianami bramkuje pytanie.
 export default function EditItemDialog({ item, open, onOpenChange, onSaved, onNotFound, onConflict }: Props) {
   const [title, setTitle] = useState(item.title);
   const [description, setDescription] = useState(item.description ?? "");
   const [type, setType] = useState<ItemType>(item.type);
   const [operationalStatus, setOperationalStatus] = useState<OperationalStatus>(item.operational_status ?? "new");
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  // Tryb rozszerzony: jednym klikiem okno wypełnia obszar listy (poniżej górnej nawigacji), dając duże
+  // pole edycji dla długich itemów. Reset przy zmianie itemu przez remount (`key={item.id}` u rodzica).
+  const [expanded, setExpanded] = useState(false);
   const { editItem, pending } = useItemMutation();
 
   // Stan operacyjny edytowalny tylko dla zaakceptowanych — pending jest przed cyklem życia.
   const canEditStatus = item.acceptance_status === "accepted";
+
+  // Rozszerzony: pozycjonowanie `inset` (top-20 zostawia odsłoniętą górną nawigację) zamiast centrowania,
+  // a textarea wypełnia wysokość. Normalny: rośnie wraz z polem (w-auto), limit 95vw / 85vh + scroll.
+  const contentClass = expanded
+    ? "top-20 right-4 bottom-4 left-4 w-auto max-w-none translate-x-0 translate-y-0 max-h-none overflow-auto sm:max-w-none"
+    : "max-h-[85vh] w-auto max-w-[95vw] overflow-auto sm:max-w-[95vw]";
+  const descriptionClass = expanded
+    ? "field-sizing-fixed min-h-[55vh] w-full max-w-none min-w-0 resize overflow-auto"
+    : "field-sizing-fixed max-h-[65vh] min-h-28 w-[32rem] max-w-[90vw] min-w-[16rem] resize overflow-auto";
 
   // Pola inicjalizowane z propsów; reset przy zmianie itemu zapewnia remount przez `key={item.id}`.
   const titleInvalid = !isTitleValid(title);
@@ -99,7 +114,20 @@ export default function EditItemDialog({ item, open, onOpenChange, onSaved, onNo
       >
         {/* Szerokość `auto` (zamiast twardego max-w-lg) → okno rośnie też w POZIOMIE wraz z polem,
             symetrycznie do pionu; limit 95vw + scroll jako zabezpieczenie. */}
-        <DialogContent className="max-h-[85vh] w-auto max-w-[95vw] overflow-auto sm:max-w-[95vw]">
+        <DialogContent className={contentClass}>
+          {/* Przełącznik rozmiaru — obok przycisku zamknięcia (X). Maximize → wypełnij obszar listy. */}
+          <button
+            type="button"
+            onClick={() => {
+              setExpanded((value) => !value);
+            }}
+            aria-pressed={expanded}
+            aria-label={expanded ? "Zmniejsz okno edycji" : "Rozszerz okno edycji na obszar listy"}
+            className="ring-offset-background focus:ring-ring absolute top-4 right-12 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden"
+          >
+            {expanded ? <Minimize2Icon className="size-4" /> : <Maximize2Icon className="size-4" />}
+            <span className="sr-only">{expanded ? "Zmniejsz okno" : "Rozszerz okno"}</span>
+          </button>
           <DialogHeader>
             <DialogTitle>Edytuj element</DialogTitle>
           </DialogHeader>
@@ -126,7 +154,7 @@ export default function EditItemDialog({ item, open, onOpenChange, onSaved, onNo
               <Textarea
                 id="edit-description"
                 value={description}
-                className="field-sizing-fixed max-h-[65vh] min-h-28 w-[32rem] max-w-[90vw] min-w-[16rem] resize overflow-auto"
+                className={descriptionClass}
                 onChange={(event) => {
                   setDescription(event.target.value);
                 }}
