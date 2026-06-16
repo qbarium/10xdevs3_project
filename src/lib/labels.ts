@@ -36,6 +36,16 @@ const ACCEPTANCE_STATUS_LABELS: Record<AcceptanceStatus, string> = {
   deleted: "Usunięte",
 };
 
+// Pochodzenie itemu w koszu (S-06) — tylko dwa statusy mogą trafić do Kosza: `rejected` (odrzucony w
+// stagingu) i `deleted` (zaakceptowany przeniesiony do kosza). Wąski typ (zamiast pełnego
+// `AcceptanceStatus`) wyklucza kompilacyjnie pomyłkowe podanie `pending`/`accepted` — itemu o tym
+// statusie z definicji nie ma w widoku Kosz. Etykiety pokrywają się z generycznymi, ale funkcja niesie
+// intencję „pochodzenie w koszu" (badge na karcie + pod-filtr).
+const ACCEPTANCE_ORIGIN_LABELS: Record<"rejected" | "deleted", string> = {
+  rejected: "Odrzucone",
+  deleted: "Usunięte",
+};
+
 const IMPORT_SESSION_STATUS_LABELS: Record<ImportSessionStatus, string> = {
   processing: "Przetwarzanie…",
   completed_with_items: "Gotowe",
@@ -62,6 +72,11 @@ export function operationalStatusLabel(status: OperationalStatus, type?: ItemTyp
 
 export function acceptanceStatusLabel(status: AcceptanceStatus): string {
   return ACCEPTANCE_STATUS_LABELS[status];
+}
+
+/** Etykieta pochodzenia itemu w koszu (S-06): `rejected` → „Odrzucone", `deleted` → „Usunięte". */
+export function acceptanceOriginLabel(status: "rejected" | "deleted"): string {
+  return ACCEPTANCE_ORIGIN_LABELS[status];
 }
 
 export function importSessionStatusLabel(status: ImportSessionStatus): string {

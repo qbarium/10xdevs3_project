@@ -37,11 +37,6 @@ export function getPendingItems(supabase: SupabaseClient, userId: string): Promi
   return listByAcceptance(supabase, userId, "pending");
 }
 
-/** Odrzucone itemy usera (widok „Kosz", S-03; read-only — przenieś/przywróć/wyczyść → S-06). */
-export function getRejectedItems(supabase: SupabaseClient, userId: string): Promise<Item[]> {
-  return listByAcceptance(supabase, userId, "rejected");
-}
-
 /**
  * Itemy usera w koszu (S-06): OBA statusy kosza — `rejected` (odrzucone w stagingu) ORAZ `deleted`
  * (zaakceptowane przeniesione do kosza). Karmi wyspę `TrashItemsView`, w której pod-filtr rozróżnia

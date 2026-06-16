@@ -9,12 +9,17 @@ import type { Item, OperationalStatus } from "@/types";
 
 const BULK_ENDPOINT = "/api/items/bulk";
 const OPERATIONAL_ENDPOINT = "/api/items/operational";
+const TRASH_EMPTY_ENDPOINT = "/api/items/trash/empty";
 
 interface BulkResponse {
   ok?: boolean;
   updatedIds?: string[];
   count?: number;
   status?: OperationalStatus;
+}
+interface EmptyResponse {
+  ok?: boolean;
+  deletedCount?: number;
 }
 interface EditResponse {
   ok?: boolean;
@@ -36,6 +41,12 @@ export interface UseItemMutation {
   bulkReject: (ids: string[]) => Promise<number | null>;
   /** Zmienia stan operacyjny zaznaczonych accepted; zwraca liczbę FAKTYCZNIE zmienionych (guard pomija nie-accepted), null przy błędzie. */
   setOperationalStatus: (ids: string[], status: OperationalStatus) => Promise<number | null>;
+  /** Przenosi zaznaczone accepted do kosza (S-06); zwraca liczbę FAKTYCZNIE przeniesionych (guard pomija nie-accepted), null przy błędzie. */
+  moveToTrash: (ids: string[]) => Promise<number | null>;
+  /** Przywraca zaznaczone z kosza (S-06, dwukierunkowo deleted→accepted / rejected→pending); zwraca liczbę FAKTYCZNIE przywróconych, null przy błędzie. */
+  restoreFromTrash: (ids: string[]) => Promise<number | null>;
+  /** Trwale opróżnia kosz usera (S-06, FR-016); zwraca liczbę skasowanych wierszy (`deletedCount`), null przy błędzie. */
+  emptyTrash: () => Promise<number | null>;
   /** Edytuje pending/accepted z compare-and-swap (`expectedUpdatedAt`); zwraca item lub powód (404 / 409 / błąd). */
   editItem: (id: string, input: EditItemInput, expectedUpdatedAt: string) => Promise<EditItemResult>;
 }
@@ -46,7 +57,7 @@ export function useItemMutation(): UseItemMutation {
 
   // Zwraca liczbę faktycznie zmienionych itemów z serwera (guard `pending` pomija nie-uprawnione),
   // lub null przy błędzie / porażce sieci.
-  async function bulk(ids: string[], action: "accept" | "reject"): Promise<number | null> {
+  async function bulk(ids: string[], action: "accept" | "reject" | "trash" | "restore"): Promise<number | null> {
     setPending(true);
     setError(null);
     try {
@@ -71,6 +82,31 @@ export function useItemMutation(): UseItemMutation {
 
   const bulkAccept = (ids: string[]): Promise<number | null> => bulk(ids, "accept");
   const bulkReject = (ids: string[]): Promise<number | null> => bulk(ids, "reject");
+  // S-06: kosz reużywa ten sam endpoint bulk (rozgałęzia po `action` w serwisie).
+  const moveToTrash = (ids: string[]): Promise<number | null> => bulk(ids, "trash");
+  const restoreFromTrash = (ids: string[]): Promise<number | null> => bulk(ids, "restore");
+
+  // Trwałe opróżnienie kosza (S-06, FR-016) — osobny endpoint bez body (operacja globalna). Wzorzec
+  // jak `bulk`: zwraca `deletedCount` z serwera (liczba faktycznie skasowanych wierszy) lub null przy
+  // błędzie / porażce sieci.
+  async function emptyTrash(): Promise<number | null> {
+    setPending(true);
+    setError(null);
+    try {
+      const res = await fetch(TRASH_EMPTY_ENDPOINT, { method: "POST" });
+      const data = (await res.json()) as EmptyResponse;
+      if (!res.ok || !data.ok) {
+        setError("Nie udało się opróżnić kosza. Spróbuj ponownie.");
+        return null;
+      }
+      return data.deletedCount ?? 0;
+    } catch {
+      setError("Błąd połączenia. Spróbuj ponownie.");
+      return null;
+    } finally {
+      setPending(false);
+    }
+  }
 
   // Zmiana stanu operacyjnego accepted itemów (S-04). Wzorzec jak `bulk`: zwraca realną liczbę
   // zmienionych z serwera (guard `accepted` pomija nie-uprawnione) lub null przy błędzie / porażce sieci.
@@ -128,5 +164,15 @@ export function useItemMutation(): UseItemMutation {
     }
   }
 
-  return { pending, error, bulkAccept, bulkReject, setOperationalStatus, editItem };
+  return {
+    pending,
+    error,
+    bulkAccept,
+    bulkReject,
+    setOperationalStatus,
+    moveToTrash,
+    restoreFromTrash,
+    emptyTrash,
+    editItem,
+  };
 }

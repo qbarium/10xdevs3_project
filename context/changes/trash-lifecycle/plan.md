@@ -311,9 +311,9 @@ Brak migracji ani zmian RLS — schemat (`deleted`, polityka `items_delete_own`)
 
 #### Automatyczne
 
-- [x] 1.1 Lint (type-checked) przechodzi: `npm run lint`
-- [x] 1.2 Build produkcyjny przechodzi: `npm run build`
-- [x] 1.3 Testy jednostkowe przechodzą: `npm run test` (validation trash/restore + bulk handler + empty handler)
+- [x] 1.1 Lint (type-checked) przechodzi: `npm run lint` — 2b43f4d
+- [x] 1.2 Build produkcyjny przechodzi: `npm run build` — 2b43f4d
+- [x] 1.3 Testy jednostkowe przechodzą: `npm run test` (validation trash/restore + bulk handler + empty handler) — 2b43f4d
 
 #### Ręczne
 
@@ -327,9 +327,9 @@ Brak migracji ani zmian RLS — schemat (`deleted`, polityka `items_delete_own`)
 
 #### Automatyczne
 
-- [ ] 2.1 Lint (type-checked) przechodzi: `npm run lint`
-- [ ] 2.2 Build produkcyjny przechodzi: `npm run build`
-- [ ] 2.3 Testy jednostkowe bez regresji: `npm run test`
+- [x] 2.1 Lint (type-checked) przechodzi: `npm run lint`
+- [x] 2.2 Build produkcyjny przechodzi: `npm run build`
+- [x] 2.3 Testy jednostkowe bez regresji: `npm run test`
 
 #### Ręczne
 
