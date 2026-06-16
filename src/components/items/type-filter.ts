@@ -27,3 +27,19 @@ export function applyTypeFilter(
 ): Item[] {
   return items.filter((item) => filter === "all" || item.type === filter || pinnedIds.has(item.id));
 }
+
+/**
+ * Persystencja filtra przez COOKIE (nie URL — decyzja #1), per widok (niezależne filtry). Cookie jest
+ * czytelne SERWEROWO, więc SSR renderuje od razu poprawnie przefiltrowaną listę — bez przeskoku po
+ * hydracji (inaczej niż sessionStorage, niewidoczny dla serwera). Nazwa per widok izoluje filtry.
+ */
+export function typeFilterCookieName(view: string): string {
+  return `tl_tf_${view}`;
+}
+
+/** Waliduje surową wartość (z cookie / dowolnego źródła) → poprawny `TypeFilterValue` lub fallback "all". */
+export function parseTypeFilter(value: string | undefined | null): TypeFilterValue {
+  return value != null && (TYPE_FILTER_VALUES as readonly string[]).includes(value)
+    ? (value as TypeFilterValue)
+    : "all";
+}

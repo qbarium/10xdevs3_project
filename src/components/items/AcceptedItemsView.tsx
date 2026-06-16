@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { useItemMutation } from "@/components/hooks/useItemMutation";
@@ -7,7 +7,7 @@ import OperationalStatusBadge from "@/components/items/OperationalStatusBadge";
 import { reconcileAfterChange, type AcceptedView } from "@/components/items/operational-view";
 import { allIds, isAllSelected, requiresConfirmation, toggleSelection } from "@/components/items/selection";
 import TypeFilter from "@/components/items/TypeFilter";
-import { applyTypeFilter, TYPE_FILTER_VALUES, type TypeFilterValue } from "@/components/items/type-filter";
+import { applyTypeFilter, typeFilterCookieName, type TypeFilterValue } from "@/components/items/type-filter";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -26,6 +26,8 @@ import type { Item, OperationalStatus } from "@/types";
 interface Props {
   initialItems: Item[];
   view: AcceptedView;
+  /** Filtr typu z cookie (czytany SERWEROWO) — stan początkowy islandu, by SSR renderował od razu poprawnie. */
+  initialTypeFilter: TypeFilterValue;
 }
 
 // Cztery przyciski bulk w kolejności cyklu życia (Nowe → W toku → Zrobione → Anulowane).
@@ -55,12 +57,12 @@ function elementNoun(n: number): string {
 // per-item (w tym stan operacyjny) odbywa się w EditItemDialog — badge typu i stanu na liście są tylko
 // do odczytu (rewizja UX S-05). Zmiana stanu wielu itemów naraz: bulk przez 4 przyciski. Po zmianie stanu
 // (bulk lub edycja) reconcile usuwa itemy, których nowy stan wypada poza predykat widoku.
-export default function AcceptedItemsView({ initialItems, view }: Props) {
+export default function AcceptedItemsView({ initialItems, view, initialTypeFilter }: Props) {
   const [items, setItems] = useState<Item[]>(initialItems);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmRequest, setConfirmRequest] = useState<{ target: OperationalStatus; ids: string[] } | null>(null);
   const [editing, setEditing] = useState<Item | null>(null);
-  const [typeFilter, setTypeFilter] = useState<TypeFilterValue>("all");
+  const [typeFilter, setTypeFilter] = useState<TypeFilterValue>(initialTypeFilter);
   // „Przypięte" id: itemy, które po edycji zmieniającej typ wypadły z aktywnego filtra, ale mają zostać
   // widoczne do najbliższego przełączenia filtra / odświeżenia (decyzja #6). Czyszczone przy zmianie filtra.
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
@@ -68,22 +70,6 @@ export default function AcceptedItemsView({ initialItems, view }: Props) {
   // Synchroniczny zamek re-entry (jak PendingItemsView): stan aktualizuje się po re-renderze, ref od razu.
   const inFlightRef = useRef(false);
   const { setOperationalStatus, pending } = useItemMutation();
-
-  // Filtr typu to stan kliencki poza URL (decyzja #1). Persystujemy go w sessionStorage (per widok), by
-  // przeżył odświeżenie strony (np. „Odśwież" z toasta konfliktu) bez wprowadzania query paramów/linkowalności.
-  const filterStorageKey = `tasker.typeFilter.${view}`;
-
-  // Przywróć zapisany filtr po montażu — client-only (sessionStorage nie istnieje w SSR; start z "all"
-  // po obu stronach unika hydration mismatch, efekt podmienia wartość dopiero po hydracji).
-  useEffect(() => {
-    const stored = sessionStorage.getItem(filterStorageKey);
-    if (stored !== null && (TYPE_FILTER_VALUES as readonly string[]).includes(stored)) {
-      // Celowy setState w efekcie: sync z sessionStorage (browser-only) PO montażu — alternatywa
-      // (lazy initializer useState) czytałaby storage przy hydracji → hydration mismatch z HTML z SSR.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setTypeFilter(stored as TypeFilterValue);
-    }
-  }, [filterStorageKey]);
 
   // Lista renderowana = itemy przefiltrowane po typie (z wyłomem „przypiętych"). Zaznaczanie i licznik
   // operują na WIDOCZNYCH itemach; invariant „selected ⊆ widoczne" utrzymuje czyszczenie selekcji przy
@@ -168,7 +154,9 @@ export default function AcceptedItemsView({ initialItems, view }: Props) {
     setTypeFilter(next);
     setPinnedIds(new Set());
     setSelected(new Set());
-    sessionStorage.setItem(filterStorageKey, next);
+    // Cookie (session, poza URL) — serwer odczyta go przy następnym SSR (refresh) i wyrenderuje od razu
+    // poprawnie przefiltrowaną listę, bez przeskoku po hydracji.
+    document.cookie = `${typeFilterCookieName(view)}=${next}; path=/; SameSite=Lax`;
   }
 
   // 404 (item nieedytowalny / zniknął) — usuń z listy i z zaznaczenia.

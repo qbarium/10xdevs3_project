@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { applyTypeFilter, TYPE_FILTER_VALUES } from "@/components/items/type-filter";
+import {
+  applyTypeFilter,
+  parseTypeFilter,
+  TYPE_FILTER_VALUES,
+  typeFilterCookieName,
+} from "@/components/items/type-filter";
 import type { Item, ItemType } from "@/types";
 
 function item(id: string, type: ItemType): Item {
@@ -60,5 +65,28 @@ describe("applyTypeFilter", () => {
     const snapshot = items.map((i) => i.id);
     applyTypeFilter(items, "note", NONE);
     expect(items.map((i) => i.id)).toEqual(snapshot);
+  });
+});
+
+describe("typeFilterCookieName", () => {
+  it("nazwa cookie per widok", () => {
+    expect(typeFilterCookieName("active")).toBe("tl_tf_active");
+    expect(typeFilterCookieName("done")).toBe("tl_tf_done");
+    expect(typeFilterCookieName("cancelled")).toBe("tl_tf_cancelled");
+  });
+});
+
+describe("parseTypeFilter", () => {
+  it("poprawna wartość → ona sama", () => {
+    expect(parseTypeFilter("task")).toBe("task");
+    expect(parseTypeFilter("all")).toBe("all");
+    expect(parseTypeFilter("decision")).toBe("decision");
+  });
+
+  it("niepoprawna / pusta / brak → fallback „all”", () => {
+    expect(parseTypeFilter("archived")).toBe("all");
+    expect(parseTypeFilter("")).toBe("all");
+    expect(parseTypeFilter(undefined)).toBe("all");
+    expect(parseTypeFilter(null)).toBe("all");
   });
 });
