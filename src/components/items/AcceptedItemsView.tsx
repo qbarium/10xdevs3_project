@@ -33,6 +33,13 @@ interface Props {
 // Cztery przyciski bulk w kolejności cyklu życia (Nowe → W toku → Zrobione → Anulowane).
 const BULK_TARGETS: OperationalStatus[] = ["new", "in_progress", "done", "cancelled"];
 
+// Żądanie akcji zbiorczej wymagającej potwierdzenia (select-all). Dwa rodzaje: zmiana stanu operacyjnego
+// (`operational` z `target`) oraz przeniesienie do kosza (`trash`, S-06 — bez `target`, bo to wyjście z
+// wymiaru akceptacji, nie zmiana stanu operacyjnego).
+type ConfirmRequest =
+  | { kind: "operational"; target: OperationalStatus; ids: string[] }
+  | { kind: "trash"; ids: string[] };
+
 const EMPTY_LABEL: Record<AcceptedView, string> = {
   active: "Brak aktywnych elementów.",
   done: "Brak zakończonych elementów.",
@@ -60,7 +67,9 @@ function elementNoun(n: number): string {
 export default function AcceptedItemsView({ initialItems, view, initialTypeFilter }: Props) {
   const [items, setItems] = useState<Item[]>(initialItems);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [confirmRequest, setConfirmRequest] = useState<{ target: OperationalStatus; ids: string[] } | null>(null);
+  // Żądanie potwierdzenia (select-all) — unia rozróżniająca: zmiana stanu operacyjnego ALBO przeniesienie
+  // do kosza (S-06). Dyskryminator `kind` steruje gałęzią `execute` i treścią dialogu.
+  const [confirmRequest, setConfirmRequest] = useState<ConfirmRequest | null>(null);
   const [editing, setEditing] = useState<Item | null>(null);
   const [typeFilter, setTypeFilter] = useState<TypeFilterValue>(initialTypeFilter);
   // „Przypięte" id: itemy, które po edycji zmieniającej typ wypadły z aktywnego filtra, ale mają zostać
@@ -69,7 +78,7 @@ export default function AcceptedItemsView({ initialItems, view, initialTypeFilte
   const [inFlightIds, setInFlightIds] = useState<Set<string>>(new Set());
   // Synchroniczny zamek re-entry (jak PendingItemsView): stan aktualizuje się po re-renderze, ref od razu.
   const inFlightRef = useRef(false);
-  const { setOperationalStatus, pending } = useItemMutation();
+  const { setOperationalStatus, moveToTrash, pending } = useItemMutation();
 
   // Lista renderowana = itemy przefiltrowane po typie (z wyłomem „przypiętych"). Zaznaczanie i licznik
   // operują na WIDOCZNYCH itemach; invariant „selected ⊆ widoczne" utrzymuje czyszczenie selekcji przy
@@ -88,20 +97,29 @@ export default function AcceptedItemsView({ initialItems, view, initialTypeFilte
 
   // Pessimistic: itemy w locie są WYGASZANE (dim), a nadawanie nowego stanu / usuwanie z listy
   // następuje dopiero po sukcesie serwera. Lista nie „miga" — przy błędzie wracają do normalnego stanu.
-  async function execute(target: OperationalStatus, ids: string[]): Promise<void> {
+  // Dwie gałęzie (`req.kind`): zmiana stanu operacyjnego (setOperationalStatus + reconcile w obrębie
+  // predykatu widoku) oraz przeniesienie do kosza (moveToTrash + usunięcie bezwarunkowe — item wychodzi
+  // z `accepted`, więc opuszcza KAŻDY widok accepted niezależnie od stanu operacyjnego).
+  async function execute(req: ConfirmRequest): Promise<void> {
     if (inFlightRef.current) return;
     inFlightRef.current = true;
+    const { ids } = req;
     setInFlightIds(new Set(ids));
-    const count = await setOperationalStatus(ids, target);
+    const count = req.kind === "trash" ? await moveToTrash(ids) : await setOperationalStatus(ids, req.target);
     if (count === null) {
       toast.error("Nie udało się wykonać akcji. Spróbuj ponownie.");
       setInFlightIds(new Set());
       inFlightRef.current = false;
       return;
     }
-    // Sukces: nadaj nowy stan i usuń itemy wypadające poza predykat widoku; wyczyść je z zaznaczenia.
     const idSet = new Set(ids);
-    setItems((prev) => reconcileAfterChange(prev, idSet, target, view));
+    if (req.kind === "trash") {
+      // Wyjście z accepted (nie zmiana stanu operacyjnego) → item znika z widoku BEZWARUNKOWO.
+      setItems((prev) => prev.filter((item) => !idSet.has(item.id)));
+    } else {
+      // Sukces: nadaj nowy stan i usuń itemy wypadające poza predykat widoku.
+      setItems((prev) => reconcileAfterChange(prev, idSet, req.target, view));
+    }
     setSelected((prev) => {
       if (!ids.some((id) => prev.has(id))) return prev;
       const next = new Set(prev);
@@ -110,7 +128,11 @@ export default function AcceptedItemsView({ initialItems, view, initialTypeFilte
     });
     // Licznik z serwera = liczba FAKTYCZNIE zmienionych (guard `accepted` pomija nie-uprawnione).
     if (count > 0) {
-      toast.success(`Zmieniono stan ${count} ${elementNoun(count)} na „${operationalStatusLabel(target)}”.`);
+      if (req.kind === "trash") {
+        toast.success(`Przeniesiono ${count} ${elementNoun(count)} do kosza.`);
+      } else {
+        toast.success(`Zmieniono stan ${count} ${elementNoun(count)} na „${operationalStatusLabel(req.target)}”.`);
+      }
     } else {
       toast("Wybrane elementy były już nieaktualne — lista odświeżona.");
     }
@@ -122,17 +144,28 @@ export default function AcceptedItemsView({ initialItems, view, initialTypeFilte
     const ids = [...selected];
     if (ids.length === 0) return;
     if (requiresConfirmation(ids.length, visibleItems.length)) {
-      setConfirmRequest({ target, ids });
+      setConfirmRequest({ kind: "operational", target, ids });
     } else {
-      void execute(target, ids);
+      void execute({ kind: "operational", target, ids });
+    }
+  }
+
+  // Bulk „Do kosza" (S-06): potwierdzenie wg tego samego wzorca (tylko gdy zaznaczono wszystkie widoczne).
+  function requestTrash(): void {
+    const ids = [...selected];
+    if (ids.length === 0) return;
+    if (requiresConfirmation(ids.length, visibleItems.length)) {
+      setConfirmRequest({ kind: "trash", ids });
+    } else {
+      void execute({ kind: "trash", ids });
     }
   }
 
   function confirmProceed(): void {
     if (!confirmRequest) return;
-    const { target, ids } = confirmRequest;
+    const req = confirmRequest;
     setConfirmRequest(null);
-    void execute(target, ids);
+    void execute(req);
   }
 
   // Edycja zapisana — podmiana itemu w miejscu z nowymi polami. Edytowany item ZOSTAJE widoczny do
@@ -227,6 +260,16 @@ export default function AcceptedItemsView({ initialItems, view, initialTypeFilte
                       {operationalStatusLabel(target)}
                     </Button>
                   ))}
+                  {/* „Do kosza" (S-06) — wyróżniony subtelnie (amber) od 4 przycisków stanu operacyjnego. */}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={selectedCount === 0 || pending}
+                    onClick={requestTrash}
+                    className="border-amber-300/30 text-amber-100/80 hover:bg-amber-400/10 hover:text-amber-50"
+                  >
+                    Do kosza
+                  </Button>
                 </div>
               </div>
 
@@ -262,6 +305,18 @@ export default function AcceptedItemsView({ initialItems, view, initialTypeFilte
                       >
                         Edytuj
                       </Button>
+                      {/* Per-item „Do kosza" (S-06) — akcja bezpośrednia na jednym itemie, bez dialogu. */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-amber-100/70 hover:bg-amber-400/10 hover:text-amber-50"
+                        disabled={pending}
+                        onClick={() => {
+                          void execute({ kind: "trash", ids: [item.id] });
+                        }}
+                      >
+                        Do kosza
+                      </Button>
                     </div>
                     <h3 className="mt-2 font-semibold text-white/90">{item.title}</h3>
                     {item.description && <p className="mt-1 line-clamp-2 text-sm text-white/70">{item.description}</p>}
@@ -282,9 +337,11 @@ export default function AcceptedItemsView({ initialItems, view, initialTypeFilte
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {confirmRequest
-                ? `Zmienić stan ${confirmRequest.ids.length} ${elementNoun(confirmRequest.ids.length)} na „${operationalStatusLabel(confirmRequest.target)}”?`
-                : ""}
+              {confirmRequest === null
+                ? ""
+                : confirmRequest.kind === "trash"
+                  ? `Przenieść ${confirmRequest.ids.length} ${elementNoun(confirmRequest.ids.length)} do kosza?`
+                  : `Zmienić stan ${confirmRequest.ids.length} ${elementNoun(confirmRequest.ids.length)} na „${operationalStatusLabel(confirmRequest.target)}”?`}
             </DialogTitle>
             <DialogDescription>
               Akcja obejmuje wszystkie wyświetlane elementy. Czy na pewno chcesz kontynuować?
@@ -300,7 +357,11 @@ export default function AcceptedItemsView({ initialItems, view, initialTypeFilte
               Anuluj
             </Button>
             <Button onClick={confirmProceed}>
-              {confirmRequest ? operationalStatusLabel(confirmRequest.target) : ""}
+              {confirmRequest === null
+                ? ""
+                : confirmRequest.kind === "trash"
+                  ? "Do kosza"
+                  : operationalStatusLabel(confirmRequest.target)}
             </Button>
           </DialogFooter>
         </DialogContent>
