@@ -214,19 +214,19 @@ Brak migracji — schemat (`items`, RLS INSERT, nullable `import_session_id`) go
 
 #### Automatyczne
 
-- [x] 1.1 Lint przechodzi: `npm run lint`
-- [x] 1.2 Build przechodzi: `npm run build`
-- [x] 1.3 Testy jednostkowe przechodzą: `npm test`
-- [x] 1.4 Testy integracyjne przechodzą: `npm run test:integration`
+- [x] 1.1 Lint przechodzi: `npm run lint` — aa5e32a
+- [x] 1.2 Build przechodzi: `npm run build` — aa5e32a
+- [x] 1.3 Testy jednostkowe przechodzą: `npm test` — aa5e32a
+- [x] 1.4 Testy integracyjne przechodzą: `npm run test:integration` — aa5e32a
 - [ ] 1.5 Doraźne (curl + zapytanie do bazy): POST poprawny → 201 + `accepted`/`new`/`null session`; zły payload → 400; bez auth → 401; sesja bez klucza → 201; wiersz potwierdzony w bazie
 
 ### Faza 2: Frontend — modal + akcja w Aktywne + UX po zapisie
 
 #### Automatyczne
 
-- [ ] 2.1 Lint przechodzi: `npm run lint`
-- [ ] 2.2 Build przechodzi: `npm run build`
-- [ ] 2.3 Testy jednostkowe przechodzą: `npm test` (isTitleValid/disabled, readLastItemType+fallback, buildCreatePayload, reducer insert+pin)
+- [x] 2.1 Lint przechodzi: `npm run lint`
+- [x] 2.2 Build przechodzi: `npm run build`
+- [x] 2.3 Testy jednostkowe przechodzą: `npm test` (isTitleValid/disabled, readLastItemType+fallback, buildCreatePayload, reducer insert+pin)
 
 #### Ręczne
 
