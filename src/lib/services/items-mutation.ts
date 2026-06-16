@@ -125,6 +125,9 @@ export async function editItem(
     })
     .eq("id", id)
     .in("acceptance_status", EDITABLE_ACCEPTANCE)
+    // Compare-and-swap na znaczniku — porównanie TEKSTOWE. Inwariant: klient odsyła `expectedUpdatedAt`
+    // dosłownie z chwili otwarcia (bez re-formatowania typu `new Date(...).toISOString()`), inaczej różnica
+    // reprezentacji (mikrosekundy/offset) dałaby fałszywy 409. Patrz EditItemDialog.handleSave.
     .eq("updated_at", expectedUpdatedAt)
     .select(ITEM_COLUMNS)
     .maybeSingle<Item>();

@@ -157,7 +157,10 @@ export default function AcceptedItemsView({ initialItems, view, initialTypeFilte
     // Wspólny cookie (session, poza URL) — serwer odczyta go przy każdym SSR (refresh ORAZ nawigacja
     // między widokami) i wyrenderuje od razu poprawnie przefiltrowaną listę, bez przeskoku ani skoku na
     // nieaktualny filtr innego widoku.
-    document.cookie = `${TYPE_FILTER_COOKIE}=${next}; path=/; SameSite=Lax`;
+    // `Secure` dokładamy tylko po HTTPS — na http-dev Secure-cookie nie byłoby odsyłane, więc SSR
+    // straciłby filtr; w produkcji (HTTPS) flaga obowiązuje dla spójności.
+    const secure = window.location.protocol === "https:" ? "; Secure" : "";
+    document.cookie = `${TYPE_FILTER_COOKIE}=${next}; path=/; SameSite=Lax${secure}`;
   }
 
   // 404 (item nieedytowalny / zniknął) — usuń z listy i z zaznaczenia.

@@ -9,6 +9,17 @@ S-05 dokłada dwie zdolności do gotowej infrastruktury 5 widoków list (zbudowa
 
 Zmiana jest **czysto aplikacyjna** — bez migracji. Schemat już niesie `updated_at` (timestamptz, aktualizowane aplikacyjnie) i `operational_status` dla wszystkich typów (po S-04).
 
+## Stan as-built (rewizje UX 2026-06-16 — czytaj PRZED kontraktami faz)
+
+> Ten plan był rewidowany w trakcie implementacji. Kanon rewizji żyje w `change.md` (decyzje #1-refinement, #3, #6, #7, #8); poniższe kontrakty Faz 1–3 opisują stan PIERWOTNY i w kilku punktach NIE odzwierciedlają wdrożonego kodu. Domknięte przez `/10x-impl-review` (F2). Rozbieżności plan-litera ↔ kod:
+>
+> - **Faza 1 §2 — payload UPDATE:** plan mówi „BEZ `operational_status`"; kod **zapisuje** `operational_status` z wartości podanej w dialogu (rewizja #3/#7). Inwariant „brak cichego resetu" utrzymany — wartość jest jawna z selektora, nie derywowana (`deriveOperationalStatus` nie jest wołane w ścieżce edycji).
+> - **Faza 2 §2–§3 — obsługa konfliktu:** plan zakładał callback `onConflict?(id)` → odświeżenie z poziomu rodzica; kod obsługuje 409 **lokalnie w dialogu** trwałym toastem (10 s) z akcją „Odśwież" (commit `0c5e0a2`), bez callbacku do widoku.
+> - **Faza 2 §4 — `PendingItemsView.tsx`:** plik nie wymagał zmiany — `EditItemDialog` sam czyta `item.updated_at`, więc pending korzysta z compare-and-swap bez jawnego przekazania.
+> - **Kluczowe odkrycia — `edit-form.ts`:** plan mówi „reużywalna bez zmian"; `buildEditPayload` zyskał parametr `operationalStatus` (wymuszone rewizją #7).
+> - **Filtr typu:** persystowany w cookie `tl_typefilter` czytanym serwerowo (rewizja #1-refinement), nie czysto efemeryczny — `initialTypeFilter` prop z SSR.
+> - **Dialog edycji:** dodano przełącznik rozszerzania na obszar listy (decyzja #8).
+
 ## Analiza stanu obecnego
 
 Filtr główny FR-008 (5 rozłącznych widoków) jest **w 100% gotowy**:

@@ -210,4 +210,29 @@ d("items-mutation — RLS + status-guard + derywacja (integracja)", () => {
       ),
     ).rejects.toBeInstanceOf(ItemNotEditableError);
   });
+
+  it("B nie edytuje itemu A (RLS → ItemNotEditableError, item A bez zmian)", async () => {
+    // Symetria pokrycia z bulk: ścieżka editItem też musi być izolowana per-user. Pod RLS B-a follow-up
+    // SELECT po `id` zwraca null (item A niewidoczny) ⇒ ItemNotEditableError, a wiersz A pozostaje nietknięty.
+    const acceptedId = await insertItem(A.supabase, A.id, {
+      acceptance_status: "accepted",
+      operational_status: "in_progress",
+      title: "A-oryginał",
+    });
+    const before = await rowOf(A.supabase, acceptedId);
+
+    await expect(
+      editItem(
+        B.supabase,
+        acceptedId,
+        { title: "Wrogi zapis", description: "hack", type: "note", operationalStatus: "done" },
+        before.updated_at,
+      ),
+    ).rejects.toBeInstanceOf(ItemNotEditableError);
+
+    const after = await rowOf(A.supabase, acceptedId);
+    expect(after.title).toBe("A-oryginał"); // brak cichego nadpisania
+    expect(after.operational_status).toBe("in_progress");
+    expect(after.updated_at).toBe(before.updated_at); // wiersz nietknięty
+  });
 });

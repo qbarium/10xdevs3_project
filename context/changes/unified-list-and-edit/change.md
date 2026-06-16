@@ -1,7 +1,7 @@
 ---
 change_id: unified-list-and-edit
 title: Jednolita lista (filtr typu) + edycja zaakceptowanych itemów
-status: implemented
+status: impl_reviewed
 created: 2026-06-15
 updated: 2026-06-16
 ---
@@ -22,3 +22,5 @@ Bez migracji — schemat (`updated_at`, `operational_status` dla wszystkich typ�
 4. **Optimistic concurrency WCHODZI** (lekcja lessons.md „lost update" wprost wskazała S-05): klient wysyła oczekiwany `updated_at` z chwili otwarcia, serwis robi compare-and-swap → `409 conflict`. Kolumna `updated_at` już istnieje (aktualizowana aplikacyjnie).
 5. **Forma filtra = rząd przycisków/zakładek single-select** (spójne z `MainFilterNav`).
 6. **Po zmianie typu w aktywnym filtrze item ZOSTAJE widoczny do odświeżenia/przełączenia filtra** (zbiór „przypiętych" id renderowany wbrew predykatowi). Świadomy wyłom z domyślnej czystej derywacji (decyzja użytkownika; zmieniona z rekomendowanego „znika natychmiast").
+
+8. **Przełącznik rozszerzania dialogu edycji na obszar listy (aneks post-implementacyjny, 2026-06-16).** Poza pierwotnym planem i decyzjami #1–#7: `EditItemDialog` zyskał toggle Maximize/Minimize (commity `5f7ee19`, `81c6a84`, `79d16c5`) — przy długim opisie dialog rozszerza się na szerokość obszaru listy zamiast wychodzić poza ekran, a textarea wypełnia dostępną przestrzeń. Czysty feature UX dorzucony w trakcie; izolowany (tylko prezentacja dialogu, bez wpływu na kontrakt edycji/serwis). Udokumentowany tu jako odkryty zakres (zgodnie z wzorcem aneksów repo), wychwycony przez `/10x-impl-review` (F1). Brak testów interakcji toggle — akceptowalne dla feature'u czysto prezentacyjnego w MVP.

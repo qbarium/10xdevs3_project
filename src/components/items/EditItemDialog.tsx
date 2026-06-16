@@ -77,6 +77,7 @@ export default function EditItemDialog({ item, open, onOpenChange, onSaved, onNo
   async function handleSave(): Promise<void> {
     if (titleInvalid) return;
     // `item.updated_at` to znacznik z chwili otwarcia dialogu — serwer porówna go (compare-and-swap).
+    // Przekazujemy go DOSŁOWNIE, bez re-formatowania — różnica reprezentacji dałaby fałszywy 409.
     const result = await editItem(
       item.id,
       buildEditPayload(title, description, type, operationalStatus),
