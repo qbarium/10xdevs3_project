@@ -55,13 +55,17 @@ export default function EditItemDialog({ item, open, onOpenChange, onSaved, onNo
   // Stan operacyjny edytowalny tylko dla zaakceptowanych — pending jest przed cyklem życia.
   const canEditStatus = item.acceptance_status === "accepted";
 
-  // Rozszerzony: pozycjonowanie `inset` (top-20 zostawia odsłoniętą górną nawigację) zamiast centrowania,
-  // a textarea wypełnia wysokość. Normalny: rośnie wraz z polem (w-auto), limit 95vw / 85vh + scroll.
+  // Rozszerzony: okno pozycjonowane `inset` (top-20 zostawia odsłoniętą górną nawigację) i ułożone jako
+  // flex-kolumna — nagłówek i stopka (przyciski) PRZYPIĘTE, środek (pola) rośnie i scrolluje, a textarea
+  // wypełnia wolną wysokość. Dzięki temu „Zapisz" zawsze widoczne, niezależnie od wysokości ekranu.
+  // Normalny: okno rośnie wraz z polem (w-auto), limit 95vw / 85vh + scroll.
   const contentClass = expanded
-    ? "top-20 right-4 bottom-4 left-4 w-auto max-w-none translate-x-0 translate-y-0 max-h-none overflow-auto sm:max-w-none"
+    ? "top-20 right-4 bottom-4 left-4 flex w-auto max-w-none translate-x-0 translate-y-0 flex-col overflow-hidden max-h-none sm:max-w-none"
     : "max-h-[85vh] w-auto max-w-[95vw] overflow-auto sm:max-w-[95vw]";
+  const fieldsClass = expanded ? "flex min-h-0 flex-1 flex-col gap-4 overflow-auto" : "flex flex-col gap-4";
+  const descriptionFieldClass = expanded ? "flex min-h-0 flex-1 flex-col gap-2" : "flex flex-col gap-2";
   const descriptionClass = expanded
-    ? "field-sizing-fixed min-h-[55vh] w-full max-w-none min-w-0 resize overflow-auto"
+    ? "field-sizing-fixed min-h-0 w-full flex-1 resize-none overflow-auto"
     : "field-sizing-fixed max-h-[65vh] min-h-28 w-[32rem] max-w-[90vw] min-w-[16rem] resize overflow-auto";
 
   // Pola inicjalizowane z propsów; reset przy zmianie itemu zapewnia remount przez `key={item.id}`.
@@ -128,11 +132,11 @@ export default function EditItemDialog({ item, open, onOpenChange, onSaved, onNo
             {expanded ? <Minimize2Icon className="size-4" /> : <Maximize2Icon className="size-4" />}
             <span className="sr-only">{expanded ? "Zmniejsz okno" : "Rozszerz okno"}</span>
           </button>
-          <DialogHeader>
+          <DialogHeader className={expanded ? "shrink-0" : undefined}>
             <DialogTitle>Edytuj element</DialogTitle>
           </DialogHeader>
 
-          <div className="flex flex-col gap-4">
+          <div className={fieldsClass}>
             <div className="flex flex-col gap-2">
               <Label htmlFor="edit-title">Tytuł</Label>
               <Input
@@ -146,7 +150,7 @@ export default function EditItemDialog({ item, open, onOpenChange, onSaved, onNo
               {titleInvalid && <p className="text-destructive text-sm">Tytuł jest wymagany.</p>}
             </div>
 
-            <div className="flex flex-col gap-2">
+            <div className={descriptionFieldClass}>
               <Label htmlFor="edit-description">Opis</Label>
               {/* field-sizing-fixed: bez auto-rozrostu przy Enterze; scroll w kontrolce + uchwyt `resize`
                   w OBU osiach. Domyślne wymiary (w-[32rem] / min-h-28) to minimum; max 90vw / 65vh.
@@ -206,7 +210,7 @@ export default function EditItemDialog({ item, open, onOpenChange, onSaved, onNo
             )}
           </div>
 
-          <DialogFooter>
+          <DialogFooter className={expanded ? "shrink-0" : undefined}>
             <Button
               variant="outline"
               onClick={() => {
