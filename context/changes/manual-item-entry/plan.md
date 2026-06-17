@@ -218,19 +218,19 @@ Brak migracji — schemat (`items`, RLS INSERT, nullable `import_session_id`) go
 - [x] 1.2 Build przechodzi: `npm run build` — aa5e32a
 - [x] 1.3 Testy jednostkowe przechodzą: `npm test` — aa5e32a
 - [x] 1.4 Testy integracyjne przechodzą: `npm run test:integration` — aa5e32a
-- [ ] 1.5 Doraźne (curl + zapytanie do bazy): POST poprawny → 201 + `accepted`/`new`/`null session`; zły payload → 400; bez auth → 401; sesja bez klucza → 201; wiersz potwierdzony w bazie
+- [x] 1.5 Doraźne (curl + zapytanie do bazy): POST poprawny → 201 + `accepted`/`new`/`null session`; zły payload → 400; bez auth → 401; sesja bez klucza → 201; wiersz potwierdzony w bazie
 
 ### Faza 2: Frontend — modal + akcja w Aktywne + UX po zapisie
 
 #### Automatyczne
 
-- [x] 2.1 Lint przechodzi: `npm run lint`
-- [x] 2.2 Build przechodzi: `npm run build`
-- [x] 2.3 Testy jednostkowe przechodzą: `npm test` (isTitleValid/disabled, readLastItemType+fallback, buildCreatePayload, reducer insert+pin)
+- [x] 2.1 Lint przechodzi: `npm run lint` — cca773b
+- [x] 2.2 Build przechodzi: `npm run build` — cca773b
+- [x] 2.3 Testy jednostkowe przechodzą: `npm test` (isTitleValid/disabled, readLastItemType+fallback, buildCreatePayload, reducer insert+pin) — cca773b
 
 #### Ręczne
 
-- [ ] 2.4 Przycisk „Dodaj item" w Aktywne; nieobecny w Zakończone/Anulowane
+- [x] 2.4 Przycisk „Dodaj item" w Aktywne; nieobecny w Zakończone/Anulowane
 - [ ] 2.5 Selektor pokazuje domyślny typ; `focus()` + scroll na nowej karcie po zapisie
 - [ ] 2.6 Toast „Dodano element."; dialog zamyka się (brak „dodaj kolejny")
 - [ ] 2.7 Klik-through bez skonfigurowanego klucza API tworzy item
