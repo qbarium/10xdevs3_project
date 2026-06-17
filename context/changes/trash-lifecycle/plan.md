@@ -317,11 +317,11 @@ Brak migracji ani zmian RLS — schemat (`deleted`, polityka `items_delete_own`)
 
 #### Ręczne
 
-- [ ] 1.4 `trash` ustawia `acceptance_status='deleted'`, `operational_status` niezmieniony
-- [ ] 1.5 `restore`: `deleted→accepted` oraz `rejected→pending`
-- [ ] 1.6 `empty` trwale kasuje wiersze rejected+deleted; zwraca `deletedCount`
-- [ ] 1.7 RLS: drugi user nie kasuje cudzego kosza (ręcznie — unit tego nie dowodzi)
-- [ ] 1.8 PRD: usunięty zapis o jednokierunkowości; FR-012/013 wspominają `rejected→pending`
+- [x] 1.4 `trash` ustawia `acceptance_status='deleted'`, `operational_status` niezmieniony
+- [x] 1.5 `restore`: `deleted→accepted` oraz `rejected→pending`
+- [x] 1.6 `empty` trwale kasuje wiersze rejected+deleted; zwraca `deletedCount`
+- [x] 1.7 RLS: drugi user nie kasuje cudzego kosza (ręcznie — unit tego nie dowodzi)
+- [x] 1.8 PRD: usunięty zapis o jednokierunkowości; FR-012/013 wspominają `rejected→pending`
 
 ### Faza 2: Frontend Kosz
 
@@ -333,10 +333,10 @@ Brak migracji ani zmian RLS — schemat (`deleted`, polityka `items_delete_own`)
 
 #### Ręczne
 
-- [ ] 2.4 Pod-filtr Wszystkie/Odrzucone/Usunięte + filtr typu działają łącznie
-- [ ] 2.5 „Przywróć" (per-item i bulk) `rejected` → item ląduje w „Elementy do akceptacji"
-- [ ] 2.6 „Wyczyść kosz": dialog z łączną liczbą, po potwierdzeniu lista pusta i wiersze zniknęły z DB
-- [ ] 2.7 Potwierdzenie restore tylko przy select-all; reakcja UI < 200 ms
+- [x] 2.4 Pod-filtr Wszystkie/Odrzucone/Usunięte + filtr typu działają łącznie
+- [x] 2.5 „Przywróć" (per-item i bulk) `rejected` → item ląduje w „Elementy do akceptacji"
+- [x] 2.6 „Wyczyść kosz": dialog z łączną liczbą, po potwierdzeniu lista pusta i wiersze zniknęły z DB
+- [x] 2.7 Potwierdzenie restore tylko przy select-all; reakcja UI < 200 ms
 
 ### Faza 3: Frontend — wejście do kosza
 
@@ -348,6 +348,6 @@ Brak migracji ani zmian RLS — schemat (`deleted`, polityka `items_delete_own`)
 
 #### Ręczne
 
-- [ ] 3.4 „Do kosza" per-item i bulk w Aktywne/Zakończone/Anulowane; potwierdzenie tylko przy select-all
-- [ ] 3.5 Pełna pętla accepted→deleted→restore→accepted z zachowaniem `operational_status`
-- [ ] 3.6 Brak regresji w 4 przyciskach stanu operacyjnego i w edycji
+- [x] 3.4 „Do kosza" per-item i bulk w Aktywne/Zakończone/Anulowane; potwierdzenie tylko przy select-all
+- [x] 3.5 Pełna pętla accepted→deleted→restore→accepted z zachowaniem `operational_status`
+- [x] 3.6 Brak regresji w 4 przyciskach stanu operacyjnego i w edycji
