@@ -40,7 +40,7 @@ const ACCEPTANCE_STATUS_LABELS: Record<AcceptanceStatus, string> = {
 // stagingu) i `deleted` (zaakceptowany przeniesiony do kosza). Wąski typ (zamiast pełnego
 // `AcceptanceStatus`) wyklucza kompilacyjnie pomyłkowe podanie `pending`/`accepted` — itemu o tym
 // statusie z definicji nie ma w widoku Kosz. Etykiety pokrywają się z generycznymi, ale funkcja niesie
-// intencję „pochodzenie w koszu" (badge na karcie + pod-filtr).
+// intencję „pochodzenie w koszu" (badge na karcie).
 const ACCEPTANCE_ORIGIN_LABELS: Record<"rejected" | "deleted", string> = {
   rejected: "Odrzucone",
   deleted: "Usunięte",

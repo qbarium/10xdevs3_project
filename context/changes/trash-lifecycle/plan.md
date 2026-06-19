@@ -151,6 +151,8 @@ UWAGA: unity mockują Supabase — NIE dowodzą RLS. Izolacja per-user przy twar
 
 ## Faza 2: Frontend Kosz
 
+> 🔁 **Scope-down 2026-06-19 (decyzja właściciela, `be3b01d`):** pod-filtr pochodzenia (Wszystkie/Odrzucone/Usunięte) oraz plik `trash-view.ts`/`applyTrashSubFilter` NIE weszły do finalnej implementacji. W Koszu zawężanie odbywa się WYŁĄCZNIE filtrem typu (jak inne widoki); rozróżnienie `rejected`/`deleted` niesie badge na karcie. Bloki §3–§4 i krok 2.4 poniżej opisują PIERWOTNY zamysł — aktualną prawdę niosą change.md (Notes) i PRD FR-012.
+
 ### Przegląd
 
 Zamiana read-only widoku Kosza na interaktywną wyspę: pod-filtr rejected/deleted, restore (per-item + bulk), „Wyczyść kosz" z obowiązkowym potwierdzeniem.
@@ -333,7 +335,7 @@ Brak migracji ani zmian RLS — schemat (`deleted`, polityka `items_delete_own`)
 
 #### Ręczne
 
-- [x] 2.4 Pod-filtr Wszystkie/Odrzucone/Usunięte + filtr typu działają łącznie
+- [x] 2.4 Pod-filtr Wszystkie/Odrzucone/Usunięte + filtr typu działają łącznie — 🔁 scope-down `be3b01d`: pod-filtr usunięty; zweryfikowano sam filtr typu
 - [x] 2.5 „Przywróć" (per-item i bulk) `rejected` → item ląduje w „Elementy do akceptacji"
 - [x] 2.6 „Wyczyść kosz": dialog z łączną liczbą, po potwierdzeniu lista pusta i wiersze zniknęły z DB
 - [x] 2.7 Potwierdzenie restore tylko przy select-all; reakcja UI < 200 ms
