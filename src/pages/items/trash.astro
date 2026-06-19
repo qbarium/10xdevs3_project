@@ -1,13 +1,15 @@
 ---
-// Widok „Kosz" — read-only lista odrzuconych itemów (S-03). Przenieś-do-kosza/przywróć/wyczyść
-// (FR-013/FR-016) to S-06 — tu Kosz pokazuje wyłącznie `rejected`, bez akcji. SSR, chroniony
-// middleware; dane serwerowo (RLS); przejściowy błąd → pusta lista (wzorzec items.astro).
+// Widok „Kosz" (S-06) — interaktywna wyspa zamiast read-only listy. Ładuje OBA statusy kosza
+// (`rejected` + `deleted`) i montuje TrashItemsView: pod-filtr pochodzenia, restore (per-item + bulk),
+// „Wyczyść kosz". SSR, chroniony middleware (PROTECTED_ROUTES obejmuje prefiks /items); dane serwerowo
+// (klient z cookies usera → RLS izoluje); przejściowy błąd → pusta lista (łagodna degradacja).
 import Layout from "@/layouts/Layout.astro";
 import Topbar from "@/components/Topbar.astro";
 import MainFilterNav from "@/components/items/MainFilterNav.astro";
-import ItemList from "@/components/items/ItemList.astro";
+import TrashItemsView from "@/components/items/TrashItemsView.tsx";
+import { parseTypeFilter, TYPE_FILTER_COOKIE } from "@/components/items/type-filter";
 import { createClient } from "@/lib/supabase";
-import { getRejectedItems } from "@/lib/services/items";
+import { getTrashItems } from "@/lib/services/items";
 import type { Item } from "@/types";
 
 export const prerender = false;
@@ -18,11 +20,14 @@ let items: Item[] = [];
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 if (user && supabase) {
   try {
-    items = await getRejectedItems(supabase, user.id);
+    items = await getTrashItems(supabase, user.id);
   } catch {
     items = [];
   }
 }
+
+// Filtr typu z cookie (wspólny z widokami accepted) — SSR renderuje od razu poprawnie przefiltrowaną listę.
+const initialTypeFilter = parseTypeFilter(Astro.cookies.get(TYPE_FILTER_COOKIE)?.value);
 ---
 
 <Layout title="Kosz">
@@ -34,7 +39,7 @@ if (user && supabase) {
           Kosz
         </h1>
         <MainFilterNav />
-        <ItemList items={items} emptyLabel="Kosz jest pusty." />
+        <TrashItemsView client:load initialItems={items} initialTypeFilter={initialTypeFilter} />
       </main>
     </div>
   </div>

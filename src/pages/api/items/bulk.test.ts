@@ -5,10 +5,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // dotknięcia bazy", krok 1.7), kształt odpowiedzi (1.5) i mapowanie błędu. Warstwa serwis→RLS→DB
 // jest pokryta testem integracyjnym items-mutation.
 vi.mock("@/lib/supabase", () => ({ createClient: vi.fn(() => ({})) }));
-vi.mock("@/lib/services/items-mutation", () => ({ setAcceptanceStatus: vi.fn() }));
+vi.mock("@/lib/services/items-mutation", () => ({
+  setAcceptanceStatus: vi.fn(),
+  moveToTrash: vi.fn(),
+  restoreFromTrash: vi.fn(),
+}));
 vi.mock("@/lib/services/logger", () => ({ reportError: vi.fn() }));
 
-import { setAcceptanceStatus } from "@/lib/services/items-mutation";
+import { moveToTrash, restoreFromTrash, setAcceptanceStatus } from "@/lib/services/items-mutation";
 import { POST } from "@/pages/api/items/bulk";
 
 const UUID = "11111111-1111-4111-8111-111111111111";
@@ -36,6 +40,8 @@ function ctx(body: unknown, user: { id: string } | null = { id: "user-1" }) {
 describe("POST /api/items/bulk", () => {
   beforeEach(() => {
     vi.mocked(setAcceptanceStatus).mockResolvedValue({ updatedIds: [UUID] });
+    vi.mocked(moveToTrash).mockResolvedValue({ updatedIds: [UUID] });
+    vi.mocked(restoreFromTrash).mockResolvedValue({ updatedIds: [UUID] });
   });
   afterEach(() => vi.clearAllMocks());
 
@@ -57,6 +63,26 @@ describe("POST /api/items/bulk", () => {
   it("reject → serwis z 'rejected'", async () => {
     await POST(ctx({ ids: [UUID], action: "reject" }));
     expect(vi.mocked(setAcceptanceStatus)).toHaveBeenCalledWith(expect.anything(), [UUID], "rejected");
+  });
+
+  // S-06 — trash woła moveToTrash (NIE setAcceptanceStatus), zwraca kształt {ok, action, updatedIds, count}
+  it("trash → moveToTrash, odpowiedź {ok, action:'trash', updatedIds, count}", async () => {
+    const res = await POST(ctx({ ids: [UUID], action: "trash" }));
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as Body;
+    expect(body).toMatchObject({ ok: true, action: "trash", updatedIds: [UUID], count: 1 });
+    expect(vi.mocked(moveToTrash)).toHaveBeenCalledWith(expect.anything(), [UUID]);
+    expect(vi.mocked(setAcceptanceStatus)).not.toHaveBeenCalled();
+  });
+
+  // S-06 — restore woła restoreFromTrash (dwukierunkowe deleted→accepted / rejected→pending)
+  it("restore → restoreFromTrash, odpowiedź {ok, action:'restore', updatedIds, count}", async () => {
+    const res = await POST(ctx({ ids: [UUID], action: "restore" }));
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as Body;
+    expect(body).toMatchObject({ ok: true, action: "restore", updatedIds: [UUID], count: 1 });
+    expect(vi.mocked(restoreFromTrash)).toHaveBeenCalledWith(expect.anything(), [UUID]);
+    expect(vi.mocked(setAcceptanceStatus)).not.toHaveBeenCalled();
   });
 
   // 1.7 — zły payload → 400 BEZ dotknięcia bazy (serwis nie wywołany)
