@@ -260,14 +260,9 @@ export default function AcceptedItemsView({ initialItems, view, initialTypeFilte
                       {operationalStatusLabel(target)}
                     </Button>
                   ))}
-                  {/* „Do kosza" (S-06) — wyróżniony subtelnie (amber) od 4 przycisków stanu operacyjnego. */}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={selectedCount === 0 || pending}
-                    onClick={requestTrash}
-                    className="border-amber-300/30 text-amber-100/80 hover:bg-amber-400/10 hover:text-amber-50"
-                  >
+                  {/* „Do kosza" (S-06) — ten sam outline co 4 przyciski stanu (czytelny też w disabled);
+                      odróżnia go etykieta i pozycja. Czerwień zarezerwowana dla „Wyczyść kosz" (trwałe). */}
+                  <Button size="sm" variant="outline" disabled={selectedCount === 0 || pending} onClick={requestTrash}>
                     Do kosza
                   </Button>
                 </div>
@@ -309,7 +304,7 @@ export default function AcceptedItemsView({ initialItems, view, initialTypeFilte
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-amber-100/70 hover:bg-amber-400/10 hover:text-amber-50"
+                        className="text-white/60 hover:bg-white/10 hover:text-white"
                         disabled={pending}
                         onClick={() => {
                           void execute({ kind: "trash", ids: [item.id] });
