@@ -78,3 +78,27 @@ export const editItemBodySchema = editItemSchema.extend({
   expectedUpdatedAt: z.iso.datetime({ offset: true }),
 });
 export type EditItemBodyInput = z.infer<typeof editItemBodySchema>;
+
+/**
+ * Payload tworzenia itemu RĘCZNEGO (S-07) — WYŁĄCZNIE pola, które user podaje w formularzu. Niezmienniki
+ * domenowe (`acceptance_status='accepted'`, `operational_status`, `import_session_id=NULL`, `user_id`) ustala
+ * SERWER, nie klient — dlatego ich tu celowo NIE ma. To fail-closed na ciele żądania API: rozszerza lekcję
+ * „nie ufaj wejściu" z konfiguracji na payload (zod domyślnie USUWA nadmiarowe pola, więc ewentualnie
+ * przemycony `acceptance_status`/`operational_status`/`import_session_id` zostaje zignorowany, nie zapisany).
+ * `title` wymagany (trim + reject pusty), `description` nullable z normalizacją pusty/whitespace → null
+ * (lustro `editItemSchema`), `type` z pięciu wartości `ItemType`. BRAK `operationalStatus` — przy tworzeniu stan
+ * jest derywowany serwerowo (`deriveOperationalStatus`), nie wybierany w UI (inaczej niż przy edycji).
+ */
+export const createItemSchema = z.object({
+  title: z.string().trim().min(1),
+  description: z
+    .string()
+    .nullable()
+    .transform((value) => {
+      if (value === null) return null;
+      const trimmed = value.trim();
+      return trimmed === "" ? null : trimmed;
+    }),
+  type: z.enum(ITEM_TYPES),
+});
+export type CreateItemInput = z.infer<typeof createItemSchema>;

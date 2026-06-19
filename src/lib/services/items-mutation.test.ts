@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  createManualItem,
   deriveOperationalStatus,
   editItem,
   ItemConflictError,
@@ -31,7 +32,18 @@ function mockSupabase(result: Result | Result[]) {
       return Promise.resolve(r).then(onFulfilled, onRejected);
     },
   };
-  for (const method of ["from", "update", "in", "eq", "select", "order", "overrideTypes", "maybeSingle"]) {
+  for (const method of [
+    "from",
+    "insert",
+    "update",
+    "in",
+    "eq",
+    "select",
+    "order",
+    "overrideTypes",
+    "maybeSingle",
+    "single",
+  ]) {
     builder[method] = vi.fn((...args: unknown[]) => {
       calls.push([method, args]);
       return builder;
@@ -55,6 +67,51 @@ describe("deriveOperationalStatus", () => {
     expect(deriveOperationalStatus("idea")).toBe("new");
     expect(deriveOperationalStatus("decision")).toBe("new");
     expect(deriveOperationalStatus("other")).toBe("new");
+  });
+});
+
+describe("createManualItem", () => {
+  it("buduje INSERT z niezmiennikami serwera (accepted / new / null session) + jawny updated_at", async () => {
+    const row = {
+      id: "x",
+      type: "note",
+      title: "T",
+      description: "opis",
+      acceptance_status: "accepted",
+      operational_status: "new",
+      import_session_id: null,
+    };
+    const { supabase, calls } = mockSupabase({ data: row, error: null });
+    const res = await createManualItem(supabase, "user-1", { title: "T", description: "opis", type: "note" });
+
+    expect(res).toBe(row);
+    const payload = firstArgOf(calls, "insert");
+    expect(payload.user_id).toBe("user-1");
+    expect(payload.import_session_id).toBeNull();
+    expect(payload.type).toBe("note");
+    expect(payload.title).toBe("T");
+    expect(payload.description).toBe("opis");
+    expect(payload.acceptance_status).toBe("accepted");
+    expect(payload.operational_status).toBe("new"); // deriveOperationalStatus(type)
+    expect(typeof payload.updated_at).toBe("string"); // jawny updated_at (wzorzec mutacji S-04)
+    // SELECT jawnych kolumn (stabilny kształt Item), NIE '*'
+    expect(calls.filter(([m]) => m === "select").length).toBe(1);
+  });
+
+  it("niezmienniki są STAŁE — payload nie zależy od wejścia (każdy typ → accepted/new)", async () => {
+    const { supabase, calls } = mockSupabase({ data: { id: "x" }, error: null });
+    await createManualItem(supabase, "user-2", { title: "Idea", description: null, type: "idea" });
+    const payload = firstArgOf(calls, "insert");
+    expect(payload.acceptance_status).toBe("accepted");
+    expect(payload.operational_status).toBe("new");
+    expect(payload.import_session_id).toBeNull();
+  });
+
+  it("rzuca na błąd serwera", async () => {
+    const { supabase } = mockSupabase({ data: null, error: { message: "boom" } });
+    await expect(
+      createManualItem(supabase, "user-1", { title: "T", description: null, type: "task" }),
+    ).rejects.toThrow();
   });
 });
 

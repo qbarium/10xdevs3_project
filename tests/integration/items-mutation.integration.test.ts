@@ -1,7 +1,13 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { editItem, ItemConflictError, ItemNotEditableError, setAcceptanceStatus } from "@/lib/services/items-mutation";
+import {
+  createManualItem,
+  editItem,
+  ItemConflictError,
+  ItemNotEditableError,
+  setAcceptanceStatus,
+} from "@/lib/services/items-mutation";
 
 // Mutacje `items` przeciw lokalnemu Supabase. Dwóch userów przez signUp (config.toml
 // enable_confirmations=false → sesja od razu). Sprawdzamy: izolację RLS (B nie rusza itemów A),
@@ -91,6 +97,28 @@ d("items-mutation — RLS + status-guard + derywacja (integracja)", () => {
   afterAll(async () => {
     await A.supabase.auth.signOut();
     await B.supabase.auth.signOut();
+  });
+
+  it("createManualItem wstawia item ręczny: accepted / new / NULL session (S-07), potwierdzone w bazie", async () => {
+    const item = await createManualItem(A.supabase, A.id, { title: "Ręczny", description: "opis", type: "note" });
+    expect(item.acceptance_status).toBe("accepted");
+    expect(item.operational_status).toBe("new");
+    expect(item.import_session_id).toBeNull();
+    expect(item.type).toBe("note");
+    expect(item.title).toBe("Ręczny");
+    expect(item.description).toBe("opis");
+    expect(item.user_id).toBe(A.id);
+    // Potwierdzenie ZAPYTANIEM do bazy (nie tylko zwrotką serwisu) — wiersz faktycznie utrwalony.
+    const row = await rowOf(A.supabase, item.id);
+    expect(row.acceptance_status).toBe("accepted");
+    expect(row.operational_status).toBe("new");
+  });
+
+  it("createManualItem pod RLS izoluje per-user — B tworzy własny item, A go nie widzi", async () => {
+    const item = await createManualItem(B.supabase, B.id, { title: "B-item", description: null, type: "task" });
+    expect(item.user_id).toBe(B.id);
+    // RLS: klient A nie widzi wiersza B → rowOf (.single()) rzuca (brak wiersza).
+    await expect(rowOf(A.supabase, item.id)).rejects.toThrow();
   });
 
   it("B nie zmienia itemu A (RLS → updatedIds puste, item nadal pending)", async () => {

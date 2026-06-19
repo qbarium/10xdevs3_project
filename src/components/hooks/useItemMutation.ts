@@ -4,12 +4,13 @@
 
 import { useState } from "react";
 
-import type { EditItemInput } from "@/lib/validation/items";
+import type { CreateItemInput, EditItemInput } from "@/lib/validation/items";
 import type { Item, OperationalStatus } from "@/types";
 
 const BULK_ENDPOINT = "/api/items/bulk";
 const OPERATIONAL_ENDPOINT = "/api/items/operational";
 const TRASH_EMPTY_ENDPOINT = "/api/items/trash/empty";
+const CREATE_ENDPOINT = "/api/items";
 
 interface BulkResponse {
   ok?: boolean;
@@ -25,6 +26,10 @@ interface EditResponse {
   ok?: boolean;
   item?: Item;
 }
+interface CreateResponse {
+  ok?: boolean;
+  item?: Item;
+}
 
 /**
  * Wynik edycji: sukces; „nie do edycji" (404 — item nie istnieje / nieedytowalny); „konflikt"
@@ -32,9 +37,14 @@ interface EditResponse {
  */
 export type EditItemResult = { ok: true; item: Item } | { ok: false; reason: "not_found" | "conflict" | "failed" };
 
+/** Wynik tworzenia itemu ręcznego (S-07): sukces z wierszem albo ogólny błąd (sieć / 4xx / 5xx). */
+export type CreateItemResult = { ok: true; item: Item } | { ok: false; reason: "failed" };
+
 export interface UseItemMutation {
   pending: boolean;
   error: string | null;
+  /** Tworzy item ręczny (POST /api/items); zwraca utworzony wiersz albo `{ok:false}` przy błędzie. */
+  createItem: (input: CreateItemInput) => Promise<CreateItemResult>;
   /** Zatwierdza zaznaczone; zwraca liczbę FAKTYCZNIE zmienionych (guard pomija nie-pending), null przy błędzie. */
   bulkAccept: (ids: string[]) => Promise<number | null>;
   /** Odrzuca zaznaczone; zwraca liczbę FAKTYCZNIE zmienionych (guard pomija nie-pending), null przy błędzie. */
@@ -164,9 +174,36 @@ export function useItemMutation(): UseItemMutation {
     }
   }
 
+  // Tworzenie itemu ręcznego (S-07). Wzorzec jak `editItem`: POST, mapowanie odpowiedzi na wynik
+  // dyskryminowany, komunikat błędu bez szczegółów sieci/DB. Endpoint zwraca 201 `{ ok, item }`.
+  async function createItem(input: CreateItemInput): Promise<CreateItemResult> {
+    setPending(true);
+    setError(null);
+    try {
+      const res = await fetch(CREATE_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
+      const data = (await res.json()) as CreateResponse;
+      if (!res.ok || !data.ok || !data.item) {
+        setError("Nie udało się dodać elementu. Spróbuj ponownie.");
+        return { ok: false, reason: "failed" };
+      }
+      return { ok: true, item: data.item };
+    } catch {
+      setError("Błąd połączenia. Spróbuj ponownie.");
+      return { ok: false, reason: "failed" };
+    } finally {
+      setPending(false);
+    }
+  }
+
+  // Scalenie S-06 (kosz) + S-07 (item ręczny): zwracamy KOMPLET metod z interfejsu UseItemMutation.
   return {
     pending,
     error,
+    createItem,
     bulkAccept,
     bulkReject,
     setOperationalStatus,
