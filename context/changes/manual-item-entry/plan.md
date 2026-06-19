@@ -231,6 +231,6 @@ Brak migracji — schemat (`items`, RLS INSERT, nullable `import_session_id`) go
 #### Ręczne
 
 - [x] 2.4 Przycisk „Dodaj item" w Aktywne; nieobecny w Zakończone/Anulowane
-- [ ] 2.5 Selektor pokazuje domyślny typ; `focus()` + scroll na nowej karcie po zapisie
-- [ ] 2.6 Toast „Dodano element."; dialog zamyka się (brak „dodaj kolejny")
-- [ ] 2.7 Klik-through bez skonfigurowanego klucza API tworzy item
+- [x] 2.5 Selektor pokazuje domyślny typ; `focus()` + scroll na nowej karcie po zapisie
+- [x] 2.6 Toast „Dodano element."; dialog zamyka się (brak „dodaj kolejny")
+- [x] 2.7 Klik-through bez skonfigurowanego klucza API tworzy item

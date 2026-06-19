@@ -1,9 +1,9 @@
 ---
 change_id: manual-item-entry
 title: Manual item entry
-status: implementing
+status: implemented
 created: 2026-06-16
-updated: 2026-06-17
+updated: 2026-06-19
 archived_at: null
 ---
 
