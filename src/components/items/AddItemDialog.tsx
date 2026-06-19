@@ -2,7 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { useItemMutation } from "@/components/hooks/useItemMutation";
-import { buildCreatePayload, readLastItemType, writeLastItemType } from "@/components/items/create-form";
+import { buildCreatePayload, writeLastItemType } from "@/components/items/create-form";
 import { isTitleValid } from "@/components/items/edit-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,20 +23,23 @@ import type { Item, ItemType } from "@/types";
 
 interface Props {
   open: boolean;
+  /** Domyślny typ przy otwarciu: typ aktywnego filtra, a na „Wszystkie" — ostatnio użyty (liczone w islandzie). */
+  defaultType: ItemType;
   onOpenChange: (open: boolean) => void;
-  /** Sukces utworzenia — wołane z nowym itemem; island robi insert + pin + focus. */
+  /** Sukces utworzenia — wołane z nowym itemem; island wstawia go, ew. przełącza filtr na jego typ i fokusuje. */
   onCreated: (item: Item) => void;
 }
 
 // Modal dodawania itemu RĘCZNEGO (S-07): typ / title / description. BEZ selektora stanu operacyjnego —
 // serwer ustala `new` (niezmiennik po stronie serwera, nie wybór usera). Reużywa wzorzec EditItemDialog:
 // gate `isTitleValid` na „Dodaj", toast potwierdzenia, bramka „niezapisane zmiany" przy zamknięciu z
-// niepustymi polami. Domyślny typ = ostatnio użyty (localStorage). Po zapisie zamyka się — świadomie BRAK
-// „dodaj kolejny" (jeden item na otwarcie). Rodzic montuje warunkowo (świeży mount = zerowanie pól).
-export default function AddItemDialog({ open, onOpenChange, onCreated }: Props) {
+// niepustymi polami. Domyślny typ przychodzi propsem `defaultType` (typ filtra / ostatnio użyty na „all").
+// Po zapisie zamyka się — świadomie BRAK „dodaj kolejny" (jeden item na otwarcie). Rodzic montuje warunkowo
+// (świeży mount = zerowanie pól + ponowne wzięcie `defaultType` dla bieżącego filtra).
+export default function AddItemDialog({ open, defaultType, onOpenChange, onCreated }: Props) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [type, setType] = useState<ItemType>(() => readLastItemType());
+  const [type, setType] = useState<ItemType>(defaultType);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const { createItem, pending } = useItemMutation();
 

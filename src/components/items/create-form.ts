@@ -4,9 +4,10 @@
 // null. Dodatkowo: pamięć „ostatnio użytego typu" (localStorage) oraz czysty reducer insert+pin dla
 // optimistic insert nowego itemu w islandzie Aktywne.
 
+import type { TypeFilterValue } from "@/components/items/type-filter";
 import { ITEM_TYPES } from "@/lib/ai/schema";
 import type { CreateItemInput } from "@/lib/validation/items";
-import type { Item, ItemType } from "@/types";
+import type { ItemType } from "@/types";
 
 /** Klucz localStorage pod „ostatnio użyty typ" (prefiks `tl_`, jak `tl_typefilter`). */
 const LAST_ITEM_TYPE_KEY = "tl_lastitemtype";
@@ -51,18 +52,23 @@ export function writeLastItemType(type: ItemType): void {
 }
 
 /**
- * Czysty reducer insert+pin dla optimistic insert nowego itemu w islandzie Aktywne: nowy item trafia na
- * POCZĄTEK listy ORAZ jego `id` do `pinnedIds`. Przypięcie jest KLUCZOWE — bez niego `applyTypeFilter`
- * ukryłby item, gdyby aktualny filtr typu nie pasował do jego typu, i krok „focus" nie miałby czego
- * sfokusować. Czysta funkcja: nie mutuje wejścia, zwraca nowe struktury (zachowuje wcześniejsze przypięcia).
+ * Decyzja o filtrze po utworzeniu itemu (S-07, decyzja użytkownika 2026-06-19): nowy item ma być widoczny
+ * w SWOIM widoku. Gdy aktywny jest konkretny filtr INNEGO typu — zwróć typ itemu (island przełączy filtr,
+ * item naturalnie wejdzie do listy, bez przypinania do obcego filtra). Gdy filtr to „all" albo już zgodny —
+ * zwróć bieżący (item i tak jest widoczny; nie zawężamy „all" do jednego typu). Czysta funkcja.
+ *
+ * UWAGA: dotyczy WYŁĄCZNIE tworzenia. Edycja zmieniająca typ zachowuje dotychczasowe przypięcie (decyzja #6,
+ * `pinnedIds` w handleSaved) — item zostaje widoczny tam, gdzie był, zamiast przeskakiwać widok.
  */
-export function insertCreatedItem(
-  items: readonly Item[],
-  pinnedIds: ReadonlySet<string>,
-  item: Item,
-): { items: Item[]; pinnedIds: Set<string> } {
-  return {
-    items: [item, ...items],
-    pinnedIds: new Set(pinnedIds).add(item.id),
-  };
+export function nextFilterAfterCreate(current: TypeFilterValue, itemType: ItemType): TypeFilterValue {
+  return current !== "all" && current !== itemType ? itemType : current;
+}
+
+/**
+ * Domyślny typ w dialogu dodawania (S-07, decyzja użytkownika 2026-06-19): na KONKRETNYM filtrze typu —
+ * ten typ (dodajesz zwykle to, na co patrzysz, więc item pasuje bez przeskoku filtra); na „all" — ostatnio
+ * użyty typ (`readLastItemType`). `TypeFilterValue` poza „all" JEST `ItemType`, więc zwracamy go wprost.
+ */
+export function defaultCreateType(filter: TypeFilterValue): ItemType {
+  return filter === "all" ? readLastItemType() : filter;
 }

@@ -3,7 +3,7 @@ import { toast } from "sonner";
 
 import { useItemMutation } from "@/components/hooks/useItemMutation";
 import AddItemDialog from "@/components/items/AddItemDialog";
-import { insertCreatedItem } from "@/components/items/create-form";
+import { defaultCreateType, nextFilterAfterCreate } from "@/components/items/create-form";
 import EditItemDialog from "@/components/items/EditItemDialog";
 import OperationalStatusBadge from "@/components/items/OperationalStatusBadge";
 import { reconcileAfterChange, type AcceptedView } from "@/components/items/operational-view";
@@ -182,21 +182,24 @@ export default function AcceptedItemsView({ initialItems, view, initialTypeFilte
     });
   }
 
-  // Utworzenie itemu ręcznego (S-07): insert + pin + focus. Kolejność jest istotna — w jednym przebiegu
-  // dokładamy item na początek `items` ORAZ jego id do `pinnedIds` (czysty reducer insertCreatedItem), żeby
-  // `applyTypeFilter` pokazał go niezależnie od aktualnego filtra typu; id zapisujemy w refie, a focus zrobi
-  // efekt po renderze. Bez przypięcia nowy item innego typu niż filtr nie wyrenderowałby się (nie do focusu).
+  // Utworzenie itemu ręcznego (S-07): insert + (ew.) przełączenie filtra + focus. Wstawiamy item na początek
+  // `items`; jeśli aktywny jest KONKRETNY filtr innego typu, przełączamy filtr na typ itemu
+  // (nextFilterAfterCreate → handleFilterChange) — item wchodzi do listy NATURALNIE, w swoim widoku (decyzja
+  // użytkownika 2026-06-19, zamiast przypinania do obcego filtra). Przy „all"/zgodnym filtrze nie przełączamy.
+  // EDYCJA zmieniająca typ zachowuje przypięcie (decyzja #6, handleSaved) — to celowa asymetria create vs edit.
+  // id zapisujemy w refie; focus robi efekt po renderze (zależny od zmiany `items`).
   function handleCreated(item: Item): void {
-    const next = insertCreatedItem(items, pinnedIds, item);
+    setItems((prev) => [item, ...prev]);
     pendingFocusRef.current = item.id;
-    setItems(next.items);
-    setPinnedIds(next.pinnedIds);
+    const targetFilter = nextFilterAfterCreate(typeFilter, item.type);
+    if (targetFilter !== typeFilter) handleFilterChange(targetFilter);
     setAddOpen(false);
   }
 
   // Po zmianie `items` (m.in. wstawieniu): jeśli czeka id do sfokusowania, przewiń do karty i sfokusuj ją
   // (uchwyt `data-item-id` + `tabIndex={-1}`), po czym wyzeruj ref. Efekt biegnie po renderze z już
-  // wstawioną+przypiętą kartą, więc element jest w DOM. Ref (nie state) → brak setState w efekcie.
+  // widoczną kartą (filtr pasuje albo został przełączony), więc element jest w DOM. Ref (nie state) → brak
+  // setState w efekcie.
   useEffect(() => {
     const id = pendingFocusRef.current;
     if (id === null) return;
@@ -373,6 +376,7 @@ export default function AcceptedItemsView({ initialItems, view, initialTypeFilte
       {canAdd && addOpen && (
         <AddItemDialog
           open
+          defaultType={defaultCreateType(typeFilter)}
           onOpenChange={(open) => {
             if (!open) setAddOpen(false);
           }}

@@ -2,11 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   buildCreatePayload,
-  insertCreatedItem,
+  defaultCreateType,
+  nextFilterAfterCreate,
   readLastItemType,
   writeLastItemType,
 } from "@/components/items/create-form";
-import type { Item } from "@/types";
 
 describe("buildCreatePayload", () => {
   it("trimuje title i przekazuje type", () => {
@@ -62,40 +62,45 @@ describe("readLastItemType bez dostępu do localStorage (SSR / tryb prywatny)", 
   });
 });
 
-describe("insertCreatedItem (reducer insert+pin)", () => {
-  const mk = (id: string, type: Item["type"] = "task"): Item => ({
-    id,
-    user_id: "u",
-    import_session_id: null,
-    type,
-    title: "T",
-    description: null,
-    acceptance_status: "accepted",
-    operational_status: "new",
-    created_at: "2026-06-17T00:00:00Z",
-    updated_at: "2026-06-17T00:00:00Z",
+describe("defaultCreateType (domyślny typ w dialogu)", () => {
+  it("konkretny filtr → ten typ (niezależnie od ostatnio użytego)", () => {
+    expect(defaultCreateType("note")).toBe("note");
+    expect(defaultCreateType("decision")).toBe("decision");
+    expect(defaultCreateType("task")).toBe("task");
   });
 
-  it("nowy item trafia NA POCZĄTEK listy, a jego id do pinnedIds (z zachowaniem wcześniejszych)", () => {
-    const existing = [mk("a"), mk("b")];
-    const fresh = mk("c", "note");
-    const res = insertCreatedItem(existing, new Set(["x"]), fresh);
-    expect(res.items.map((i) => i.id)).toEqual(["c", "a", "b"]);
-    expect(res.pinnedIds.has("c")).toBe(true);
-    expect(res.pinnedIds.has("x")).toBe(true);
+  it("filtr 'all' → ostatnio użyty typ (fallback 'task' przy braku)", () => {
+    const store = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: (k: string) => store.get(k) ?? null,
+      setItem: (k: string, v: string) => {
+        store.set(k, v);
+      },
+      removeItem: (k: string) => {
+        store.delete(k);
+      },
+    });
+    expect(defaultCreateType("all")).toBe("task"); // brak zapisanego → fallback
+    localStorage.setItem("tl_lastitemtype", "idea");
+    expect(defaultCreateType("all")).toBe("idea");
+    vi.unstubAllGlobals();
+  });
+});
+
+describe("nextFilterAfterCreate (przełączenie filtra po utworzeniu)", () => {
+  it("filtr 'all' → bez zmian (item i tak widoczny; nie zawężamy do jednego typu)", () => {
+    expect(nextFilterAfterCreate("all", "note")).toBe("all");
+    expect(nextFilterAfterCreate("all", "task")).toBe("all");
   });
 
-  it("pin jest niezależny od typu — item innego typu i tak przypięty (widoczny mimo filtra)", () => {
-    const res = insertCreatedItem([], new Set(), mk("c", "decision"));
-    expect(res.items.map((i) => i.id)).toEqual(["c"]);
-    expect(res.pinnedIds.has("c")).toBe(true);
+  it("filtr zgodny z typem itemu → bez zmian", () => {
+    expect(nextFilterAfterCreate("task", "task")).toBe("task");
+    expect(nextFilterAfterCreate("note", "note")).toBe("note");
   });
 
-  it("nie mutuje wejścia (czysta funkcja)", () => {
-    const existing = [mk("a")];
-    const pinned = new Set<string>();
-    insertCreatedItem(existing, pinned, mk("c"));
-    expect(existing).toHaveLength(1);
-    expect(pinned.size).toBe(0);
+  it("konkretny filtr INNEGO typu → przełącz na typ itemu (item w swoim widoku)", () => {
+    expect(nextFilterAfterCreate("task", "note")).toBe("note");
+    expect(nextFilterAfterCreate("idea", "decision")).toBe("decision");
+    expect(nextFilterAfterCreate("other", "task")).toBe("task");
   });
 });
