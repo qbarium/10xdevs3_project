@@ -9,7 +9,6 @@ import {
   requiresConfirmation,
   toggleSelection,
 } from "@/components/items/selection";
-import { applyTrashSubFilter, type TrashSubFilter } from "@/components/items/trash-view";
 import TypeFilter from "@/components/items/TypeFilter";
 import { applyTypeFilter, TYPE_FILTER_COOKIE, type TypeFilterValue } from "@/components/items/type-filter";
 import { Button } from "@/components/ui/button";
@@ -33,12 +32,6 @@ interface Props {
   initialTypeFilter: TypeFilterValue;
 }
 
-// Pod-filtr pochodzenia + jego etykiety (wzór wizualny TypeFilter). „all" lokalnie; rejected/deleted z labels.
-const SUB_FILTERS: TrashSubFilter[] = ["all", "rejected", "deleted"];
-function subFilterLabel(sub: TrashSubFilter): string {
-  return sub === "all" ? "Wszystkie" : acceptanceOriginLabel(sub);
-}
-
 // Brak koncepcji „przypiętych" w koszu (item nieedytowalny) — applyTypeFilter wymaga zbioru, podajemy pusty.
 const NO_PINNED: ReadonlySet<string> = new Set();
 
@@ -56,14 +49,14 @@ function elementNoun(n: number): string {
 }
 
 // Interaktywny island Kosza (S-06). Reużywa wzorce AcceptedItemsView: model zaznaczania (selection.ts) +
-// pessimistic dim + Dialog confirm na select-all + toast + filtr typu przez wspólny cookie SSR. Dwa wymiary
-// zawężania: pod-filtr pochodzenia (rejected/deleted, lokalny stan) × filtr typu (cookie). Restore usuwa
-// item z listy bezwarunkowo (opuszcza kosz w obu kierunkach: deleted→accepted, rejected→pending). „Wyczyść
-// kosz" to globalny twardy DELETE z obowiązkowym potwierdzeniem podającym ŁĄCZNĄ liczbę itemów kosza.
+// pessimistic dim + Dialog confirm na select-all + toast + filtr typu przez wspólny cookie SSR. Pochodzenie
+// itemu (rejected/deleted) niesie badge na karcie — w trybie Kosz zawężamy WYŁĄCZNIE po typie (jak inne
+// widoki), bez osobnego filtra statusu (decyzja właścicielska 2026-06-19). Restore usuwa item z listy
+// bezwarunkowo (opuszcza kosz w obu kierunkach: deleted→accepted, rejected→pending). „Wyczyść kosz" to
+// globalny twardy DELETE z obowiązkowym potwierdzeniem podającym ŁĄCZNĄ liczbę itemów kosza.
 export default function TrashItemsView({ initialItems, initialTypeFilter }: Props) {
   const [items, setItems] = useState<Item[]>(initialItems);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [sub, setSub] = useState<TrashSubFilter>("all");
   const [typeFilter, setTypeFilter] = useState<TypeFilterValue>(initialTypeFilter);
   const [inFlightIds, setInFlightIds] = useState<Set<string>>(new Set());
   // Potwierdzenie restore (select-all): id do przywrócenia po akceptacji. Potwierdzenie empty: boolean.
@@ -73,10 +66,9 @@ export default function TrashItemsView({ initialItems, initialTypeFilter }: Prop
   const inFlightRef = useRef(false);
   const { restoreFromTrash, emptyTrash, pending } = useItemMutation();
 
-  // Lista renderowana = itemy zawężone po obu wymiarach naraz (typ → pochodzenie). Zaznaczanie i licznik
-  // operują na WIDOCZNYCH itemach; invariant „selected ⊆ widoczne" utrzymuje czyszczenie selekcji przy
-  // zmianie któregokolwiek filtra.
-  const visibleItems = applyTrashSubFilter(applyTypeFilter(items, typeFilter, NO_PINNED), sub);
+  // Lista renderowana = itemy zawężone filtrem typu (jedyny filtr w Koszu). Zaznaczanie i licznik operują
+  // na WIDOCZNYCH itemach; invariant „selected ⊆ widoczne" utrzymuje czyszczenie selekcji przy zmianie filtra.
+  const visibleItems = applyTypeFilter(items, typeFilter, NO_PINNED);
   const allSelected = isAllSelected(selected.size, visibleItems.length);
   const selectedCount = selected.size;
 
@@ -169,12 +161,6 @@ export default function TrashItemsView({ initialItems, initialTypeFilter }: Prop
     document.cookie = `${TYPE_FILTER_COOKIE}=${next}; path=/; SameSite=Lax${secure}`;
   }
 
-  // Zmiana pod-filtra pochodzenia (lokalny stan, bez cookie): też czyści selekcję dla invariantu.
-  function handleSubChange(next: TrashSubFilter): void {
-    setSub(next);
-    setSelected(new Set());
-  }
-
   return (
     <div className="flex flex-col gap-3">
       <Toaster />
@@ -188,33 +174,9 @@ export default function TrashItemsView({ initialItems, initialTypeFilter }: Prop
         </div>
       ) : (
         <>
-          {/* Rząd pod-filtra pochodzenia + globalny „Wyczyść kosz" (zawsze dostępny, gdy kosz niepusty). */}
+          {/* Filtr typu (jedyny filtr w Koszu) + globalny „Wyczyść kosz" (zawsze dostępny, gdy kosz niepusty). */}
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Filtr pochodzenia">
-              {SUB_FILTERS.map((option) => {
-                const active = option === sub;
-                return (
-                  <Button
-                    key={option}
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    aria-pressed={active}
-                    onClick={() => {
-                      handleSubChange(option);
-                    }}
-                    className={cn(
-                      "rounded-full",
-                      active
-                        ? "border-purple-300/40 bg-purple-400/20 text-white hover:bg-purple-400/30"
-                        : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10",
-                    )}
-                  >
-                    {subFilterLabel(option)}
-                  </Button>
-                );
-              })}
-            </div>
+            <TypeFilter value={typeFilter} onChange={handleTypeFilterChange} />
             <Button
               size="sm"
               variant="destructive"
@@ -228,14 +190,12 @@ export default function TrashItemsView({ initialItems, initialTypeFilter }: Prop
             </Button>
           </div>
 
-          <TypeFilter value={typeFilter} onChange={handleTypeFilterChange} />
-
           {visibleItems.length === 0 ? (
             <div
               role="status"
               className="rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70"
             >
-              Brak elementów dla wybranych filtrów.
+              Brak elementów tego typu w koszu.
             </div>
           ) : (
             <>
