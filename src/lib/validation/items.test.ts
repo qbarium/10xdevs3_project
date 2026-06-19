@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { bulkActionSchema, editItemBodySchema, editItemSchema, operationalActionSchema } from "@/lib/validation/items";
+import {
+  bulkActionSchema,
+  createItemSchema,
+  editItemBodySchema,
+  editItemSchema,
+  operationalActionSchema,
+} from "@/lib/validation/items";
 
 const UUID = "11111111-1111-4111-8111-111111111111";
 
@@ -115,6 +121,58 @@ describe("editItemBodySchema", () => {
     expect(
       editItemBodySchema.safeParse({ ...base, title: "   ", expectedUpdatedAt: "2026-01-01T00:00:00Z" }).success,
     ).toBe(false);
+  });
+});
+
+describe("createItemSchema", () => {
+  it("akceptuje poprawny payload i trimuje title", () => {
+    const r = createItemSchema.safeParse({ title: "  Nowy  ", description: "opis", type: "task" });
+    expect(r.success).toBe(true);
+    if (r.success) {
+      expect(r.data.title).toBe("Nowy");
+      expect(r.data.description).toBe("opis");
+      expect(r.data.type).toBe("task");
+    }
+  });
+
+  it("odrzuca pusty title (po trim)", () => {
+    expect(createItemSchema.safeParse({ title: "   ", description: null, type: "note" }).success).toBe(false);
+  });
+
+  it("odrzuca nieznany type", () => {
+    expect(createItemSchema.safeParse({ title: "T", description: null, type: "task2" }).success).toBe(false);
+  });
+
+  it("normalizuje pusty/whitespace description → null", () => {
+    const r = createItemSchema.safeParse({ title: "T", description: "   ", type: "idea" });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.description).toBeNull();
+  });
+
+  it("akceptuje description null", () => {
+    const r = createItemSchema.safeParse({ title: "T", description: null, type: "decision" });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.description).toBeNull();
+  });
+
+  // Inwariant fail-closed: niezmienniki ustala serwer, więc schemat MUSI usuwać przemycone pola stanu.
+  it("ignoruje nadmiarowe pola stanu (acceptance_status / operational_status / import_session_id / user_id)", () => {
+    const r = createItemSchema.safeParse({
+      title: "T",
+      description: null,
+      type: "task",
+      acceptance_status: "pending",
+      operational_status: "done",
+      import_session_id: "11111111-1111-4111-8111-111111111111",
+      user_id: "haker",
+    });
+    expect(r.success).toBe(true);
+    if (r.success) {
+      expect(r.data).not.toHaveProperty("acceptance_status");
+      expect(r.data).not.toHaveProperty("operational_status");
+      expect(r.data).not.toHaveProperty("import_session_id");
+      expect(r.data).not.toHaveProperty("user_id");
+    }
   });
 });
 

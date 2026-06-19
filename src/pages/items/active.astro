@@ -40,7 +40,13 @@ const initialTypeFilter = parseTypeFilter(Astro.cookies.get(TYPE_FILTER_COOKIE)?
           Aktywne
         </h1>
         <MainFilterNav />
-        <AcceptedItemsView client:load initialItems={items} view="active" initialTypeFilter={initialTypeFilter} />
+        <AcceptedItemsView
+          client:load
+          initialItems={items}
+          view="active"
+          initialTypeFilter={initialTypeFilter}
+          canAdd
+        />
       </main>
     </div>
   </div>

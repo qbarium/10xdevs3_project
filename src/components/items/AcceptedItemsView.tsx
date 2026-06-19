@@ -1,7 +1,9 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { useItemMutation } from "@/components/hooks/useItemMutation";
+import AddItemDialog from "@/components/items/AddItemDialog";
+import { defaultCreateType, nextFilterAfterCreate } from "@/components/items/create-form";
 import EditItemDialog from "@/components/items/EditItemDialog";
 import OperationalStatusBadge from "@/components/items/OperationalStatusBadge";
 import { reconcileAfterChange, type AcceptedView } from "@/components/items/operational-view";
@@ -28,6 +30,8 @@ interface Props {
   view: AcceptedView;
   /** Filtr typu z cookie (czytany SERWEROWO) — stan początkowy islandu, by SSR renderował od razu poprawnie. */
   initialTypeFilter: TypeFilterValue;
+  /** Czy pokazać akcję „Dodaj item" (S-07) — tylko widok Aktywne; Zakończone/Anulowane pomijają (domyślnie false). */
+  canAdd?: boolean;
 }
 
 // Cztery przyciski bulk w kolejności cyklu życia (Nowe → W toku → Zrobione → Anulowane).
@@ -57,7 +61,7 @@ function elementNoun(n: number): string {
 // per-item (w tym stan operacyjny) odbywa się w EditItemDialog — badge typu i stanu na liście są tylko
 // do odczytu (rewizja UX S-05). Zmiana stanu wielu itemów naraz: bulk przez 4 przyciski. Po zmianie stanu
 // (bulk lub edycja) reconcile usuwa itemy, których nowy stan wypada poza predykat widoku.
-export default function AcceptedItemsView({ initialItems, view, initialTypeFilter }: Props) {
+export default function AcceptedItemsView({ initialItems, view, initialTypeFilter, canAdd = false }: Props) {
   const [items, setItems] = useState<Item[]>(initialItems);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmRequest, setConfirmRequest] = useState<{ target: OperationalStatus; ids: string[] } | null>(null);
@@ -67,6 +71,10 @@ export default function AcceptedItemsView({ initialItems, view, initialTypeFilte
   // widoczne do najbliższego przełączenia filtra / odświeżenia (decyzja #6). Czyszczone przy zmianie filtra.
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
   const [inFlightIds, setInFlightIds] = useState<Set<string>>(new Set());
+  // S-07: stan modala dodawania. Id świeżo utworzonego itemu do sfokusowania trzymamy w REFIE (nie state),
+  // by efekt focusu tylko go czytał/zerował — `setState` w efekcie łamie react-hooks/set-state-in-effect.
+  const [addOpen, setAddOpen] = useState(false);
+  const pendingFocusRef = useRef<string | null>(null);
   // Synchroniczny zamek re-entry (jak PendingItemsView): stan aktualizuje się po re-renderze, ref od razu.
   const inFlightRef = useRef(false);
   const { setOperationalStatus, pending } = useItemMutation();
@@ -174,9 +182,53 @@ export default function AcceptedItemsView({ initialItems, view, initialTypeFilte
     });
   }
 
+  // Utworzenie itemu ręcznego (S-07): insert + (ew.) przełączenie filtra + focus. Wstawiamy item na początek
+  // `items`; jeśli aktywny jest KONKRETNY filtr innego typu, przełączamy filtr na typ itemu
+  // (nextFilterAfterCreate → handleFilterChange) — item wchodzi do listy NATURALNIE, w swoim widoku (decyzja
+  // użytkownika 2026-06-19, zamiast przypinania do obcego filtra). Przy „all"/zgodnym filtrze nie przełączamy.
+  // EDYCJA zmieniająca typ zachowuje przypięcie (decyzja #6, handleSaved) — to celowa asymetria create vs edit.
+  // id zapisujemy w refie; focus robi efekt po renderze (zależny od zmiany `items`).
+  function handleCreated(item: Item): void {
+    setItems((prev) => [item, ...prev]);
+    pendingFocusRef.current = item.id;
+    const targetFilter = nextFilterAfterCreate(typeFilter, item.type);
+    if (targetFilter !== typeFilter) handleFilterChange(targetFilter);
+    setAddOpen(false);
+  }
+
+  // Po zmianie `items` (m.in. wstawieniu): jeśli czeka id do sfokusowania, przewiń do karty i sfokusuj ją
+  // (uchwyt `data-item-id` + `tabIndex={-1}`), po czym wyzeruj ref. Efekt biegnie po renderze z już
+  // widoczną kartą (filtr pasuje albo został przełączony), więc element jest w DOM. Ref (nie state) → brak
+  // setState w efekcie.
+  useEffect(() => {
+    const id = pendingFocusRef.current;
+    if (id === null) return;
+    pendingFocusRef.current = null;
+    const el = document.querySelector<HTMLElement>(`[data-item-id="${id}"]`);
+    if (el) {
+      el.scrollIntoView({ block: "nearest" });
+      el.focus();
+    }
+  }, [items]);
+
   return (
     <div className="flex flex-col gap-3">
       <Toaster />
+
+      {/* Trwały rząd akcji — PRZED gałęzią pustej listy, więc „Dodaj item" jest widoczny także przy pustym
+          widoku / pustym wyniku filtra (tylko Aktywne: `canAdd`). Osobny od paska bulk (ten zależy od selekcji). */}
+      {canAdd && (
+        <div className="flex items-center justify-end">
+          <Button
+            size="sm"
+            onClick={() => {
+              setAddOpen(true);
+            }}
+          >
+            Dodaj item
+          </Button>
+        </div>
+      )}
 
       {items.length === 0 ? (
         <div
@@ -233,8 +285,10 @@ export default function AcceptedItemsView({ initialItems, view, initialTypeFilte
               {visibleItems.map((item) => (
                 <article
                   key={item.id}
+                  data-item-id={item.id}
+                  tabIndex={-1}
                   className={cn(
-                    "flex gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl transition-opacity",
+                    "flex gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl transition-opacity focus:ring-2 focus:ring-purple-400/60 focus:outline-none",
                     inFlightIds.has(item.id) && "pointer-events-none opacity-50",
                   )}
                 >
@@ -316,6 +370,17 @@ export default function AcceptedItemsView({ initialItems, view, initialTypeFilte
           }}
           onSaved={handleSaved}
           onNotFound={handleRemoved}
+        />
+      )}
+
+      {canAdd && addOpen && (
+        <AddItemDialog
+          open
+          defaultType={defaultCreateType(typeFilter)}
+          onOpenChange={(open) => {
+            if (!open) setAddOpen(false);
+          }}
+          onCreated={handleCreated}
         />
       )}
     </div>
