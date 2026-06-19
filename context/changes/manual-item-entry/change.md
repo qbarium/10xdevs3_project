@@ -1,7 +1,7 @@
 ---
 change_id: manual-item-entry
 title: Manual item entry
-status: implemented
+status: impl_reviewed
 created: 2026-06-16
 updated: 2026-06-19
 archived_at: null
