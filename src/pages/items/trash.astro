@@ -1,6 +1,6 @@
 ---
 // Widok „Kosz" (S-06) — interaktywna wyspa zamiast read-only listy. Ładuje OBA statusy kosza
-// (`rejected` + `deleted`) i montuje TrashItemsView: pod-filtr pochodzenia, restore (per-item + bulk),
+// (`rejected` + `deleted`) i montuje TrashItemsView: filtr typu, restore (per-item + bulk),
 // „Wyczyść kosz". SSR, chroniony middleware (PROTECTED_ROUTES obejmuje prefiks /items); dane serwerowo
 // (klient z cookies usera → RLS izoluje); przejściowy błąd → pusta lista (łagodna degradacja).
 import Layout from "@/layouts/Layout.astro";

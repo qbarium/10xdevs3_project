@@ -39,7 +39,7 @@ export function getPendingItems(supabase: SupabaseClient, userId: string): Promi
 
 /**
  * Itemy usera w koszu (S-06): OBA statusy kosza — `rejected` (odrzucone w stagingu) ORAZ `deleted`
- * (zaakceptowane przeniesione do kosza). Karmi wyspę `TrashItemsView`, w której pod-filtr rozróżnia
+ * (zaakceptowane przeniesione do kosza). Karmi wyspę `TrashItemsView`, w której badge na karcie rozróżnia
  * pochodzenie. Sortowanie jak pozostałe widoki nie-pending (recency akcji → `updated_at DESC`, potem
  * `created_at DESC, id ASC`), więc świeżo przeniesiony/odrzucony item ląduje na górze. `listByAcceptance`
  * nie pasuje (bierze pojedynczy status), więc to osobny statement z `.in(...)`.
