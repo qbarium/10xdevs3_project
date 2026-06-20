@@ -1,10 +1,10 @@
 ---
 change_id: trash-lifecycle
 title: Cykl życia kosza
-status: impl_reviewed
+status: archived
 created: 2026-06-16
 updated: 2026-06-20
-archived_at: null
+archived_at: 2026-06-20T18:28:38Z
 ---
 
 ## Notes
