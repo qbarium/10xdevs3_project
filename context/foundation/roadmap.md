@@ -37,7 +37,7 @@ TaskerLight przyjmuje surowy, nieuporządkowany wsad głosowo-tekstowy i rozdzie
 | S-04  | task-operational-lifecycle | zmieniać stan operacyjny itemu dowolnego typu (nowe/w realizacji/zrealizowane/anulowane) | S-03              | US-04, FR-009                              | done |
 | S-05  | unified-list-and-edit    | przeglądać Aktywne/Zakończone/Anulowane (filtr typu) i edytować itemy       | S-03              | FR-008, FR-011                             | done |
 | S-06  | trash-lifecycle          | przenieść item do kosza, przywrócić i wyczyścić kosz                        | S-03              | US-05, FR-013, FR-016                      | done |
-| S-07  | manual-item-entry        | dodać item ręcznie (bez klucza, od razu `accepted`)                         | S-02              | US-08, FR-028                              | proposed |
+| S-07  | manual-item-entry        | dodać item ręcznie (bez klucza, od razu `accepted`)                         | S-02              | US-08, FR-028                              | done |
 | S-08  | import-session-log-retry | przejrzeć dziennik sesji importu i ponowić sesję `niepowodzenie`            | S-02              | US-07, FR-027                              | done |
 | S-09  | list-filters-search      | sortować, wyszukiwać i filtrować listy po dacie/sesji                       | S-05              | FR-008 (filtry dodatkowe)                  | proposed |
 
@@ -168,7 +168,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Blokady:** —
 - **Niewiadome:** —
 - **Ryzyko:** Wyjątek od FR-024 (działa bez klucza) — daje testowalność UI list bez wywołań dostawcy AI; niezależny od łańcucha klasyfikacji, więc dobry kandydat do równoległego uruchomienia (dźwignia przy blokadzie „czas/pojemność").
-- **Status:** proposed
+- **Status:** done
 
 ### S-08: Dziennik sesji importu + ponowienie
 
@@ -237,6 +237,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **S-04: użytkownik może zmienić stan operacyjny itemu dowolnego typu (`nowe` / `w realizacji` / `zrealizowane` / `anulowane`, wzajemnie przechodnie) per item i zbiorczo; `zrealizowane` przenosi item z Aktywne do Zakończone, `anulowane` do Anulowane. Etykiety stanu są per-typ (np. `zrealizowane`: zadanie „Zrobione", notatka „Obsłużona", decyzja „Podjęta", pomysł „Obsłużony").** — Zarchiwizowano 2026-06-15 → `context/archive/2026-06-15-task-operational-lifecycle/`. Lekcja: —.
 - **S-05: użytkownik może przeglądać widoki Aktywne / Zakończone / Anulowane z filtrem typu (Wszystkie / Zadania / Notatki / Pomysły / Decyzje / Inne) i edytować zaakceptowane itemy (`title`, `description`, `typ`).** — Zarchiwizowano 2026-06-16 → `context/archive/2026-06-15-unified-list-and-edit/`. Lekcja: —.
 - **S-06: użytkownik może przenieść zaakceptowany item do kosza (zachowując stan operacyjny), przywrócić go z kosza dokładnie do poprzedniego stanu oraz trwale opróżnić kosz globalną akcją z potwierdzeniem.** — Zarchiwizowano 2026-06-20 → `context/archive/2026-06-16-trash-lifecycle/`. Lekcja: —.
+- **S-07: użytkownik może dodać item ręcznie (wybór typu + `title` + `description`) z pominięciem klasyfikacji; item powstaje od razu jako `accepted` / `nowe` i pojawia się w Aktywne. Akcja NIE wymaga klucza API.** — Zarchiwizowano 2026-06-19 → `context/archive/2026-06-16-manual-item-entry/`. Lekcja: —.
 
 ## Zrobione
 

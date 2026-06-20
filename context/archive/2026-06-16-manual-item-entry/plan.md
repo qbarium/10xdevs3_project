@@ -206,6 +206,24 @@ Brak migracji — schemat (`items`, RLS INSERT, nullable `import_session_id`) go
 - Hook: `src/components/hooks/useItemMutation.ts`. Etykiety: `src/lib/labels.ts`. Filtr/pin: `src/components/items/type-filter.ts`, `AcceptedItemsView.tsx`.
 - Lekcje: `context/foundation/lessons.md` (walidacja zod wielopolowa; kształt błędu `{ok:false,code,error}`; nie ufaj wejściu).
 
+## Aneks — zmiana zachowania tworzenia (2026-06-19)
+
+> Dodane po przeglądzie implementacji (ustalenie F1). Odnotowuje faktycznie wdrożone zachowanie create
+> względem opisu w „Krytycznych szczegółach" (l.44) i kontrakcie Fazy 2 (l.159); nie zmienia zamrożonych
+> bloków powyżej. Źródło: decyzja użytkownika 2026-06-19, commit `54821a4`.
+
+Pierwotny plan zakładał, że po utworzeniu nowy item zostaje **przypięty** do bieżącego filtra
+(`insertCreatedItem` + `pinnedIds`). Zastąpiono to czytelniejszym zachowaniem:
+
+- **Po utworzeniu filtr przeskakuje na typ nowego itemu** (`nextFilterAfterCreate`) — item ląduje w swoim
+  widoku zamiast być przypięty do obcego filtra. Przy filtrze „Wszystkie" lub już zgodnym — bez zmian.
+- **Domyślny typ w dialogu** = typ aktywnego filtra; na „Wszystkie" — ostatnio użyty (`defaultCreateType`).
+  W typowym przepływie item pasuje do filtra (brak przeskoku); przeskok tylko przy świadomej zmianie typu.
+- **Edycja BEZ zmian** — zmiana typu w edycji zachowuje dotychczasowe przypięcie (`pinnedIds`, decyzja #6).
+  Celowa asymetria create vs edit.
+
+Reduktor `insertCreatedItem` usunięto; `pinnedIds` pozostaje wyłącznie dla ścieżki edycji.
+
 ## Postęp
 
 > Konwencja: `- [ ]` oczekujące, `- [x]` wykonane. Dołącz ` — <commit sha>` po zakończeniu kroku. Nie zmieniaj nazw tytułów kroków. Zobacz `references/progress-format.md`.
