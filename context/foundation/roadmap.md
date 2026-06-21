@@ -39,7 +39,8 @@ TaskerLight przyjmuje surowy, nieuporządkowany wsad głosowo-tekstowy i rozdzie
 | S-06  | trash-lifecycle          | przenieść item do kosza, przywrócić i wyczyścić kosz                        | S-03              | US-05, FR-013, FR-016                      | proposed |
 | S-07  | manual-item-entry        | dodać item ręcznie (bez klucza, od razu `accepted`)                         | S-02              | US-08, FR-028                              | done |
 | S-08  | import-session-log-retry | przejrzeć dziennik sesji importu i ponowić sesję `niepowodzenie`            | S-02              | US-07, FR-027                              | done |
-| S-09  | list-filters-search      | sortować, wyszukiwać i filtrować listy po dacie/sesji                       | S-05              | FR-008 (filtry dodatkowe)                  | proposed |
+| S-09  | list-filters-search      | sortować i wyszukiwać listy po dacie i tytule (+ podfiltr stanu w Aktywne)  | S-05              | FR-008 (filtry dodatkowe)                  | proposed |
+| S-10  | session-items-detail     | w dzienniku sesji wybrać sesję i zobaczyć/edytować jej elementy (master-detail) | S-08, S-05, S-06 | FR-027 (rozszerzony); nadpisuje FR-008/FR-015 | proposed |
 
 ## Strumienie
 
@@ -50,7 +51,7 @@ Pomoc nawigacyjna — grupuje elementy współdzielące łańcuch Wymagań wstę
 | A        | Ścieżka generacji              | `F-01` → `S-01` → `S-02` → `S-03` → `S-04`       | Ścieżka must-have „happy path"; rdzeń celu „szybkość uruchomienia".            |
 | B        | Zarządzanie itemami i edycja   | `S-05` → `S-09`                                  | Dołącza do Strumienia A w `S-03`; `S-09` to późne utwardzanie filtrów.        |
 | C        | Cykl kosza                     | `S-06`                                           | Dołącza do Strumienia A w `S-03`; równolegle z `S-04`/`S-05`.                 |
-| D        | Wejścia poboczne i diagnostyka | `S-07` / `S-08`                                  | Oba dołączają do Strumienia A w `S-02`; niezależne, dobre do równoległości.    |
+| D        | Wejścia poboczne i diagnostyka | `S-07` / `S-08` → `S-10`                         | `S-07`/`S-08` dołączają do Strumienia A w `S-02`; `S-10` rozbudowuje dziennik sesji (`S-08`) i reużywa operacje z `S-05`/`S-06`. |
 
 ## Baza
 
@@ -182,16 +183,28 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Ryzyko:** Polityka retry sprawdza stan klucza przed ponowieniem (klucz usunięty między błędem a retry → komunikat); per-file rozbicie i podgląd itemów poza MVP.
 - **Status:** done
 
-### S-09: Filtry dodatkowe list — sortowanie, wyszukiwanie, filtr sesji
+### S-09: Filtry dodatkowe list — sortowanie, wyszukiwanie, podfiltr stanu
 
-- **Wynik:** użytkownik może sortować i filtrować listy po dacie utworzenia/modyfikacji i tytule, wyszukiwać po tytule i opisie oraz filtrować po sesji importu (i w Koszu po poprzednim statusie `rejected`/`deleted`).
+- **Wynik:** użytkownik może sortować listy po dacie utworzenia/modyfikacji i tytule, wyszukiwać po tytule i opisie oraz zawężać po stanie operacyjnym w widoku Aktywne; filtr typu i sortowanie/wyszukiwanie działają na modelu serwer + parametry w adresie strony. (Filtr po sesji importu przeniesiony do S-10; rozróżnienie statusu w Koszu realizuje etykieta wg FR-012.)
 - **Change ID:** list-filters-search
 - **Odnośniki PRD:** FR-008 (warstwa filtrów dodatkowych)
 - **Wymagania wstępne:** S-05
-- **Równolegle z:** S-06
+- **Równolegle z:** S-06, S-10
 - **Blokady:** —
 - **Niewiadome:** —
-- **Ryzyko:** Utwardzanie UX na końcu łańcucha — must-have część FR-008, ale sekwencjonowane późno zgodnie z celem „szybkość uruchomienia" (najpierw ścisła ścieżka generacji).
+- **Ryzyko:** Utwardzanie UX na końcu łańcucha — must-have część FR-008, ale sekwencjonowane późno zgodnie z celem „szybkość uruchomienia" (najpierw ścisła ścieżka generacji). Przeniesienie filtra typu z modelu klient + cookie na serwer + parametry w adresie strony dotyka działających widoków (S-05/S-06) — wymaga zachowania poprawnego renderu serwerowego (SSR czyta parametry z adresu).
+- **Status:** proposed
+
+### S-10: Widok elementów sesji (master-detail w dzienniku importu)
+
+- **Wynik:** użytkownik może w dzienniku sesji importu wybrać sesję i zobaczyć po prawej wszystkie jej elementy naraz (wszystkie stany akceptacji — `pending`/`accepted`/`rejected`/`deleted` — rozróżniane etykietą, bez filtrów), a następnie podejrzeć, edytować lub usunąć element bezpośrednio w tym widoku, reużywając operacje z list głównych (dialog edycji z S-05, przeniesienie do kosza z S-06). Wybrana sesja zapisana w adresie strony.
+- **Change ID:** session-items-detail
+- **Odnośniki PRD:** FR-027 (rozszerzony — podgląd/edycja elementów sesji wchodzi do zakresu); nadpisuje FR-008/FR-015 (sesja poza filtrami listy)
+- **Wymagania wstępne:** S-08, S-05, S-06
+- **Równolegle z:** S-09
+- **Blokady:** —
+- **Niewiadome:** —
+- **Ryzyko:** Rozszerza FR-027 poza pierwotny zakres MVP (podgląd elementów sesji). Prawa lista pobiera elementy po `import_session_id` dedykowanym endpointem (`GET /api/import-sessions/[id]/items`), zwracając wszystkie stany akceptacji. Elementy `rejected`/`deleted` pozostają tylko do odczytu wg FR-011 (edycja/usuwanie tylko dla `pending`/`accepted`); operacje to reużycie (EditItemDialog z S-05, move-to-trash z S-06), nie budowane od nowa. Lista jednej sesji jest ograniczona (≤ 100 elementów wg FR-020), więc nie powiela problemu skalowania filtra sesji.
 - **Status:** proposed
 
 ## Przekazanie backlogu
@@ -207,7 +220,8 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 | S-06             | trash-lifecycle            | Kosz: przenieś / przywróć / wyczyść                       | no                    | Po S-03; równolegle z S-04/S-05                    |
 | S-07             | manual-item-entry          | Ręczne dodawanie itemu (bez klucza)                       | no                    | Po S-02; niezależny — kandydat do równoległości    |
 | S-08             | import-session-log-retry   | Dziennik sesji importu + ponowienie                      | no                    | Po S-02; niezależny — kandydat do równoległości    |
-| S-09             | list-filters-search        | Filtry dodatkowe: sort / wyszukiwanie / sesja            | no                    | Po S-05                                            |
+| S-09             | list-filters-search        | Filtry dodatkowe: sort / wyszukiwanie / podfiltr stanu   | no                    | Po S-05                                            |
+| S-10             | session-items-detail       | Widok elementów sesji (master-detail w dzienniku)        | no                    | Po S-08 + S-05 + S-06                              |
 
 ## Otwarte pytania dotyczące mapy drogowej
 
