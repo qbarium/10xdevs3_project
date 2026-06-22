@@ -443,35 +443,35 @@ Brak migracji bazy. Zmiana czysto aplikacyjna na istniejących kolumnach i indek
 
 #### Automatyczne
 
-- [x] 2.1 Lint przechodzi: `npm run lint`
-- [x] 2.2 Testy jednostkowe przechodzą: `npm test`
-- [x] 2.3 Build przechodzi: `npm run build`
+- [x] 2.1 Lint przechodzi: `npm run lint` — cee0038
+- [x] 2.2 Testy jednostkowe przechodzą: `npm test` — cee0038
+- [x] 2.3 Build przechodzi: `npm run build` — cee0038
 
 #### Ręczne
 
-- [x] 2.4 `GET /api/items?view=active&type=task&sort=title&dir=asc` zwraca przefiltrowany/posortowany JSON; brak/niepoprawny `view` → 400 (niepoprawny `sort`/`type` tolerowany)
+- [x] 2.4 `GET /api/items?view=active&type=task&sort=title&dir=asc` zwraca przefiltrowany/posortowany JSON; brak/niepoprawny `view` → 400 (niepoprawny `sort`/`type` tolerowany) — cee0038
 
 ### Faza 3: Hook `useItemList` + synchronizacja adresu
 
 #### Automatyczne
 
-- [x] 3.1 Lint przechodzi: `npm run lint`
-- [x] 3.2 Testy jednostkowe przechodzą: `npm test`
-- [x] 3.3 Build przechodzi: `npm run build`
+- [x] 3.1 Lint przechodzi: `npm run lint` — cee0038
+- [x] 3.2 Testy jednostkowe przechodzą: `npm test` — cee0038
+- [x] 3.3 Build przechodzi: `npm run build` — cee0038
 
 ### Faza 4: Migracja filtra typu na serwer + URL + SSR
 
 #### Automatyczne
 
-- [ ] 4.1 Lint przechodzi (brak nieużywanych importów/eksportów): `npm run lint`
-- [ ] 4.2 Testy jednostkowe przechodzą: `npm test`
-- [ ] 4.3 Build przechodzi: `npm run build`
+- [x] 4.1 Lint przechodzi (brak nieużywanych importów/eksportów): `npm run lint`
+- [x] 4.2 Testy jednostkowe przechodzą: `npm test`
+- [x] 4.3 Build przechodzi: `npm run build`
 
 #### Ręczne
 
-- [ ] 4.4 Filtr typu działa na każdym widoku (w tym „Elementy do akceptacji") i jest widoczny w adresie strony
-- [ ] 4.5 Odświeżenie z `?type=…` pokazuje od razu przefiltrowaną listę (brak przeskoku po hydracji)
-- [ ] 4.6 „Wstecz/dalej" przełącza filtr; brak cookie `tl_typefilter`
+- [x] 4.4 Filtr typu działa na każdym widoku (w tym „Elementy do akceptacji") i jest widoczny w adresie strony
+- [x] 4.5 Odświeżenie z `?type=…` pokazuje od razu przefiltrowaną listę (brak przeskoku po hydracji)
+- [x] 4.6 „Wstecz/dalej" przełącza filtr; brak cookie `tl_typefilter`
 
 ### Faza 5: Nowe kontrolki + finalizacja UX
 

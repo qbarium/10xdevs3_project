@@ -4,20 +4,25 @@ import Topbar from "@/components/Topbar.astro";
 import MainFilterNav from "@/components/items/MainFilterNav.astro";
 import PendingItemsView from "@/components/items/PendingItemsView.tsx";
 import { createClient } from "@/lib/supabase";
-import { getPendingItems } from "@/lib/services/items";
+import { listItems } from "@/lib/services/items";
+import { parseListCriteria } from "@/lib/services/list-criteria";
 import type { Item } from "@/types";
 
 export const prerender = false;
 
 const { user } = Astro.locals;
 
+// Kryteria listy z adresu strony (filtr typu/sort/szukanie) — ten sam parser co klient → render SSR
+// i pierwszy stan wyspy są identyczne (hydration-stable, bez przeskoku). `view` na sztywno per strona.
+const criteria = parseListCriteria("pending", Astro.url.searchParams);
+
 // Middleware chroni /items (PROTECTED_ROUTES) — `user` zawsze ustawiony. Pendingi liczymy serwerowo
-// (klient z cookies usera → RLS izoluje). To cel auto-przejścia z modalu klasyfikacji (Faza 4).
+// (klient z cookies usera → RLS izoluje). To cel auto-przejścia z modalu klasyfikacji.
 let items: Item[] = [];
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 if (user && supabase) {
   try {
-    items = await getPendingItems(supabase, user.id);
+    items = await listItems(supabase, user.id, criteria);
   } catch {
     // Przejściowy błąd odczytu → pusta lista (łagodna degradacja).
     items = [];
@@ -34,7 +39,7 @@ if (user && supabase) {
           Elementy do akceptacji
         </h1>
         <MainFilterNav />
-        <PendingItemsView client:load initialItems={items} />
+        <PendingItemsView client:load initialItems={items} initialCriteria={criteria} />
       </main>
     </div>
   </div>

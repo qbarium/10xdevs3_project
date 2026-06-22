@@ -7,27 +7,28 @@ import Layout from "@/layouts/Layout.astro";
 import Topbar from "@/components/Topbar.astro";
 import MainFilterNav from "@/components/items/MainFilterNav.astro";
 import TrashItemsView from "@/components/items/TrashItemsView.tsx";
-import { parseTypeFilter, TYPE_FILTER_COOKIE } from "@/components/items/type-filter";
 import { createClient } from "@/lib/supabase";
-import { getTrashItems } from "@/lib/services/items";
+import { listItems } from "@/lib/services/items";
+import { parseListCriteria } from "@/lib/services/list-criteria";
 import type { Item } from "@/types";
 
 export const prerender = false;
 
 const { user } = Astro.locals;
 
+// Kryteria listy z adresu strony (filtr typu/sort/szukanie) — ten sam parser co klient → render SSR
+// i pierwszy stan wyspy są identyczne (hydration-stable, bez przeskoku). `view` na sztywno per strona.
+const criteria = parseListCriteria("trash", Astro.url.searchParams);
+
 let items: Item[] = [];
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 if (user && supabase) {
   try {
-    items = await getTrashItems(supabase, user.id);
+    items = await listItems(supabase, user.id, criteria);
   } catch {
     items = [];
   }
 }
-
-// Filtr typu z cookie (wspólny z widokami accepted) — SSR renderuje od razu poprawnie przefiltrowaną listę.
-const initialTypeFilter = parseTypeFilter(Astro.cookies.get(TYPE_FILTER_COOKIE)?.value);
 ---
 
 <Layout title="Kosz">
@@ -39,7 +40,7 @@ const initialTypeFilter = parseTypeFilter(Astro.cookies.get(TYPE_FILTER_COOKIE)?
           Kosz
         </h1>
         <MainFilterNav />
-        <TrashItemsView client:load initialItems={items} initialTypeFilter={initialTypeFilter} />
+        <TrashItemsView client:load initialItems={items} initialCriteria={criteria} />
       </main>
     </div>
   </div>

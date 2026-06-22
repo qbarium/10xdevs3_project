@@ -57,8 +57,9 @@ export function writeLastItemType(type: ItemType): void {
  * item naturalnie wejdzie do listy, bez przypinania do obcego filtra). Gdy filtr to „all" albo już zgodny —
  * zwróć bieżący (item i tak jest widoczny; nie zawężamy „all" do jednego typu). Czysta funkcja.
  *
- * UWAGA: dotyczy WYŁĄCZNIE tworzenia. Edycja zmieniająca typ zachowuje dotychczasowe przypięcie (decyzja #6,
- * `pinnedIds` w handleSaved) — item zostaje widoczny tam, gdzie był, zamiast przeskakiwać widok.
+ * UWAGA: dotyczy WYŁĄCZNIE tworzenia. Edycja zmieniająca typ NIE przełącza filtra — edytowany item zostaje
+ * widoczny w bieżącym widoku do najbliższego re-fetchu / zmiany kryteriów (decyzja #6, S-09: optimistic
+ * update w handleSaved bez re-fetchu, więc filtr serwerowy usuwa item dopiero przy następnej zmianie).
  */
 export function nextFilterAfterCreate(current: TypeFilterValue, itemType: ItemType): TypeFilterValue {
   return current !== "all" && current !== itemType ? itemType : current;

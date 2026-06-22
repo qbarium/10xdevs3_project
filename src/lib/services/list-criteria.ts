@@ -9,8 +9,9 @@
 // (`lessons.md`), zaakceptowane przy bramce przeglądu planu — walidacja jest wydzieloną, testowaną,
 // współdzieloną funkcją, nie ad-hoc.
 //
-// `parseTypeFilter`/`TypeFilterValue` reużywane z `type-filter.ts` (kierunek importu zostanie odwrócony
-// w Fazie 4, gdy kliencki `applyTypeFilter`/cookie znikną i eksporty trafią tutaj).
+// `parseTypeFilter`/`TypeFilterValue` reużywane z `type-filter.ts` — po migracji S-09 (Faza 4) plik ten
+// trzyma już tylko wspólny słownik wartości + parser (kliencki `applyTypeFilter`/cookie usunięte), więc
+// pozostaje kanonicznym źródłem tych eksportów (nie był osierocony — konsumują go `TypeFilter.tsx`/`create-form.ts`).
 
 import { parseTypeFilter } from "@/components/items/type-filter";
 import type { TypeFilterValue } from "@/components/items/type-filter";
