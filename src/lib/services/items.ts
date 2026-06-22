@@ -115,7 +115,7 @@ export function getCancelledItems(supabase: SupabaseClient, userId: string): Pro
 
 /**
  * Kosz (S-06): OBA statusy kosza — `rejected` (odrzucone w stagingu) ORAZ `deleted` (zaakceptowane
- * przeniesione do kosza). Karmi wyspę `TrashItemsView`, w której pod-filtr rozróżnia pochodzenie (FR-012).
+ * przeniesione do kosza). Karmi wyspę `TrashItemsView`, w której badge na karcie rozróżnia pochodzenie (FR-012).
  */
 export function getTrashItems(supabase: SupabaseClient, userId: string): Promise<Item[]> {
   return listItems(supabase, userId, defaultCriteria("trash"));
