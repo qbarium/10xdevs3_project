@@ -431,33 +431,33 @@ Brak migracji bazy. Zmiana czysto aplikacyjna na istniejących kolumnach i indek
 
 #### Automatyczne
 
-- [x] 1.1 Lint przechodzi: `npm run lint`
-- [x] 1.2 Testy jednostkowe przechodzą: `npm test`
-- [x] 1.3 Build przechodzi: `npm run build`
+- [x] 1.1 Lint przechodzi: `npm run lint` — 645a0b4
+- [x] 1.2 Testy jednostkowe przechodzą: `npm test` — 645a0b4
+- [x] 1.3 Build przechodzi: `npm run build` — 645a0b4
 
 #### Ręczne
 
-- [x] 1.4 Strony list nadal renderują poprawne listy (nakładki działają — brak regresji)
+- [x] 1.4 Strony list nadal renderują poprawne listy (nakładki działają — brak regresji) — 645a0b4
 
 ### Faza 2: Endpoint `GET /api/items`
 
 #### Automatyczne
 
-- [ ] 2.1 Lint przechodzi: `npm run lint`
-- [ ] 2.2 Testy jednostkowe przechodzą: `npm test`
-- [ ] 2.3 Build przechodzi: `npm run build`
+- [x] 2.1 Lint przechodzi: `npm run lint`
+- [x] 2.2 Testy jednostkowe przechodzą: `npm test`
+- [x] 2.3 Build przechodzi: `npm run build`
 
 #### Ręczne
 
-- [ ] 2.4 `GET /api/items?view=active&type=task&sort=title&dir=asc` zwraca przefiltrowany/posortowany JSON; brak/niepoprawny `view` → 400 (niepoprawny `sort`/`type` tolerowany)
+- [x] 2.4 `GET /api/items?view=active&type=task&sort=title&dir=asc` zwraca przefiltrowany/posortowany JSON; brak/niepoprawny `view` → 400 (niepoprawny `sort`/`type` tolerowany)
 
 ### Faza 3: Hook `useItemList` + synchronizacja adresu
 
 #### Automatyczne
 
-- [ ] 3.1 Lint przechodzi: `npm run lint`
-- [ ] 3.2 Testy jednostkowe przechodzą: `npm test`
-- [ ] 3.3 Build przechodzi: `npm run build`
+- [x] 3.1 Lint przechodzi: `npm run lint`
+- [x] 3.2 Testy jednostkowe przechodzą: `npm test`
+- [x] 3.3 Build przechodzi: `npm run build`
 
 ### Faza 4: Migracja filtra typu na serwer + URL + SSR
 

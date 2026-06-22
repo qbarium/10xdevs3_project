@@ -19,6 +19,9 @@ import type { OperationalStatus } from "@/types";
 /** Pięć widoków list. Wynika ze ŚCIEŻKI strony (każda `.astro` ustala swój) — NIE jest parametrem URL. */
 export type MainView = "pending" | "active" | "done" | "cancelled" | "trash";
 
+/** Pięć dozwolonych widoków. Strony `.astro` używają literałów; tylko endpoint waliduje surowy `view` z URL. */
+export const MAIN_VIEWS = ["pending", "active", "done", "cancelled", "trash"] as const satisfies readonly MainView[];
+
 /** Pole sortowania (jedno naraz). Mapowane na kolumnę w `listItems`: created→created_at, updated→updated_at. */
 export type SortField = "created" | "updated" | "title";
 
@@ -62,6 +65,11 @@ function isSortDir(value: string | null): value is SortDir {
 
 function isActiveOperational(value: string | null): value is OperationalStatus {
   return value != null && (ACTIVE_OPERATIONAL_STATUSES as readonly string[]).includes(value);
+}
+
+/** Runtime-guard surowego `view` z URL → `MainView` (endpoint zawęża nim string przed `parseListCriteria`). */
+export function isMainView(value: string | null): value is MainView {
+  return value != null && (MAIN_VIEWS as readonly string[]).includes(value);
 }
 
 /**
