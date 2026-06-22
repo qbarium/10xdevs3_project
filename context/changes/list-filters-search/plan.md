@@ -477,14 +477,14 @@ Brak migracji bazy. Zmiana czysto aplikacyjna na istniejących kolumnach i indek
 
 #### Automatyczne
 
-- [x] 5.1 Lint przechodzi: `npm run lint`
-- [x] 5.2 Testy jednostkowe przechodzą: `npm test`
-- [x] 5.3 Build przechodzi: `npm run build`
+- [x] 5.1 Lint przechodzi: `npm run lint` — 8f1ccf8
+- [x] 5.2 Testy jednostkowe przechodzą: `npm test` — 8f1ccf8
+- [x] 5.3 Build przechodzi: `npm run build` — 8f1ccf8
 
 #### Ręczne
 
-- [x] 5.4 Sortowanie (pole + kierunek) zmienia kolejność i URL
-- [x] 5.5 Wyszukiwanie zawęża po tytule/opisie (z opóźnieniem); znak `%` nie psuje wyników
-- [x] 5.6 Podfiltr stanu operacyjnego działa tylko w Aktywne
-- [x] 5.7 Zmiana dowolnego filtra czyści zaznaczenie
-- [x] 5.8 Pusty wynik pokazuje komunikat + „Wyczyść filtry"; round-trip URL między kartami zachowuje filtry
+- [x] 5.4 Sortowanie (pole + kierunek) zmienia kolejność i URL — 8f1ccf8
+- [x] 5.5 Wyszukiwanie zawęża po tytule/opisie (z opóźnieniem); znak `%` nie psuje wyników — 8f1ccf8
+- [x] 5.6 Podfiltr stanu operacyjnego działa tylko w Aktywne — 8f1ccf8
+- [x] 5.7 Zmiana dowolnego filtra czyści zaznaczenie — 8f1ccf8
+- [x] 5.8 Pusty wynik pokazuje komunikat + „Wyczyść filtry"; round-trip URL między kartami zachowuje filtry — 8f1ccf8

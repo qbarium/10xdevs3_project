@@ -1,7 +1,7 @@
 ---
 change_id: list-filters-search
 title: Filtry dodatkowe list — sortowanie, wyszukiwanie, podfiltr stanu
-status: implementing
+status: implemented
 created: 2026-06-20
 updated: 2026-06-23
 archived_at: null
