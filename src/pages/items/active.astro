@@ -8,27 +8,28 @@ import Layout from "@/layouts/Layout.astro";
 import Topbar from "@/components/Topbar.astro";
 import MainFilterNav from "@/components/items/MainFilterNav.astro";
 import AcceptedItemsView from "@/components/items/AcceptedItemsView.tsx";
-import { parseTypeFilter, TYPE_FILTER_COOKIE } from "@/components/items/type-filter";
 import { createClient } from "@/lib/supabase";
-import { getActiveItems } from "@/lib/services/items";
+import { listItems } from "@/lib/services/items";
+import { parseListCriteria } from "@/lib/services/list-criteria";
 import type { Item } from "@/types";
 
 export const prerender = false;
 
 const { user } = Astro.locals;
 
+// Kryteria listy z adresu strony (filtr typu/sort/szukanie/podfiltr operacyjny) — ten sam parser co klient
+// → render SSR i pierwszy stan wyspy są identyczne (hydration-stable, bez przeskoku). `view` na sztywno.
+const criteria = parseListCriteria("active", Astro.url.searchParams);
+
 let items: Item[] = [];
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 if (user && supabase) {
   try {
-    items = await getActiveItems(supabase, user.id);
+    items = await listItems(supabase, user.id, criteria);
   } catch {
     items = [];
   }
 }
-
-// Filtr typu z cookie (per widok) — SSR renderuje od razu poprawnie przefiltrowaną listę (bez przeskoku).
-const initialTypeFilter = parseTypeFilter(Astro.cookies.get(TYPE_FILTER_COOKIE)?.value);
 ---
 
 <Layout title="Aktywne">
@@ -40,13 +41,7 @@ const initialTypeFilter = parseTypeFilter(Astro.cookies.get(TYPE_FILTER_COOKIE)?
           Aktywne
         </h1>
         <MainFilterNav />
-        <AcceptedItemsView
-          client:load
-          initialItems={items}
-          view="active"
-          initialTypeFilter={initialTypeFilter}
-          canAdd
-        />
+        <AcceptedItemsView client:load initialItems={items} view="active" initialCriteria={criteria} canAdd />
       </main>
     </div>
   </div>

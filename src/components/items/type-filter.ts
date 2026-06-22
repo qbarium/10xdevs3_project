@@ -1,10 +1,9 @@
-// Czysta logika filtra typu dla widoków zaakceptowanych (S-05). Wydzielona z islandu
-// AcceptedItemsView, by była testowalna w środowisku node (bez DOM) — analogicznie do selection.ts
-// i operational-view.ts. Filtr jest KLIENCKI (decyzja #1): derywuje listę z już załadowanych itemów,
-// bez zapytań i bez query-paramów.
+// Wartości i walidacja filtra typu — współdzielone przez prezentacyjny `TypeFilter.tsx`, `parseListCriteria`
+// (`list-criteria.ts`) oraz `create-form.ts`. Po migracji S-09 (Faza 4) filtr typu jest SERWEROWY: derywacja
+// listy odbywa się w `listItems` wg `ListCriteria` z parametrów URL, więc kliencki `applyTypeFilter` i cookie
+// `tl_typefilter` zniknęły — został TYLKO wspólny słownik wartości + tolerancyjny parser pojedynczej wartości.
 
 import { ITEM_TYPES } from "@/lib/ai/schema";
-import type { Item } from "@/types";
 
 /**
  * Wartości filtra typu: „wszystkie" + 5 typów `ItemType`. Wyprowadzone z kanonicznego `ITEM_TYPES`
@@ -14,30 +13,7 @@ import type { Item } from "@/types";
 export const TYPE_FILTER_VALUES = ["all", ...ITEM_TYPES] as const;
 export type TypeFilterValue = (typeof TYPE_FILTER_VALUES)[number];
 
-/**
- * Itemy spełniające filtr: `all` przepuszcza wszystko, w innym wypadku zostają itemy danego typu.
- * `pinnedIds` to świadomy wyłom (decyzja #6): item przypięty (np. po edycji zmieniającej typ przy
- * aktywnym filtrze) ZOSTAJE widoczny mimo niezgodności z filtrem — do najbliższego przełączenia
- * filtra / odświeżenia. Czysta funkcja: nie mutuje wejścia, zwraca nową tablicę.
- */
-export function applyTypeFilter(
-  items: readonly Item[],
-  filter: TypeFilterValue,
-  pinnedIds: ReadonlySet<string>,
-): Item[] {
-  return items.filter((item) => filter === "all" || item.type === filter || pinnedIds.has(item.id));
-}
-
-/**
- * Persystencja filtra przez COOKIE (nie URL — decyzja #1), WSPÓLNA dla widoków zaakceptowanych
- * (Aktywne/Zakończone/Anulowane). Jeden cookie → filtr jest spójny przy przełączaniu widoków (nie
- * skacze na nieaktualną wartość per-widok) i przeżywa odświeżenie. Czytany SERWEROWO, więc SSR
- * renderuje od razu poprawnie przefiltrowaną listę — bez przeskoku po hydracji (inaczej niż
- * sessionStorage, niewidoczny dla serwera).
- */
-export const TYPE_FILTER_COOKIE = "tl_typefilter";
-
-/** Waliduje surową wartość (z cookie / dowolnego źródła) → poprawny `TypeFilterValue` lub fallback "all". */
+/** Waliduje surową wartość (z URL / dowolnego źródła) → poprawny `TypeFilterValue` lub fallback "all". */
 export function parseTypeFilter(value: string | undefined | null): TypeFilterValue {
   return value != null && (TYPE_FILTER_VALUES as readonly string[]).includes(value)
     ? (value as TypeFilterValue)

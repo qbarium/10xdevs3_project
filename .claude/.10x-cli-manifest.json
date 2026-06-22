@@ -1,8 +1,8 @@
 {
   "package": "@przeprogramowani/10x-cli",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "manifestVersion": 3,
-  "lastApplied": "2026-06-14T13:56:02.020Z",
+  "lastApplied": "2026-06-22T21:36:50.858Z",
   "lessonId": "m3l1",
   "course": "10xdevs3",
   "tool": "claude-code",
@@ -845,7 +845,7 @@
       "configs": []
     },
     "m3l1": {
-      "appliedAt": "2026-06-14T13:56:02.017Z",
+      "appliedAt": "2026-06-22T21:36:50.856Z",
       "skills": {
         "10x-init": {
           "files": [

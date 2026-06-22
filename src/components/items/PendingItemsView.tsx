@@ -1,8 +1,10 @@
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { useItemList } from "@/components/hooks/useItemList";
 import { useItemMutation } from "@/components/hooks/useItemMutation";
 import EditItemDialog from "@/components/items/EditItemDialog";
+import ListFilterBar from "@/components/items/ListFilterBar";
 import {
   allIds,
   isAllSelected,
@@ -22,11 +24,16 @@ import {
 } from "@/components/ui/dialog";
 import { Toaster } from "@/components/ui/sonner";
 import { itemTypeLabel } from "@/lib/labels";
+import { defaultCriteria, hasActiveFilters } from "@/lib/services/list-criteria";
+import type { ListCriteria } from "@/lib/services/list-criteria";
 import { cn } from "@/lib/utils";
 import type { Item } from "@/types";
 
 interface Props {
   initialItems: Item[];
+  /** Kryteria z adresu strony (czytane SERWEROWO tym samym parserem co klient) — stan startowy hooka, by SSR
+      i pierwszy render wyspy były identyczne (hydration-stable, bez przeskoku). */
+  initialCriteria: ListCriteria;
 }
 
 type PendingAction = "accept" | "reject";
@@ -49,8 +56,15 @@ function elementNoun(n: number): string {
 // Interaktywny widok pendingów (React island, client:load). Model zaznaczania per-item + „zaznacz
 // wszystkie", akcje zbiorcze z optimistic update + toast, potwierdzenie tylko na ścieżce select-all.
 // Czysta logika zaznaczania/optimistic w `selection.ts` (testowana osobno).
-export default function PendingItemsView({ initialItems }: Props) {
-  const [items, setItems] = useState<Item[]>(initialItems);
+//
+// S-09: lista należy do `useItemList` (filtr typu SERWEROWY przez kryteria z URL — pending zyskuje filtr,
+// którego wcześniej nie miał). Zmiana filtra = re-fetch; mutacje = optimistic przez `applyOptimistic`.
+export default function PendingItemsView({ initialItems, initialCriteria }: Props) {
+  const { items, criteria, settledCriteria, setCriteria, applyOptimistic, error } = useItemList(
+    "pending",
+    initialItems,
+    initialCriteria,
+  );
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmRequest, setConfirmRequest] = useState<{ action: PendingAction; ids: string[] } | null>(null);
   const [editing, setEditing] = useState<Item | null>(null);
@@ -62,6 +76,10 @@ export default function PendingItemsView({ initialItems }: Props) {
 
   const allSelected = isAllSelected(selected.size, items.length);
   const selectedCount = selected.size;
+  // Bazuje na `settledCriteria` (pasują do wyświetlanej listy), nie na żywych `criteria` — inaczej zmiana filtra
+  // przełączałaby układ (pasek/pusty stan) przed nadejściem danych → migotanie. Kontrolki paska i tak odbijają
+  // żywe `criteria`, więc pozostają responsywne.
+  const filtersActive = hasActiveFilters(settledCriteria);
 
   function toggleItem(id: string): void {
     setSelected((prev) => toggleSelection(prev, id));
@@ -71,9 +89,23 @@ export default function PendingItemsView({ initialItems }: Props) {
     setSelected((prev) => (isAllSelected(prev.size, items.length) ? new Set() : allIds(items)));
   }
 
+  // Każda zmiana kryterium z paska filtrów → wyczyść zaznaczenie (invariant „selected ⊆ widoczne" — po
+  // re-fetchu skład listy się zmienia) i re-fetchuj (autorytatywna lista z serwera).
+  function applyCriteria(next: ListCriteria): void {
+    setSelected(new Set());
+    setCriteria(next);
+  }
+
+  // Ponów ostatni fetch wg bieżących kryteriów (po błędzie sieci) — bez zmiany kryteriów i bez czyszczenia
+  // zaznaczenia (przy powodzeniu skład listy się nie zmienia).
+  function retry(): void {
+    setCriteria({ ...criteria });
+  }
+
   // Weryfikacja PRZED zmianą listy (pessimistic): elementy w locie są tylko WYGASZANE (dim),
   // a usuwane dopiero po sukcesie serwera. Lista nie „miga" — przy błędzie elementy wracają do
-  // normalnego stanu, bez znikania i przywracania. Wspólne dla akcji zbiorczych i inline.
+  // normalnego stanu, bez znikania i przywracania. Wspólne dla akcji zbiorczych i inline. Zmiany
+  // nanosimy przez `applyOptimistic` (lista jest w gestii hooka; mutacja NIE wymusza re-fetchu).
   async function execute(action: PendingAction, ids: string[]): Promise<void> {
     // Zgodne z intencją „jedna akcja naraz" już wyrażoną przez `disabled={pending}` — zamek
     // domyka wyścig, gdy dwa szybkie kliknięcia padną zanim `pending=true` się przeflushuje.
@@ -89,7 +121,7 @@ export default function PendingItemsView({ initialItems }: Props) {
     }
     // Sukces: usuń zaznaczone z listy (wszystkie są już nie-pending) i z zaznaczenia.
     const idSet = new Set(ids);
-    setItems((prev) => removeByIds(prev, idSet));
+    applyOptimistic((prev) => removeByIds(prev, idSet));
     setSelected((prev) => {
       if (!ids.some((id) => prev.has(id))) return prev;
       const next = new Set(prev);
@@ -124,14 +156,14 @@ export default function PendingItemsView({ initialItems }: Props) {
     void execute(action, ids);
   }
 
-  // Edycja zapisana — podmiana itemu w miejscu (zostaje pending, nie znika z listy).
+  // Edycja zapisana — podmiana itemu w miejscu (optimistic; zostaje pending, nie znika z listy).
   function handleSaved(updated: Item): void {
-    setItems((prev) => prev.map((current) => (current.id === updated.id ? updated : current)));
+    applyOptimistic((prev) => prev.map((current) => (current.id === updated.id ? updated : current)));
   }
 
-  // 404 podczas edycji (item nie jest już pending) — usuń z listy i z zaznaczenia (poprawka F2).
+  // 404 podczas edycji (item nie jest już pending) — usuń z listy (optimistic) i z zaznaczenia.
   function handleRemoved(id: string): void {
-    setItems((prev) => prev.filter((current) => current.id !== id));
+    applyOptimistic((prev) => prev.filter((current) => current.id !== id));
     setSelected((prev) => {
       if (!prev.has(id)) return prev;
       const next = new Set(prev);
@@ -144,13 +176,38 @@ export default function PendingItemsView({ initialItems }: Props) {
     <div className="flex flex-col gap-3">
       <Toaster />
 
+      {/* Pasek filtrów widoczny, gdy jest co filtrować ALBO gdy jakikolwiek filtr jest aktywny — w drugim
+          przypadku lista może być pusta (zawężona), a kontrolki MUSZĄ zostać dostępne (powrót do domyślnych). */}
+      {(items.length > 0 || filtersActive) && (
+        <ListFilterBar criteria={criteria} onChange={applyCriteria} error={error} onRetry={retry} />
+      )}
+
       {items.length === 0 ? (
-        <div
-          role="status"
-          className="rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70"
-        >
-          Brak elementów do akceptacji.
-        </div>
+        filtersActive ? (
+          <div
+            role="status"
+            className="flex flex-col items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70"
+          >
+            <span>Brak elementów dla wybranych filtrów.</span>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                applyCriteria(defaultCriteria("pending"));
+              }}
+              className="border-white/15 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white"
+            >
+              Wyczyść filtry
+            </Button>
+          </div>
+        ) : (
+          <div
+            role="status"
+            className="rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70"
+          >
+            Brak elementów do akceptacji.
+          </div>
+        )
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
