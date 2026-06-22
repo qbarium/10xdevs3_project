@@ -23,7 +23,7 @@ Na każdym widoku list (w tym „Elementy do akceptacji") użytkownik sortuje, w
 | Dostarczenie | `GET /api/items` + wyspa fetchuje, URL synchronizowany | Płynne, spełnia NFR ≤ 200 ms, shareable | Plan |
 | Filtr typu | Migracja klient+cookie → serwer+URL | Jeden spójny mechanizm filtrów we wszystkich widokach | Plan |
 | Filtr daty | Tylko jako klucz sortowania (bez zakresu „od–do") | Pokrywa realną potrzebę minimalnym UI | Plan |
-| Sortowanie | Jedno pole naraz + tie-break po `id` | Brak sortowania złożonego dla użytkownika; deterministyczna kolejność | Plan |
+| Sortowanie | Jedno pole naraz + łańcuch tie-break `created_at DESC` → `id ASC` | Brak sortowania złożonego dla użytkownika; deterministyczna kolejność zachowująca dotychczasowy układ (F6: sam losowy `id` nie wystarcza) | Plan |
 | Podfiltr stanu operacyjnego | Tylko widok Aktywne | Jedyny widok z >1 stanem (`new` + `in_progress`) | Kanon (FR-008) |
 | Zakres „Elementy do akceptacji" | Filtr typu + wyszukiwanie + sortowanie; bez podfiltra stanu | Pending nie ma stanu operacyjnego; reszta spójna z innymi widokami | Plan |
 | Selekcja przy zmianie filtra | Czyszczona | Brak akcji na niewidocznych; inwariant „zaznaczenie ⊆ widoczne" | Plan |
@@ -42,7 +42,7 @@ Pure moduł kryteriów (`list-criteria.ts`: typ `ListCriteria` + `parseListCrite
 
 | Faza | Co dostarcza | Kluczowe ryzyko |
 | --- | --- | --- |
-| 1. Warstwa danych | `listItems` + kryteria + (de)serializacja URL (jeden walidator, bez osobnego zod) | Poprawne domyślne sortowanie per widok |
+| 1. Warstwa danych | `listItems` + kryteria + (de)serializacja URL (jeden walidator, bez osobnego zod) | Domyślne sortowanie per widok + łańcuch tie-break `created_at DESC` → `id ASC` odwzorowujący dotychczasowy układ (F6) |
 | 2. Endpoint `GET /api/items` | Parametry z URL → walidacja → lista | Pierwszy endpoint czytający query string |
 | 3. Hook `useItemList` + URL | Fetch wg kryteriów, debounce, zapis URL | Debounce tylko dla wyszukiwania |
 | 4. Migracja filtra typu (serwer+URL+SSR) | Wszystkie widoki na nowym potoku; pending zyskuje filtr typu | Dotyka działających widoków (S-05/S-06); hydration-stability |

@@ -128,7 +128,7 @@ Jedna funkcja `listItems(supabase, userId, criteria)` zastępująca pięć osobn
 - `type !== "all"` → `eq("type", type)`.
 - `view === "active" && opstatus` → `eq("operational_status", opstatus)`.
 - `q` (po trim, niepuste) → `.or("title.ilike.%q%,description.ilike.%q%")`; przed złożeniem wzorca z `q` neutralizowane są **zarówno** wildcardy LIKE (`%`/`_`) **jak i** delimitery składni filtra PostgREST (`,` `(` `)` `.`) — inaczej fraza typu `foo,bar` lub `f(x)` rozbije parsowanie `.or()` (błąd albo błędne dopasowania / wstrzyknięcie warunku w obrębie danych usera).
-- Sort: mapowanie `created→created_at`, `updated→updated_at`, `title→title`; `.order(<col>, { ascending: dir==="asc" })` + zawsze `.order("id", { ascending: true })` (tie-break).
+- Sort: mapowanie `created→created_at`, `updated→updated_at`, `title→title`; `.order(<col>, { ascending: dir==="asc" })`, następnie **stały łańcuch tie-break** odwzorowujący dotychczasową kolejność: gdy `<col>` ≠ `created_at` → `.order("created_at", { ascending: false })`, a na końcu **zawsze** `.order("id", { ascending: true })`. Uzasadnienie (F6): `id` to losowy UUID (`gen_random_uuid`), więc sam stabilizuje, ale układa losowo; `created_at DESC` porządkuje **chronologicznie** grupę o wspólnym kluczu głównym (np. paczka bulk-akcji ma wspólny `updated_at`, jeden statement), a `id` jest finalnym stabilizatorem, gdy i `created_at` remisuje (itemy z jednego importu). Bez `created_at` domyślny sort nie-pending zmieniłby kolejność paczek względem dziś.
 - `.overrideTypes<Item[], { merge: false }>()`; błąd → `throw new Error("Odczyt itemów nie powiódł się.", { cause })`.
 
 #### 4. Stare funkcje jako nakładki
@@ -228,6 +228,7 @@ Klientowa warstwa łącząca kryteria z endpointem i adresem strony: pobieranie 
 - `applyOptimistic(updater: (prev: Item[]) => Item[])` → wyspy nanoszą optimistic mutacje na listę będącą w gestii hooka (lista należy do hooka, nie do wyspy). Mutacje **NIE** wymuszają re-fetchu (patrz „Krytyczne szczegóły"); hook nie nadpisuje świeżego optimistic update, dopóki nie nastąpi re-fetch wywołany zmianą kryteriów.
 - `setCriteria(next)` → aktualizuje stan, woła `GET /api/items?<criteriaToQuery(next)>` (z `view`), podmienia listę po sukcesie; błąd → `error` (+ zachowanie poprzedniej listy).
 - Zmiana pola `q` debounce ~300 ms; pozostałe pola fetchują natychmiast.
+- **Tylko najnowsze żądanie wygrywa (F5 — wyścig)**: każde `setCriteria` anuluje poprzedni fetch przez `AbortController` (ref na bieżący kontroler); `AbortError` jest połykany (nie ustawia `error`, nie podmienia listy). Bez tego dwa nakładające się żądania (np. szybka zmiana sort → typ) mogłyby wrócić poza kolejnością i starsza odpowiedź nadpisałaby nowszą („stale wins").
 - Po udanym fetchu zapis URL: `history.pushState` dla zmian **dyskretnych** (typ/sort/dir/opstatus — każda tworzy wpis w historii, by „wstecz/dalej" je przełączał) oraz `history.replaceState` dla kolejnych liter wyszukiwania (`q` po debounce — sklejane w jeden wpis, bez śmiecenia historią na każdą literę). Listener `popstate` re-parsuje `location.search` (parser z Fazy 1) → `setCriteria`, dzięki czemu „wstecz/dalej" faktycznie odtwarza filtry (`replaceState` sam nie tworzy wpisów historii, więc bez `pushState` + `popstate` back/forward by nie działał).
 - `initialItems` jako stan startowy (z SSR) — brak fetchu na pierwszy render (lista już zgodna z URL dzięki SSR).
 
@@ -237,7 +238,7 @@ Klientowa warstwa łącząca kryteria z endpointem i adresem strony: pobieranie 
 
 **Cel**: Pokryć składanie URL i mapowanie odpowiedzi (część czysta; zachowanie DOM/fetch weryfikowane ręcznie w Fazie 4–5).
 
-**Kontrakt**: `criteriaToQuery` użyte do budowy URL daje oczekiwany ciąg; mapowanie `{ ok:true, items }` → `items`, `{ ok:false }`/błąd sieci → `error` bez utraty poprzedniej listy.
+**Kontrakt**: `criteriaToQuery` użyte do budowy URL daje oczekiwany ciąg; mapowanie `{ ok:true, items }` → `items`, `{ ok:false }`/błąd sieci → `error` bez utraty poprzedniej listy. Najnowsze-wygrywa (F5): przy dwóch fetchach (mock, kontrolowana kolejność) starsza odpowiedź nie podmienia listy (`AbortError` połykany / odrzucony jako nie-najnowszy).
 
 ### Kryteria sukcesu:
 
@@ -387,9 +388,9 @@ Dodanie sortowania, wyszukiwania i podfiltra stanu operacyjnego (Aktywne) na now
 ### Testy jednostkowe:
 
 - `list-criteria.ts` — `parseListCriteria` (domyślne per widok, fallback dla śmieci, każde pole), `criteriaToQuery` (pomijanie domyślnych, round-trip).
-- `items.ts` — `listItems`: predykat każdego widoku, filtr typu, podfiltr operacyjny (tylko active), wyszukiwanie (escapowanie `%`/`_` **oraz** delimiterów PostgREST `,` `(` `)` `.` — test frazy z `,` i `(`), sort + tie-break.
+- `items.ts` — `listItems`: predykat każdego widoku, filtr typu, podfiltr operacyjny (tylko active), wyszukiwanie (escapowanie `%`/`_` **oraz** delimiterów PostgREST `,` `(` `)` `.` — test frazy z `,` i `(`), sort + łańcuch tie-break (`created_at` DESC potem `id` ASC — odwzorowanie dotychczasowej kolejności paczek bulk-akcji).
 - Endpoint `index.ts` — GET: 200 / 400 (brak/niepoprawny `view`) / 401 / pusty wynik; niepoprawny `sort`/`type` tolerowany (fallback do domyślnej).
-- `useItemList` — budowa URL + mapowanie odpowiedzi (część czysta).
+- `useItemList` — budowa URL + mapowanie odpowiedzi + najnowsze-wygrywa (część czysta / mock fetch).
 
 ### Testy integracyjne:
 
@@ -430,13 +431,13 @@ Brak migracji bazy. Zmiana czysto aplikacyjna na istniejących kolumnach i indek
 
 #### Automatyczne
 
-- [ ] 1.1 Lint przechodzi: `npm run lint`
-- [ ] 1.2 Testy jednostkowe przechodzą: `npm test`
-- [ ] 1.3 Build przechodzi: `npm run build`
+- [x] 1.1 Lint przechodzi: `npm run lint`
+- [x] 1.2 Testy jednostkowe przechodzą: `npm test`
+- [x] 1.3 Build przechodzi: `npm run build`
 
 #### Ręczne
 
-- [ ] 1.4 Strony list nadal renderują poprawne listy (nakładki działają — brak regresji)
+- [x] 1.4 Strony list nadal renderują poprawne listy (nakładki działają — brak regresji)
 
 ### Faza 2: Endpoint `GET /api/items`
 
