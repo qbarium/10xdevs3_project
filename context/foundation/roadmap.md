@@ -41,6 +41,7 @@ TaskerLight przyjmuje surowy, nieuporządkowany wsad głosowo-tekstowy i rozdzie
 | S-08  | import-session-log-retry | przejrzeć dziennik sesji importu i ponowić sesję `niepowodzenie`            | S-02              | US-07, FR-027                              | done |
 | S-09  | list-filters-search      | sortować i wyszukiwać listy po dacie i tytule (+ podfiltr stanu w Aktywne)  | S-05              | FR-008 (filtry dodatkowe)                  | proposed |
 | S-10  | session-items-detail     | w dzienniku sesji wybrać sesję i zobaczyć/edytować jej elementy (master-detail) | S-08, S-05, S-06 | FR-027 (rozszerzony); nadpisuje FR-008/FR-015 | proposed |
+| S-11  | session-log-filter-ux    | filtrować dziennik sesji reaktywnie (bez „Zastosuj"), spójne dropdowny, „Wyczyść filtry" | S-08 | FR-027 / FR-008 (parytet UX) | proposed |
 
 ## Strumienie
 
@@ -51,7 +52,7 @@ Pomoc nawigacyjna — grupuje elementy współdzielące łańcuch Wymagań wstę
 | A        | Ścieżka generacji              | `F-01` → `S-01` → `S-02` → `S-03` → `S-04`       | Ścieżka must-have „happy path"; rdzeń celu „szybkość uruchomienia".            |
 | B        | Zarządzanie itemami i edycja   | `S-05` → `S-09`                                  | Dołącza do Strumienia A w `S-03`; `S-09` to późne utwardzanie filtrów.        |
 | C        | Cykl kosza                     | `S-06`                                           | Dołącza do Strumienia A w `S-03`; równolegle z `S-04`/`S-05`.                 |
-| D        | Wejścia poboczne i diagnostyka | `S-07` / `S-08` → `S-10`                         | `S-07`/`S-08` dołączają do Strumienia A w `S-02`; `S-10` rozbudowuje dziennik sesji (`S-08`) i reużywa operacje z `S-05`/`S-06`. |
+| D        | Wejścia poboczne i diagnostyka | `S-07` / `S-08` → `S-10`, `S-11`                  | `S-07`/`S-08` dołączają do Strumienia A w `S-02`; `S-10` rozbudowuje dziennik sesji (`S-08`) o master-detail elementów, a `S-11` przenosi na dziennik reaktywny model filtrów z `S-09`. |
 
 ## Baza
 
@@ -207,6 +208,18 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Ryzyko:** Rozszerza FR-027 poza pierwotny zakres MVP (podgląd elementów sesji). Prawa lista pobiera elementy po `import_session_id` dedykowanym endpointem (`GET /api/import-sessions/[id]/items`), zwracając wszystkie stany akceptacji. Elementy `rejected`/`deleted` pozostają tylko do odczytu wg FR-011 (edycja/usuwanie tylko dla `pending`/`accepted`); operacje to reużycie (EditItemDialog z S-05, move-to-trash z S-06), nie budowane od nowa. Lista jednej sesji jest ograniczona (≤ 100 elementów wg FR-020), więc nie powiela problemu skalowania filtra sesji.
 - **Status:** proposed
 
+### S-11: Reaktywne filtry dziennika sesji importu (parytet UX z S-09)
+
+- **Wynik:** użytkownik filtruje i sortuje dziennik sesji importu (`/import-sessions`) **reaktywnie** — zmiana kontrolki natychmiast zawęża listę bez przycisku „Zastosuj", a kryteria są w adresie strony (refresh / „wstecz-dalej" / odnośnik je zachowują); dropdowny sort/status są spójne wizualnie z resztą aplikacji (custom `Select` pod motyw cosmic, nie natywne `<select>`); pusty wynik przy aktywnym filtrze pokazuje komunikat z akcją „Wyczyść filtry" (rozróżnienie „pusto bo filtr" vs „brak sesji").
+- **Change ID:** session-log-filter-ux
+- **Odnośniki PRD:** FR-027 (dziennik sesji importu), FR-008 (warstwa filtrów — parytet UX z listami głównymi)
+- **Wymagania wstępne:** S-08 (dziennik sesji istnieje)
+- **Równolegle z:** S-10 (oba rozbudowują dziennik z S-08, ale niezależnie: S-10 = master-detail elementów sesji, S-11 = reaktywne filtry listy sesji)
+- **Blokady:** —
+- **Niewiadome:** Czy reaktywność oprzeć na dedykowanym `GET /api/import-sessions` (jak `GET /api/items` w S-09), czy na lżejszym wariancie fetch obecnej strony — rozstrzyga `/10x-plan`. Blokuje: nie.
+- **Ryzyko:** Czysto UX, na istniejącej powierzchni — niski koszt; wzorzec gotowy w S-09 (`useItemList` + `list-criteria` + `SortControl`/`ListFilterBar`) do reużycia/uogólnienia. Uwaga architektoniczna: dziennik to wyspa hookowa (`SessionsList → SessionRow → useSessionRetry`) — historyczne źródło blokera dup-React SSR (naprawione w `astro.config.mjs`: `vite.resolve.dedupe` + `ssr.noExternal`); dołożenie hooka filtrów wymaga potwierdzenia dev SSR realnym renderem, nie tylko zielonym buildem (lekcja „bug widoczny tylko w dev", `lessons.md`). Pełny kontekst zgłoszenia: `context/archive/2026-06-13-import-session-log-retry/follow-ups/session-log-filter-ux.md`.
+- **Status:** proposed
+
 ## Przekazanie backlogu
 
 | ID mapy drogowej | Change ID                  | Sugerowany tytuł problemu                                  | Gotowe do `/10x-plan` | Uwagi                                              |
@@ -222,6 +235,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 | S-08             | import-session-log-retry   | Dziennik sesji importu + ponowienie                      | no                    | Po S-02; niezależny — kandydat do równoległości    |
 | S-09             | list-filters-search        | Filtry dodatkowe: sort / wyszukiwanie / podfiltr stanu   | no                    | Po S-05                                            |
 | S-10             | session-items-detail       | Widok elementów sesji (master-detail w dzienniku)        | no                    | Po S-08 + S-05 + S-06                              |
+| S-11             | session-log-filter-ux      | Reaktywne filtry dziennika sesji (parytet UX z S-09)     | no                    | Po S-08; wzorzec z S-09                            |
 
 ## Otwarte pytania dotyczące mapy drogowej
 
