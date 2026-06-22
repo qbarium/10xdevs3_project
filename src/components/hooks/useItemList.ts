@@ -78,7 +78,10 @@ function isSearchOnlyChange(prev: ListCriteria, next: ListCriteria): boolean {
 
 export interface UseItemList {
   items: Item[];
+  /** Żywe kryteria (sterują KONTROLKAMI — responsywne, zmieniają się natychmiast). */
   criteria: ListCriteria;
+  /** Kryteria pasujące do wyświetlanej `items` (sterują UKŁADEM — pasek/pusty stan, bez migotania). */
+  settledCriteria: ListCriteria;
   /** Zmiana kryteriów → re-fetch. Zmiana samej frazy `q` jest debounce'owana (~300 ms) i scala wpis historii. */
   setCriteria: (next: ListCriteria) => void;
   /** Nanosi optimistic mutację na listę hooka (bez re-fetchu); unieważnia fetch w locie, by jej nie cofnął. */
@@ -94,6 +97,11 @@ export function useItemList(
 ): UseItemList {
   const [items, setItems] = useState<Item[]>(initialItems);
   const [criteria, setCriteriaState] = useState<ListCriteria>(initialCriteria);
+  // Kryteria odpowiadające AKTUALNIE wyświetlanej liście (`items`) — aktualizowane DOPIERO, gdy fetch wróci
+  // i podmieni listę. Decyzje układu w wyspach (widoczność paska filtrów, rodzaj pustego stanu) bazują na NIM,
+  // a nie na `criteria` (które zmienia się synchronicznie w `setCriteria`). Inaczej między klikiem a powrotem
+  // fetcha powstaje render z niespójnym stanem (criteria=nowe, items=stare) → migotanie ekranu pośredniego.
+  const [settledCriteria, setSettledCriteria] = useState<ListCriteria>(initialCriteria);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -115,6 +123,7 @@ export function useItemList(
       setLoading(false);
       if (outcome.status === "ok") {
         setItems(outcome.items);
+        setSettledCriteria(next); // lista i jej kryteria zmieniają się razem (spójny układ, bez migotania)
         // Zapis adresu pomijamy dla popstate (adres już zmieniony przez back/forward).
         if (!opts.fromPopstate) {
           const qs = criteriaToQuery(next);
@@ -192,5 +201,5 @@ export function useItemList(
     };
   }, []);
 
-  return { items, criteria, setCriteria, applyOptimistic, loading, error };
+  return { items, criteria, settledCriteria, setCriteria, applyOptimistic, loading, error };
 }

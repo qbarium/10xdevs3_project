@@ -6,10 +6,10 @@ import { useItemMutation } from "@/components/hooks/useItemMutation";
 import AddItemDialog from "@/components/items/AddItemDialog";
 import { defaultCreateType, nextFilterAfterCreate } from "@/components/items/create-form";
 import EditItemDialog from "@/components/items/EditItemDialog";
+import ListFilterBar from "@/components/items/ListFilterBar";
 import OperationalStatusBadge from "@/components/items/OperationalStatusBadge";
 import { reconcileAfterChange, type AcceptedView } from "@/components/items/operational-view";
 import { allIds, isAllSelected, requiresConfirmation, toggleSelection } from "@/components/items/selection";
-import TypeFilter from "@/components/items/TypeFilter";
 import type { TypeFilterValue } from "@/components/items/type-filter";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Toaster } from "@/components/ui/sonner";
 import { itemTypeLabel, operationalStatusLabel } from "@/lib/labels";
+import { defaultCriteria, hasActiveFilters } from "@/lib/services/list-criteria";
 import type { ListCriteria } from "@/lib/services/list-criteria";
 import { cn } from "@/lib/utils";
 import type { Item, OperationalStatus } from "@/types";
@@ -77,7 +78,11 @@ function elementNoun(n: number): string {
 // klienckiego `applyTypeFilter`/`pinnedIds`/cookie: re-fetch przy zmianie filtra (nie edycja) usuwa item
 // z widoku, więc edytowany item zostaje widoczny do następnej zmiany kryteriów (decyzja #6 — naturalnie).
 export default function AcceptedItemsView({ initialItems, view, initialCriteria, canAdd = false }: Props) {
-  const { items, criteria, setCriteria, applyOptimistic } = useItemList(view, initialItems, initialCriteria);
+  const { items, criteria, settledCriteria, setCriteria, applyOptimistic, error } = useItemList(
+    view,
+    initialItems,
+    initialCriteria,
+  );
   const [selected, setSelected] = useState<Set<string>>(new Set());
   // Żądanie potwierdzenia (select-all) — unia rozróżniająca: zmiana stanu operacyjnego ALBO przeniesienie
   // do kosza (S-06). Dyskryminator `kind` steruje gałęzią `execute` i treścią dialogu.
@@ -96,6 +101,10 @@ export default function AcceptedItemsView({ initialItems, view, initialCriteria,
   // operują na tej liście; invariant „selected ⊆ widoczne" utrzymuje czyszczenie selekcji przy zmianie filtra.
   const allSelected = isAllSelected(selected.size, items.length);
   const selectedCount = selected.size;
+  // Bazuje na `settledCriteria` (pasują do wyświetlanej listy), nie na żywych `criteria` — inaczej zmiana filtra
+  // przełączałaby układ (pasek/pusty stan) przed nadejściem danych → migotanie. Kontrolki paska i tak odbijają
+  // żywe `criteria`, więc pozostają responsywne.
+  const filtersActive = hasActiveFilters(settledCriteria);
 
   function toggleItem(id: string): void {
     setSelected((prev) => toggleSelection(prev, id));
@@ -187,11 +196,23 @@ export default function AcceptedItemsView({ initialItems, view, initialCriteria,
     applyOptimistic((prev) => prev.map((current) => (current.id === updated.id ? updated : current)));
   }
 
-  // Zmiana filtra typu → re-fetch (autorytatywna lista z serwera) + wyczyszczenie selekcji (invariant
-  // selected ⊆ widoczne — zaznaczać można tylko widoczne itemy; po re-fetchu skład listy się zmienia).
-  function handleFilterChange(next: TypeFilterValue): void {
+  // Każda zmiana kryterium z paska filtrów → wyczyść zaznaczenie (invariant „selected ⊆ widoczne" — po
+  // re-fetchu skład listy się zmienia) i re-fetchuj (autorytatywna lista z serwera).
+  function applyCriteria(next: ListCriteria): void {
     setSelected(new Set());
-    setCriteria({ ...criteria, type: next });
+    setCriteria(next);
+  }
+
+  // Zmiana samego filtra typu — cienka nakładka na `applyCriteria` zachowująca kontrakt `TypeFilterValue`
+  // używany przez create-flow S-07 (`nextFilterAfterCreate` w `handleCreated`).
+  function handleFilterChange(next: TypeFilterValue): void {
+    applyCriteria({ ...criteria, type: next });
+  }
+
+  // Ponów ostatni fetch wg bieżących kryteriów (po błędzie sieci) — bez zmiany kryteriów i bez czyszczenia
+  // zaznaczenia (przy powodzeniu skład listy się nie zmienia).
+  function retry(): void {
+    setCriteria({ ...criteria });
   }
 
   // 404 (item nieedytowalny / zniknął) — usuń z listy (optimistic) i z zaznaczenia.
@@ -256,19 +277,38 @@ export default function AcceptedItemsView({ initialItems, view, initialCriteria,
         </div>
       )}
 
-      {/* Filtr typu widoczny, gdy jest co filtrować ALBO gdy filtr jest aktywny (`type !== "all"`) — w drugim
-          przypadku lista może być pusta, a kontrolka MUSI zostać dostępna, by dało się wrócić do „Wszystkie". */}
-      {(items.length > 0 || criteria.type !== "all") && (
-        <TypeFilter value={criteria.type} onChange={handleFilterChange} />
+      {/* Pasek filtrów widoczny, gdy jest co filtrować ALBO gdy jakikolwiek filtr jest aktywny — w drugim
+          przypadku lista może być pusta (zawężona), a kontrolki MUSZĄ zostać dostępne (powrót do domyślnych). */}
+      {(items.length > 0 || filtersActive) && (
+        <ListFilterBar criteria={criteria} onChange={applyCriteria} error={error} onRetry={retry} />
       )}
 
       {items.length === 0 ? (
-        <div
-          role="status"
-          className="rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70"
-        >
-          {criteria.type !== "all" ? "Brak elementów tego typu w tym widoku." : EMPTY_LABEL[view]}
-        </div>
+        filtersActive ? (
+          <div
+            role="status"
+            className="flex flex-col items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70"
+          >
+            <span>Brak elementów dla wybranych filtrów.</span>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                applyCriteria(defaultCriteria(view));
+              }}
+              className="border-white/15 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white"
+            >
+              Wyczyść filtry
+            </Button>
+          </div>
+        ) : (
+          <div
+            role="status"
+            className="rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70"
+          >
+            {EMPTY_LABEL[view]}
+          </div>
+        )
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">

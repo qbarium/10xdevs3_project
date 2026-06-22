@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { criteriaToQuery, defaultCriteria, parseListCriteria } from "@/lib/services/list-criteria";
+import { criteriaToQuery, defaultCriteria, hasActiveFilters, parseListCriteria } from "@/lib/services/list-criteria";
 import type { ListCriteria } from "@/lib/services/list-criteria";
 
 function params(query: string): URLSearchParams {
@@ -93,5 +93,26 @@ describe("round-trip parse(query(c)) === c", () => {
   ];
   it.each(cases)("round-trips $view/$type/$sort", (c) => {
     expect(parseListCriteria(c.view, params(criteriaToQuery(c)))).toEqual(c);
+  });
+});
+
+describe("hasActiveFilters", () => {
+  it("domyślne kryteria (puste params) → false dla każdego widoku", () => {
+    for (const view of ["pending", "active", "done", "cancelled", "trash"] as const) {
+      expect(hasActiveFilters(defaultCriteria(view))).toBe(false);
+    }
+  });
+
+  it("dowolne pole różne od domyślnego (typ/sort/dir/q/opstatus) → true", () => {
+    expect(hasActiveFilters({ ...defaultCriteria("active"), type: "task" })).toBe(true);
+    expect(hasActiveFilters({ ...defaultCriteria("active"), sort: "title" })).toBe(true);
+    expect(hasActiveFilters({ ...defaultCriteria("active"), dir: "asc" })).toBe(true);
+    expect(hasActiveFilters({ ...defaultCriteria("active"), q: "foo" })).toBe(true);
+    expect(hasActiveFilters({ ...defaultCriteria("active"), opstatus: "new" })).toBe(true);
+  });
+
+  it("opstatus poza widokiem active nie liczy się jako filtr (nie jest emitowany)", () => {
+    expect(hasActiveFilters({ ...defaultCriteria("done"), opstatus: "new" })).toBe(false);
+    expect(hasActiveFilters({ ...defaultCriteria("trash"), opstatus: "in_progress" })).toBe(false);
   });
 });

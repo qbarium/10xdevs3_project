@@ -3,6 +3,7 @@ import { toast } from "sonner";
 
 import { useItemList } from "@/components/hooks/useItemList";
 import { useItemMutation } from "@/components/hooks/useItemMutation";
+import ListFilterBar from "@/components/items/ListFilterBar";
 import {
   allIds,
   isAllSelected,
@@ -10,8 +11,6 @@ import {
   requiresConfirmation,
   toggleSelection,
 } from "@/components/items/selection";
-import TypeFilter from "@/components/items/TypeFilter";
-import type { TypeFilterValue } from "@/components/items/type-filter";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -24,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Toaster } from "@/components/ui/sonner";
 import { acceptanceOriginLabel, itemTypeLabel } from "@/lib/labels";
+import { defaultCriteria, hasActiveFilters } from "@/lib/services/list-criteria";
 import type { ListCriteria } from "@/lib/services/list-criteria";
 import { cn } from "@/lib/utils";
 import type { Item } from "@/types";
@@ -61,7 +61,11 @@ function elementNoun(n: number): string {
 // konkretną liczbę tylko bez aktywnego filtra (`type==="all"`); przy filtrze opiera się na treści „CAŁY kosz"
 // i liczbie z toastu po akcji (serwer zwraca faktycznie usuniętą liczbę).
 export default function TrashItemsView({ initialItems, initialCriteria }: Props) {
-  const { items, criteria, setCriteria, applyOptimistic } = useItemList("trash", initialItems, initialCriteria);
+  const { items, criteria, settledCriteria, setCriteria, applyOptimistic, error } = useItemList(
+    "trash",
+    initialItems,
+    initialCriteria,
+  );
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [inFlightIds, setInFlightIds] = useState<Set<string>>(new Set());
   // Potwierdzenie restore (select-all): id do przywrócenia po akceptacji. Potwierdzenie empty: boolean.
@@ -75,6 +79,10 @@ export default function TrashItemsView({ initialItems, initialCriteria }: Props)
   // na tej liście; invariant „selected ⊆ widoczne" utrzymuje czyszczenie selekcji przy zmianie filtra.
   const allSelected = isAllSelected(selected.size, items.length);
   const selectedCount = selected.size;
+  // Bazuje na `settledCriteria` (pasują do wyświetlanej listy), nie na żywych `criteria` — inaczej zmiana filtra
+  // przełączałaby układ (pasek/pusty stan) przed nadejściem danych → migotanie. Kontrolki paska i tak odbijają
+  // żywe `criteria`, więc pozostają responsywne.
+  const filtersActive = hasActiveFilters(settledCriteria);
 
   function toggleItem(id: string): void {
     setSelected((prev) => toggleSelection(prev, id));
@@ -155,23 +163,28 @@ export default function TrashItemsView({ initialItems, initialCriteria }: Props)
     void executeEmpty();
   }
 
-  // Zmiana filtra typu → re-fetch (autorytatywna lista z serwera) + wyczyszczenie selekcji (invariant
-  // selected ⊆ widoczne — po re-fetchu skład listy się zmienia).
-  function handleTypeFilterChange(next: TypeFilterValue): void {
+  // Każda zmiana kryterium z paska filtrów → wyczyść zaznaczenie (invariant „selected ⊆ widoczne" — po
+  // re-fetchu skład listy się zmienia) i re-fetchuj (autorytatywna lista z serwera).
+  function applyCriteria(next: ListCriteria): void {
     setSelected(new Set());
-    setCriteria({ ...criteria, type: next });
+    setCriteria(next);
+  }
+
+  // Ponów ostatni fetch wg bieżących kryteriów (po błędzie sieci) — bez zmiany kryteriów i bez czyszczenia
+  // zaznaczenia (przy powodzeniu skład listy się nie zmienia).
+  function retry(): void {
+    setCriteria({ ...criteria });
   }
 
   return (
     <div className="flex flex-col gap-3">
       <Toaster />
 
-      {/* Rząd filtra + „Wyczyść kosz" widoczny, gdy jest co filtrować ALBO gdy filtr jest aktywny — w drugim
-          przypadku lista może być pusta (zawężona), a kontrolki MUSZĄ zostać dostępne (powrót do „Wszystkie"
-          oraz globalne czyszczenie kosza, który poza filtrem wciąż może mieć itemy). */}
-      {(items.length > 0 || criteria.type !== "all") && (
-        <div className="flex flex-wrap items-center gap-2">
-          <TypeFilter value={criteria.type} onChange={handleTypeFilterChange} />
+      {/* Pasek filtrów + „Wyczyść kosz" widoczny, gdy jest co filtrować ALBO gdy jakikolwiek filtr jest
+          aktywny — w drugim przypadku lista może być pusta (zawężona), a kontrolki MUSZĄ zostać dostępne
+          (powrót do domyślnych oraz globalne czyszczenie kosza, który poza filtrem wciąż może mieć itemy). */}
+      {(items.length > 0 || filtersActive) && (
+        <ListFilterBar criteria={criteria} onChange={applyCriteria} error={error} onRetry={retry}>
           <Button
             size="sm"
             variant="destructive"
@@ -179,20 +192,38 @@ export default function TrashItemsView({ initialItems, initialCriteria }: Props)
             onClick={() => {
               setConfirmEmpty(true);
             }}
-            className="ml-auto"
           >
             Wyczyść kosz
           </Button>
-        </div>
+        </ListFilterBar>
       )}
 
       {items.length === 0 ? (
-        <div
-          role="status"
-          className="rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70"
-        >
-          {criteria.type !== "all" ? "Brak elementów tego typu w koszu." : "Kosz jest pusty."}
-        </div>
+        filtersActive ? (
+          <div
+            role="status"
+            className="flex flex-col items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70"
+          >
+            <span>Brak elementów dla wybranych filtrów.</span>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                applyCriteria(defaultCriteria("trash"));
+              }}
+              className="border-white/15 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white"
+            >
+              Wyczyść filtry
+            </Button>
+          </div>
+        ) : (
+          <div
+            role="status"
+            className="rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70"
+          >
+            Kosz jest pusty.
+          </div>
+        )
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
@@ -290,8 +321,9 @@ export default function TrashItemsView({ initialItems, initialCriteria }: Props)
         </DialogContent>
       </Dialog>
 
-      {/* Potwierdzenie „Wyczyść kosz" — łączna liczba znana klientowi tylko bez filtra (type==="all"); przy
-          aktywnym filtrze pomijamy liczbę (lista jest zawężona), a treść niesie zakres „CAŁY kosz". */}
+      {/* Potwierdzenie „Wyczyść kosz" — łączna liczba znana klientowi tylko BEZ filtra zawężającego liczbę
+          (type==="all" ORAZ pusta fraza q — oba filtrują wiersze kosza); przy aktywnym filtrze pomijamy liczbę
+          (lista jest zawężona), a treść niesie zakres „CAŁY kosz". Sort/dir nie zmieniają liczby — pomijane. */}
       <Dialog
         open={confirmEmpty}
         onOpenChange={(open) => {
@@ -301,7 +333,7 @@ export default function TrashItemsView({ initialItems, initialCriteria }: Props)
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {criteria.type === "all"
+              {criteria.type === "all" && criteria.q === ""
                 ? `Wyczyścić kosz? Trwale usuniesz ${items.length} ${elementNoun(items.length)}.`
                 : "Wyczyścić kosz?"}
             </DialogTitle>

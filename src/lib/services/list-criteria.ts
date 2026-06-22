@@ -113,3 +113,13 @@ export function criteriaToQuery(criteria: ListCriteria): string {
 export function defaultCriteria(view: MainView): ListCriteria {
   return parseListCriteria(view, new URLSearchParams());
 }
+
+/**
+ * Czy JAKIEKOLWIEK kryterium odbiega od domyślnego dla widoku (typ / sort / dir / q / opstatus). Reużywa
+ * `criteriaToQuery` — ono emituje WYŁĄCZNIE pola różne od domyślnych, więc niepusty query string ⇔ aktywny
+ * filtr (zamiast osobnego, dryfującego porównania pól). Steruje rozróżnieniem pustego wyniku w wyspach:
+ * „brak elementów dla wybranych filtrów" (+ akcja „Wyczyść filtry") vs zwykły pusty widok.
+ */
+export function hasActiveFilters(criteria: ListCriteria): boolean {
+  return criteriaToQuery(criteria).length > 0;
+}

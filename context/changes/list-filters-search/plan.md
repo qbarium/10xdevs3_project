@@ -463,28 +463,28 @@ Brak migracji bazy. Zmiana czysto aplikacyjna na istniejących kolumnach i indek
 
 #### Automatyczne
 
-- [x] 4.1 Lint przechodzi (brak nieużywanych importów/eksportów): `npm run lint`
-- [x] 4.2 Testy jednostkowe przechodzą: `npm test`
-- [x] 4.3 Build przechodzi: `npm run build`
+- [x] 4.1 Lint przechodzi (brak nieużywanych importów/eksportów): `npm run lint` — 32ecad5
+- [x] 4.2 Testy jednostkowe przechodzą: `npm test` — 32ecad5
+- [x] 4.3 Build przechodzi: `npm run build` — 32ecad5
 
 #### Ręczne
 
-- [x] 4.4 Filtr typu działa na każdym widoku (w tym „Elementy do akceptacji") i jest widoczny w adresie strony
-- [x] 4.5 Odświeżenie z `?type=…` pokazuje od razu przefiltrowaną listę (brak przeskoku po hydracji)
-- [x] 4.6 „Wstecz/dalej" przełącza filtr; brak cookie `tl_typefilter`
+- [x] 4.4 Filtr typu działa na każdym widoku (w tym „Elementy do akceptacji") i jest widoczny w adresie strony — 32ecad5
+- [x] 4.5 Odświeżenie z `?type=…` pokazuje od razu przefiltrowaną listę (brak przeskoku po hydracji) — 32ecad5
+- [x] 4.6 „Wstecz/dalej" przełącza filtr; brak cookie `tl_typefilter` — 32ecad5
 
 ### Faza 5: Nowe kontrolki + finalizacja UX
 
 #### Automatyczne
 
-- [ ] 5.1 Lint przechodzi: `npm run lint`
-- [ ] 5.2 Testy jednostkowe przechodzą: `npm test`
-- [ ] 5.3 Build przechodzi: `npm run build`
+- [x] 5.1 Lint przechodzi: `npm run lint`
+- [x] 5.2 Testy jednostkowe przechodzą: `npm test`
+- [x] 5.3 Build przechodzi: `npm run build`
 
 #### Ręczne
 
-- [ ] 5.4 Sortowanie (pole + kierunek) zmienia kolejność i URL
-- [ ] 5.5 Wyszukiwanie zawęża po tytule/opisie (z opóźnieniem); znak `%` nie psuje wyników
-- [ ] 5.6 Podfiltr stanu operacyjnego działa tylko w Aktywne
-- [ ] 5.7 Zmiana dowolnego filtra czyści zaznaczenie
-- [ ] 5.8 Pusty wynik pokazuje komunikat + „Wyczyść filtry"; round-trip URL między kartami zachowuje filtry
+- [x] 5.4 Sortowanie (pole + kierunek) zmienia kolejność i URL
+- [x] 5.5 Wyszukiwanie zawęża po tytule/opisie (z opóźnieniem); znak `%` nie psuje wyników
+- [x] 5.6 Podfiltr stanu operacyjnego działa tylko w Aktywne
+- [x] 5.7 Zmiana dowolnego filtra czyści zaznaczenie
+- [x] 5.8 Pusty wynik pokazuje komunikat + „Wyczyść filtry"; round-trip URL między kartami zachowuje filtry

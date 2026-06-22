@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useItemList } from "@/components/hooks/useItemList";
 import { useItemMutation } from "@/components/hooks/useItemMutation";
 import EditItemDialog from "@/components/items/EditItemDialog";
+import ListFilterBar from "@/components/items/ListFilterBar";
 import {
   allIds,
   isAllSelected,
@@ -11,8 +12,6 @@ import {
   requiresConfirmation,
   toggleSelection,
 } from "@/components/items/selection";
-import TypeFilter from "@/components/items/TypeFilter";
-import type { TypeFilterValue } from "@/components/items/type-filter";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -25,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { Toaster } from "@/components/ui/sonner";
 import { itemTypeLabel } from "@/lib/labels";
+import { defaultCriteria, hasActiveFilters } from "@/lib/services/list-criteria";
 import type { ListCriteria } from "@/lib/services/list-criteria";
 import { cn } from "@/lib/utils";
 import type { Item } from "@/types";
@@ -60,7 +60,11 @@ function elementNoun(n: number): string {
 // S-09: lista należy do `useItemList` (filtr typu SERWEROWY przez kryteria z URL — pending zyskuje filtr,
 // którego wcześniej nie miał). Zmiana filtra = re-fetch; mutacje = optimistic przez `applyOptimistic`.
 export default function PendingItemsView({ initialItems, initialCriteria }: Props) {
-  const { items, criteria, setCriteria, applyOptimistic } = useItemList("pending", initialItems, initialCriteria);
+  const { items, criteria, settledCriteria, setCriteria, applyOptimistic, error } = useItemList(
+    "pending",
+    initialItems,
+    initialCriteria,
+  );
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmRequest, setConfirmRequest] = useState<{ action: PendingAction; ids: string[] } | null>(null);
   const [editing, setEditing] = useState<Item | null>(null);
@@ -72,6 +76,10 @@ export default function PendingItemsView({ initialItems, initialCriteria }: Prop
 
   const allSelected = isAllSelected(selected.size, items.length);
   const selectedCount = selected.size;
+  // Bazuje na `settledCriteria` (pasują do wyświetlanej listy), nie na żywych `criteria` — inaczej zmiana filtra
+  // przełączałaby układ (pasek/pusty stan) przed nadejściem danych → migotanie. Kontrolki paska i tak odbijają
+  // żywe `criteria`, więc pozostają responsywne.
+  const filtersActive = hasActiveFilters(settledCriteria);
 
   function toggleItem(id: string): void {
     setSelected((prev) => toggleSelection(prev, id));
@@ -81,11 +89,17 @@ export default function PendingItemsView({ initialItems, initialCriteria }: Prop
     setSelected((prev) => (isAllSelected(prev.size, items.length) ? new Set() : allIds(items)));
   }
 
-  // Zmiana filtra typu → re-fetch (autorytatywna lista z serwera) + wyczyszczenie selekcji (invariant
-  // selected ⊆ widoczne — po re-fetchu skład listy się zmienia).
-  function handleFilterChange(next: TypeFilterValue): void {
+  // Każda zmiana kryterium z paska filtrów → wyczyść zaznaczenie (invariant „selected ⊆ widoczne" — po
+  // re-fetchu skład listy się zmienia) i re-fetchuj (autorytatywna lista z serwera).
+  function applyCriteria(next: ListCriteria): void {
     setSelected(new Set());
-    setCriteria({ ...criteria, type: next });
+    setCriteria(next);
+  }
+
+  // Ponów ostatni fetch wg bieżących kryteriów (po błędzie sieci) — bez zmiany kryteriów i bez czyszczenia
+  // zaznaczenia (przy powodzeniu skład listy się nie zmienia).
+  function retry(): void {
+    setCriteria({ ...criteria });
   }
 
   // Weryfikacja PRZED zmianą listy (pessimistic): elementy w locie są tylko WYGASZANE (dim),
@@ -162,19 +176,38 @@ export default function PendingItemsView({ initialItems, initialCriteria }: Prop
     <div className="flex flex-col gap-3">
       <Toaster />
 
-      {/* Filtr typu widoczny, gdy jest co filtrować ALBO gdy filtr jest aktywny (`type !== "all"`) — w drugim
-          przypadku lista może być pusta, a kontrolka MUSI zostać dostępna, by dało się wrócić do „Wszystkie". */}
-      {(items.length > 0 || criteria.type !== "all") && (
-        <TypeFilter value={criteria.type} onChange={handleFilterChange} />
+      {/* Pasek filtrów widoczny, gdy jest co filtrować ALBO gdy jakikolwiek filtr jest aktywny — w drugim
+          przypadku lista może być pusta (zawężona), a kontrolki MUSZĄ zostać dostępne (powrót do domyślnych). */}
+      {(items.length > 0 || filtersActive) && (
+        <ListFilterBar criteria={criteria} onChange={applyCriteria} error={error} onRetry={retry} />
       )}
 
       {items.length === 0 ? (
-        <div
-          role="status"
-          className="rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70"
-        >
-          {criteria.type !== "all" ? "Brak elementów tego typu w tym widoku." : "Brak elementów do akceptacji."}
-        </div>
+        filtersActive ? (
+          <div
+            role="status"
+            className="flex flex-col items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70"
+          >
+            <span>Brak elementów dla wybranych filtrów.</span>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                applyCriteria(defaultCriteria("pending"));
+              }}
+              className="border-white/15 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white"
+            >
+              Wyczyść filtry
+            </Button>
+          </div>
+        ) : (
+          <div
+            role="status"
+            className="rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70"
+          >
+            Brak elementów do akceptacji.
+          </div>
+        )
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
