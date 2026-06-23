@@ -30,6 +30,12 @@ const SORT_COLUMN: Record<SortField, string> = {
  *     wewnątrz cudzysłowów literalne `"` i `\` są escapowane backslashem (warstwa quotingu PostgREST).
  * Bez tego fraza `foo,bar` lub `f(x)` rozbiłaby parsowanie `.or()` (błąd / wstrzyknięcie warunku w obrębie
  * danych usera), a `50%` dawałoby błędne (wildcardowe) dopasowania.
+ *
+ * ZNANE OGRANICZENIE — `*` NIE jest literalizowany: PostgREST twardo mapuje `*`→`%` dla `ilike`, PO zdjęciu
+ * cudzysłowów i BEZ escape'a (zweryfikowane empirycznie 2026-06-23 na lokalnym stacku: `%Zadanie\*A%` wciąż
+ * dopasowuje „Zadanie A"). Dlatego `*` we frazie działa jak wildcard, inaczej niż literalne `%`/`_`. Pełna
+ * literalność `*` wymagałaby operatora regex (również nieescapowalnego czysto przez quoting PostgREST) lub
+ * RPC z bind-paramem + ESCAPE — świadomie poza zakresem (plan: supabase-js bez RPC, `target_scale: small`).
  */
 export function buildSearchOrFilter(term: string): string {
   // Warstwa 1: literalizacja wildcardów LIKE (\ % _). Każdy znak mapowany niezależnie w jednym przebiegu.
