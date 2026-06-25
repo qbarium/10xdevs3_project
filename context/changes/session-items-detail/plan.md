@@ -247,7 +247,7 @@ Brak — żadnych zmian schematu ani danych. Endpoint i akcje działają na istn
 #### Automatyczne
 
 - [x] 1.1 Lint przechodzi: `npm run lint` — f785671
-- [ ] 1.2 Testy jednostkowe nowych helperów przechodzą: `npm test`
+- [x] 1.2 Testy jednostkowe nowych helperów przechodzą: `npm test`
 - [x] 1.3 Build przechodzi: `npm run build` — f785671
 
 #### Ręczne
@@ -271,8 +271,8 @@ Brak — żadnych zmian schematu ani danych. Endpoint i akcje działają na istn
 
 #### Automatyczne
 
-- [x] 3.1 Lint przechodzi: `npm run lint`
-- [x] 3.2 Build przechodzi: `npm run build`
+- [x] 3.1 Lint przechodzi: `npm run lint` — e887b83
+- [x] 3.2 Build przechodzi: `npm run build` — e887b83
 
 #### Ręczne
 

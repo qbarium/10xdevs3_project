@@ -14,8 +14,23 @@ vi.mock("@/lib/services/logger", () => ({ reportError: vi.fn() }));
 
 import { moveToTrash, restoreFromTrash, setAcceptanceStatus } from "@/lib/services/items-mutation";
 import { POST } from "@/pages/api/items/bulk";
+import type { Item } from "@/types";
 
 const UUID = "11111111-1111-4111-8111-111111111111";
+
+// Minimalny wiersz Item dla mocka restore (S-10: restoreFromTrash zwraca świeże wiersze, nie liczbę).
+const ITEM = {
+  id: UUID,
+  user_id: "u",
+  import_session_id: null,
+  type: "task",
+  title: "T",
+  description: null,
+  acceptance_status: "accepted",
+  operational_status: "new",
+  created_at: "2026-01-01T00:00:00Z",
+  updated_at: "2026-01-01T00:00:01Z",
+} satisfies Item;
 
 interface Body {
   ok?: boolean;
@@ -23,6 +38,7 @@ interface Body {
   updatedIds?: string[];
   count?: number;
   code?: string;
+  items?: Item[];
 }
 
 function ctx(body: unknown, user: { id: string } | null = { id: "user-1" }) {
@@ -41,7 +57,8 @@ describe("POST /api/items/bulk", () => {
   beforeEach(() => {
     vi.mocked(setAcceptanceStatus).mockResolvedValue({ updatedIds: [UUID] });
     vi.mocked(moveToTrash).mockResolvedValue({ updatedIds: [UUID] });
-    vi.mocked(restoreFromTrash).mockResolvedValue({ updatedIds: [UUID] });
+    // S-10: restore zwraca świeże wiersze (Item[]); endpoint wyprowadza z nich updatedIds/count.
+    vi.mocked(restoreFromTrash).mockResolvedValue([ITEM]);
   });
   afterEach(() => vi.clearAllMocks());
 
@@ -75,12 +92,14 @@ describe("POST /api/items/bulk", () => {
     expect(vi.mocked(setAcceptanceStatus)).not.toHaveBeenCalled();
   });
 
-  // S-06 — restore woła restoreFromTrash (dwukierunkowe deleted→accepted / rejected→pending)
-  it("restore → restoreFromTrash, odpowiedź {ok, action:'restore', updatedIds, count}", async () => {
+  // S-06/S-10 — restore woła restoreFromTrash i ADDYTYWNIE zwraca świeże wiersze (`items`) obok updatedIds/count.
+  it("restore → restoreFromTrash, odpowiedź {ok, action:'restore', updatedIds, count, items}", async () => {
     const res = await POST(ctx({ ids: [UUID], action: "restore" }));
     expect(res.status).toBe(200);
     const body = (await res.json()) as Body;
     expect(body).toMatchObject({ ok: true, action: "restore", updatedIds: [UUID], count: 1 });
+    // S-10: pole `items` ze świeżymi wierszami (poprawny updated_at) dla panelu sesji.
+    expect(body.items).toEqual([ITEM]);
     expect(vi.mocked(restoreFromTrash)).toHaveBeenCalledWith(expect.anything(), [UUID]);
     expect(vi.mocked(setAcceptanceStatus)).not.toHaveBeenCalled();
   });
