@@ -36,12 +36,18 @@ export const POST: APIRoute = async (context) => {
 
   const { ids, action } = parsed.data;
   try {
-    // Każda gałąź zwraca `{ updatedIds }` (guard statusem w serwisie → tylko uprawnione wiersze).
+    // Restore zwraca PEŁNE wiersze (świeży `updated_at`) — dokładamy `items` do odpowiedzi ADDYTYWNIE
+    // (panel sesji S-10 podmienia element z poprawnym znacznikiem, by edycja po restore nie dała 409).
+    // `updatedIds`/`count` zachowane → konsumenci accept/reject/trash w głównych widokach nietknięci.
+    if (action === "restore") {
+      const items = await restoreFromTrash(supabase, ids);
+      const updatedIds = items.map((item) => item.id);
+      return json({ ok: true, action, updatedIds, count: updatedIds.length, items }, 200);
+    }
+    // Pozostałe gałęzie zwracają `{ updatedIds }` (guard statusem w serwisie → tylko uprawnione wiersze).
     let updatedIds: string[];
     if (action === "trash") {
       ({ updatedIds } = await moveToTrash(supabase, ids));
-    } else if (action === "restore") {
-      ({ updatedIds } = await restoreFromTrash(supabase, ids));
     } else {
       ({ updatedIds } = await setAcceptanceStatus(supabase, ids, action === "accept" ? "accepted" : "rejected"));
     }

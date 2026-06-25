@@ -153,20 +153,25 @@ export async function moveToTrash(supabase: SupabaseClient, ids: string[]): Prom
  * Mieszana selekcja (rejected + deleted) wymaga DWÓCH guarded UPDATE-ów, każdy strzeżony bieżącym
  * statusem źródłowym: `deleted → accepted` ORAZ `rejected → pending`. Restore jest deterministyczny z
  * samego statusu (jedyne źródło `deleted` to move-to-trash z `accepted`; jedyne źródło `rejected` to
- * reject z `pending`), więc nie potrzeba kolumny „previous_status". `updatedIds` to suma obu — wiersze
- * faktycznie przywrócone (reszta pominięta bez błędu — FR-007). Oba UPDATE-y NIE są wspólnie
+ * reject z `pending`), więc nie potrzeba kolumny „previous_status". Zwraca PEŁNE, zaktualizowane wiersze
+ * (`Item[]`) — sumę obu UPDATE-ów (reszta pominięta bez błędu — FR-007). Oba UPDATE-y NIE są wspólnie
  * transakcyjne (świadome ograniczenie solo-MVP): gdy drugi rzuci po zatwierdzeniu pierwszego, endpoint
  * zwróci 500, ale stan per-item pozostaje spójny (każdy w prawidłowym statusie) — bez korupcji.
+ *
+ * S-10 (master-detail): zwracamy `Item[]` zamiast samych `id`, bo panel sesji re-otwiera przywrócony
+ * element do edycji, a edycja robi compare-and-swap na `updated_at`. Bez SERWER-świeżego `updated_at`
+ * (z `.select(ITEM_COLUMNS)`) pierwsza edycja po restore trafiłaby na zakleszczony 409. Konsumenci, którym
+ * wystarcza liczba (główne widoki: trash/accept/reject), biorą ją z `items.length` w endpoincie `bulk`.
  */
-export async function restoreFromTrash(supabase: SupabaseClient, ids: string[]): Promise<{ updatedIds: string[] }> {
+export async function restoreFromTrash(supabase: SupabaseClient, ids: string[]): Promise<Item[]> {
   const now = new Date().toISOString();
   const { data: restoredDeleted, error: deletedError } = await supabase
     .from("items")
     .update({ acceptance_status: "accepted", updated_at: now })
     .in("id", ids)
     .eq("acceptance_status", "deleted")
-    .select("id")
-    .overrideTypes<{ id: string }[], { merge: false }>();
+    .select(ITEM_COLUMNS)
+    .overrideTypes<Item[], { merge: false }>();
   if (deletedError) throw new Error("Przywrócenie z kosza nie powiodło się.", { cause: deletedError });
 
   const { data: restoredRejected, error: rejectedError } = await supabase
@@ -174,11 +179,11 @@ export async function restoreFromTrash(supabase: SupabaseClient, ids: string[]):
     .update({ acceptance_status: "pending", updated_at: now })
     .in("id", ids)
     .eq("acceptance_status", "rejected")
-    .select("id")
-    .overrideTypes<{ id: string }[], { merge: false }>();
+    .select(ITEM_COLUMNS)
+    .overrideTypes<Item[], { merge: false }>();
   if (rejectedError) throw new Error("Przywrócenie z kosza nie powiodło się.", { cause: rejectedError });
 
-  return { updatedIds: [...restoredDeleted, ...restoredRejected].map((row) => row.id) };
+  return [...restoredDeleted, ...restoredRejected];
 }
 
 /**

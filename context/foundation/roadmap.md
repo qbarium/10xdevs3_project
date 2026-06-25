@@ -40,7 +40,7 @@ TaskerLight przyjmuje surowy, nieuporządkowany wsad głosowo-tekstowy i rozdzie
 | S-07  | manual-item-entry        | dodać item ręcznie (bez klucza, od razu `accepted`)                         | S-02              | US-08, FR-028                              | done |
 | S-08  | import-session-log-retry | przejrzeć dziennik sesji importu i ponowić sesję `niepowodzenie`            | S-02              | US-07, FR-027                              | done |
 | S-09  | list-filters-search      | sortować i wyszukiwać listy po dacie i tytule (+ podfiltr stanu w Aktywne)  | S-05              | FR-008 (filtry dodatkowe)                  | done |
-| S-10  | session-items-detail     | w dzienniku sesji wybrać sesję i zobaczyć/edytować jej elementy (master-detail) | S-08, S-05, S-06 | FR-027 (rozszerzony); nadpisuje FR-008/FR-015 | proposed |
+| S-10  | session-items-detail     | w dzienniku sesji wybrać sesję i zobaczyć/edytować jej elementy (master-detail) | S-08, S-05, S-06 | FR-027 (rozszerzony); nadpisuje FR-008/FR-015 | in-progress |
 | S-11  | session-log-filter-ux    | filtrować dziennik sesji reaktywnie (bez „Zastosuj"), spójne dropdowny, „Wyczyść filtry" | S-08 | FR-027 / FR-008 (parytet UX) | proposed |
 
 ## Strumienie
@@ -206,7 +206,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Blokady:** —
 - **Niewiadome:** —
 - **Ryzyko:** Rozszerza FR-027 poza pierwotny zakres MVP (podgląd elementów sesji). Prawa lista pobiera elementy po `import_session_id` dedykowanym endpointem (`GET /api/import-sessions/[id]/items`), zwracając wszystkie stany akceptacji. Elementy `rejected`/`deleted` pozostają tylko do odczytu wg FR-011 (edycja/usuwanie tylko dla `pending`/`accepted`); operacje to reużycie (EditItemDialog z S-05, move-to-trash z S-06), nie budowane od nowa. Lista jednej sesji jest ograniczona (≤ 100 elementów wg FR-020), więc nie powiela problemu skalowania filtra sesji.
-- **Status:** proposed
+- **Status:** in-progress
 
 ### S-11: Reaktywne filtry dziennika sesji importu (parytet UX z S-09)
 
@@ -218,6 +218,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Blokady:** —
 - **Niewiadome:** Czy reaktywność oprzeć na dedykowanym `GET /api/import-sessions` (jak `GET /api/items` w S-09), czy na lżejszym wariancie fetch obecnej strony — rozstrzyga `/10x-plan`. Blokuje: nie.
 - **Ryzyko:** Czysto UX, na istniejącej powierzchni — niski koszt; wzorzec gotowy w S-09 (`useItemList` + `list-criteria` + `SortControl`/`ListFilterBar`) do reużycia/uogólnienia. Uwaga architektoniczna: dziennik to wyspa hookowa (`SessionsList → SessionRow → useSessionRetry`) — historyczne źródło blokera dup-React SSR (naprawione w `astro.config.mjs`: `vite.resolve.dedupe` + `ssr.noExternal`); dołożenie hooka filtrów wymaga potwierdzenia dev SSR realnym renderem, nie tylko zielonym buildem (lekcja „bug widoczny tylko w dev", `lessons.md`). Pełny kontekst zgłoszenia: `context/archive/2026-06-13-import-session-log-retry/follow-ups/session-log-filter-ux.md`.
+- **Dopisane z S-10 (2026-06-25):** do zakresu S-11 wchodzi **paginacja (lub „pokaż starsze") listy sesji** — dziennik jest append-only i rośnie bez ograniczeń, a `getImportSessions` ciągnie dziś wszystkie wiersze bez `LIMIT`; oraz **zapis wybranej sesji w adresie strony** (`?session=`, deep-link do panelu master-detail z S-10) — projektowane **razem** z paginacją, bo deep-link do sesji spoza bieżącej strony wymaga świadomego rozwiązania (np. kursorowego „załaduj stronę zawierającą sesję"). Decyzja przy planowaniu S-10: oba świadomie odłożone z S-10 tutaj.
 - **Status:** proposed
 
 ## Przekazanie backlogu
