@@ -6,7 +6,15 @@
 import { SessionRow } from "@/components/import-sessions/SessionRow";
 import type { SessionRowData } from "@/components/import-sessions/SessionRow";
 
-export function SessionsList({ rows }: { rows: SessionRowData[] }) {
+export function SessionsList({
+  rows,
+  onSelect,
+  selectedId,
+}: {
+  rows: SessionRowData[];
+  onSelect: (id: string) => void;
+  selectedId: string | null;
+}) {
   if (rows.length === 0) {
     return (
       <div
@@ -21,7 +29,7 @@ export function SessionsList({ rows }: { rows: SessionRowData[] }) {
   return (
     <ul className="flex flex-col gap-3">
       {rows.map((row) => (
-        <SessionRow key={row.id} row={row} />
+        <SessionRow key={row.id} row={row} onSelect={onSelect} selected={row.id === selectedId} />
       ))}
     </ul>
   );

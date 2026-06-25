@@ -259,8 +259,8 @@ Brak — żadnych zmian schematu ani danych. Endpoint i akcje działają na istn
 
 #### Automatyczne
 
-- [x] 2.1 Lint przechodzi: `npm run lint`
-- [x] 2.2 Build przechodzi: `npm run build`
+- [x] 2.1 Lint przechodzi: `npm run lint` — 5800e69
+- [x] 2.2 Build przechodzi: `npm run build` — 5800e69
 
 #### Ręczne
 
@@ -271,8 +271,8 @@ Brak — żadnych zmian schematu ani danych. Endpoint i akcje działają na istn
 
 #### Automatyczne
 
-- [ ] 3.1 Lint przechodzi: `npm run lint`
-- [ ] 3.2 Build przechodzi: `npm run build`
+- [x] 3.1 Lint przechodzi: `npm run lint`
+- [x] 3.2 Build przechodzi: `npm run build`
 
 #### Ręczne
 

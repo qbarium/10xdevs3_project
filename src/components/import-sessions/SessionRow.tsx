@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ingestErrorMessage } from "@/lib/ingest-errors";
 import { entryNoun, importSessionStatusLabel } from "@/lib/labels";
+import { cn } from "@/lib/utils";
 import type { ImportSessionStatus } from "@/types";
 
 /** Odchudzone dane wiersza (liczone serwerowo) — bez pełnego `raw_input`, tylko gotowy podgląd. */
@@ -34,7 +35,15 @@ const STATUS_BADGE: Record<ImportSessionStatus, string> = {
   failed: "border-red-300/30 bg-red-400/10 text-red-100",
 };
 
-export function SessionRow({ row }: { row: SessionRowData }) {
+export function SessionRow({
+  row,
+  onSelect,
+  selected,
+}: {
+  row: SessionRowData;
+  onSelect: (id: string) => void;
+  selected: boolean;
+}) {
   const { state, result, error, retry } = useSessionRetry();
 
   // Po rozstrzygnięciu ponowienia (done) nadpisujemy widok wyniku w miejscu; inaczej zostaje stan z SSR.
@@ -45,9 +54,23 @@ export function SessionRow({ row }: { row: SessionRowData }) {
   const isRetrying = state === "retrying";
 
   return (
-    <li className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl">
+    <li
+      className={cn(
+        "rounded-xl border bg-white/5 px-4 py-3 backdrop-blur-xl transition-colors",
+        selected ? "border-purple-400/60 ring-1 ring-purple-400/40" : "border-white/10",
+      )}
+    >
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+        {/* Wybór sesji: cała treść nagłówka to button (dostępny klawiaturą); przyciski retry/link niżej
+            są osobnym rodzeństwem, więc nie ma zagnieżdżonej interaktywności. */}
+        <button
+          type="button"
+          onClick={() => {
+            onSelect(row.id);
+          }}
+          aria-pressed={selected}
+          className="min-w-0 flex-1 cursor-pointer rounded-md text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/50"
+        >
           <div className="flex items-center gap-2">
             <span className="rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-xs font-medium text-white/70">
               {row.isFile ? "Plik" : "Wklejka"}
@@ -57,7 +80,7 @@ export function SessionRow({ row }: { row: SessionRowData }) {
           <p className="mt-1 truncate text-sm text-white/90" title={row.preview}>
             {row.preview}
           </p>
-        </div>
+        </button>
         <span className={`shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium ${STATUS_BADGE[status]}`}>
           {importSessionStatusLabel(status)}
         </span>

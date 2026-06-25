@@ -17,6 +17,8 @@ interface BulkResponse {
   updatedIds?: string[];
   count?: number;
   status?: OperationalStatus;
+  /** S-10: tylko dla `action:"restore"` — świeże wiersze (panel sesji podmienia element z poprawnym `updated_at`). */
+  items?: Item[];
 }
 interface EmptyResponse {
   ok?: boolean;
@@ -55,6 +57,8 @@ export interface UseItemMutation {
   moveToTrash: (ids: string[]) => Promise<number | null>;
   /** Przywraca zaznaczone z kosza (S-06, dwukierunkowo deleted→accepted / rejected→pending); zwraca liczbę FAKTYCZNIE przywróconych, null przy błędzie. */
   restoreFromTrash: (ids: string[]) => Promise<number | null>;
+  /** S-10: przywraca z kosza i ZWRACA świeże wiersze (panel sesji podmienia element z poprawnym `updated_at`); null przy błędzie. */
+  restoreFromTrashItems: (ids: string[]) => Promise<Item[] | null>;
   /** Trwale opróżnia kosz usera (S-06, FR-016); zwraca liczbę skasowanych wierszy (`deletedCount`), null przy błędzie. */
   emptyTrash: () => Promise<number | null>;
   /** Edytuje pending/accepted z compare-and-swap (`expectedUpdatedAt`); zwraca item lub powód (404 / 409 / błąd). */
@@ -95,6 +99,32 @@ export function useItemMutation(): UseItemMutation {
   // S-06: kosz reużywa ten sam endpoint bulk (rozgałęzia po `action` w serwisie).
   const moveToTrash = (ids: string[]): Promise<number | null> => bulk(ids, "trash");
   const restoreFromTrash = (ids: string[]): Promise<number | null> => bulk(ids, "restore");
+
+  // S-10: wariant restore zwracający ŚWIEŻE wiersze (`items` z odpowiedzi bulk), nie liczbę. Panel sesji
+  // podmienia przywrócony element z poprawnym `updated_at`, by edycja po restore nie dała fałszywego 409.
+  // Główne widoki (Kosz) używają `restoreFromTrash` (liczba) — ten wariant ich nie dotyka.
+  async function restoreFromTrashItems(ids: string[]): Promise<Item[] | null> {
+    setPending(true);
+    setError(null);
+    try {
+      const res = await fetch(BULK_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids, action: "restore" }),
+      });
+      const data = (await res.json()) as BulkResponse;
+      if (!res.ok || !data.ok) {
+        setError("Nie udało się przywrócić. Spróbuj ponownie.");
+        return null;
+      }
+      return data.items ?? [];
+    } catch {
+      setError("Błąd połączenia. Spróbuj ponownie.");
+      return null;
+    } finally {
+      setPending(false);
+    }
+  }
 
   // Trwałe opróżnienie kosza (S-06, FR-016) — osobny endpoint bez body (operacja globalna). Wzorzec
   // jak `bulk`: zwraca `deletedCount` z serwera (liczba faktycznie skasowanych wierszy) lub null przy
@@ -209,6 +239,7 @@ export function useItemMutation(): UseItemMutation {
     setOperationalStatus,
     moveToTrash,
     restoreFromTrash,
+    restoreFromTrashItems,
     emptyTrash,
     editItem,
   };
