@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ITEM_TYPES } from "@/lib/ai/schema";
-import { itemTypeLabel, operationalStatusLabel } from "@/lib/labels";
+import { acceptanceStatusLabel, itemTypeLabel, operationalStatusLabel } from "@/lib/labels";
 import { OPERATIONAL_STATUSES } from "@/lib/validation/items";
 import type { Item, ItemType, OperationalStatus } from "@/types";
 
@@ -30,6 +30,12 @@ interface Props {
   onSaved: (updated: Item) => void;
   /** 404 (item nie istnieje / nieedytowalny) — wołane, by usunąć item z listy islandu. */
   onNotFound: (id: string) => void;
+  /**
+   * Tryb podglądu (S-10): gdy `true`, dialog pokazuje treść elementu tylko-do-odczytu (bez pól edycji,
+   * bez „Zapisz", bez wywołania mutacji ani `expectedUpdatedAt`) — dla `rejected`/`deleted`, których nie
+   * wolno edytować. Domyślnie `false` → zachowanie identyczne jak dziś (kontrakt edycji nienaruszony).
+   */
+  readOnly?: boolean;
 }
 
 // Modal edycji itemu (title/description/typ + stan operacyjny dla zaakceptowanych) — jedyne miejsce
@@ -38,8 +44,9 @@ interface Props {
 // dla pendingów selektor jest ukryty (cykl życia zaczyna się po akceptacji). `item.updated_at` jedzie
 // jako `expectedUpdatedAt` (optimistic concurrency → 409). Przełącznik rozmiaru (Maximize/Minimize)
 // rozszerza okno na obszar listy (poniżej górnej nawigacji) dla długich itemów. Zamknięcie z niezapisanymi
-// zmianami bramkuje pytanie.
-export default function EditItemDialog({ item, open, onOpenChange, onSaved, onNotFound }: Props) {
+// zmianami bramkuje pytanie. W trybie `readOnly` (S-10, podgląd `rejected`/`deleted`) pola są
+// tylko-do-odczytu, brak „Zapisz"/mutacji — pozostałe ścieżki (Pending/Accepted) działają bez zmian.
+export default function EditItemDialog({ item, open, onOpenChange, onSaved, onNotFound, readOnly = false }: Props) {
   const [title, setTitle] = useState(item.title);
   const [description, setDescription] = useState(item.description ?? "");
   const [type, setType] = useState<ItemType>(item.type);
@@ -115,6 +122,85 @@ export default function EditItemDialog({ item, open, onOpenChange, onSaved, onNo
   function requestClose(): void {
     if (isDirty) setConfirmDiscard(true);
     else onOpenChange(false);
+  }
+
+  // Tryb podglądu (S-10): osobny, prosty render tylko-do-odczytu — żadnych pól edycji, „Zapisz",
+  // mutacji ani `expectedUpdatedAt`. Wszystkie hooki powyżej są już wywołane (reguły hooków), więc
+  // wczesny return jest bezpieczny; ścieżka edycji poniżej pozostaje całkowicie nietknięta. Nic nie
+  // jest „dirty" (pola read-only), więc zamknięcie idzie wprost, bez bramki niezapisanych zmian.
+  if (readOnly) {
+    return (
+      <Dialog
+        open={open}
+        onOpenChange={(next) => {
+          if (!next) onOpenChange(false);
+        }}
+      >
+        <DialogContent className={contentClass}>
+          <button
+            type="button"
+            onClick={() => {
+              setExpanded((value) => !value);
+            }}
+            aria-pressed={expanded}
+            aria-label={expanded ? "Zmniejsz okno podglądu" : "Rozszerz okno podglądu na obszar listy"}
+            className="ring-offset-background focus:ring-ring absolute top-4 right-12 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden"
+          >
+            {expanded ? <Minimize2Icon className="size-4" /> : <Maximize2Icon className="size-4" />}
+            <span className="sr-only">{expanded ? "Zmniejsz okno" : "Rozszerz okno"}</span>
+          </button>
+          <DialogHeader className={expanded ? "shrink-0" : undefined}>
+            <DialogTitle>Podgląd elementu</DialogTitle>
+          </DialogHeader>
+
+          <div className={fieldsClass}>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="view-title">Tytuł</Label>
+              <Input id="view-title" value={item.title} readOnly />
+            </div>
+
+            <div className={descriptionFieldClass}>
+              <Label htmlFor="view-description">Opis</Label>
+              <Textarea
+                key={expanded ? "view-desc-expanded" : "view-desc-normal"}
+                id="view-description"
+                value={item.description ?? ""}
+                className={descriptionClass}
+                readOnly
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label>Klasyfikacja i status</Label>
+              <div className="flex flex-wrap gap-2">
+                <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium">
+                  {itemTypeLabel(item.type)}
+                </span>
+                <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium">
+                  {acceptanceStatusLabel(item.acceptance_status)}
+                </span>
+                {item.operational_status && (
+                  <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium">
+                    {operationalStatusLabel(item.operational_status, item.type)}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className={expanded ? "shrink-0" : undefined}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                onOpenChange(false);
+              }}
+            >
+              Zamknij
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
   }
 
   return (
