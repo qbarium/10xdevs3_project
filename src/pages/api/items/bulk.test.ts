@@ -55,9 +55,10 @@ function ctx(body: unknown, user: { id: string } | null = { id: "user-1" }) {
 
 describe("POST /api/items/bulk", () => {
   beforeEach(() => {
-    vi.mocked(setAcceptanceStatus).mockResolvedValue({ updatedIds: [UUID] });
+    // S-10: setAcceptanceStatus (accept/reject) ORAZ restoreFromTrash zwracają świeże wiersze (Item[]);
+    // endpoint wyprowadza z nich updatedIds/count i dokłada `items` addytywnie. moveToTrash dalej zwraca count.
+    vi.mocked(setAcceptanceStatus).mockResolvedValue([ITEM]);
     vi.mocked(moveToTrash).mockResolvedValue({ updatedIds: [UUID] });
-    // S-10: restore zwraca świeże wiersze (Item[]); endpoint wyprowadza z nich updatedIds/count.
     vi.mocked(restoreFromTrash).mockResolvedValue([ITEM]);
   });
   afterEach(() => vi.clearAllMocks());
@@ -68,17 +69,22 @@ describe("POST /api/items/bulk", () => {
     expect(vi.mocked(setAcceptanceStatus)).not.toHaveBeenCalled();
   });
 
-  // 1.5 — accept zmienia status (endpoint woła serwis z 'accepted' i zwraca count)
-  it("accept → 200, serwis z 'accepted', odpowiedź {ok, action, updatedIds, count}", async () => {
+  // 1.5 — accept zmienia status (endpoint woła serwis z 'accepted', zwraca count + ADDYTYWNIE items, S-10)
+  it("accept → 200, serwis z 'accepted', odpowiedź {ok, action, updatedIds, count, items}", async () => {
     const res = await POST(ctx({ ids: [UUID], action: "accept" }));
     expect(res.status).toBe(200);
     const body = (await res.json()) as Body;
     expect(body).toMatchObject({ ok: true, action: "accept", updatedIds: [UUID], count: 1 });
+    // S-10: świeże wiersze dla panelu sesji (edycja po akceptacji bez fałszywego 409).
+    expect(body.items).toEqual([ITEM]);
     expect(vi.mocked(setAcceptanceStatus)).toHaveBeenCalledWith(expect.anything(), [UUID], "accepted");
   });
 
-  it("reject → serwis z 'rejected'", async () => {
-    await POST(ctx({ ids: [UUID], action: "reject" }));
+  it("reject → serwis z 'rejected', odpowiedź zawiera items", async () => {
+    const res = await POST(ctx({ ids: [UUID], action: "reject" }));
+    const body = (await res.json()) as Body;
+    expect(body).toMatchObject({ ok: true, action: "reject", updatedIds: [UUID], count: 1 });
+    expect(body.items).toEqual([ITEM]);
     expect(vi.mocked(setAcceptanceStatus)).toHaveBeenCalledWith(expect.anything(), [UUID], "rejected");
   });
 

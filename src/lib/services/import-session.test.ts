@@ -30,25 +30,38 @@ const baseRow = {
 };
 
 describe("getImportSessions (S-08) — listowanie dziennika", () => {
-  it("filtruje po userze, domyślnie sortuje malejąco i mapuje metadane pliku z LEFT JOIN", async () => {
+  it("filtruje po userze, domyślnie sortuje malejąco i mapuje metadane pliku + live_item_count", async () => {
     const { client, builder } = mockSupabase({
-      data: [{ ...baseRow, import_files: [{ file_name: "notatki.txt", file_mime: "text/plain" }] }],
+      data: [
+        {
+          ...baseRow,
+          import_files: [{ file_name: "notatki.txt", file_mime: "text/plain" }],
+          items: [{ count: 3 }],
+        },
+      ],
       error: null,
     });
     const sessions = await getImportSessions(client, "u1");
     expect(builder.eq).toHaveBeenCalledWith("user_id", "u1");
     expect(builder.order).toHaveBeenCalledWith("created_at", { ascending: false });
     expect(sessions).toHaveLength(1);
-    expect(sessions[0]).toMatchObject({ id: "s1", file_name: "notatki.txt", file_mime: "text/plain" });
-    // pole pomocnicze import_files nie wycieka do wyniku
+    expect(sessions[0]).toMatchObject({
+      id: "s1",
+      file_name: "notatki.txt",
+      file_mime: "text/plain",
+      live_item_count: 3, // count z embedowanego items(count)
+    });
+    // pola pomocnicze embedów nie wyciekają do wyniku
     expect("import_files" in sessions[0]).toBe(false);
+    expect("items" in sessions[0]).toBe(false);
   });
 
-  it("paste bez pliku → file_name/file_mime null", async () => {
+  it("paste bez pliku → file_name/file_mime null; brak embeda items → live_item_count 0", async () => {
     const { client } = mockSupabase({ data: [{ ...baseRow, import_files: [] }], error: null });
     const [s] = await getImportSessions(client, "u1");
     expect(s.file_name).toBeNull();
     expect(s.file_mime).toBeNull();
+    expect(s.live_item_count).toBe(0);
   });
 
   it("sort created_asc → ascending true; filtr statusu → dodatkowy eq", async () => {

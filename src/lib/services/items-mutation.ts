@@ -85,23 +85,27 @@ export async function createManualItem(
 /**
  * Zbiorcza zmiana statusu akceptacji zaznaczonych pendingów jednym atomowym statementem.
  * Guard `pending` w WHERE → itemy poza zbiorem `pending` po prostu nie pasują (`.select` ich nie
- * zwróci), więc zwracane `updatedIds` to dokładnie wiersze faktycznie zmienione (reszta pominięta,
- * bez błędu — FR-007).
+ * zwróci), więc zwracane wiersze to dokładnie te faktycznie zmienione (reszta pominięta, bez błędu — FR-007).
+ *
+ * S-10 (panel sesji): zwraca PEŁNE wiersze (`Item[]`), nie same `id` — analogicznie do `restoreFromTrash`.
+ * Panel po „Zaakceptuj" re-otwiera element do edycji, a edycja robi compare-and-swap na `updated_at`; bez
+ * server-świeżego znacznika pierwsza edycja po akceptacji dałaby fałszywy 409. Konsumenci, którym wystarcza
+ * liczba (główne listy: accept/reject), biorą ją z `items.length` w endpoincie `bulk`.
  */
 export async function setAcceptanceStatus(
   supabase: SupabaseClient,
   ids: string[],
   status: "accepted" | "rejected",
-): Promise<{ updatedIds: string[] }> {
+): Promise<Item[]> {
   const { data, error } = await supabase
     .from("items")
     .update({ acceptance_status: status, updated_at: new Date().toISOString() })
     .in("id", ids)
     .eq("acceptance_status", "pending")
-    .select("id")
-    .overrideTypes<{ id: string }[], { merge: false }>();
+    .select(ITEM_COLUMNS)
+    .overrideTypes<Item[], { merge: false }>();
   if (error) throw new Error("Zmiana statusu akceptacji nie powiodła się.", { cause: error });
-  return { updatedIds: data.map((row) => row.id) };
+  return data;
 }
 
 /**

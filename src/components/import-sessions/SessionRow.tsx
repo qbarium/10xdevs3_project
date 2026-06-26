@@ -26,7 +26,10 @@ export interface SessionRowData {
   preview: string;
   dateLabel: string;
   status: ImportSessionStatus;
+  /** Historyczna liczba elementów z chwili klasyfikacji (nie maleje przy usuwaniu). */
   itemCount: number | null;
+  /** Liczba ŻYWYCH elementów (po ewentualnym trwałym usunięciu). `live < itemCount` → „X z Y wpisów". */
+  liveItemCount: number;
   errorCode: string | null;
 }
 
@@ -57,12 +60,24 @@ export function SessionRow({ row, selected, tabIndex, rowIndex, onSelect, onKeyD
   const resolved = state === "done" && result ? result : null;
   const status: ImportSessionStatus = resolved ? resolved.status : row.status;
   const itemCount = resolved ? resolved.itemCount : (row.itemCount ?? 0);
+  // Po ponowieniu żywych == nowy item_count (świeża klasyfikacja, nic jeszcze nie usunięto); inaczej z SSR.
+  const liveItemCount = resolved ? itemCount : row.liveItemCount;
   const errorCode = resolved ? resolved.code : row.errorCode;
   const isRetrying = state === "retrying";
 
-  // Kolumna „wpisy": liczba tylko dla stanów zakończonych; processing/failed → „—" (liczba nieznana).
-  const countText =
-    status === "completed_with_items" || status === "completed_no_items" ? `${itemCount} ${entryNoun(itemCount)}` : "—";
+  // Kolumna „wpisy": liczba dla stanów zakończonych (processing/failed → „—"). Gdy część elementów trwale
+  // usunięto („Wyczyść kosz"), żywych jest mniej niż w chwili klasyfikacji → „X z Y wpisów"; inaczej „Y wpisów".
+  let countText: string;
+  if (status === "completed_with_items" || status === "completed_no_items") {
+    // „X z Y" → dopełniacz po „z N" (1 → „wpisu", ≥2 → „wpisów"), NIE forma licząca `entryNoun`
+    // („1 wpis"/„2 wpisy") — ta jest poprawna tylko dla samodzielnego „N wpisów".
+    countText =
+      liveItemCount < itemCount
+        ? `${liveItemCount} z ${itemCount} ${itemCount === 1 ? "wpisu" : "wpisów"}`
+        : `${itemCount} ${entryNoun(itemCount)}`;
+  } else {
+    countText = "—";
+  }
 
   return (
     <li
@@ -79,21 +94,18 @@ export function SessionRow({ row, selected, tabIndex, rowIndex, onSelect, onKeyD
         selected ? "bg-purple-500/15" : "hover:bg-white/5",
       )}
     >
-      {/* Linia główna — stałe tracki kolumn (Typ · Data · Podgląd+wpisy · Status) wyrównują się między wierszami. */}
-      <div className="grid grid-cols-[4.5rem_8.5rem_minmax(0,1fr)_auto] items-center gap-3">
+      {/* Linia główna — stałe, krótkie kolumny (Typ · Data · Wpisy · Status) wyrównują się między wierszami,
+          niezależnie od liczby plików (brak treści zmiennej długości). Bez podglądu i nazw plików — elementy
+          sesji są po prawej; podgląd/nazwę dorobimy w razie potrzeby (pole `preview` zostaje w DTO). */}
+      <div className="grid grid-cols-[4.5rem_9rem_1fr_8rem] items-center gap-3">
         <span className="justify-self-start rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-center text-xs font-medium text-white/70">
           {row.isFile ? "Plik" : "Tekst"}
         </span>
-        <time className="text-xs whitespace-nowrap text-white/50">{row.dateLabel}</time>
-        <div className="min-w-0">
-          <p className="truncate text-sm text-white/90" title={row.preview}>
-            {row.preview}
-          </p>
-          <p className="text-xs text-white/50">{countText}</p>
-        </div>
+        <time className="text-sm whitespace-nowrap text-white/90">{row.dateLabel}</time>
+        <span className="justify-self-center text-xs whitespace-nowrap text-white/60">{countText}</span>
         <span
           className={cn(
-            "justify-self-end rounded-full border px-2 py-0.5 text-xs font-medium whitespace-nowrap",
+            "justify-self-center rounded-full border px-2 py-0.5 text-xs font-medium whitespace-nowrap",
             STATUS_BADGE[status],
           )}
         >

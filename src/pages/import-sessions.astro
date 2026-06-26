@@ -52,6 +52,7 @@ const rows: SessionRowData[] = sessions.map((s) => ({
   dateLabel: s.created_at.slice(0, 16).replace("T", " "),
   status: s.status,
   itemCount: s.item_count,
+  liveItemCount: s.live_item_count,
   errorCode: s.error_message,
 }));
 

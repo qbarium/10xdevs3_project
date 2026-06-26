@@ -117,11 +117,12 @@ describe("createManualItem", () => {
 });
 
 describe("setAcceptanceStatus", () => {
-  it("buduje guarded UPDATE i zwraca tylko zmienione id", async () => {
-    const { supabase, calls } = mockSupabase({ data: [{ id: "a" }, { id: "b" }], error: null });
+  it("buduje guarded UPDATE i zwraca świeże wiersze (S-10: Item[], nie samo id)", async () => {
+    const rows = [{ id: "a" }, { id: "b" }];
+    const { supabase, calls } = mockSupabase({ data: rows, error: null });
     const res = await setAcceptanceStatus(supabase, ["a", "b", "c"], "accepted");
 
-    expect(res.updatedIds).toEqual(["a", "b"]); // "c" pominięty (guard pending) — nie ma go w data
+    expect(res).toEqual(rows); // "c" pominięty (guard pending) — nie ma go w data; zwracamy pełne wiersze
     expect(calls.filter(([m]) => m === "eq")).toContainEqual(["eq", ["acceptance_status", "pending"]]);
     expect(calls.filter(([m]) => m === "in")).toContainEqual(["in", ["id", ["a", "b", "c"]]]);
     expect(firstArgOf(calls, "update").acceptance_status).toBe("accepted");

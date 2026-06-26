@@ -12,7 +12,6 @@ import { useItemMutation } from "@/components/hooks/useItemMutation";
 import { useSessionItems } from "@/components/hooks/useSessionItems";
 import EditItemDialog from "@/components/items/EditItemDialog";
 import { Button } from "@/components/ui/button";
-import { Toaster } from "@/components/ui/sonner";
 import { acceptanceStatusLabel, itemTypeLabel, operationalStatusLabel } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import type { Item } from "@/types";
@@ -21,7 +20,7 @@ const PANEL_SHELL = "rounded-xl border border-white/10 bg-white/5 px-4 py-6 text
 
 export default function SessionItemsPanel({ sessionId }: { sessionId: string | null }) {
   const { items, loading, error, replaceItem, setItemStatus } = useSessionItems(sessionId);
-  const { moveToTrash, restoreFromTrashItems } = useItemMutation();
+  const { moveToTrash, restoreFromTrashItems, acceptItems, rejectItems } = useItemMutation();
   // Jeden dialog dla edycji i podglądu — `readOnly` rozróżnia tryb; `key={item.id}` u dołu resetuje pola.
   const [dialogItem, setDialogItem] = useState<Item | null>(null);
   const [dialogReadOnly, setDialogReadOnly] = useState(false);
@@ -81,6 +80,45 @@ export default function SessionItemsPanel({ sessionId }: { sessionId: string | n
     if (row) {
       replaceItem(row);
       toast.success("Przywrócono element.");
+    } else {
+      toast("Element był już nieaktualny — odśwież widok.");
+    }
+  }
+
+  // Zaakceptuj: pending → accepted. Podmieniamy PEŁNY świeży wiersz (poprawny updated_at), by element był
+  // od razu edytowalny bez fałszywego 409 (compare-and-swap). Element zostaje w panelu jako accepted.
+  async function handleAccept(id: string): Promise<void> {
+    if (inFlightIds.has(id)) return;
+    markInFlight(id, true);
+    const accepted = await acceptItems([id]);
+    markInFlight(id, false);
+    if (accepted === null) {
+      toast.error("Nie udało się zaakceptować. Spróbuj ponownie.");
+      return;
+    }
+    const row = accepted.find((it) => it.id === id);
+    if (row) {
+      replaceItem(row);
+      toast.success("Zaakceptowano element.");
+    } else {
+      toast("Element był już nieaktualny — odśwież widok.");
+    }
+  }
+
+  // Odrzuć: pending → rejected. Element zostaje w panelu (read-only, z możliwością przywrócenia).
+  async function handleReject(id: string): Promise<void> {
+    if (inFlightIds.has(id)) return;
+    markInFlight(id, true);
+    const rejected = await rejectItems([id]);
+    markInFlight(id, false);
+    if (rejected === null) {
+      toast.error("Nie udało się odrzucić. Spróbuj ponownie.");
+      return;
+    }
+    const row = rejected.find((it) => it.id === id);
+    if (row) {
+      replaceItem(row);
+      toast.success("Odrzucono element.");
     } else {
       toast("Element był już nieaktualny — odśwież widok.");
     }
@@ -157,6 +195,30 @@ export default function SessionItemsPanel({ sessionId }: { sessionId: string | n
                       Do kosza
                     </Button>
                   )}
+                  {item.acceptance_status === "pending" && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-emerald-200/80 hover:bg-emerald-400/10 hover:text-emerald-100"
+                        onClick={() => {
+                          void handleAccept(item.id);
+                        }}
+                      >
+                        Zaakceptuj
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-200/80 hover:bg-red-400/10 hover:text-red-100"
+                        onClick={() => {
+                          void handleReject(item.id);
+                        }}
+                      >
+                        Odrzuć
+                      </Button>
+                    </>
+                  )}
                   {inTrash && (
                     <>
                       <Button
@@ -193,9 +255,9 @@ export default function SessionItemsPanel({ sessionId }: { sessionId: string | n
   }
 
   return (
-    // Nagłówek „Elementy sesji" żyje w ImportSessionsView (wspólny poziom z nagłówkiem listy sesji).
+    // Nagłówek „Elementy sesji" oraz <Toaster/> żyją w ImportSessionsView — dzięki temu treść panelu jest
+    // PIERWSZYM dzieckiem kolumny i startuje na tym samym poziomie co lista sesji po lewej (bez wiodącego gap).
     <div className="flex flex-col gap-3">
-      <Toaster />
       {body}
 
       {dialogItem && (
