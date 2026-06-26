@@ -247,13 +247,13 @@ Brak — żadnych zmian schematu ani danych. Endpoint i akcje działają na istn
 #### Automatyczne
 
 - [x] 1.1 Lint przechodzi: `npm run lint` — f785671
-- [x] 1.2 Testy jednostkowe nowych helperów przechodzą: `npm test`
+- [x] 1.2 Testy jednostkowe nowych helperów przechodzą: `npm test` — bb2b758
 - [x] 1.3 Build przechodzi: `npm run build` — f785671
 
 #### Ręczne
 
-- [ ] 1.4 `GET /api/import-sessions/<id>/items` zwraca wszystkie elementy sesji we wszystkich stanach, sort `created_at asc`; nieistniejąca/cudza sesja → pusta lista
-- [ ] 1.5 `POST /api/items/bulk {action:"restore"}` zwraca `items` ze świeżym `updated_at`; accept/reject/trash niezmienione
+- [x] 1.4 `GET /api/import-sessions/<id>/items` zwraca wszystkie elementy sesji we wszystkich stanach, sort `created_at asc`; nieistniejąca/cudza sesja → pusta lista
+- [x] 1.5 `POST /api/items/bulk {action:"restore"}` zwraca `items` ze świeżym `updated_at`; accept/reject/trash niezmienione
 
 ### Faza 2: Dialog podglądu (tryb read-only)
 
@@ -264,8 +264,8 @@ Brak — żadnych zmian schematu ani danych. Endpoint i akcje działają na istn
 
 #### Ręczne
 
-- [ ] 2.3 Dialog w trybie read-only pokazuje treść elementu bez pól edycji i bez „Zapisz"
-- [ ] 2.4 Istniejące przepływy edycji (Pending/Accepted) działają bez zmian — brak regresji
+- [x] 2.3 Dialog w trybie read-only pokazuje treść elementu bez pól edycji i bez „Zapisz"
+- [x] 2.4 Istniejące przepływy edycji (Pending/Accepted) działają bez zmian — brak regresji
 
 ### Faza 3: Panel master-detail + wpięcie akcji
 
@@ -276,10 +276,10 @@ Brak — żadnych zmian schematu ani danych. Endpoint i akcje działają na istn
 
 #### Ręczne
 
-- [ ] 3.3 Kliknięcie sesji po lewej dociąga jej elementy po prawej (wszystkie stany, badże statusu i stanu)
-- [ ] 3.4 Edycja pending/accepted: zapis aktualizuje element w miejscu, bez reorderu i migotania
-- [ ] 3.5 Przeniesienie accepted do kosza: element zmienia się na `deleted` w miejscu (read-only), nie znika
-- [ ] 3.6 Przywrócenie: element wraca do `accepted`/`pending` w miejscu i jest od razu edytowalny (edycja po restore bez fałszywego 409)
-- [ ] 3.7 Podgląd read-only dla `rejected`/`deleted`; brak akcji edycji/kosza dla nich
-- [ ] 3.8 Weryfikacja dev SSR: `/import-sessions` z sesjami renderuje się bez „Invalid hook call", potwierdzone w trybie re-optymalizacji w trakcie sesji
-- [ ] 3.9 Wybór sesji stabilny — element nie ucieka spod kursora przy akcjach
+- [x] 3.3 Kliknięcie sesji po lewej dociąga jej elementy po prawej (wszystkie stany, badże statusu i stanu)
+- [x] 3.4 Edycja pending/accepted: zapis aktualizuje element w miejscu, bez reorderu i migotania
+- [x] 3.5 Przeniesienie accepted do kosza: element zmienia się na `deleted` w miejscu (read-only), nie znika
+- [x] 3.6 Przywrócenie: element wraca do `accepted`/`pending` w miejscu i jest od razu edytowalny (edycja po restore bez fałszywego 409)
+- [x] 3.7 Podgląd read-only dla `rejected`/`deleted`; brak akcji edycji/kosza dla nich
+- [x] 3.8 Weryfikacja dev SSR: `/import-sessions` z sesjami renderuje się bez „Invalid hook call", potwierdzone w trybie re-optymalizacji w trakcie sesji
+- [x] 3.9 Wybór sesji stabilny — element nie ucieka spod kursora przy akcjach
