@@ -27,7 +27,7 @@ export function SessionsList({
   }
 
   return (
-    <ul className="flex flex-col gap-3">
+    <ul className="divide-y divide-white/10 overflow-hidden rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl">
       {rows.map((row) => (
         <SessionRow key={row.id} row={row} onSelect={onSelect} selected={row.id === selectedId} />
       ))}

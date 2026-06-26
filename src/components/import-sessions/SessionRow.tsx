@@ -54,12 +54,7 @@ export function SessionRow({
   const isRetrying = state === "retrying";
 
   return (
-    <li
-      className={cn(
-        "rounded-xl border bg-white/5 px-4 py-3 backdrop-blur-xl transition-colors",
-        selected ? "border-purple-400/60 ring-1 ring-purple-400/40" : "border-white/10",
-      )}
-    >
+    <li className={cn("px-4 py-3 transition-colors", selected ? "bg-purple-500/15" : "hover:bg-white/5")}>
       <div className="flex items-start justify-between gap-3">
         {/* Wybór sesji: cała treść nagłówka to button (dostępny klawiaturą); przyciski retry/link niżej
             są osobnym rodzeństwem, więc nie ma zagnieżdżonej interaktywności. */}
