@@ -118,6 +118,11 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* Rezerwuj miejsce na pasek przewijania na stałe — gdy dialog (Radix) blokuje scroll body
+     (`overflow:hidden`), pasek znika, ale gutter zostaje, więc treść nie „odskakuje" w bok. */
+  html {
+    scrollbar-gutter: stable;
+  }
   body {
     @apply bg-background text-foreground;
   }

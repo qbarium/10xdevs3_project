@@ -68,9 +68,10 @@ export interface GetImportSessionsOptions {
   status?: ImportSessionStatus;
 }
 
-/** Kształt wiersza z embedowanym `import_files` (LEFT JOIN) zwracany przez Supabase. */
+/** Kształt wiersza z embedowanym `import_files` (LEFT JOIN) + agregatem `items(count)` zwracany przez Supabase. */
 interface ImportSessionRow extends ImportSession {
   import_files?: { file_name: string; file_mime: string | null }[] | null;
+  items?: { count: number }[] | null;
 }
 
 /**
@@ -87,7 +88,7 @@ export async function getImportSessions(
   let query = supabase
     .from("import_sessions")
     .select(
-      "id, user_id, status, raw_input, item_count, error_message, created_at, updated_at, import_files(file_name, file_mime)",
+      "id, user_id, status, raw_input, item_count, error_message, created_at, updated_at, import_files(file_name, file_mime), items(count)",
     )
     .eq("user_id", userId);
   if (opts.status) query = query.eq("status", opts.status);
@@ -95,9 +96,16 @@ export async function getImportSessions(
   if (error) throw new Error("Pobranie listy sesji importu nie powiodło się.", { cause: error });
   const rows = (data as unknown as ImportSessionRow[] | null) ?? [];
   return rows.map((row) => {
-    const { import_files, ...session } = row;
+    const { import_files, items, ...session } = row;
     const file = Array.isArray(import_files) ? import_files[0] : null;
-    return { ...session, file_name: file?.file_name ?? null, file_mime: file?.file_mime ?? null };
+    // `items(count)` zwraca [{ count: N }] (RLS-scoped → liczba ŻYWYCH elementów sesji usera).
+    const live_item_count = Array.isArray(items) ? (items[0]?.count ?? 0) : 0;
+    return {
+      ...session,
+      file_name: file?.file_name ?? null,
+      file_mime: file?.file_mime ?? null,
+      live_item_count,
+    };
   });
 }
 

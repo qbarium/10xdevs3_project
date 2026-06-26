@@ -126,3 +126,25 @@ export function getCancelledItems(supabase: SupabaseClient, userId: string): Pro
 export function getTrashItems(supabase: SupabaseClient, userId: string): Promise<Item[]> {
   return listItems(supabase, userId, defaultCriteria("trash"));
 }
+
+/**
+ * Wszystkie elementy JEDNEJ sesji importu bieżącego usera (S-10, master-detail) — odpowiednik `listItems`,
+ * ale po `import_session_id` zamiast `view`. Sesja to SCOPE, nie widok: świadomie BEZ filtra
+ * `acceptance_status`, więc panel dostaje wszystkie cztery stany naraz (`pending`/`accepted`/`rejected`/
+ * `deleted`). Filtr `user_id` redundantny względem RLS (`items_select_own`), ale jawny — nieistniejąca lub
+ * cudza sesja zwróci po prostu pustą listę (RLS odfiltrowuje), bez osobnego sprawdzania istnienia. Sort
+ * `created_at ASC` (niezmienny dla elementu, więc zmiana stanu NIGDY nie przesuwa wiersza w panelu) + stały
+ * tie-break `id ASC`. Reużywa `ITEM_COLUMNS` (kształt `Item` 1:1 z `listItems`).
+ */
+export async function getSessionItems(supabase: SupabaseClient, userId: string, sessionId: string): Promise<Item[]> {
+  const { data, error } = await supabase
+    .from("items")
+    .select(ITEM_COLUMNS)
+    .eq("user_id", userId)
+    .eq("import_session_id", sessionId)
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true })
+    .overrideTypes<Item[], { merge: false }>();
+  if (error) throw new Error("Odczyt elementów sesji nie powiódł się.", { cause: error });
+  return data;
+}

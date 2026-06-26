@@ -36,15 +36,19 @@ export const POST: APIRoute = async (context) => {
 
   const { ids, action } = parsed.data;
   try {
-    // Każda gałąź zwraca `{ updatedIds }` (guard statusem w serwisie → tylko uprawnione wiersze).
-    let updatedIds: string[];
-    if (action === "trash") {
-      ({ updatedIds } = await moveToTrash(supabase, ids));
-    } else if (action === "restore") {
-      ({ updatedIds } = await restoreFromTrash(supabase, ids));
-    } else {
-      ({ updatedIds } = await setAcceptanceStatus(supabase, ids, action === "accept" ? "accepted" : "rejected"));
+    // Restore ORAZ accept/reject zwracają PEŁNE wiersze — dokładamy `items` ADDYTYWNIE (panel sesji S-10
+    // podmienia element ze świeżym `updated_at`, by edycja po accept/restore nie dała fałszywego 409).
+    // `updatedIds`/`count` zachowane → konsumenci z głównych list (czytają count) nietknięci.
+    if (action === "restore" || action === "accept" || action === "reject") {
+      const items =
+        action === "restore"
+          ? await restoreFromTrash(supabase, ids)
+          : await setAcceptanceStatus(supabase, ids, action === "accept" ? "accepted" : "rejected");
+      const updatedIds = items.map((item) => item.id);
+      return json({ ok: true, action, updatedIds, count: updatedIds.length, items }, 200);
     }
+    // Kosz: guard statusem w serwisie → tylko uprawnione wiersze; liczba wystarcza (element staje się read-only).
+    const { updatedIds } = await moveToTrash(supabase, ids);
     return json({ ok: true, action, updatedIds, count: updatedIds.length }, 200);
   } catch (err) {
     reportError(err);

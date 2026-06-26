@@ -1,7 +1,7 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import Topbar from "@/components/Topbar.astro";
-import { SessionsList } from "@/components/import-sessions/SessionsList";
+import ImportSessionsView from "@/components/import-sessions/ImportSessionsView";
 import type { SessionRowData } from "@/components/import-sessions/SessionRow";
 import { createClient } from "@/lib/supabase";
 import { getImportSessions } from "@/lib/services/import-session";
@@ -52,6 +52,7 @@ const rows: SessionRowData[] = sessions.map((s) => ({
   dateLabel: s.created_at.slice(0, 16).replace("T", " "),
   status: s.status,
   itemCount: s.item_count,
+  liveItemCount: s.live_item_count,
   errorCode: s.error_message,
 }));
 
@@ -62,7 +63,7 @@ const selectClass =
 
 <Layout title="Sesje importu">
   <div class="bg-cosmic min-h-screen p-4">
-    <div class="mx-auto max-w-2xl">
+    <div class="mx-auto max-w-6xl">
       <Topbar />
       <main class="mt-8 flex flex-col gap-6">
         <h1 class="bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-2xl font-bold text-transparent">
@@ -98,7 +99,7 @@ const selectClass =
           </button>
         </form>
 
-        <SessionsList client:load rows={rows} />
+        <ImportSessionsView client:load rows={rows} />
       </main>
     </div>
   </div>

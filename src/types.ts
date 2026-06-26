@@ -115,6 +115,12 @@ export interface ImportFile {
 export interface ImportSessionWithFile extends ImportSession {
   file_name: string | null;
   file_mime: string | null;
+  /**
+   * Liczba ŻYWYCH elementów sesji (count z embedowanego `items`), do odróżnienia od `item_count`
+   * (historyczna liczba z chwili klasyfikacji, nie maleje). Rozjazd `live < item_count` oznacza, że
+   * część elementów trwale usunięto („Wyczyść kosz") — dziennik pokazuje „X z Y wpisów" (S-10).
+   */
+  live_item_count: number;
 }
 
 /** Wiersz `items` — typowany item; `import_session_id` null dla itemów ręcznych (S-07). */

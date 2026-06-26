@@ -7,6 +7,7 @@ import {
   editItem,
   ItemConflictError,
   ItemNotEditableError,
+  restoreFromTrash,
   setAcceptanceStatus,
   setOperationalStatus,
 } from "@/lib/services/items-mutation";
@@ -116,11 +117,12 @@ describe("createManualItem", () => {
 });
 
 describe("setAcceptanceStatus", () => {
-  it("buduje guarded UPDATE i zwraca tylko zmienione id", async () => {
-    const { supabase, calls } = mockSupabase({ data: [{ id: "a" }, { id: "b" }], error: null });
+  it("buduje guarded UPDATE i zwraca świeże wiersze (S-10: Item[], nie samo id)", async () => {
+    const rows = [{ id: "a" }, { id: "b" }];
+    const { supabase, calls } = mockSupabase({ data: rows, error: null });
     const res = await setAcceptanceStatus(supabase, ["a", "b", "c"], "accepted");
 
-    expect(res.updatedIds).toEqual(["a", "b"]); // "c" pominięty (guard pending) — nie ma go w data
+    expect(res).toEqual(rows); // "c" pominięty (guard pending) — nie ma go w data; zwracamy pełne wiersze
     expect(calls.filter(([m]) => m === "eq")).toContainEqual(["eq", ["acceptance_status", "pending"]]);
     expect(calls.filter(([m]) => m === "in")).toContainEqual(["in", ["id", ["a", "b", "c"]]]);
     expect(firstArgOf(calls, "update").acceptance_status).toBe("accepted");
@@ -146,6 +148,32 @@ describe("setOperationalStatus", () => {
   it("rzuca na błąd serwera", async () => {
     const { supabase } = mockSupabase({ data: null, error: { message: "boom" } });
     await expect(setOperationalStatus(supabase, ["a"], "cancelled")).rejects.toThrow();
+  });
+});
+
+describe("restoreFromTrash (S-10: zwraca świeże wiersze Item[])", () => {
+  it("zwraca sumę obu guarded UPDATE (deleted→accepted, rejected→pending) jako Item[]", async () => {
+    const rowA = { id: "a", acceptance_status: "accepted" };
+    const rowB = { id: "b", acceptance_status: "pending" };
+    const { supabase, calls } = mockSupabase([
+      { data: [rowA], error: null }, // UPDATE deleted → accepted
+      { data: [rowB], error: null }, // UPDATE rejected → pending
+    ]);
+    const res = await restoreFromTrash(supabase, ["a", "b", "c"]);
+
+    expect(res).toEqual([rowA, rowB]); // pełne wiersze, nie { updatedIds }
+    // Każdy UPDATE strzeżony statusem ŹRÓDŁOWYM (dwukierunkowy restore).
+    expect(calls.filter(([m]) => m === "eq")).toContainEqual(["eq", ["acceptance_status", "deleted"]]);
+    expect(calls.filter(([m]) => m === "eq")).toContainEqual(["eq", ["acceptance_status", "rejected"]]);
+    // SELECT pełnych kolumn (ze świeżym updated_at dla panelu sesji), NIE samego "id".
+    const selectArgs = calls.filter(([m]) => m === "select").map(([, a]) => a[0] as string);
+    expect(selectArgs.length).toBe(2);
+    expect(selectArgs.every((cols) => cols.includes("updated_at"))).toBe(true);
+  });
+
+  it("rzuca na błąd serwera (pierwszy UPDATE)", async () => {
+    const { supabase } = mockSupabase({ data: null, error: { message: "boom" } });
+    await expect(restoreFromTrash(supabase, ["a"])).rejects.toThrow();
   });
 });
 

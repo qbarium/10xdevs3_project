@@ -1,12 +1,26 @@
-// Lista dziennika sesji importu (S-08). Jedna wyspa React (montowana przez import-sessions.astro jako
-// client:load) — renderuje wiersze, które aktualizują swój status w miejscu po ponowieniu (patrz
-// SessionRow). Dane przychodzą jako odchudzone DTO liczone serwerowo (bez pełnego raw_input). Sort/filtr
-// pozostają server-side (formularz GET na stronie) — to jedyna ścieżka usuwania wierszy z listy.
+// Lista dziennika sesji importu (S-08; listbox z wyborem z S-10). Renderuje wiersze, które aktualizują swój
+// status w miejscu po ponowieniu (patrz SessionRow). Dane przychodzą jako odchudzone DTO liczone serwerowo
+// (bez pełnego raw_input). Sort/filtr pozostają server-side (formularz GET na stronie).
+//
+// S-10: lista to ARIA listbox z nawigacją klawiaturą. Cały wiersz (`role="option"`) jest klikalny; ↑/↓
+// przesuwają zaznaczenie i fokus, Enter/Spacja zaznaczają wiersz pod fokusem. Roving tabindex: jeden punkt
+// wejścia z Tab (wybrany wiersz, a gdy nic nie wybrano — pierwszy). Logika klawiatury siedzi TU, bo zna
+// pełną listę wierszy; wiersz tylko deleguje zdarzenie.
+
+import type { KeyboardEvent } from "react";
 
 import { SessionRow } from "@/components/import-sessions/SessionRow";
 import type { SessionRowData } from "@/components/import-sessions/SessionRow";
 
-export function SessionsList({ rows }: { rows: SessionRowData[] }) {
+export function SessionsList({
+  rows,
+  onSelect,
+  selectedId,
+}: {
+  rows: SessionRowData[];
+  onSelect: (id: string) => void;
+  selectedId: string | null;
+}) {
   if (rows.length === 0) {
     return (
       <div
@@ -18,10 +32,43 @@ export function SessionsList({ rows }: { rows: SessionRowData[] }) {
     );
   }
 
+  const selectedIndex = rows.findIndex((row) => row.id === selectedId);
+
+  function handleRowKeyDown(event: KeyboardEvent<HTMLLIElement>): void {
+    const { key } = event;
+    const currentIndex = Number(event.currentTarget.dataset.rowIndex);
+    if (key === "ArrowDown" || key === "ArrowUp") {
+      // ↑/↓ przesuwają zaznaczenie (panel po prawej śledzi) i fokus na sąsiedni wiersz.
+      event.preventDefault();
+      const nextIndex =
+        key === "ArrowDown" ? Math.min(currentIndex + 1, rows.length - 1) : Math.max(currentIndex - 1, 0);
+      onSelect(rows[nextIndex].id);
+      event.currentTarget.parentElement?.querySelector<HTMLElement>(`[data-row-index="${nextIndex}"]`)?.focus();
+    } else if (key === "Enter" || key === " ") {
+      // Enter/Spacja zaznaczają wiersz pod fokusem — ale tylko gdy fokus jest na samym wierszu, a nie na
+      // przycisku retry w jego środku (wtedy zdarzenie obsługuje przycisk).
+      if (event.target !== event.currentTarget) return;
+      event.preventDefault();
+      onSelect(rows[currentIndex].id);
+    }
+  }
+
   return (
-    <ul className="flex flex-col gap-3">
-      {rows.map((row) => (
-        <SessionRow key={row.id} row={row} />
+    <ul
+      role="listbox"
+      aria-label="Lista sesji importu"
+      className="divide-y divide-white/10 overflow-hidden rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl"
+    >
+      {rows.map((row, index) => (
+        <SessionRow
+          key={row.id}
+          row={row}
+          rowIndex={index}
+          selected={row.id === selectedId}
+          tabIndex={row.id === selectedId || (selectedIndex < 0 && index === 0) ? 0 : -1}
+          onSelect={onSelect}
+          onKeyDown={handleRowKeyDown}
+        />
       ))}
     </ul>
   );

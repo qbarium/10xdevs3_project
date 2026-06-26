@@ -1,7 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 
-import { buildSearchOrFilter, getActiveItems, getPendingItems, getTrashItems, listItems } from "@/lib/services/items";
+import {
+  buildSearchOrFilter,
+  getActiveItems,
+  getPendingItems,
+  getSessionItems,
+  getTrashItems,
+  listItems,
+} from "@/lib/services/items";
 import { defaultCriteria } from "@/lib/services/list-criteria";
 import type { ListCriteria } from "@/lib/services/list-criteria";
 
@@ -186,6 +193,29 @@ describe("listItems — wynik / błąd", () => {
   it("rzuca na błąd serwera", async () => {
     const { supabase } = mockSupabase({ data: null, error: { message: "boom" } });
     await expect(listItems(supabase, "u", defaultCriteria("active"))).rejects.toThrow();
+  });
+});
+
+describe("getSessionItems (S-10: scope po sesji, wszystkie stany akceptacji)", () => {
+  it("eq user_id + eq import_session_id, BEZ filtra acceptance_status, sort created_at asc → id asc", async () => {
+    const { supabase, calls } = mockSupabase({ data: ROWS, error: null });
+    const res = await getSessionItems(supabase, "u", "sess-1");
+
+    expect(res).toBe(ROWS);
+    expect(argsOf(calls, "eq")).toContainEqual(["user_id", "u"]);
+    expect(argsOf(calls, "eq")).toContainEqual(["import_session_id", "sess-1"]);
+    // Scope, nie view — żaden predykat na stan akceptacji (panel pokazuje wszystkie 4 stany).
+    expect(argsOf(calls, "eq").some(([col]) => col === "acceptance_status")).toBe(false);
+    expect(argsOf(calls, "in")).toHaveLength(0);
+    expect(argsOf(calls, "order")).toEqual([
+      ["created_at", { ascending: true }],
+      ["id", { ascending: true }],
+    ]);
+  });
+
+  it("rzuca na błąd serwera", async () => {
+    const { supabase } = mockSupabase({ data: null, error: { message: "boom" } });
+    await expect(getSessionItems(supabase, "u", "s")).rejects.toThrow();
   });
 });
 
