@@ -10,12 +10,20 @@ import SessionItemsPanel from "@/components/import-sessions/SessionItemsPanel";
 import { SessionsList } from "@/components/import-sessions/SessionsList";
 import type { SessionRowData } from "@/components/import-sessions/SessionRow";
 
+// Wspólny styl nagłówka kolumny — oba (lewy „Sesje", prawy „Elementy sesji") identyczne, by stały na tym
+// samym poziomie, a zawartość pod nimi startowała równo.
+const COLUMN_HEADING =
+  "bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-lg font-semibold text-transparent";
+
 export default function ImportSessionsView({ rows }: { rows: SessionRowData[] }) {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
   return (
-    <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
-      <div className="min-w-0">
+    // `items-start` trzyma obie kolumny przy górze (nagłówki na jednym poziomie), a prawy panel może się
+    // „przykleić" przy przewijaniu długiej listy. Każda kolumna: nagłówek (równa wysokość) + zawartość.
+    <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] md:items-start">
+      <section className="flex min-w-0 flex-col gap-3">
+        <h2 className={COLUMN_HEADING}>Sesje</h2>
         <SessionsList
           rows={rows}
           selectedId={selectedSessionId}
@@ -23,10 +31,11 @@ export default function ImportSessionsView({ rows }: { rows: SessionRowData[] })
             setSelectedSessionId(id);
           }}
         />
-      </div>
-      <div className="min-w-0 md:sticky md:top-4 md:self-start">
+      </section>
+      <section className="flex min-w-0 flex-col gap-3 md:sticky md:top-4">
+        <h2 className={COLUMN_HEADING}>Elementy sesji</h2>
         <SessionItemsPanel sessionId={selectedSessionId} />
-      </div>
+      </section>
     </div>
   );
 }

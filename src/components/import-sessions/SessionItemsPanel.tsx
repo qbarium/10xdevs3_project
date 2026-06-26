@@ -193,11 +193,9 @@ export default function SessionItemsPanel({ sessionId }: { sessionId: string | n
   }
 
   return (
+    // Nagłówek „Elementy sesji" żyje w ImportSessionsView (wspólny poziom z nagłówkiem listy sesji).
     <div className="flex flex-col gap-3">
       <Toaster />
-      <h2 className="bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-lg font-semibold text-transparent">
-        Elementy sesji
-      </h2>
       {body}
 
       {dialogItem && (
