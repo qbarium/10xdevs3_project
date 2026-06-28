@@ -3,7 +3,7 @@ project: TaskerLight
 version: 1
 status: draft
 created: 2026-06-05
-updated: 2026-06-23
+updated: 2026-06-28
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -40,7 +40,7 @@ TaskerLight przyjmuje surowy, nieuporządkowany wsad głosowo-tekstowy i rozdzie
 | S-07  | manual-item-entry        | dodać item ręcznie (bez klucza, od razu `accepted`)                         | S-02              | US-08, FR-028                              | done |
 | S-08  | import-session-log-retry | przejrzeć dziennik sesji importu i ponowić sesję `niepowodzenie`            | S-02              | US-07, FR-027                              | done |
 | S-09  | list-filters-search      | sortować i wyszukiwać listy po dacie i tytule (+ podfiltr stanu w Aktywne)  | S-05              | FR-008 (filtry dodatkowe)                  | done |
-| S-10  | session-items-detail     | w dzienniku sesji wybrać sesję i zobaczyć/edytować jej elementy (master-detail) | S-08, S-05, S-06 | FR-027 (rozszerzony); nadpisuje FR-008/FR-015 | in-progress |
+| S-10  | session-items-detail     | w dzienniku sesji wybrać sesję i zobaczyć/edytować jej elementy (master-detail) | S-08, S-05, S-06 | FR-027 (rozszerzony); nadpisuje FR-008/FR-015 | done |
 | S-11  | session-log-filter-ux    | filtrować dziennik sesji reaktywnie (bez „Zastosuj"), spójne dropdowny, „Wyczyść filtry" | S-08 | FR-027 / FR-008 (parytet UX) | proposed |
 
 ## Strumienie
@@ -206,7 +206,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Blokady:** —
 - **Niewiadome:** —
 - **Ryzyko:** Rozszerza FR-027 poza pierwotny zakres MVP (podgląd elementów sesji). Prawa lista pobiera elementy po `import_session_id` dedykowanym endpointem (`GET /api/import-sessions/[id]/items`), zwracając wszystkie stany akceptacji. Elementy `rejected`/`deleted` pozostają tylko do odczytu wg FR-011 (edycja/usuwanie tylko dla `pending`/`accepted`); operacje to reużycie (EditItemDialog z S-05, move-to-trash z S-06), nie budowane od nowa. Lista jednej sesji jest ograniczona (≤ 100 elementów wg FR-020), więc nie powiela problemu skalowania filtra sesji.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-11: Reaktywne filtry dziennika sesji importu (parytet UX z S-09)
 
@@ -268,6 +268,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **S-06: użytkownik może przenieść zaakceptowany item do kosza (zachowując stan operacyjny), przywrócić go z kosza dokładnie do poprzedniego stanu oraz trwale opróżnić kosz globalną akcją z potwierdzeniem.** — Zarchiwizowano 2026-06-20 → `context/archive/2026-06-16-trash-lifecycle/`. Lekcja: —.
 - **S-07: użytkownik może dodać item ręcznie (wybór typu + `title` + `description`) z pominięciem klasyfikacji; item powstaje od razu jako `accepted` / `nowe` i pojawia się w Aktywne. Akcja NIE wymaga klucza API.** — Zarchiwizowano 2026-06-19 → `context/archive/2026-06-16-manual-item-entry/`. Lekcja: —.
 - **S-09: użytkownik może sortować listy po dacie utworzenia/modyfikacji i tytule, wyszukiwać po tytule i opisie oraz zawężać po stanie operacyjnym w widoku Aktywne; filtr typu i sortowanie/wyszukiwanie działają na modelu serwer + parametry w adresie strony. (Filtr po sesji importu przeniesiony do S-10; rozróżnienie statusu w Koszu realizuje etykieta wg FR-012.)** — Zarchiwizowano 2026-06-23 → `context/archive/2026-06-20-list-filters-search/`. Lekcja: —.
+- **S-10: użytkownik może w dzienniku sesji importu wybrać sesję i zobaczyć po prawej wszystkie jej elementy naraz (wszystkie stany akceptacji — `pending`/`accepted`/`rejected`/`deleted` — rozróżniane etykietą, bez filtrów), a następnie podejrzeć, edytować lub usunąć element bezpośrednio w tym widoku, reużywając operacje z list głównych (dialog edycji z S-05, przeniesienie do kosza z S-06). Wybrana sesja zapisana w adresie strony.** — Zarchiwizowano 2026-06-28 → `context/archive/2026-06-24-session-items-detail/`. Lekcja: dup-React SSR (dev-only) — fix configu niepełny, znana wada; kryterium naprawy (reopt_fired=0) w lessons.md.
 
 ## Zrobione
 
