@@ -315,9 +315,9 @@ Jedna migracja Supabase — indeks `(user_id, created_at, id)`, bez zmian danych
 
 #### Automatyczne
 
-- [x] 3.1 Lint przechodzi: `npm run lint`
-- [x] 3.2 Testy jednostkowe przechodzą: `npm test`
-- [x] 3.3 Build przechodzi: `npm run build`
+- [x] 3.1 Lint przechodzi: `npm run lint` — fefe043
+- [x] 3.2 Testy jednostkowe przechodzą: `npm test` — fefe043
+- [x] 3.3 Build przechodzi: `npm run build` — fefe043
 
 #### Ręczne
 
