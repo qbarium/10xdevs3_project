@@ -5,46 +5,37 @@ import ImportSessionsView from "@/components/import-sessions/ImportSessionsView"
 import type { SessionRowData } from "@/components/import-sessions/SessionRow";
 import { createClient } from "@/lib/supabase";
 import { getImportSessions, toSessionRow } from "@/lib/services/import-session";
-import type { GetImportSessionsOptions } from "@/lib/services/import-session";
-import type { ImportSessionStatus, ImportSessionWithFile } from "@/types";
-import { importSessionStatusLabel } from "@/lib/labels";
+import { parseSessionListCriteria } from "@/lib/services/session-list-criteria";
 
 export const prerender = false;
 
 const { user } = Astro.locals;
 
-// Sort/filtr z query-paramów (server-side, lekkie). Whitelist — nieznane wartości → fallback domyślny
-// (sort malejąco, brak filtra statusu). To wąski wariant tylko dla dziennika; pełne filtry to S-09.
-const sortParam = Astro.url.searchParams.get("sort");
-const sort: GetImportSessionsOptions["sort"] = sortParam === "created_asc" ? "created_asc" : "created_desc";
+// S-11: kryteria dziennika (status/sort/page) z adresu strony przez TEN SAM tolerancyjny parser, co endpoint
+// i hook — render serwerowy i pierwszy stan wyspy są identyczne (hydration-stable, brak przeskoku po hydracji).
+const criteria = parseSessionListCriteria(Astro.url.searchParams);
 
-const STATUS_VALUES: ImportSessionStatus[] = ["processing", "completed_with_items", "completed_no_items", "failed"];
-const statusParam = Astro.url.searchParams.get("status");
-const status = STATUS_VALUES.includes(statusParam as ImportSessionStatus)
-  ? (statusParam as ImportSessionStatus)
-  : undefined;
-
-// Middleware chroni /import-sessions (PROTECTED_ROUTES) — `user` zawsze ustawiony. Lista serwerowo
-// (klient z cookies usera → RLS izoluje per-user). Przejściowy błąd odczytu → pusta lista (degradacja).
-let sessions: ImportSessionWithFile[] = [];
+// Middleware chroni /import-sessions (PROTECTED_ROUTES) — `user` zawsze ustawiony. Pierwsza strona listy
+// serwerowo (klient z cookies usera → RLS izoluje per-user). Przejściowy błąd odczytu → pusta strona
+// (degradacja). Stan początkowy (wiersze + total) trafia do wyspy, która dalej steruje listą reaktywnie
+// (hook useSessionList) — bez przycisku „Zastosuj" i bez przeładowania strony.
+let initialRows: SessionRowData[] = [];
+let initialTotal = 0;
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 if (user && supabase) {
   try {
-    // S-11: serwis zwraca teraz stronę listy ({ sessions, total, page, pageSize }); tu konsumujemy same
-    // wiersze (reaktywność i paginacja w UI wchodzą w Fazie 2/3, kiedy strona oddaje stan początkowy wyspie).
-    ({ sessions } = await getImportSessions(supabase, user.id, { sort, status }));
+    const { sessions, total } = await getImportSessions(supabase, user.id, {
+      sort: criteria.sort,
+      status: criteria.status === "all" ? undefined : criteria.status,
+      page: criteria.page,
+    });
+    initialRows = sessions.map(toSessionRow);
+    initialTotal = total;
   } catch {
-    sessions = [];
+    initialRows = [];
+    initialTotal = 0;
   }
 }
-
-// Odchudzone DTO wiersza liczone serwerowo przez współdzielony `toSessionRow` (to samo źródło, którym
-// karmi się endpoint listy) — strona i endpoint produkują identyczne wiersze dla wyspy React.
-const rows: SessionRowData[] = sessions.map(toSessionRow);
-
-// Ciemny popup natywnych selectów zapewnia globalne `html { color-scheme: dark }` w Layout.
-const selectClass =
-  "rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-sm text-white/90 focus:border-purple-300/50 focus:outline-none";
 ---
 
 <Layout title="Sesje importu">
@@ -56,36 +47,12 @@ const selectClass =
           Sesje importu
         </h1>
 
-        <form method="get" class="flex flex-wrap items-end gap-3">
-          <label class="flex flex-col gap-1 text-xs text-white/60">
-            Sortowanie
-            <select name="sort" class:list={[selectClass]}>
-              <option value="created_desc" selected={sort === "created_desc"}>Najnowsze</option>
-              <option value="created_asc" selected={sort === "created_asc"}>Najstarsze</option>
-            </select>
-          </label>
-          <label class="flex flex-col gap-1 text-xs text-white/60">
-            Status
-            <select name="status" class:list={[selectClass]}>
-              <option value="" selected={!status}>Wszystkie</option>
-              {
-                STATUS_VALUES.map((s) => (
-                  <option value={s} selected={status === s}>
-                    {importSessionStatusLabel(s)}
-                  </option>
-                ))
-              }
-            </select>
-          </label>
-          <button
-            type="submit"
-            class="rounded-lg border border-purple-300/30 bg-purple-400/10 px-3 py-1.5 text-sm font-medium text-purple-100 transition-colors hover:bg-purple-400/20"
-          >
-            Zastosuj
-          </button>
-        </form>
-
-        <ImportSessionsView client:load rows={rows} />
+        <ImportSessionsView
+          client:load
+          initialRows={initialRows}
+          initialCriteria={criteria}
+          initialTotal={initialTotal}
+        />
       </main>
     </div>
   </div>

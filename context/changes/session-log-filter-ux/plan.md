@@ -287,10 +287,10 @@ Jedna migracja Supabase — indeks `(user_id, created_at, id)`, bez zmian danych
 
 #### Automatyczne
 
-- [x] 1.1 Lint przechodzi: `npm run lint`
-- [x] 1.2 Testy jednostkowe przechodzą: `npm test`
-- [x] 1.3 Build przechodzi: `npm run build`
-- [x] 1.4 Migracja nakłada się czysto lokalnie: `npx supabase migration up`
+- [x] 1.1 Lint przechodzi: `npm run lint` — f7f1316
+- [x] 1.2 Testy jednostkowe przechodzą: `npm test` — f7f1316
+- [x] 1.3 Build przechodzi: `npm run build` — f7f1316
+- [x] 1.4 Migracja nakłada się czysto lokalnie: `npx supabase migration up` — f7f1316
 
 #### Ręczne
 
@@ -301,9 +301,9 @@ Jedna migracja Supabase — indeks `(user_id, created_at, id)`, bez zmian danych
 
 #### Automatyczne
 
-- [ ] 2.1 Lint przechodzi: `npm run lint`
-- [ ] 2.2 Testy jednostkowe przechodzą: `npm test`
-- [ ] 2.3 Build przechodzi: `npm run build`
+- [x] 2.1 Lint przechodzi: `npm run lint`
+- [x] 2.2 Testy jednostkowe przechodzą: `npm test`
+- [x] 2.3 Build przechodzi: `npm run build`
 
 #### Ręczne
 
