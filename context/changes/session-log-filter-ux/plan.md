@@ -301,9 +301,9 @@ Jedna migracja Supabase — indeks `(user_id, created_at, id)`, bez zmian danych
 
 #### Automatyczne
 
-- [x] 2.1 Lint przechodzi: `npm run lint`
-- [x] 2.2 Testy jednostkowe przechodzą: `npm test`
-- [x] 2.3 Build przechodzi: `npm run build`
+- [x] 2.1 Lint przechodzi: `npm run lint` — 6c769b3
+- [x] 2.2 Testy jednostkowe przechodzą: `npm test` — 6c769b3
+- [x] 2.3 Build przechodzi: `npm run build` — 6c769b3
 
 #### Ręczne
 
@@ -315,9 +315,9 @@ Jedna migracja Supabase — indeks `(user_id, created_at, id)`, bez zmian danych
 
 #### Automatyczne
 
-- [ ] 3.1 Lint przechodzi: `npm run lint`
-- [ ] 3.2 Testy jednostkowe przechodzą: `npm test`
-- [ ] 3.3 Build przechodzi: `npm run build`
+- [x] 3.1 Lint przechodzi: `npm run lint`
+- [x] 3.2 Testy jednostkowe przechodzą: `npm test`
+- [x] 3.3 Build przechodzi: `npm run build`
 
 #### Ręczne
 
