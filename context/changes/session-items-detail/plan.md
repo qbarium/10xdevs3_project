@@ -31,7 +31,7 @@ Użytkownik na `/import-sessions` widzi dwie kolumny. Po lewej dotychczasowa lis
 
 - **Brak paginacji listy sesji** — odłożona do S-11 (wraz z ewentualnym deep-linkiem sesji w URL; obie decyzje są sprzężone).
 - **Brak zapisu wybranej sesji w adresie strony** (`?session=`) — projektowane razem z paginacją w S-11.
-- **Brak akcji akceptuj/odrzuć i zaznaczania zbiorczego w panelu** — to widok-przegląd, nie druga główna lista; pełne zarządzanie zostaje na listach głównych.
+- **Brak zaznaczania zbiorczego (bulk-select) w panelu** — to widok-przegląd; multi-select zostaje na listach głównych. *(Aneks 2026-06-27: pojedyncze akcje „Zaakceptuj/Odrzuć" dla `pending` DODANE do panelu po przeglądzie wizualnym S-10 — świadoma decyzja użytkownika, commit `ff524f3`. Zaznaczanie zbiorcze nadal poza zakresem.)*
 - **Brak zmian schematu/migracji** — model danych wystarcza.
 - **Brak per-item permanent delete** (poza MVP).
 
