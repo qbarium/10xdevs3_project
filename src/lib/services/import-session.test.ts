@@ -1,16 +1,18 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { getImportSessions, getSessionForRetry, reopenSession } from "@/lib/services/import-session";
+import { getImportSessions, getSessionForRetry, reopenSession, toSessionRow } from "@/lib/services/import-session";
+import { SESSION_PAGE_SIZE } from "@/lib/services/session-list-criteria";
+import type { ImportSessionWithFile } from "@/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 // Chainable mock buildera Supabase: każda metoda zwraca builder; builder jest awaitable (`then`),
-// więc terminalny `await` (po .order / .select / .maybeSingle) daje { data, error }. Inspekcja
+// więc terminalny `await` (po .order / .range / .maybeSingle) daje { data, error, count }. Inspekcja
 // argumentów przez `builder.<m>.mock.calls`.
-function mockSupabase(result: { data: unknown; error: unknown }) {
+function mockSupabase(result: { data: unknown; error: unknown; count?: number | null }) {
   const builder: Record<string, ReturnType<typeof vi.fn>> & {
     then?: (resolve: (v: unknown) => unknown, reject?: (e: unknown) => unknown) => unknown;
   } = {};
-  for (const m of ["select", "eq", "order", "update", "maybeSingle"]) {
+  for (const m of ["select", "eq", "order", "range", "update", "maybeSingle"]) {
     builder[m] = vi.fn(() => builder);
   }
   builder.then = (resolve, reject) => Promise.resolve(result).then(resolve, reject);
@@ -29,7 +31,7 @@ const baseRow = {
   updated_at: "2026-06-13T00:00:00Z",
 };
 
-describe("getImportSessions (S-08) — listowanie dziennika", () => {
+describe("getImportSessions (S-08/S-11) — strona dziennika", () => {
   it("filtruje po userze, domyślnie sortuje malejąco i mapuje metadane pliku + live_item_count", async () => {
     const { client, builder } = mockSupabase({
       data: [
@@ -40,8 +42,9 @@ describe("getImportSessions (S-08) — listowanie dziennika", () => {
         },
       ],
       error: null,
+      count: 1,
     });
-    const sessions = await getImportSessions(client, "u1");
+    const { sessions } = await getImportSessions(client, "u1");
     expect(builder.eq).toHaveBeenCalledWith("user_id", "u1");
     expect(builder.order).toHaveBeenCalledWith("created_at", { ascending: false });
     expect(sessions).toHaveLength(1);
@@ -57,23 +60,98 @@ describe("getImportSessions (S-08) — listowanie dziennika", () => {
   });
 
   it("paste bez pliku → file_name/file_mime null; brak embeda items → live_item_count 0", async () => {
-    const { client } = mockSupabase({ data: [{ ...baseRow, import_files: [] }], error: null });
-    const [s] = await getImportSessions(client, "u1");
+    const { client } = mockSupabase({ data: [{ ...baseRow, import_files: [] }], error: null, count: 1 });
+    const {
+      sessions: [s],
+    } = await getImportSessions(client, "u1");
     expect(s.file_name).toBeNull();
     expect(s.file_mime).toBeNull();
     expect(s.live_item_count).toBe(0);
   });
 
-  it("sort created_asc → ascending true; filtr statusu → dodatkowy eq", async () => {
-    const { client, builder } = mockSupabase({ data: [], error: null });
+  it("sort created_asc → ascending true (oba .order); filtr statusu → dodatkowy eq", async () => {
+    const { client, builder } = mockSupabase({ data: [], error: null, count: 0 });
     await getImportSessions(client, "u1", { sort: "created_asc", status: "failed" });
     expect(builder.order).toHaveBeenCalledWith("created_at", { ascending: true });
+    expect(builder.order).toHaveBeenCalledWith("id", { ascending: true }); // tie-break ten sam kierunek
     expect(builder.eq).toHaveBeenCalledWith("status", "failed");
   });
 
+  it("tie-break: domyślnie dokłada .order('id', desc) po .order('created_at', desc)", async () => {
+    const { client, builder } = mockSupabase({ data: [], error: null, count: 0 });
+    await getImportSessions(client, "u1");
+    expect(builder.order).toHaveBeenCalledWith("created_at", { ascending: false });
+    expect(builder.order).toHaveBeenCalledWith("id", { ascending: false });
+  });
+
+  it("paginacja: range(from,to) wg page/pageSize i total z count", async () => {
+    const { client, builder } = mockSupabase({ data: [], error: null, count: 42 });
+    const result = await getImportSessions(client, "u1", { page: 3, pageSize: 10 });
+    expect(builder.range).toHaveBeenCalledWith(20, 29); // (3-1)*10 .. +10-1
+    expect(result).toMatchObject({ total: 42, page: 3, pageSize: 10 });
+  });
+
+  it("domyślna strona 1 → range(0, SESSION_PAGE_SIZE-1); count null → total 0", async () => {
+    const { client, builder } = mockSupabase({ data: [], error: null, count: null });
+    const result = await getImportSessions(client, "u1");
+    expect(builder.range).toHaveBeenCalledWith(0, SESSION_PAGE_SIZE - 1);
+    expect(result).toMatchObject({ total: 0, page: 1, pageSize: SESSION_PAGE_SIZE });
+  });
+
+  it("page < 1 → clamp do 1 (range od 0)", async () => {
+    const { client, builder } = mockSupabase({ data: [], error: null, count: 0 });
+    const result = await getImportSessions(client, "u1", { page: 0, pageSize: 5 });
+    expect(builder.range).toHaveBeenCalledWith(0, 4);
+    expect(result.page).toBe(1);
+  });
+
   it("błąd zapytania → rzuca", async () => {
-    const { client } = mockSupabase({ data: null, error: { message: "boom" } });
+    const { client } = mockSupabase({ data: null, error: { message: "boom" }, count: null });
     await expect(getImportSessions(client, "u1")).rejects.toThrow();
+  });
+});
+
+describe("toSessionRow (S-11) — mapowanie wiersza na DTO wyspy", () => {
+  function session(over: Partial<ImportSessionWithFile>): ImportSessionWithFile {
+    return {
+      id: "s1",
+      user_id: "u1",
+      status: "completed_with_items",
+      raw_input: null,
+      item_count: 2,
+      error_message: null,
+      created_at: "2026-06-13T09:30:45Z",
+      updated_at: "2026-06-13T09:30:45Z",
+      file_name: null,
+      file_mime: null,
+      live_item_count: 2,
+      ...over,
+    };
+  }
+
+  it("plik → preview to nazwa pliku, isFile true", () => {
+    const row = toSessionRow(session({ file_name: "notatki.txt" }));
+    expect(row).toMatchObject({ isFile: true, preview: "notatki.txt" });
+  });
+
+  it("paste → preview z raw_input (spacje zwinięte), isFile false", () => {
+    const row = toSessionRow(session({ raw_input: "  kup   mleko\n i chleb " }));
+    expect(row.isFile).toBe(false);
+    expect(row.preview).toBe("kup mleko i chleb");
+  });
+
+  it("pusty wsad → placeholder „(pusty wsad)”", () => {
+    expect(toSessionRow(session({ raw_input: "   " })).preview).toBe("(pusty wsad)");
+  });
+
+  it("długi raw_input → ucięty do 120 znaków + wielokropek", () => {
+    const row = toSessionRow(session({ raw_input: "a".repeat(200) }));
+    expect(row.preview).toHaveLength(121); // 120 znaków + „…"
+    expect(row.preview.endsWith("…")).toBe(true);
+  });
+
+  it("dateLabel: 'YYYY-MM-DD HH:mm' z created_at", () => {
+    expect(toSessionRow(session({ created_at: "2026-06-13T09:30:45Z" })).dateLabel).toBe("2026-06-13 09:30");
   });
 });
 

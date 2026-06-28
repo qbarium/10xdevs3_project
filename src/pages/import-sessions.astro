@@ -4,7 +4,7 @@ import Topbar from "@/components/Topbar.astro";
 import ImportSessionsView from "@/components/import-sessions/ImportSessionsView";
 import type { SessionRowData } from "@/components/import-sessions/SessionRow";
 import { createClient } from "@/lib/supabase";
-import { getImportSessions } from "@/lib/services/import-session";
+import { getImportSessions, toSessionRow } from "@/lib/services/import-session";
 import type { GetImportSessionsOptions } from "@/lib/services/import-session";
 import type { ImportSessionStatus, ImportSessionWithFile } from "@/types";
 import { importSessionStatusLabel } from "@/lib/labels";
@@ -30,31 +30,17 @@ let sessions: ImportSessionWithFile[] = [];
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 if (user && supabase) {
   try {
-    sessions = await getImportSessions(supabase, user.id, { sort, status });
+    // S-11: serwis zwraca teraz stronę listy ({ sessions, total, page, pageSize }); tu konsumujemy same
+    // wiersze (reaktywność i paginacja w UI wchodzą w Fazie 2/3, kiedy strona oddaje stan początkowy wyspie).
+    ({ sessions } = await getImportSessions(supabase, user.id, { sort, status }));
   } catch {
     sessions = [];
   }
 }
 
-// Odchudzone DTO wiersza liczone serwerowo: gotowy podgląd ≤120 zn. (bez pełnego raw_input w payloadzie
-// klienta), sformatowana data, status/itemCount/errorCode. To trafia do wyspy React (SessionsList).
-const PREVIEW_MAX = 120;
-function rowPreview(s: ImportSessionWithFile): string {
-  if (s.file_name) return s.file_name;
-  const collapsed = (s.raw_input ?? "").replace(/\s+/g, " ").trim();
-  if (!collapsed) return "(pusty wsad)";
-  return collapsed.length > PREVIEW_MAX ? `${collapsed.slice(0, PREVIEW_MAX)}…` : collapsed;
-}
-const rows: SessionRowData[] = sessions.map((s) => ({
-  id: s.id,
-  isFile: Boolean(s.file_name),
-  preview: rowPreview(s),
-  dateLabel: s.created_at.slice(0, 16).replace("T", " "),
-  status: s.status,
-  itemCount: s.item_count,
-  liveItemCount: s.live_item_count,
-  errorCode: s.error_message,
-}));
+// Odchudzone DTO wiersza liczone serwerowo przez współdzielony `toSessionRow` (to samo źródło, którym
+// karmi się endpoint listy) — strona i endpoint produkują identyczne wiersze dla wyspy React.
+const rows: SessionRowData[] = sessions.map(toSessionRow);
 
 // Ciemny popup natywnych selectów zapewnia globalne `html { color-scheme: dark }` w Layout.
 const selectClass =
