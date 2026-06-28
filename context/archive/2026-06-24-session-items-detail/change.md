@@ -1,10 +1,10 @@
 ---
 change_id: session-items-detail
 title: Widok elementów sesji — master-detail w dzienniku importu
-status: implemented
+status: archived
 created: 2026-06-24
-updated: 2026-06-26
-archived_at: null
+updated: 2026-06-28
+archived_at: 2026-06-28T19:40:10Z
 ---
 
 ## Notes
