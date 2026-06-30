@@ -10,6 +10,8 @@ import { Loader2 } from "lucide-react";
 import { useCallback, useState } from "react";
 
 import { useSessionList } from "@/components/hooks/useSessionList";
+import PageSizeSelect from "@/components/import-sessions/PageSizeSelect";
+import { writePageSizePref } from "@/components/import-sessions/page-size-pref";
 import SessionFilterBar from "@/components/import-sessions/SessionFilterBar";
 import SessionItemsPanel from "@/components/import-sessions/SessionItemsPanel";
 import SessionPagination from "@/components/import-sessions/SessionPagination";
@@ -104,17 +106,28 @@ export default function ImportSessionsView({
               }}
               hasActiveFilters={hasActiveSessionFilters(settledCriteria)}
               onClearFilters={() => {
-                changeCriteria(defaultSessionCriteria());
+                // Czyść filtry/sort, ale ZACHOWAJ rozmiar strony — to preferencja widoku, nie filtr.
+                changeCriteria({ ...defaultSessionCriteria(), size: criteria.size });
               }}
             />
-            <SessionPagination
-              page={page}
-              pageCount={pageCount}
-              onPage={(nextPage) => {
-                // Paginacja zachowuje filtr/sort z wyświetlanej listy (settledCriteria), zmienia samą stronę.
-                changeCriteria({ ...settledCriteria, page: nextPage });
-              }}
-            />
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <PageSizeSelect
+                value={criteria.size}
+                onChange={(size) => {
+                  // Zmiana rozmiaru = nowy zakres → reset do strony 1; zapamiętujemy wybór w localStorage.
+                  writePageSizePref(size);
+                  changeCriteria(resetToFirstPage({ ...criteria, size }));
+                }}
+              />
+              <SessionPagination
+                page={page}
+                pageCount={pageCount}
+                onPage={(nextPage) => {
+                  // Paginacja zachowuje filtr/sort z wyświetlanej listy (settledCriteria), zmienia samą stronę.
+                  changeCriteria({ ...settledCriteria, page: nextPage });
+                }}
+              />
+            </div>
           </section>
           <section className="flex min-w-0 flex-col gap-3 md:sticky md:top-4">
             <h2 className={COLUMN_HEADING}>Elementy sesji</h2>

@@ -66,7 +66,24 @@ describe("GET /api/import-sessions", () => {
       sort: "created_asc",
       status: "failed",
       page: 1,
+      pageSize: 10,
     });
+  });
+
+  it("size z puli → pageSize dla serwisu; spoza puli → domyślny 10", async () => {
+    await GET(getCtx("?size=50"));
+    expect(vi.mocked(getImportSessions)).toHaveBeenCalledWith(
+      expect.anything(),
+      "user-1",
+      expect.objectContaining({ pageSize: 50 }),
+    );
+    vi.mocked(getImportSessions).mockClear();
+    await GET(getCtx("?size=7"));
+    expect(vi.mocked(getImportSessions)).toHaveBeenCalledWith(
+      expect.anything(),
+      "user-1",
+      expect.objectContaining({ pageSize: 10 }),
+    );
   });
 
   // status=all (lub brak) → serwis dostaje status undefined (brak filtra).
@@ -76,6 +93,7 @@ describe("GET /api/import-sessions", () => {
       sort: "created_asc",
       status: undefined,
       page: 1,
+      pageSize: 10,
     });
   });
 
@@ -87,6 +105,7 @@ describe("GET /api/import-sessions", () => {
       sort: "created_desc",
       status: undefined,
       page: 1,
+      pageSize: 10,
     });
   });
 

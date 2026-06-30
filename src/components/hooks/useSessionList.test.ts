@@ -34,6 +34,10 @@ describe("buildSessionListUrl — pomija domyślne", () => {
       "/api/import-sessions?status=failed&sort=created_asc&page=2",
     );
   });
+
+  it("rozmiar strony różny od domyślnego dołączony", () => {
+    expect(buildSessionListUrl(criteria({ size: 50 }))).toBe("/api/import-sessions?size=50");
+  });
 });
 
 describe("mapSessionResponse — sukces tylko przy ok+ok:true+tablica rows", () => {

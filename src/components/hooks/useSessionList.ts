@@ -16,12 +16,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { readPageSizePref } from "@/components/import-sessions/page-size-pref";
 import type { SessionRowData } from "@/components/import-sessions/SessionRow";
-import {
-  SESSION_PAGE_SIZE,
-  parseSessionListCriteria,
-  sessionCriteriaToQuery,
-} from "@/lib/services/session-list-criteria";
+import { parseSessionListCriteria, sessionCriteriaToQuery } from "@/lib/services/session-list-criteria";
 import type { SessionListCriteria } from "@/lib/services/session-list-criteria";
 
 const FETCH_ERROR = "Nie udało się zaktualizować listy. Spróbuj ponownie.";
@@ -164,6 +161,18 @@ export function useSessionList(
     };
   }, [runFetch]);
 
+  // Trwała preferencja rozmiaru strony: na „gołym" wejściu (URL bez `size`) adoptuj zapamiętaną wartość z
+  // localStorage i re-fetchuj BEZ zapisu URL (preferencja nie zaśmieca adresu). URL z `size` ma pierwszeństwo.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).has("size")) return;
+    const stored = readPageSizePref();
+    if (stored == null || stored === criteriaRef.current.size) return;
+    const next = { ...criteriaRef.current, size: stored, page: 1 };
+    criteriaRef.current = next;
+    setCriteriaState(next);
+    runFetch(next, { fromPopstate: true });
+  }, [runFetch]);
+
   // Sprzątanie przy odmontowaniu: anuluj fetch w locie.
   useEffect(() => {
     return () => {
@@ -171,7 +180,7 @@ export function useSessionList(
     };
   }, []);
 
-  const pageCount = Math.max(1, Math.ceil(total / SESSION_PAGE_SIZE));
+  const pageCount = Math.max(1, Math.ceil(total / settledCriteria.size));
 
   return {
     rows,

@@ -34,6 +34,7 @@ export const GET: APIRoute = async (context) => {
       sort: criteria.sort,
       status: criteria.status === "all" ? undefined : criteria.status,
       page: criteria.page,
+      pageSize: criteria.size,
     });
     const rows = sessions.map(toSessionRow);
     return json({ ok: true, rows, total, page, pageSize }, 200);

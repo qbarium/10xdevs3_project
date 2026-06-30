@@ -13,8 +13,8 @@ function params(query: string): URLSearchParams {
 }
 
 describe("parseSessionListCriteria — domyślne", () => {
-  it("puste params → status:all, sort:created_desc, page:1", () => {
-    expect(parseSessionListCriteria(params(""))).toEqual({ status: "all", sort: "created_desc", page: 1 });
+  it("puste params → status:all, sort:created_desc, page:1, size:10", () => {
+    expect(parseSessionListCriteria(params(""))).toEqual({ status: "all", sort: "created_desc", page: 1, size: 10 });
   });
 });
 
@@ -66,26 +66,37 @@ describe("sessionCriteriaToQuery — pomija domyślne", () => {
   });
 
   it("emituje tylko pola różne od domyślnych", () => {
-    const parsed = params(sessionCriteriaToQuery({ status: "failed", sort: "created_asc", page: 3 }));
+    const parsed = params(sessionCriteriaToQuery({ status: "failed", sort: "created_asc", page: 3, size: 50 }));
     expect(parsed.get("status")).toBe("failed");
     expect(parsed.get("sort")).toBe("created_asc");
     expect(parsed.get("page")).toBe("3");
+    expect(parsed.get("size")).toBe("50");
   });
 
-  it("page 1 nie jest emitowane (domyślne)", () => {
-    expect(sessionCriteriaToQuery({ status: "failed", sort: "created_desc", page: 1 })).toBe("status=failed");
+  it("page 1 i size domyślny nie są emitowane", () => {
+    expect(sessionCriteriaToQuery({ status: "failed", sort: "created_desc", page: 1, size: 10 })).toBe("status=failed");
   });
 });
 
 describe("round-trip parse(query(c)) === c", () => {
   const cases: SessionListCriteria[] = [
-    { status: "all", sort: "created_desc", page: 1 },
-    { status: "failed", sort: "created_asc", page: 5 },
-    { status: "completed_with_items", sort: "created_desc", page: 2 },
-    { status: "processing", sort: "created_asc", page: 1 },
+    { status: "all", sort: "created_desc", page: 1, size: 10 },
+    { status: "failed", sort: "created_asc", page: 5, size: 25 },
+    { status: "completed_with_items", sort: "created_desc", page: 2, size: 100 },
+    { status: "processing", sort: "created_asc", page: 1, size: 10 },
   ];
-  it.each(cases)("round-trips $status/$sort/$page", (c) => {
+  it.each(cases)("round-trips $status/$sort/$page/$size", (c) => {
     expect(parseSessionListCriteria(params(sessionCriteriaToQuery(c)))).toEqual(c);
+  });
+});
+
+describe("parseSessionListCriteria — size (pula wartości)", () => {
+  it.each([10, 15, 25, 50, 100])("czyta dozwolony rozmiar %i", (size) => {
+    expect(parseSessionListCriteria(params(`size=${size}`)).size).toBe(size);
+  });
+
+  it.each(["size=7", "size=999", "size=abc", ""])("spoza puli / śmieć / brak (%s) → domyślny 10", (query) => {
+    expect(parseSessionListCriteria(params(query)).size).toBe(10);
   });
 });
 

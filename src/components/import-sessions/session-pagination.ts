@@ -22,6 +22,15 @@ export function pageNav(page: number, pageCount: number): PageNav {
 }
 
 /**
+ * Parsuje i klampuje WPISANY przez użytkownika numer strony do zakresu [1, pageCount]. Wartość niepoprawna
+ * (pusta / NaN) → `current` (zachowujemy bieżącą stronę, nie skaczemy na 1). Ułamki ucinane w dół.
+ */
+export function clampPage(value: number, pageCount: number, current: number): number {
+  if (!Number.isFinite(value)) return current;
+  return Math.min(Math.max(1, Math.floor(value)), Math.max(1, pageCount));
+}
+
+/**
  * Kryteria po zmianie FILTRA lub SORTU — zawsze wracają na stronę 1, bo zmienił się zakres wyników (bieżąca
  * strona N mogłaby już nie istnieć). Paginacja zmienia samą stronę, więc jej NIE przepuszczamy przez to.
  */

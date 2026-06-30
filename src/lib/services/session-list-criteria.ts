@@ -15,8 +15,11 @@
 
 import type { ImportSessionStatus } from "@/types";
 
-/** Rozmiar strony dziennika (paginacja offsetowa). Współdzielony przez serwis i hook (liczenie `pageCount`). */
-export const SESSION_PAGE_SIZE = 20;
+/** Dozwolone rozmiary strony dziennika (pula do wyboru w UI). Pierwszy element jest domyślny. */
+export const SESSION_PAGE_SIZES = [10, 15, 25, 50, 100] as const;
+
+/** Domyślny rozmiar strony (gdy brak/niepoprawny `size`). MUSI należeć do `SESSION_PAGE_SIZES`. */
+export const SESSION_PAGE_SIZE = 10;
 
 /** Filtr statusu: konkretny stan sesji albo „all" (brak filtra). */
 export type SessionStatusFilter = ImportSessionStatus | "all";
@@ -24,11 +27,15 @@ export type SessionStatusFilter = ImportSessionStatus | "all";
 /** Oś sortowania dziennika — wyłącznie po dacie utworzenia (malejąco/rosnąco). */
 export type SessionSort = "created_desc" | "created_asc";
 
-/** Komplet kryteriów dziennika: filtr statusu + sort po dacie + numer strony (1-based). */
+/**
+ * Komplet kryteriów dziennika: filtr statusu + sort po dacie + numer strony (1-based) + rozmiar strony.
+ * `size` to PREFERENCJA WIDOKU (ile wpisów na stronę), nie filtr — nie liczy się do `hasActiveSessionFilters`.
+ */
 export interface SessionListCriteria {
   status: SessionStatusFilter;
   sort: SessionSort;
   page: number;
+  size: number;
 }
 
 /** Cztery wartości enuma `import_session_status` — whitelist filtra (poza nimi: „all"). */
@@ -59,6 +66,12 @@ function parsePage(value: string | null): number {
   return Math.floor(n);
 }
 
+/** Waliduje rozmiar strony względem puli `SESSION_PAGE_SIZES`; spoza puli / śmieć → domyślny. */
+function parseSize(value: string | null): number {
+  const n = Number(value);
+  return (SESSION_PAGE_SIZES as readonly number[]).includes(n) ? n : SESSION_PAGE_SIZE;
+}
+
 /**
  * Czyta kryteria z `params`. TOLERANCYJNY: każde niepoprawne/brakujące pole → domyślne (status „all",
  * sort malejąco, strona 1) — nie rzuca. JEDYNY walidator kryteriów: używają go SSR, klient ORAZ endpoint.
@@ -70,6 +83,7 @@ export function parseSessionListCriteria(params: URLSearchParams): SessionListCr
     status: isStatus(statusRaw) ? statusRaw : DEFAULT_STATUS,
     sort: isSort(sortRaw) ? sortRaw : DEFAULT_SORT,
     page: parsePage(params.get("page")),
+    size: parseSize(params.get("size")),
   };
 }
 
@@ -82,6 +96,7 @@ export function sessionCriteriaToQuery(criteria: SessionListCriteria): string {
   if (criteria.status !== DEFAULT_STATUS) params.set("status", criteria.status);
   if (criteria.sort !== DEFAULT_SORT) params.set("sort", criteria.sort);
   if (criteria.page > 1) params.set("page", String(criteria.page));
+  if (criteria.size !== SESSION_PAGE_SIZE) params.set("size", String(criteria.size));
   return params.toString();
 }
 
