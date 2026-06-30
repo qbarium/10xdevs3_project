@@ -1,10 +1,10 @@
 ---
 change_id: session-log-filter-ux
 title: Session log filter ux
-status: impl_reviewed
+status: archived
 created: 2026-06-28
 updated: 2026-07-01
-archived_at: null
+archived_at: 2026-07-01T01:03:40+02:00
 ---
 
 ## Notes
