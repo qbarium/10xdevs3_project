@@ -5,6 +5,8 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import type { SessionRowData } from "@/components/import-sessions/SessionRow";
+import { SESSION_PAGE_SIZE } from "@/lib/services/session-list-criteria";
 import type { ClassifiedItem, ImportFile, ImportSession, ImportSessionStatus, ImportSessionWithFile } from "@/types";
 
 /**
@@ -62,10 +64,22 @@ export async function failSession(supabase: SupabaseClient, sessionId: string, c
 // Wszystko nad klientem Supabase z RLS (cookies usera) — izolacja per-user jest egzekwowana
 // politykami, dodatkowy `.eq("user_id", …)` to obrona w głąb i jawny kontrakt zapytania.
 
-/** Opcje listowania sesji do dziennika: sortowanie po dacie i opcjonalny filtr statusu. */
+/** Opcje listowania sesji do dziennika: sort po dacie, opcjonalny filtr statusu, paginacja offsetowa. */
 export interface GetImportSessionsOptions {
   sort?: "created_desc" | "created_asc";
   status?: ImportSessionStatus;
+  /** Numer strony (1-based). Domyślnie 1; clamp do ≥ 1. */
+  page?: number;
+  /** Rozmiar strony. Domyślnie `SESSION_PAGE_SIZE`. */
+  pageSize?: number;
+}
+
+/** Jedna strona dziennika: wiersze + łączna liczba (do kontrolek stron) + echo strony/rozmiaru. */
+export interface ImportSessionsPage {
+  sessions: ImportSessionWithFile[];
+  total: number;
+  page: number;
+  pageSize: number;
 }
 
 /** Kształt wiersza z embedowanym `import_files` (LEFT JOIN) + agregatem `items(count)` zwracany przez Supabase. */
@@ -75,27 +89,42 @@ interface ImportSessionRow extends ImportSession {
 }
 
 /**
- * Listuje sesje importu użytkownika do dziennika (S-08) z metadanymi pliku (LEFT JOIN
- * `import_files`). Sort po `created_at` (domyślnie malejąco) + opcjonalny filtr statusu.
- * MVP jest single-user o małym wolumenie — bez paginacji (indeks `import_sessions_user_idx`).
+ * Listuje JEDNĄ STRONĘ sesji importu użytkownika do dziennika (S-08 + paginacja S-11) z metadanymi pliku
+ * (LEFT JOIN `import_files`). Sort po `created_at` (domyślnie malejąco) ze STABILIZATOREM `id` (tie-break)
+ * + opcjonalny filtr statusu + `range(from, to)` dla strony + `count: "exact"` dla łącznej liczby.
+ *
+ * Tie-break po `id` jest konieczny: `created_at` nie jest unikalny (seria ponowień w jednej chwili), więc
+ * bez stabilizatora wiersze na granicy strony mogłyby się powtarzać lub gubić przy offsecie (indeks
+ * `import_sessions (user_id, created_at, id)` wspiera dokładnie tę kolejność).
  */
 export async function getImportSessions(
   supabase: SupabaseClient,
   userId: string,
   opts: GetImportSessionsOptions = {},
-): Promise<ImportSessionWithFile[]> {
+): Promise<ImportSessionsPage> {
   const ascending = opts.sort === "created_asc";
+  const page = Math.max(1, Math.floor(opts.page ?? 1));
+  const pageSize = opts.pageSize ?? SESSION_PAGE_SIZE;
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+  // Uwaga skali (świadomy kompromis MVP): `count: "exact"` liczy WSZYSTKIE pasujące wiersze (nie estymuje),
+  // a `.range` to paginacja offsetowa — koszt rośnie z liczbą sesji i głębokością strony. Dla solo-MVP
+  // (dziesiątki/setki sesji) nieistotne; przy dziesiątkach tysięcy → keyset/cursor lub `count: "estimated"`.
   let query = supabase
     .from("import_sessions")
     .select(
       "id, user_id, status, raw_input, item_count, error_message, created_at, updated_at, import_files(file_name, file_mime), items(count)",
+      { count: "exact" },
     )
     .eq("user_id", userId);
   if (opts.status) query = query.eq("status", opts.status);
-  const { data, error } = await query.order("created_at", { ascending });
+  const { data, error, count } = await query
+    .order("created_at", { ascending })
+    .order("id", { ascending })
+    .range(from, to);
   if (error) throw new Error("Pobranie listy sesji importu nie powiodło się.", { cause: error });
   const rows = (data as unknown as ImportSessionRow[] | null) ?? [];
-  return rows.map((row) => {
+  const sessions = rows.map((row) => {
     const { import_files, items, ...session } = row;
     const file = Array.isArray(import_files) ? import_files[0] : null;
     // `items(count)` zwraca [{ count: N }] (RLS-scoped → liczba ŻYWYCH elementów sesji usera).
@@ -107,6 +136,37 @@ export async function getImportSessions(
       live_item_count,
     };
   });
+  return { sessions, total: count ?? 0, page, pageSize };
+}
+
+// --- S-11: mapowanie wiersza do odchudzonego DTO wyspy (współdzielone: strona + endpoint) ----------------
+// Jedno źródło prawdy mapowania `ImportSessionWithFile → SessionRowData` (gotowy podgląd ≤120 zn., etykieta
+// daty, status/itemCount/live). Wcześniej liczone wyłącznie w `import-sessions.astro`; po przejściu na fetch
+// kliencki (S-11) ten sam mapper karmi render SSR (stan początkowy) i endpoint (kolejne strony) — strona
+// i endpoint produkują IDENTYCZNE wiersze. Czysty (bez Supabase), więc bezpieczny też do testów w node.
+
+const PREVIEW_MAX = 120;
+
+/** Gotowy podgląd wiersza: nazwa pliku, albo skrócony (≤120 zn.) `raw_input`, albo „(pusty wsad)". */
+function rowPreview(session: ImportSessionWithFile): string {
+  if (session.file_name) return session.file_name;
+  const collapsed = (session.raw_input ?? "").replace(/\s+/g, " ").trim();
+  if (!collapsed) return "(pusty wsad)";
+  return collapsed.length > PREVIEW_MAX ? `${collapsed.slice(0, PREVIEW_MAX)}…` : collapsed;
+}
+
+/** Czysta funkcja: wiersz serwisu → odchudzone DTO wyspy. Bez pełnego `raw_input` w payloadzie klienta. */
+export function toSessionRow(session: ImportSessionWithFile): SessionRowData {
+  return {
+    id: session.id,
+    isFile: Boolean(session.file_name),
+    preview: rowPreview(session),
+    dateLabel: session.created_at.slice(0, 16).replace("T", " "),
+    status: session.status,
+    itemCount: session.item_count,
+    liveItemCount: session.live_item_count,
+    errorCode: session.error_message,
+  };
 }
 
 /**
