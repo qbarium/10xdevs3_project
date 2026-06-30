@@ -4,7 +4,7 @@
 - **Plan**: context/changes/session-log-filter-ux/plan.md
 - **Zakres**: Pełny plan (Faza 1–3 z 3) + poprawki UX poza planem (commit 9ee41d2)
 - **Data**: 2026-07-01
-- **Werdykt**: WYMAGA UWAGI
+- **Werdykt**: WYMAGA UWAGI → **triaż domknięty 2026-07-01** (F1 FIXED, F2 ACCEPTED, F3 NOTED)
 - **Ustalenia**: 0 krytycznych, 2 ostrzeżenia, 1 obserwacja
 
 ## Werdykty
@@ -36,7 +36,7 @@ Bezpieczeństwo (wstrzyknięcie SQL, auth/RLS na granicy endpointu, localStorage
   - Kompromis: Nie usuwa migotania dla adopcji z localStorage na gołym URL (to oddzielna, świadoma decyzja — `size` nie trafia do adresu).
   - Pewność: WYSOKA — identyczny wzorzec w `api/import-sessions/index.ts:37`.
   - Martwy punkt: Brak znaczących.
-- **Decyzja**: PENDING
+- **Decyzja**: FIXED (triaż 2026-07-01) — dodano `pageSize: criteria.size` w `import-sessions.astro:27-32`; SSR wyrównany do endpointu.
 
 ### F2 — Dodatki UX poza planem (rozmiar strony, pierwsza/ostatnia, skok strony)
 
@@ -46,7 +46,7 @@ Bezpieczeństwo (wstrzyknięcie SQL, auth/RLS na granicy endpointu, localStorage
 - **Lokalizacja**: src/components/import-sessions/{PageSizeSelect.tsx, page-size-pref.ts, SessionPagination.tsx}, src/lib/services/session-list-criteria.ts (pole `size`)
 - **Szczegóły**: Plan Fazy 3 wymagał tylko poprzednia/następna + wskaźnik strony. Implementacja dodaje: kontrolkę rozmiaru strony z zapamiętywaniem (localStorage), przyciski pierwsza/ostatnia, pole skoku do strony (`clampPage`), pole `size` w kryteriach. To nadzbiór planu — spójny, przetestowany i nieszkodliwy (oba pod-agenty potwierdzają). Zmiany zostały zgłaszane interaktywnie podczas weryfikacji ręcznej i są udokumentowane: osobny commit `9ee41d2` „post-plan" + adnotacja w `roadmap.md` (S-11 status). Bariery „Czego NIE robimy" (deep-link `?session=`, wyszukiwanie, panel S-10 nietknięty, paginacja offsetowa) — utrzymane.
 - **Poprawka**: Zaakceptować jako udokumentowany zakres post-plan (już odnotowane w commit `9ee41d2` + `roadmap.md`). Bez zmiany kodu. Opcjonalnie: dopisać krótki aneks do `plan.md` (sekcja „Dodatki poza planem"), jeśli plan ma pozostać pełnym źródłem prawdy zakresu.
-- **Decyzja**: PENDING
+- **Decyzja**: ACCEPTED (triaż 2026-07-01) — udokumentowany zakres post-plan (commit `9ee41d2` + `roadmap.md`); bez zmiany kodu.
 
 ### F3 — `count: "exact"` + paginacja offsetowa bez górnego clampu strony (znany limit skali)
 
@@ -56,4 +56,4 @@ Bezpieczeństwo (wstrzyknięcie SQL, auth/RLS na granicy endpointu, localStorage
 - **Lokalizacja**: src/lib/services/import-session.ts:106-121
 - **Szczegóły**: Każde zapytanie listy używa `{ count: "exact" }` (pełne policzenie, nie estymacja) + `range(from,to)` offsetowy z `from=(page-1)*pageSize`; `parsePage` clampuje tylko do ≥1 (brak górnej granicy). Dla solo-MVP z dziennikiem rzędu dziesiątek/setek sesji nieistotne; indeks `(user_id, created_at, id)` pokrywa sort idealnie. Pusta strona poza zakresem zwraca 0 wierszy (nieszkodliwe).
 - **Poprawka**: Zostawić jak jest dla MVP; opcjonalnie dopisać komentarz w `getImportSessions`, że `count:"exact"` + offset to znane ograniczenie skali (przy dziesiątkach tysięcy wierszy → keyset/cursor lub `count:"estimated"`).
-- **Decyzja**: PENDING
+- **Decyzja**: NOTED (triaż 2026-07-01) — dopisano komentarz o limicie skali w `getImportSessions` (import-session.ts); kod bez zmiany zachowania.

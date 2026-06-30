@@ -107,6 +107,9 @@ export async function getImportSessions(
   const pageSize = opts.pageSize ?? SESSION_PAGE_SIZE;
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
+  // Uwaga skali (świadomy kompromis MVP): `count: "exact"` liczy WSZYSTKIE pasujące wiersze (nie estymuje),
+  // a `.range` to paginacja offsetowa — koszt rośnie z liczbą sesji i głębokością strony. Dla solo-MVP
+  // (dziesiątki/setki sesji) nieistotne; przy dziesiątkach tysięcy → keyset/cursor lub `count: "estimated"`.
   let query = supabase
     .from("import_sessions")
     .select(

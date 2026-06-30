@@ -28,6 +28,7 @@ if (user && supabase) {
       sort: criteria.sort,
       status: criteria.status === "all" ? undefined : criteria.status,
       page: criteria.page,
+      pageSize: criteria.size,
     });
     initialRows = sessions.map(toSessionRow);
     initialTotal = total;
