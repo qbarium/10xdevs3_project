@@ -3,7 +3,7 @@ project: TaskerLight
 version: 1
 status: draft
 created: 2026-06-05
-updated: 2026-06-28
+updated: 2026-07-01
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -41,7 +41,9 @@ TaskerLight przyjmuje surowy, nieuporządkowany wsad głosowo-tekstowy i rozdzie
 | S-08  | import-session-log-retry | przejrzeć dziennik sesji importu i ponowić sesję `niepowodzenie`            | S-02              | US-07, FR-027                              | done |
 | S-09  | list-filters-search      | sortować i wyszukiwać listy po dacie i tytule (+ podfiltr stanu w Aktywne)  | S-05              | FR-008 (filtry dodatkowe)                  | done |
 | S-10  | session-items-detail     | w dzienniku sesji wybrać sesję i zobaczyć/edytować jej elementy (master-detail) | S-08, S-05, S-06 | FR-027 (rozszerzony); nadpisuje FR-008/FR-015 | done |
-| S-11  | session-log-filter-ux    | filtrować dziennik sesji reaktywnie (bez „Zastosuj"), spójne dropdowny, „Wyczyść filtry" | S-08 | FR-027 / FR-008 (parytet UX) | proposed |
+| S-11  | session-log-filter-ux    | filtrować dziennik sesji reaktywnie (bez „Zastosuj"), spójne dropdowny, „Wyczyść filtry" | S-08 | FR-027 / FR-008 (parytet UX) | in-review |
+| S-12  | dup-react-ssr-dev-fix    | (naprawa, dev-only) wyeliminować błąd podwójnego React-a na `/import-sessions` w `npm run dev` | — | — (dług techniczny; lessons.md) | proposed |
+| S-13  | session-entries-mode     | otworzyć wpisy danej sesji jako pełną listę („Pokaż wpisy") zamiast master-detail; lista sesji jako karty + paginacja wpisów | S-10, S-11 | FR-027 / FR-008 (zastępuje master-detail S-10) | proposed |
 
 ## Strumienie
 
@@ -219,6 +221,31 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Niewiadome:** Czy reaktywność oprzeć na dedykowanym `GET /api/import-sessions` (jak `GET /api/items` w S-09), czy na lżejszym wariancie fetch obecnej strony — rozstrzyga `/10x-plan`. Blokuje: nie.
 - **Ryzyko:** Czysto UX, na istniejącej powierzchni — niski koszt; wzorzec gotowy w S-09 (`useItemList` + `list-criteria` + `SortControl`/`ListFilterBar`) do reużycia/uogólnienia. Uwaga architektoniczna: dziennik to wyspa hookowa (`SessionsList → SessionRow → useSessionRetry`) — historyczne źródło blokera dup-React SSR (naprawione w `astro.config.mjs`: `vite.resolve.dedupe` + `ssr.noExternal`); dołożenie hooka filtrów wymaga potwierdzenia dev SSR realnym renderem, nie tylko zielonym buildem (lekcja „bug widoczny tylko w dev", `lessons.md`). Pełny kontekst zgłoszenia: `context/archive/2026-06-13-import-session-log-retry/follow-ups/session-log-filter-ux.md`.
 - **Dopisane z S-10 (2026-06-25):** do zakresu S-11 wchodzi **paginacja (lub „pokaż starsze") listy sesji** — dziennik jest append-only i rośnie bez ograniczeń, a `getImportSessions` ciągnie dziś wszystkie wiersze bez `LIMIT`; oraz **zapis wybranej sesji w adresie strony** (`?session=`, deep-link do panelu master-detail z S-10) — projektowane **razem** z paginacją, bo deep-link do sesji spoza bieżącej strony wymaga świadomego rozwiązania (np. kursorowego „załaduj stronę zawierającą sesję"). Decyzja przy planowaniu S-10: oba świadomie odłożone z S-10 tutaj.
+- **Status:** in-review (zaimplementowane — 3 fazy + poprawki UX poza planem: paginacja pierwsza/ostatnia + wpisanie strony, rozmiar strony z zapamiętywaniem; czeka na `/10x-impl-review`; pod-zgłoszenia #100–#102)
+
+### S-12: Naprawa błędu podwójnego React-a na `/import-sessions` (tylko tryb deweloperski)
+
+- **Wynik:** (naprawa, dług techniczny) strona `/import-sessions` przestaje wywalać render serwerowy („Invalid hook call / more than one copy of React") w `npm run dev`; build produkcyjny i tak był wolny od błędu, więc to poprawa doświadczenia deweloperskiego, nie wydania.
+- **Change ID:** dup-react-ssr-dev-fix
+- **Odnośniki PRD:** — (dług techniczny; brak FR)
+- **Wymagania wstępne:** — (niezależne; wynesione z S-11, sekwencjonowane po nim)
+- **Równolegle z:** —
+- **Blokady:** —
+- **Niewiadome:** Aktualny trigger re-optymalizacji Vite — dwa wcześniejsze podejścia (S-08, S-10) nie wyeliminowały błędu, a `reopt_fired=0` okazał się niewystarczającym kryterium. Rozstrzyga diagnoza w fazie naprawy. Blokuje: nie.
+- **Ryzyko:** Błąd zależny od czasu i kolejności ładowania (tryb deweloperski), trudny do deterministycznego odtworzenia; kryterium „naprawione" wymaga odtworzenia prawdziwego trybu awarii, nie zielonego buildu. Pełny kontekst: `context/changes/session-log-filter-ux/follow-ups/dup-react-ssr-dev-only.md`.
+- **Status:** proposed
+
+### S-13: Tryb „Pokaż wpisy" — kontekstowy widok elementów sesji (zastępuje master-detail)
+
+- **Wynik:** użytkownik w dzienniku sesji (lista kart: status, źródło, data, liczba wpisów) klika „Pokaż wpisy" na sesji i trafia na pełną listę wpisów w **trybie kontekstowym sesji** (adres `?session=<id>`): baner „Wpisy dla sesji importu — <źródło>, <data>" z akcją powrotu, normalne filtry/wyszukiwanie ukryte, widoczne WSZYSTKIE elementy sesji (wszystkie stany akceptacji), z zachowanymi akcjami (edycja/akceptacja/odrzucenie reużyte z list głównych). Sesje `niepowodzenie` mają „Ponów" zamiast „Pokaż wpisy". Master-detail (prawy panel) znika — lista sesji staje się pełnoszerokimi kartami.
+- **Change ID:** session-entries-mode
+- **Odnośniki PRD:** FR-027 (rozszerzony), FR-008 (filtr sesji jako tryb kontekstowy, nie zwykły filtr) — zastępuje model master-detail z S-10
+- **Wymagania wstępne:** S-10 (endpoint `GET /api/import-sessions/[id]/items` + `getSessionItems` do reużycia), S-11 (paginacja listy do reużycia)
+- **Równolegle z:** —
+- **Blokady:** —
+- **Niewiadome:** —
+- **Decyzje (uzgodnione 2026-07-01):** (1) tryb sesji pokazuje WSZYSTKIE itemy sesji niezależnie od stanu akceptacji (jak panel S-10); (2) akcje (edycja/akceptacja/odrzucenie) ZACHOWANE, nie read-only; (3) paginacja zostaje w trybie sesji i dochodzi też do zwykłej listy wpisów (reużycie dorobku S-11). Warstwa danych istnieje (S-10), więc zmiana jest głównie prezentacyjna (panel → pełna strona + baner) plus tryb/filtr sesji na liście wpisów i paginacja wpisów.
+- **Ryzyko:** Cofa decyzję S-10 (master-detail) — usuwa `SessionItemsPanel`/`useSessionItems`/dwukolumnowy layout z `ImportSessionsView`. Reużywa endpoint S-10, więc warstwa danych zostaje. Główny koszt: redesign listy sesji na karty + tryb kontekstowy na liście wpisów (baner, ukryte filtry, deep-link `?session=`) + paginacja wpisów. Prowadzić przez `/10x-frame` (wyzwanie założenia „utrzymujemy master-detail") przed planem.
 - **Status:** proposed
 
 ## Przekazanie backlogu
@@ -236,7 +263,9 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 | S-08             | import-session-log-retry   | Dziennik sesji importu + ponowienie                      | no                    | Po S-02; niezależny — kandydat do równoległości    |
 | S-09             | list-filters-search        | Filtry dodatkowe: sort / wyszukiwanie / podfiltr stanu   | no                    | Po S-05                                            |
 | S-10             | session-items-detail       | Widok elementów sesji (master-detail w dzienniku)        | no                    | Po S-08 + S-05 + S-06                              |
-| S-11             | session-log-filter-ux      | Reaktywne filtry dziennika sesji (parytet UX z S-09)     | no                    | Po S-08; wzorzec z S-09                            |
+| S-11             | session-log-filter-ux      | Reaktywne filtry dziennika sesji (parytet UX z S-09)     | yes                   | Zaplanowane (`plan.md`); `/10x-implement … phase 1` |
+| S-12             | dup-react-ssr-dev-fix      | Naprawa błędu podwójnego React-a (tylko dev) na `/import-sessions` | no          | Po S-11; dług techniczny, dev-only                  |
+| S-13             | session-entries-mode       | Tryb „Pokaż wpisy" + filtr sesji na liście wpisów (zastępuje master-detail) | no          | Po S-10 + S-11; redesign + reużycie endpointu S-10; przez `/10x-frame` |
 
 ## Otwarte pytania dotyczące mapy drogowej
 
