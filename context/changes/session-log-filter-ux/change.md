@@ -1,9 +1,9 @@
 ---
 change_id: session-log-filter-ux
 title: Session log filter ux
-status: implementing
+status: implemented
 created: 2026-06-28
-updated: 2026-06-29
+updated: 2026-07-01
 archived_at: null
 ---
 

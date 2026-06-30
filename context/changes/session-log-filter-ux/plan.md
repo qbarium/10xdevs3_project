@@ -294,8 +294,8 @@ Jedna migracja Supabase — indeks `(user_id, created_at, id)`, bez zmian danych
 
 #### Ręczne
 
-- [ ] 1.5 Strona `/import-sessions` renderuje poprawną listę bez regresji (na `npm run preview`)
-- [ ] 1.6 `GET /api/import-sessions?status=failed&sort=created_asc&page=1` zwraca przefiltrowany/posortowany/ostronicowany JSON; 401 bez usera; niepoprawny `sort` tolerowany (na `npm run preview`)
+- [x] 1.5 Strona `/import-sessions` renderuje poprawną listę bez regresji (na `npm run preview`)
+- [x] 1.6 `GET /api/import-sessions?status=failed&sort=created_asc&page=1` zwraca przefiltrowany/posortowany/ostronicowany JSON; 401 bez usera; niepoprawny `sort` tolerowany (na `npm run preview`)
 
 ### Faza 2: Reaktywne filtry i sortowanie na wyspie
 
@@ -307,9 +307,9 @@ Jedna migracja Supabase — indeks `(user_id, created_at, id)`, bez zmian danych
 
 #### Ręczne
 
-- [ ] 2.4 Zmiana sortowania/statusu zawęża listę bez przeładowania; adres odzwierciedla wybór (na `npm run preview`)
-- [ ] 2.5 Odświeżenie z `?status=…` pokazuje od razu przefiltrowaną listę (brak przeskoku); „wstecz/dalej" przełącza filtry
-- [ ] 2.6 Pusty wynik z filtrem pokazuje „Brak sesji dla wybranych filtrów" + „Wyczyść filtry"; brak „Zastosuj" i natywnych `<select>`
+- [x] 2.4 Zmiana sortowania/statusu zawęża listę bez przeładowania; adres odzwierciedla wybór (na `npm run preview`)
+- [x] 2.5 Odświeżenie z `?status=…` pokazuje od razu przefiltrowaną listę (brak przeskoku); „wstecz/dalej" przełącza filtry
+- [x] 2.6 Pusty wynik z filtrem pokazuje „Brak sesji dla wybranych filtrów" + „Wyczyść filtry"; brak „Zastosuj" i natywnych `<select>`
 
 ### Faza 3: Paginacja w interfejsie + domknięcie UX
 
@@ -321,7 +321,7 @@ Jedna migracja Supabase — indeks `(user_id, created_at, id)`, bez zmian danych
 
 #### Ręczne
 
-- [ ] 3.4 Następna/poprzednia zmienia stronę i `?page=`; przyciski wyłączone na krańcach (na `npm run preview`)
-- [ ] 3.5 Zmiana filtra/sortowania wraca do strony 1
-- [ ] 3.6 Wskaźnik ładowania w trakcie pobierania; komunikat błędu z ponowieniem przy wymuszonym błędzie, poprzednia lista zostaje
-- [ ] 3.7 Pełny obieg adresu (filtr + strona) zachowany między kartami
+- [x] 3.4 Następna/poprzednia zmienia stronę i `?page=`; przyciski wyłączone na krańcach (na `npm run preview`)
+- [x] 3.5 Zmiana filtra/sortowania wraca do strony 1
+- [x] 3.6 Wskaźnik ładowania w trakcie pobierania; komunikat błędu z ponowieniem przy wymuszonym błędzie, poprzednia lista zostaje
+- [x] 3.7 Pełny obieg adresu (filtr + strona) zachowany między kartami
