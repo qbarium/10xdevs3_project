@@ -236,26 +236,26 @@ Zostawić trwały artefakt, by czwarta deklaracja „naprawione" nie mogła być
 
 #### Automatyczne
 
-- [x] 1.1 Lint przechodzi: `npm run lint`
-- [x] 1.2 Build prod pozostaje zielony: `npm run build`
+- [x] 1.1 Lint przechodzi: `npm run lint` — 27b46f0
+- [x] 1.2 Build prod pozostaje zielony: `npm run build` — 27b46f0
 
 #### Ręczne
 
-- [x] 1.3 `ssr.optimizeDeps.include` zawiera dokładnie 15 specyfikatorów zgodnych z `package.json`
-- [x] 1.4 Komentarz `ssr.noExternal` przepisany zgodnie z dowodem z dysku; top-level `optimizeDeps.include` nietknięty
+- [x] 1.3 `ssr.optimizeDeps.include` zawiera dokładnie 15 specyfikatorów zgodnych z `package.json` — 27b46f0
+- [x] 1.4 Komentarz `ssr.noExternal` przepisany zgodnie z dowodem z dysku; top-level `optimizeDeps.include` nietknięty — 27b46f0
 
 ### Faza 2: Deterministyczna weryfikacja + empiryczne rozstrzygnięcie parytetu
 
 #### Automatyczne
 
-- [ ] 2.1 `deps_ssr/_metadata.json`: rodzina React + populacja na początku `optimized`, nie w ogonie
-- [ ] 2.2 (Warunkowo, jeśli dołożono top-level parytet) build zielony: `npm run build`
+- [x] 2.1 `deps_ssr/_metadata.json`: rodzina React + populacja na początku `optimized`, nie w ogonie
+- [x] 2.2 (Warunkowo, jeśli dołożono top-level parytet) build zielony: `npm run build`
 
 #### Ręczne
 
-- [ ] 2.3 Pełna sesja (middleware + `/import-sessions` + `/items*` + dialog + trasa API z `zod`): zero `optimized dependencies changed. reloading` i zero `Invalid hook call`
-- [ ] 2.4 `deps_astro/_metadata.json` zinspektowany; decyzja o parytecie top-level podjęta i udokumentowana
-- [ ] 2.5 Sesja weryfikacyjna wykonana BEZ `--force`
+- [x] 2.3 Pełna sesja (middleware + `/import-sessions` + `/items*` + dialog + trasa API z `zod`): zero `optimized dependencies changed. reloading` i zero `Invalid hook call`
+- [x] 2.4 `deps_astro/_metadata.json` zinspektowany; decyzja o parytecie top-level podjęta i udokumentowana
+- [x] 2.5 Sesja weryfikacyjna wykonana BEZ `--force`
 
 ### Faza 3: Zabezpieczenie przed regresją
 
