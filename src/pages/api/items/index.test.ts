@@ -99,10 +99,14 @@ describe("POST /api/items", () => {
 });
 
 // GET czyta kryteria z query string i woła `listItems` (zmockowany — handler testujemy w izolacji od DB).
-// `parseListCriteria` działa NA ŻYWO (czysty walidator) — stąd asercje na kryteriach przekazanych serwisowi.
+// `parseListCriteria`/`parseItemPage`/`parseItemSize` działają NA ŻYWO (czyste walidatory) — stąd asercje
+// na kryteriach i oknie przekazanych serwisowi.
 interface ListBody {
   ok?: boolean;
   items?: unknown[];
+  total?: number;
+  page?: number;
+  pageSize?: number;
   code?: string;
 }
 
@@ -116,7 +120,7 @@ function getCtx(query: string, user: { id: string } | null = { id: "user-1" }) {
 
 describe("GET /api/items", () => {
   beforeEach(() => {
-    vi.mocked(listItems).mockResolvedValue([ITEM] as never);
+    vi.mocked(listItems).mockResolvedValue({ items: [ITEM], total: 1 } as never);
   });
   afterEach(() => vi.clearAllMocks());
 
@@ -138,12 +142,15 @@ describe("GET /api/items", () => {
     expect(vi.mocked(listItems)).not.toHaveBeenCalled();
   });
 
-  // 200 + serwis dostaje user.id ORAZ kryteria sparsowane z query stringa.
-  it("poprawne parametry → 200, serwis z user.id + kryteriami, odpowiedź {ok,items}", async () => {
+  // 200 + serwis dostaje user.id ORAZ kryteria sparsowane z query stringa. Bez `size` → wywołanie BEZ okna
+  // (pełna lista, kompat wstecz) i odpowiedź BEZ echa page/pageSize — ale zawsze z total (addytywnie).
+  it("poprawne parametry bez okna → 200, serwis bez okna, odpowiedź {ok,items,total} bez page/pageSize", async () => {
     const res = await GET(getCtx("?view=active&type=task&sort=title&dir=asc"));
     expect(res.status).toBe(200);
     const body = (await res.json()) as ListBody;
-    expect(body).toMatchObject({ ok: true, items: [ITEM] });
+    expect(body).toMatchObject({ ok: true, items: [ITEM], total: 1 });
+    expect(body.page).toBeUndefined();
+    expect(body.pageSize).toBeUndefined();
     expect(vi.mocked(listItems)).toHaveBeenCalledWith(expect.anything(), "user-1", {
       view: "active",
       type: "task",
@@ -152,6 +159,45 @@ describe("GET /api/items", () => {
       q: "",
       opstatus: undefined,
     });
+  });
+
+  it("page+size z puli → 200, serwis z oknem, odpowiedź z echem page/pageSize", async () => {
+    vi.mocked(listItems).mockResolvedValue({ items: [ITEM], total: 60 } as never);
+    const res = await GET(getCtx("?view=active&page=2&size=25"));
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as ListBody;
+    expect(body).toMatchObject({ ok: true, items: [ITEM], total: 60, page: 2, pageSize: 25 });
+    expect(vi.mocked(listItems)).toHaveBeenCalledWith(
+      expect.anything(),
+      "user-1",
+      expect.objectContaining({ view: "active" }),
+      { page: 2, size: 25 },
+    );
+  });
+
+  it("size spoza puli / śmieć → traktowane jak brak okna (pełna lista)", async () => {
+    const res = await GET(getCtx("?view=active&page=2&size=999"));
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as ListBody;
+    expect(body.page).toBeUndefined();
+    expect(body.pageSize).toBeUndefined();
+    // Wywołanie 3-argumentowe (bez okna) — page bez size jest ignorowane.
+    expect(vi.mocked(listItems)).toHaveBeenCalledWith(
+      expect.anything(),
+      "user-1",
+      expect.objectContaining({ view: "active" }),
+    );
+  });
+
+  it("śmieciowy page z poprawnym size → clamp do strony 1", async () => {
+    const res = await GET(getCtx("?view=active&page=abc&size=10"));
+    expect(res.status).toBe(200);
+    expect(vi.mocked(listItems)).toHaveBeenCalledWith(
+      expect.anything(),
+      "user-1",
+      expect.objectContaining({ view: "active" }),
+      { page: 1, size: 10 },
+    );
   });
 
   // Niepoprawny sort/type NIE daje 400 — tolerancyjny parser cofa je do domyślnych (świadome odchylenie od zod).
@@ -168,11 +214,11 @@ describe("GET /api/items", () => {
     });
   });
 
-  it("filtr bez trafień → 200, items: []", async () => {
-    vi.mocked(listItems).mockResolvedValue([] as never);
+  it("filtr bez trafień → 200, items: [] + total 0", async () => {
+    vi.mocked(listItems).mockResolvedValue({ items: [], total: 0 });
     const res = await GET(getCtx("?view=trash&q=nic-takiego"));
     expect(res.status).toBe(200);
-    expect((await res.json()) as ListBody).toMatchObject({ ok: true, items: [] });
+    expect(await res.json()).toMatchObject({ ok: true, items: [], total: 0 });
   });
 
   it("rzut serwisu → 500 generyczne", async () => {

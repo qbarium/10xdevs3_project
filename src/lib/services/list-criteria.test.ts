@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { criteriaToQuery, defaultCriteria, hasActiveFilters, parseListCriteria } from "@/lib/services/list-criteria";
+import {
+  criteriaToQuery,
+  defaultCriteria,
+  hasActiveFilters,
+  ITEM_PAGE_SIZE,
+  ITEM_PAGE_SIZES,
+  parseItemPage,
+  parseItemSize,
+  parseListCriteria,
+} from "@/lib/services/list-criteria";
 import type { ListCriteria } from "@/lib/services/list-criteria";
 
 function params(query: string): URLSearchParams {
@@ -114,5 +123,43 @@ describe("hasActiveFilters", () => {
   it("opstatus poza widokiem active nie liczy się jako filtr (nie jest emitowany)", () => {
     expect(hasActiveFilters({ ...defaultCriteria("done"), opstatus: "new" })).toBe(false);
     expect(hasActiveFilters({ ...defaultCriteria("trash"), opstatus: "in_progress" })).toBe(false);
+  });
+});
+
+describe("parseItemPage — clamp do całkowitej ≥ 1 (S-13 F1)", () => {
+  it("poprawna liczba → wartość (podłoga dla ułamka)", () => {
+    expect(parseItemPage("1")).toBe(1);
+    expect(parseItemPage("5")).toBe(5);
+    expect(parseItemPage("2.7")).toBe(2);
+  });
+
+  it("brak / śmieć / zero / ujemna → 1 (nie rzuca)", () => {
+    expect(parseItemPage(null)).toBe(1);
+    expect(parseItemPage("")).toBe(1);
+    expect(parseItemPage("abc")).toBe(1);
+    expect(parseItemPage("0")).toBe(1);
+    expect(parseItemPage("-3")).toBe(1);
+    expect(parseItemPage("Infinity")).toBe(1);
+  });
+});
+
+describe("parseItemSize — pula albo null = brak okna (S-13 F1)", () => {
+  it("wartość z puli → liczba", () => {
+    for (const size of ITEM_PAGE_SIZES) {
+      expect(parseItemSize(String(size))).toBe(size);
+    }
+  });
+
+  it("brak / śmieć / spoza puli → null (pełna lista, kompat przejściowy)", () => {
+    expect(parseItemSize(null)).toBeNull();
+    expect(parseItemSize("")).toBeNull();
+    expect(parseItemSize("abc")).toBeNull();
+    expect(parseItemSize("11")).toBeNull();
+    expect(parseItemSize("0")).toBeNull();
+    expect(parseItemSize("-10")).toBeNull();
+  });
+
+  it("domyślny rozmiar należy do puli", () => {
+    expect(ITEM_PAGE_SIZES).toContain(ITEM_PAGE_SIZE);
   });
 });

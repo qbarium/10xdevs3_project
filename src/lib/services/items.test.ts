@@ -1,24 +1,18 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 
-import {
-  buildSearchOrFilter,
-  getActiveItems,
-  getPendingItems,
-  getSessionItems,
-  getTrashItems,
-  listItems,
-} from "@/lib/services/items";
+import { buildSearchOrFilter, getSessionItems, listItems } from "@/lib/services/items";
 import { defaultCriteria } from "@/lib/services/list-criteria";
 import type { ListCriteria } from "@/lib/services/list-criteria";
 
 // Mock łańcucha query-buildera Supabase: każda metoda rejestruje argumenty i zwraca ten sam `builder`
 // (thenable rozwiązywalny do skonfigurowanego wyniku). Pozwala zweryfikować, że `listItems` składa właściwy
-// predykat/filtr/sort — bez realnej bazy (to pokrywają testy integracyjne). Wzorzec z `items-mutation.test.ts`
-// poszerzony o `.or()` (wyszukiwanie).
+// predykat/filtr/sort/okno — bez realnej bazy (to pokrywają testy integracyjne). Wzorzec z
+// `items-mutation.test.ts` poszerzony o `.or()` (wyszukiwanie) i `.range()` (okno strony, S-13 F1).
 interface Result {
   data: unknown;
   error: unknown;
+  count?: number | null;
 }
 type Call = [string, unknown[]];
 
@@ -28,7 +22,7 @@ function mockSupabase(result: Result): { supabase: SupabaseClient; calls: Call[]
     then: (onFulfilled: (v: unknown) => unknown, onRejected?: (e: unknown) => unknown) =>
       Promise.resolve(result).then(onFulfilled, onRejected),
   };
-  for (const method of ["from", "select", "eq", "in", "or", "order", "overrideTypes"]) {
+  for (const method of ["from", "select", "eq", "in", "or", "order", "range", "overrideTypes"]) {
     builder[method] = (...args: unknown[]) => {
       calls.push([method, args]);
       return builder;
@@ -185,9 +179,20 @@ describe("listItems — sort + łańcuch tie-break", () => {
 });
 
 describe("listItems — wynik / błąd", () => {
-  it("zwraca data na sukces", async () => {
+  it("zwraca { items, total } na sukces (total z count zapytania)", async () => {
+    const { supabase } = mockSupabase({ data: ROWS, error: null, count: 42 });
+    expect(await listItems(supabase, "u", defaultCriteria("active"))).toEqual({ items: ROWS, total: 42 });
+  });
+
+  it("select z count: exact (total liczone zawsze, też bez okna)", async () => {
+    const { supabase, calls } = mockSupabase({ data: ROWS, error: null, count: 2 });
+    await listItems(supabase, "u", defaultCriteria("active"));
+    expect(argsOf(calls, "select")[0]?.[1]).toEqual({ count: "exact" });
+  });
+
+  it("brak count w odpowiedzi → total 0 (tolerancyjnie)", async () => {
     const { supabase } = mockSupabase({ data: ROWS, error: null });
-    expect(await listItems(supabase, "u", defaultCriteria("active"))).toBe(ROWS);
+    expect((await listItems(supabase, "u", defaultCriteria("active"))).total).toBe(0);
   });
 
   it("rzuca na błąd serwera", async () => {
@@ -196,17 +201,64 @@ describe("listItems — wynik / błąd", () => {
   });
 });
 
+describe("listItems — okno strony (S-13 F1)", () => {
+  it("bez okna → brak .range (pełna lista, dzisiejsze zachowanie)", async () => {
+    const { supabase, calls } = mockSupabase({ data: ROWS, error: null, count: 2 });
+    await listItems(supabase, "u", defaultCriteria("active"));
+    expect(argsOf(calls, "range")).toHaveLength(0);
+  });
+
+  it("okno page 1, size 10 → range(0, 9)", async () => {
+    const { supabase, calls } = mockSupabase({ data: ROWS, error: null, count: 2 });
+    await listItems(supabase, "u", defaultCriteria("active"), { page: 1, size: 10 });
+    expect(argsOf(calls, "range")).toEqual([[0, 9]]);
+  });
+
+  it("okno page 3, size 25 → range(50, 74)", async () => {
+    const { supabase, calls } = mockSupabase({ data: ROWS, error: null, count: 100 });
+    await listItems(supabase, "u", defaultCriteria("pending"), { page: 3, size: 25 });
+    expect(argsOf(calls, "range")).toEqual([[50, 74]]);
+  });
+
+  it("okno nie zmienia predykatów ani sortu (range dokładane na końcu łańcucha)", async () => {
+    const { supabase, calls } = mockSupabase({ data: ROWS, error: null, count: 2 });
+    await listItems(supabase, "u", defaultCriteria("pending"), { page: 2, size: 10 });
+    expect(argsOf(calls, "eq")).toContainEqual(["acceptance_status", "pending"]);
+    expect(argsOf(calls, "order")).toEqual([
+      ["created_at", { ascending: false }],
+      ["id", { ascending: true }],
+    ]);
+  });
+});
+
 describe("getSessionItems (S-10: scope po sesji, wszystkie stany akceptacji)", () => {
   it("eq user_id + eq import_session_id, BEZ filtra acceptance_status, sort created_at asc → id asc", async () => {
-    const { supabase, calls } = mockSupabase({ data: ROWS, error: null });
+    const { supabase, calls } = mockSupabase({ data: ROWS, error: null, count: 2 });
     const res = await getSessionItems(supabase, "u", "sess-1");
 
-    expect(res).toBe(ROWS);
+    expect(res).toEqual({ items: ROWS, total: 2 });
     expect(argsOf(calls, "eq")).toContainEqual(["user_id", "u"]);
     expect(argsOf(calls, "eq")).toContainEqual(["import_session_id", "sess-1"]);
-    // Scope, nie view — żaden predykat na stan akceptacji (panel pokazuje wszystkie 4 stany).
+    // Scope, nie view — żaden predykat na stan akceptacji (konsument pokazuje wszystkie 4 stany).
     expect(argsOf(calls, "eq").some(([col]) => col === "acceptance_status")).toBe(false);
     expect(argsOf(calls, "in")).toHaveLength(0);
+    expect(argsOf(calls, "order")).toEqual([
+      ["created_at", { ascending: true }],
+      ["id", { ascending: true }],
+    ]);
+  });
+
+  it("bez okna → brak .range; select z count: exact", async () => {
+    const { supabase, calls } = mockSupabase({ data: ROWS, error: null, count: 2 });
+    await getSessionItems(supabase, "u", "sess-1");
+    expect(argsOf(calls, "range")).toHaveLength(0);
+    expect(argsOf(calls, "select")[0]?.[1]).toEqual({ count: "exact" });
+  });
+
+  it("okno page 2, size 10 → range(10, 19); sort bez zmian", async () => {
+    const { supabase, calls } = mockSupabase({ data: ROWS, error: null, count: 30 });
+    await getSessionItems(supabase, "u", "sess-1", { page: 2, size: 10 });
+    expect(argsOf(calls, "range")).toEqual([[10, 19]]);
     expect(argsOf(calls, "order")).toEqual([
       ["created_at", { ascending: true }],
       ["id", { ascending: true }],
@@ -216,30 +268,5 @@ describe("getSessionItems (S-10: scope po sesji, wszystkie stany akceptacji)", (
   it("rzuca na błąd serwera", async () => {
     const { supabase } = mockSupabase({ data: null, error: { message: "boom" } });
     await expect(getSessionItems(supabase, "u", "s")).rejects.toThrow();
-  });
-});
-
-describe("nakładki widoków delegują do listItems z domyślnymi kryteriami", () => {
-  it("getPendingItems → predykat pending + sort created_at desc/id asc", async () => {
-    const { supabase, calls } = mockSupabase({ data: ROWS, error: null });
-    await getPendingItems(supabase, "u");
-    expect(argsOf(calls, "eq")).toContainEqual(["acceptance_status", "pending"]);
-    expect(argsOf(calls, "order")).toEqual([
-      ["created_at", { ascending: false }],
-      ["id", { ascending: true }],
-    ]);
-  });
-
-  it("getActiveItems → accepted + in new/in_progress", async () => {
-    const { supabase, calls } = mockSupabase({ data: ROWS, error: null });
-    await getActiveItems(supabase, "u");
-    expect(argsOf(calls, "eq")).toContainEqual(["acceptance_status", "accepted"]);
-    expect(argsOf(calls, "in")).toContainEqual(["operational_status", ["new", "in_progress"]]);
-  });
-
-  it("getTrashItems → in rejected/deleted", async () => {
-    const { supabase, calls } = mockSupabase({ data: ROWS, error: null });
-    await getTrashItems(supabase, "u");
-    expect(argsOf(calls, "in")).toContainEqual(["acceptance_status", ["rejected", "deleted"]]);
   });
 });

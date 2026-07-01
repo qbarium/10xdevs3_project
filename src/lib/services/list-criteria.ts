@@ -123,3 +123,30 @@ export function defaultCriteria(view: MainView): ListCriteria {
 export function hasActiveFilters(criteria: ListCriteria): boolean {
   return criteriaToQuery(criteria).length > 0;
 }
+
+// --- S-13: okno strony listy wpisów (paginacja) -----------------------------------------------------------
+// Pula rozmiarów i tolerancyjne parsery okna — jedno źródło dla endpointów (S-13 Faza 1) oraz parsera
+// kryteriów i UI (Faza 2). Lustro `SESSION_PAGE_SIZES`/`parsePage`/`parseSize` z `session-list-criteria.ts`.
+
+/** Dozwolone rozmiary strony listy wpisów (pula do wyboru w UI). Pierwszy element jest domyślny. */
+export const ITEM_PAGE_SIZES = [10, 15, 25, 50, 100] as const;
+
+/** Domyślny rozmiar strony listy wpisów. MUSI należeć do `ITEM_PAGE_SIZES`. */
+export const ITEM_PAGE_SIZE = 10;
+
+/** Parsuje numer strony: liczba całkowita ≥ 1; brak / śmieć / < 1 → 1 (clamp, nie rzuca). */
+export function parseItemPage(value: string | null): number {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 1) return 1;
+  return Math.floor(n);
+}
+
+/**
+ * Waliduje rozmiar strony względem puli `ITEM_PAGE_SIZES`; brak / śmieć / spoza puli → `null`.
+ * `null` = BRAK paginacji (pełna lista) — kompatybilność przejściowa Fazy 1: klienci nie wysyłający
+ * okna dostają dzisiejsze zachowanie. Od Fazy 2 ścieżka kryteriów rozstrzyga `null` na `ITEM_PAGE_SIZE`.
+ */
+export function parseItemSize(value: string | null): number | null {
+  const n = Number(value);
+  return (ITEM_PAGE_SIZES as readonly number[]).includes(n) ? n : null;
+}

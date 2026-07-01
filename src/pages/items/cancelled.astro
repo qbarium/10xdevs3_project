@@ -24,7 +24,7 @@ let items: Item[] = [];
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 if (user && supabase) {
   try {
-    items = await listItems(supabase, user.id, criteria);
+    items = (await listItems(supabase, user.id, criteria)).items;
   } catch {
     items = [];
   }

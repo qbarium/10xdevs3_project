@@ -1,8 +1,9 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { getActiveItems, getCancelledItems, getDoneItems } from "@/lib/services/items";
+import { listItems } from "@/lib/services/items";
 import { setOperationalStatus } from "@/lib/services/items-mutation";
+import { defaultCriteria } from "@/lib/services/list-criteria";
 
 // Stan operacyjny S-04 przeciw lokalnemu Supabase. Dwóch userów przez signUp (config.toml
 // enable_confirmations=false → sesja od razu). Sprawdzamy: izolację RLS (B nie zmienia stanu
@@ -93,7 +94,7 @@ d("items-operational — RLS + guard accepted + rozłączne podzbiory (integracj
     expect(await operationalOf(A.supabase, pendingId)).toBe("new"); // niezmieniony (guard)
   });
 
-  it("getActiveItems/getDoneItems/getCancelledItems zwracają rozłączne podzbiory accepted", async () => {
+  it("listItems (active/done/cancelled) zwraca rozłączne podzbiory accepted", async () => {
     const activeNew = await insertItem(A.supabase, A.id, { operational_status: "new" });
     const activeInProgress = await insertItem(A.supabase, A.id, { operational_status: "in_progress" });
     const doneId = await insertItem(A.supabase, A.id, { operational_status: "done" });
@@ -101,9 +102,9 @@ d("items-operational — RLS + guard accepted + rozłączne podzbiory (integracj
     // pending (z dowolnym stanem operacyjnym) NIE wpada do żadnego widoku accepted.
     const pendingId = await insertItem(A.supabase, A.id, { acceptance_status: "pending", operational_status: "new" });
 
-    const active = (await getActiveItems(A.supabase, A.id)).map((i) => i.id);
-    const done = (await getDoneItems(A.supabase, A.id)).map((i) => i.id);
-    const cancelled = (await getCancelledItems(A.supabase, A.id)).map((i) => i.id);
+    const active = (await listItems(A.supabase, A.id, defaultCriteria("active"))).items.map((i) => i.id);
+    const done = (await listItems(A.supabase, A.id, defaultCriteria("done"))).items.map((i) => i.id);
+    const cancelled = (await listItems(A.supabase, A.id, defaultCriteria("cancelled"))).items.map((i) => i.id);
 
     // Aktywne = new ∪ in_progress; nie zawiera done/cancelled/pending.
     expect(active).toContain(activeNew);

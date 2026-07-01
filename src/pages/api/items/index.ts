@@ -1,10 +1,13 @@
 // /api/items — endpoint kolekcji itemów zalogowanego usera.
 //
-// GET (S-09, filtry dodatkowe FR-008): czyta kryteria listy z query string (`view` + type/sort/dir/q/opstatus),
-// egzekwuje logowanie i RLS (klient z cookies usera), woła `listItems` i zwraca `{ ok, items }`. Pierwszy
-// endpoint czytający `url.searchParams`. `view` walidowane manualnie (pojedyncze pole skalarne — selektor
-// predykatu); pozostałe pola przez tolerancyjny `parseListCriteria` (śmieć → fallback do domyślnej, clamp `q`),
-// świadomie BEZ osobnego zod (jeden współdzielony walidator z SSR i klientem — patrz `list-criteria.ts`).
+// GET (S-09, filtry dodatkowe FR-008; okno strony od S-13 Fazy 1): czyta kryteria listy z query string
+// (`view` + type/sort/dir/q/opstatus) oraz OPCJONALNE okno `page`/`size`, egzekwuje logowanie i RLS (klient
+// z cookies usera), woła `listItems` i zwraca `{ ok, items, total }` (+ echo `page`/`pageSize` przy oknie —
+// wzorzec GET /api/import-sessions). Brak/śmieciowy `size` → wywołanie BEZ okna (pełna lista, jak dotąd) —
+// kompatybilność wstecz dla klientów nie wysyłających okna (`useItemList` do Fazy 2). `view` walidowane
+// manualnie (pojedyncze pole skalarne — selektor predykatu); pozostałe pola przez tolerancyjny
+// `parseListCriteria` (śmieć → fallback do domyślnej, clamp `q`), świadomie BEZ osobnego zod (jeden
+// współdzielony walidator z SSR i klientem — patrz `list-criteria.ts`).
 //
 // POST (S-07): utworzenie pojedynczego itemu RĘCZNEGO — pomija klasyfikację AI i kolejkę pendingów: serwer
 // wstawia item od razu jako accepted/new/NULL-session. Sekwencja jak bulk.ts/[id].ts: guard sesji (401) →
@@ -20,7 +23,7 @@ import type { APIRoute } from "astro";
 import { json } from "@/lib/http";
 import { listItems } from "@/lib/services/items";
 import { createManualItem } from "@/lib/services/items-mutation";
-import { isMainView, parseListCriteria } from "@/lib/services/list-criteria";
+import { isMainView, parseItemPage, parseItemSize, parseListCriteria } from "@/lib/services/list-criteria";
 import { reportError } from "@/lib/services/logger";
 import { createClient } from "@/lib/supabase";
 import { createItemSchema } from "@/lib/validation/items";
@@ -42,8 +45,15 @@ export const GET: APIRoute = async (context) => {
   try {
     // Pozostałe pola: tolerancyjny parser (niepoprawne → fallback do domyślnej; `q` clamp do 200).
     const criteria = parseListCriteria(view, searchParams);
-    const items = await listItems(supabase, user.id, criteria);
-    return json({ ok: true, items }, 200);
+    // Okno strony: `size === null` (brak/śmieć) → pełna lista bez okna; odpowiedź zawsze z `total`.
+    const size = parseItemSize(searchParams.get("size"));
+    if (size === null) {
+      const { items, total } = await listItems(supabase, user.id, criteria);
+      return json({ ok: true, items, total }, 200);
+    }
+    const page = parseItemPage(searchParams.get("page"));
+    const { items, total } = await listItems(supabase, user.id, criteria, { page, size });
+    return json({ ok: true, items, total, page, pageSize: size }, 200);
   } catch (err) {
     reportError(err);
     return json({ ok: false, code: "internal", error: "Błąd serwera." }, 500);
