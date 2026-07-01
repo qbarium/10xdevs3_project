@@ -248,22 +248,22 @@ Zostawić trwały artefakt, by czwarta deklaracja „naprawione" nie mogła być
 
 #### Automatyczne
 
-- [x] 2.1 `deps_ssr/_metadata.json`: rodzina React + populacja na początku `optimized`, nie w ogonie
-- [x] 2.2 (Warunkowo, jeśli dołożono top-level parytet) build zielony: `npm run build`
+- [x] 2.1 `deps_ssr/_metadata.json`: rodzina React + populacja na początku `optimized`, nie w ogonie — df3b198
+- [x] 2.2 (Warunkowo, jeśli dołożono top-level parytet) build zielony: `npm run build` — df3b198
 
 #### Ręczne
 
-- [x] 2.3 Pełna sesja (middleware + `/import-sessions` + `/items*` + dialog + trasa API z `zod`): zero `optimized dependencies changed. reloading` i zero `Invalid hook call`
-- [x] 2.4 `deps_astro/_metadata.json` zinspektowany; decyzja o parytecie top-level podjęta i udokumentowana
-- [x] 2.5 Sesja weryfikacyjna wykonana BEZ `--force`
+- [x] 2.3 Pełna sesja (middleware + `/import-sessions` + `/items*` + dialog + trasa API z `zod`): zero `optimized dependencies changed. reloading` i zero `Invalid hook call` — df3b198
+- [x] 2.4 `deps_astro/_metadata.json` zinspektowany; decyzja o parytecie top-level podjęta i udokumentowana — df3b198
+- [x] 2.5 Sesja weryfikacyjna wykonana BEZ `--force` — df3b198
 
 ### Faza 3: Zabezpieczenie przed regresją
 
 #### Automatyczne
 
-- [ ] 3.1 Prettier na dotkniętych plikach md (celowany, nie całe repo)
+- [x] 3.1 Prettier na dotkniętych plikach md (celowany, nie całe repo)
 
 #### Ręczne
 
-- [ ] 3.2 Wpis `lessons.md`: cała populacja + pokrycie dialog/API + reguła utrzymania
-- [ ] 3.3 `follow-ups/repro.md`: procedura + lista „co NIE jest dowodem"
+- [x] 3.2 Wpis `lessons.md`: cała populacja + pokrycie dialog/API + reguła utrzymania
+- [x] 3.3 `follow-ups/repro.md`: procedura + lista „co NIE jest dowodem"
