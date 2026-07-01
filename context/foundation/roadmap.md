@@ -42,7 +42,7 @@ TaskerLight przyjmuje surowy, nieuporządkowany wsad głosowo-tekstowy i rozdzie
 | S-09  | list-filters-search      | sortować i wyszukiwać listy po dacie i tytule (+ podfiltr stanu w Aktywne)  | S-05              | FR-008 (filtry dodatkowe)                  | done |
 | S-10  | session-items-detail     | w dzienniku sesji wybrać sesję i zobaczyć/edytować jej elementy (master-detail) | S-08, S-05, S-06 | FR-027 (rozszerzony); nadpisuje FR-008/FR-015 | done |
 | S-11  | session-log-filter-ux    | filtrować dziennik sesji reaktywnie (bez „Zastosuj"), spójne dropdowny, „Wyczyść filtry" | S-08 | FR-027 / FR-008 (parytet UX) | done |
-| S-12  | dup-react-ssr-dev-fix    | (naprawa, dev-only) wyeliminować błąd podwójnego React-a na `/import-sessions` w `npm run dev` | — | — (dług techniczny; lessons.md) | in-progress |
+| S-12  | dup-react-ssr-dev-fix    | (naprawa, dev-only) wyeliminować błąd podwójnego React-a na `/import-sessions` w `npm run dev` | — | — (dług techniczny; lessons.md) | done |
 | S-13  | session-entries-mode     | otworzyć wpisy danej sesji jako pełną listę („Pokaż wpisy") zamiast master-detail; lista sesji jako karty + paginacja wpisów | S-10, S-11 | FR-027 / FR-008 (zastępuje master-detail S-10) | proposed |
 
 ## Strumienie
@@ -233,7 +233,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Blokady:** —
 - **Niewiadome:** Aktualny trigger re-optymalizacji Vite — dwa wcześniejsze podejścia (S-08, S-10) nie wyeliminowały błędu, a `reopt_fired=0` okazał się niewystarczającym kryterium. Rozstrzyga diagnoza w fazie naprawy. Blokuje: nie.
 - **Ryzyko:** Błąd zależny od czasu i kolejności ładowania (tryb deweloperski), trudny do deterministycznego odtworzenia; kryterium „naprawione" wymaga odtworzenia prawdziwego trybu awarii, nie zielonego buildu. Pełny kontekst: `context/changes/session-log-filter-ux/follow-ups/dup-react-ssr-dev-only.md`.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-13: Tryb „Pokaż wpisy" — kontekstowy widok elementów sesji (zastępuje master-detail)
 
@@ -299,6 +299,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **S-09: użytkownik może sortować listy po dacie utworzenia/modyfikacji i tytule, wyszukiwać po tytule i opisie oraz zawężać po stanie operacyjnym w widoku Aktywne; filtr typu i sortowanie/wyszukiwanie działają na modelu serwer + parametry w adresie strony. (Filtr po sesji importu przeniesiony do S-10; rozróżnienie statusu w Koszu realizuje etykieta wg FR-012.)** — Zarchiwizowano 2026-06-23 → `context/archive/2026-06-20-list-filters-search/`. Lekcja: —.
 - **S-10: użytkownik może w dzienniku sesji importu wybrać sesję i zobaczyć po prawej wszystkie jej elementy naraz (wszystkie stany akceptacji — `pending`/`accepted`/`rejected`/`deleted` — rozróżniane etykietą, bez filtrów), a następnie podejrzeć, edytować lub usunąć element bezpośrednio w tym widoku, reużywając operacje z list głównych (dialog edycji z S-05, przeniesienie do kosza z S-06). Wybrana sesja zapisana w adresie strony.** — Zarchiwizowano 2026-06-28 → `context/archive/2026-06-24-session-items-detail/`. Lekcja: dup-React SSR (dev-only) — fix configu niepełny, znana wada; kryterium naprawy (reopt_fired=0) w lessons.md.
 - **S-11: użytkownik filtruje i sortuje dziennik sesji importu (`/import-sessions`) reaktywnie — zmiana kontrolki natychmiast zawęża listę bez przycisku „Zastosuj", kryteria w adresie strony (refresh / „wstecz-dalej" / odnośnik je zachowują); dropdowny sort/status spójne wizualnie (custom `Select`, nie natywne `<select>`); pusty wynik z filtrem pokazuje „Wyczyść filtry"; doszła paginacja stronowa (indeks + serwis + endpoint) oraz — poza planem — rozmiar strony z zapamiętywaniem i skok do strony.** — Zarchiwizowano 2026-07-01 → `context/archive/2026-06-28-session-log-filter-ux/`. Lekcja: wspólne kryterium przekazuj przez WSZYSTKIE warstwy (SSR + endpoint) — częściowe wpięcie `size` dało rozjazd hydratacji (F1, impl-review).
+- **S-12: (naprawa, dług techniczny) strona `/import-sessions` przestaje wywalać render serwerowy („Invalid hook call / more than one copy of React") w `npm run dev`; build produkcyjny i tak był wolny od błędu, więc to poprawa doświadczenia deweloperskiego, nie wydania.** — Zarchiwizowano 2026-07-01 → `context/archive/2026-07-01-dup-react-ssr-dev-fix/`. Lekcja: przypnij CAŁĄ populację późno-odkrywanych depów w `ssr.optimizeDeps.include` (nie jeden), weryfikuj dwutorowo z pokryciem dialog/API (lessons.md).
 
 ## Zrobione
 
