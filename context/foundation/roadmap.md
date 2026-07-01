@@ -42,7 +42,7 @@ TaskerLight przyjmuje surowy, nieuporządkowany wsad głosowo-tekstowy i rozdzie
 | S-09  | list-filters-search      | sortować i wyszukiwać listy po dacie i tytule (+ podfiltr stanu w Aktywne)  | S-05              | FR-008 (filtry dodatkowe)                  | done |
 | S-10  | session-items-detail     | w dzienniku sesji wybrać sesję i zobaczyć/edytować jej elementy (master-detail) | S-08, S-05, S-06 | FR-027 (rozszerzony); nadpisuje FR-008/FR-015 | done |
 | S-11  | session-log-filter-ux    | filtrować dziennik sesji reaktywnie (bez „Zastosuj"), spójne dropdowny, „Wyczyść filtry" | S-08 | FR-027 / FR-008 (parytet UX) | done |
-| S-12  | dup-react-ssr-dev-fix    | (naprawa, dev-only) wyeliminować błąd podwójnego React-a na `/import-sessions` w `npm run dev` | — | — (dług techniczny; lessons.md) | proposed |
+| S-12  | dup-react-ssr-dev-fix    | (naprawa, dev-only) wyeliminować błąd podwójnego React-a na `/import-sessions` w `npm run dev` | — | — (dług techniczny; lessons.md) | in-progress |
 | S-13  | session-entries-mode     | otworzyć wpisy danej sesji jako pełną listę („Pokaż wpisy") zamiast master-detail; lista sesji jako karty + paginacja wpisów | S-10, S-11 | FR-027 / FR-008 (zastępuje master-detail S-10) | proposed |
 
 ## Strumienie
@@ -233,7 +233,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Blokady:** —
 - **Niewiadome:** Aktualny trigger re-optymalizacji Vite — dwa wcześniejsze podejścia (S-08, S-10) nie wyeliminowały błędu, a `reopt_fired=0` okazał się niewystarczającym kryterium. Rozstrzyga diagnoza w fazie naprawy. Blokuje: nie.
 - **Ryzyko:** Błąd zależny od czasu i kolejności ładowania (tryb deweloperski), trudny do deterministycznego odtworzenia; kryterium „naprawione" wymaga odtworzenia prawdziwego trybu awarii, nie zielonego buildu. Pełny kontekst: `context/changes/session-log-filter-ux/follow-ups/dup-react-ssr-dev-only.md`.
-- **Status:** proposed
+- **Status:** in-progress
 
 ### S-13: Tryb „Pokaż wpisy" — kontekstowy widok elementów sesji (zastępuje master-detail)
 

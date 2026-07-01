@@ -21,25 +21,50 @@ export default defineConfig({
     // dependencies changed. reloading`), która rozjeżdżała generacje `?v=` Reacta (core vs
     // react-dom/server) w trakcie renderu SSR → „Invalid hook call / more than one copy of React".
     // Brak re-optymalizacji = brak rozjazdu generacji. Klient + SSR, bo to optymalizator SSR
-    // (`deps_ssr`) firował ten reload. Potwierdzone na żywo: jedyny późny dep to `astro/env/runtime`.
+    // (`deps_ssr`) firował ten reload. UWAGA (S-12): późnych depów jest cała populacja, nie jeden —
+    // pełny pin całej rodziny React + deps aplikacji siedzi w `ssr.optimizeDeps.include` niżej.
+    // Ten top-level include celowo zostaje minimalny; parytet (czy `deps_astro` też wymaga listy)
+    // rozstrzyga empirycznie Faza 2 S-12.
     optimizeDeps: {
       include: ["astro/env/runtime"],
     },
     ssr: {
-      // Bundluj Reacta DO grafu SSR zamiast serwować go z wersjonowanych chunków optymalizatora
-      // dev (node_modules/.vite/deps_ssr/*?v=<hash>). To wyjmuje react/react-dom/react-dom-server
-      // z mechanizmu generacji `?v=` Vite. Bez tego re-optymalizacja JAKIEJKOLWIEK innej zależności
-      // odkrytej w trakcie sesji (np. astro/env/runtime, zod z klasyfikacji) reloadowała deps i
-      // potrafiła zostawić `react` w nowej generacji, a `react-dom/server` w starej — w tym samym
-      // renderze SSR → dwie instancje Reacta → „Invalid hook call / more than one copy of React".
-      // Crash trafiał wyspę z hookiem (SessionsList → SessionRow → useSessionRetry). Problem
-      // WYŁĄCZNIE dev — optimizeDeps nie istnieje w buildzie Rollupa. Patrz
-      // context/changes/import-session-log-retry/follow-ups/review-fixes.md.
+      // `noExternal` bundluje react/react-dom DO grafu SSR zamiast serwować je z wersjonowanych
+      // chunków optymalizatora dev (`deps_ssr/*?v=<hash>`). Dysk (S-12 research.md) dowodzi, że
+      // zadziałało to WYŁĄCZNIE w środowisku `deps_astro` (tam React w ogóle nie wchodzi w graf),
+      // ale NIE chroni ścieżki crashu: środowisko `deps_ssr`, które faktycznie renderuje wyspy React,
+      // wciąż ma `react` i `react-dom/server` jako pełne chunki `?v=`. Realną dźwignią eliminującą
+      // wyścig generacji jest pin rodziny React + całej populacji późno-odkrywanych depów w
+      // `ssr.optimizeDeps.include` niżej (S-12), nie ten `noExternal`. Dyrektywę trzymamy dla
+      // `deps_astro`; jej konieczność na adapterze workerd jest niepotwierdzona — rozstrzyga Faza 2
+      // S-12. Patrz context/changes/dup-react-ssr-dev-fix/ (research.md + plan.md).
       noExternal: ["react", "react-dom"],
-      // Patrz komentarz przy `optimizeDeps` wyżej — pre-bundling po stronie SSR, bo to optymalizator
-      // SSR (`deps_ssr`) firował re-optymalizację `astro/env/runtime`.
+      // S-12 (dup-React SSR): pre-bundluj OD RAZU całą populację późno-odkrywanych zależności grafu
+      // wyspy, nie tylko `astro/env/runtime` (to był residual S-10). Dowolna z nich odkryta w trakcie
+      // sesji wyzwalała re-optymalizację (`optimized dependencies changed. reloading`), która bumpuje
+      // browserHash środowiska `deps_ssr` i rozjeżdża generacje `?v=` `react` (core) vs
+      // `react-dom/server` w jednym renderze SSR → „Invalid hook call / more than one copy of React".
+      // Cold-scan łapie całą listę od razu → zero mid-session reopt → zero rozjazdu generacji.
+      // Wyłącznie dev — `optimizeDeps` nie istnieje w buildzie Rollupa. Reguła utrzymania: nowy dep
+      // osiągalny z grafu wyspy → dopisz go tutaj.
       optimizeDeps: {
-        include: ["astro/env/runtime"],
+        include: [
+          "astro/env/runtime",
+          "react",
+          "react-dom",
+          "react-dom/server",
+          "react/jsx-runtime",
+          "react/jsx-dev-runtime",
+          "@supabase/ssr",
+          "zod",
+          "sonner",
+          "lucide-react",
+          "radix-ui",
+          "@radix-ui/react-slot",
+          "class-variance-authority",
+          "clsx",
+          "tailwind-merge",
+        ],
       },
     },
   },
