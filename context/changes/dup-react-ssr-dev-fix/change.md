@@ -1,7 +1,7 @@
 ---
 change_id: dup-react-ssr-dev-fix
 title: Naprawa błędu podwójnego React-a na /import-sessions (tylko tryb deweloperski)
-status: implemented
+status: impl_reviewed
 created: 2026-07-01
 updated: 2026-07-01
 archived_at: null
