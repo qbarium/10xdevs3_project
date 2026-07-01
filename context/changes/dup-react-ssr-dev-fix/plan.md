@@ -261,9 +261,9 @@ Zostawić trwały artefakt, by czwarta deklaracja „naprawione" nie mogła być
 
 #### Automatyczne
 
-- [x] 3.1 Prettier na dotkniętych plikach md (celowany, nie całe repo)
+- [x] 3.1 Prettier na dotkniętych plikach md (celowany, nie całe repo) — 7ce00e4
 
 #### Ręczne
 
-- [x] 3.2 Wpis `lessons.md`: cała populacja + pokrycie dialog/API + reguła utrzymania
-- [x] 3.3 `follow-ups/repro.md`: procedura + lista „co NIE jest dowodem"
+- [x] 3.2 Wpis `lessons.md`: cała populacja + pokrycie dialog/API + reguła utrzymania — 7ce00e4
+- [x] 3.3 `follow-ups/repro.md`: procedura + lista „co NIE jest dowodem" — 7ce00e4
