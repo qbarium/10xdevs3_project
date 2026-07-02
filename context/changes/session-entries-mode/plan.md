@@ -388,6 +388,18 @@ Dziennik staje się jedną kolumną pełnoszerokich kart z akcjami nawigacyjnymi
 - Decyzje master-detail i semantyka panelu: `context/archive/2026-06-24-session-items-detail/` (plan-brief, aneks 2026-06-27)
 - Lekcje: `context/foundation/lessons.md` (dup-React SSR ×3, kryterium przez wszystkie warstwy, optimistic concurrency)
 
+## Aneks wdrożeniowy — decyzje z testów manualnych (2026-07-02)
+
+> Trzy świadome pivoty podjęte podczas implementacji i testów manualnych, zastępujące odpowiednie fragmenty sekcji „Pożądany stan końcowy" i „Krytyczne szczegóły implementacji". Odnotowane dla zgodności planu (źródła prawdy) z kodem; wychwycone w `/10x-impl-review` (F1). Wzorzec aneksu jak przy aktualizacji FR-009 po S-04.
+
+1. **Nawigacja widoków: menu górne + lista rozwijana zamiast „wyszarzonych zakładek".** `MainFilterNav.astro` **usunięty** (nie zmodyfikowany prop `disabled`, jak zakładała Faza 4 pkt 4). Widoki listy wpisów dostają pozycje menu górnego („Do akceptacji", „Wpisy") + `EntriesViewSelect` (dropdown wyboru stanu). W trybie sesji nawigacja widoków jest **nieobecna** (nie wyszarzona), a pasek filtrów **ukryty** — aktywne pozostaje wyłącznie „Wyczyść filtry" + baner. Powód: wariant wyszarzony zajmował pół ekranu bez wartości (commity `657d1a0`, `f372a6b`, `2a1a510`).
+
+2. **Preferencja rozmiaru strony: cookie zamiast localStorage.** localStorage jest niewidoczny przy SSR → ~1 s migotania (serwer renderował domyślne 10, wyspa po hydracji re-fetchowała wg preferencji). Przeniesiono do **cookie** (`path=/`, rok, `SameSite=Lax`) czytanego też serwerowo przez `withPageSizePref`; URL z `size` ma pierwszeństwo (adopcja kliencka staje się no-opem); stare zapisy localStorage migrowane przy pierwszym odczycie. Cookie bez `Secure` — akceptowalne, to niewrażliwa preferencja UI (commit `77b8a4b`).
+
+3. **Semantyka kolejki: „zawsze dociągaj" zamiast „auto-cofnięcie o 1".** Po każdej akcji usuwającej wpis z widoku kolejkowego (zatwierdź/odrzuć, kosz / zmiana stanu poza predykat, przywróć, 404 przy edycji) hook dociąga bieżącą stronę clampowaną do nowej liczby stron (`refetchAfterRemoval`, `replaceState` — bez spamu historii): w miejsce usuniętych wjeżdżają wpisy z kolejnych stron, strona nigdy nie zostaje pusta, gdy coś czeka dalej, a licznik stron mówi prawdę. „Wyczyść kosz" dociąga jawnie stronę 1 (lokalny `total` zna tylko bieżącą stronę). Dotychczasowe auto-cofnięcie o 1 przy pustej stronie > 1 usunięte jako podzbiór nowej reguły. Tryb sesji (rejestr — wpisy zostają w miejscu) bez zmian (commit `4e6dbc8`).
+
+Dodatkowo, poza literą planu (nieszkodliwe, otestowane, bez naruszenia „Czego NIE robimy"): powrót „Wróć do dziennika" zapamiętuje stronę/filtr/sort dziennika i wraca dokładnie tam, a nie na goły `/import-sessions` — mechanizm `session-log-return.ts` (`sessionStorage` zapisywany klikiem „Pokaż wpisy", odczyt w skrypcie banera; przechowuje query DZIENNIKA, nie wybór sesji, więc nie reintrodukuje stanu wyboru do adresu dziennika). Pula rozmiarów strony rozszerzona o `5`; „Pokaż wpisy" na karcie sesji zawsze widoczne (aria-disabled przy braku żywych wpisów, dla równej wysokości kart) (commit `2a1a510`, `65f1967`).
+
 ## Progress
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.

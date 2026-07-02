@@ -22,7 +22,7 @@ const { user } = Astro.locals;
 // i pierwszy stan wyspy są identyczne (hydration-stable, bez przeskoku). `view` na sztywno per strona.
 // Preferencja rozmiaru strony z COOKIE nakładana już przy SSR (URL z `size` ma pierwszeństwo) —
 // bez migotania „domyślna strona → docięta po adopcji"; obowiązuje też w trybie sesji (wspólny klucz).
-const criteria = withPageSizePref(
+let criteria = withPageSizePref(
   parseListCriteria("pending", Astro.url.searchParams),
   Astro.url.searchParams,
   Astro.cookies.get(ITEMS_LIST_PAGE_SIZE_KEY)?.value,
@@ -59,6 +59,25 @@ if (user && supabase) {
   } catch {
     // Przejściowy błąd odczytu → pusta lista (łagodna degradacja); w trybie sesji bez metadanych
     // strona pokaże wariant „sesja niedostępna" z akcjami wyjścia.
+    items = [];
+    total = 0;
+  }
+}
+
+// Strona poza zakresem (S-13 impl-review F2): ręcznie wpisany adres / popstate z `?page=N` większym niż
+// liczba stron zwraca pustą listę (offset za końcem → PGRST103 → catch wyżej), przez co paginacja znika
+// (pageCount ≤ 1), a w trybie sesji ekran fałszywie mówi „ta sesja nie ma elementów" mimo istniejących
+// wpisów. Zamiast maskować, cofnij na stronę 1 i dociągnij jej dane — licznik stron wraca, użytkownik widzi
+// treść, a hook wyspy zsynchronizuje adres przy pierwszej interakcji. Bez `return Astro.redirect` (top-level
+// return w .astro wywraca regułę no-misused-promises). Strażniki: strona 1 z total=0 to prawdziwie pusty
+// wynik; `sessionMode && !sessionMeta` to wariant „sesja niedostępna".
+if (user && supabase && criteria.page > 1 && total === 0 && (!sessionMode || sessionMeta)) {
+  criteria = { ...criteria, page: 1 };
+  try {
+    ({ items, total } = criteria.session
+      ? await getSessionItems(supabase, user.id, criteria.session, { page: 1, size: criteria.size })
+      : await listItems(supabase, user.id, criteria, { page: 1, size: criteria.size }));
+  } catch {
     items = [];
     total = 0;
   }
