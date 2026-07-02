@@ -14,7 +14,7 @@ function filterLabel(value: TypeFilterValue): string {
 }
 
 // Prezentacyjny rząd przycisków filtra typu (single-select, kontrolowany — bez własnego stanu).
-// Wizualnie spójny z MainFilterNav.astro: pełne pigułki, aktywna podświetlona na fioletowo. Rodzic
+// Pełne pigułki, aktywna podświetlona na fioletowo (wspólny motyw pigułek nawigacji). Rodzic
 // trzyma `value` i reaguje na `onChange`. `aria-pressed` niesie stan zaznaczenia do czytników ekranu.
 export default function TypeFilter({ value, onChange }: Props) {
   return (

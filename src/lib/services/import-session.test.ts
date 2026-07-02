@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { getImportSessions, getSessionForRetry, reopenSession, toSessionRow } from "@/lib/services/import-session";
+import {
+  getImportSessions,
+  getSessionForRetry,
+  getSessionMeta,
+  reopenSession,
+  toSessionRow,
+} from "@/lib/services/import-session";
 import { SESSION_PAGE_SIZE } from "@/lib/services/session-list-criteria";
 import type { ImportSessionWithFile } from "@/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -152,6 +158,52 @@ describe("toSessionRow (S-11) — mapowanie wiersza na DTO wyspy", () => {
 
   it("dateLabel: 'YYYY-MM-DD HH:mm' z created_at", () => {
     expect(toSessionRow(session({ created_at: "2026-06-13T09:30:45Z" })).dateLabel).toBe("2026-06-13 09:30");
+  });
+});
+
+describe("getSessionMeta (S-13 F4) — metadane sesji dla banera trybu", () => {
+  it("wiersz z embedami → SessionRowData (współdzielone mapowanie + toSessionRow)", async () => {
+    const { client, builder } = mockSupabase({
+      data: {
+        ...baseRow,
+        status: "completed_with_items",
+        item_count: 3,
+        error_message: null,
+        import_files: [{ file_name: "notatki.txt", file_mime: "text/plain" }],
+        items: [{ count: 2 }],
+      },
+      error: null,
+    });
+    const meta = await getSessionMeta(client, "u1", "s1");
+    expect(builder.eq).toHaveBeenCalledWith("user_id", "u1");
+    expect(builder.eq).toHaveBeenCalledWith("id", "s1");
+    expect(builder.maybeSingle).toHaveBeenCalled();
+    expect(meta).toMatchObject({
+      id: "s1",
+      isFile: true,
+      preview: "notatki.txt",
+      dateLabel: "2026-06-13 00:00",
+      status: "completed_with_items",
+      itemCount: 3,
+      liveItemCount: 2,
+      errorCode: null,
+    });
+  });
+
+  it("paste bez pliku → preview z raw_input; brak embeda items → liveItemCount 0", async () => {
+    const { client } = mockSupabase({ data: { ...baseRow, import_files: [] }, error: null });
+    const meta = await getSessionMeta(client, "u1", "s1");
+    expect(meta).toMatchObject({ isFile: false, preview: "wsad", liveItemCount: 0 });
+  });
+
+  it("brak wiersza (nieistniejąca / cudza sesja przez RLS) → null", async () => {
+    const { client } = mockSupabase({ data: null, error: null });
+    expect(await getSessionMeta(client, "u1", "s1")).toBeNull();
+  });
+
+  it("błąd zapytania → rzuca", async () => {
+    const { client } = mockSupabase({ data: null, error: { message: "boom" } });
+    await expect(getSessionMeta(client, "u1", "s1")).rejects.toThrow();
   });
 });
 

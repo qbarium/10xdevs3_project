@@ -1,11 +1,17 @@
 ---
+import { z } from "zod";
+
 import Layout from "@/layouts/Layout.astro";
 import Topbar from "@/components/Topbar.astro";
-import MainFilterNav from "@/components/items/MainFilterNav.astro";
 import PendingItemsView from "@/components/items/PendingItemsView.tsx";
+import SessionBanner from "@/components/items/SessionBanner.astro";
+import SessionEntriesView from "@/components/items/SessionEntriesView.tsx";
+import { ITEMS_LIST_PAGE_SIZE_KEY, withPageSizePref } from "@/components/lists/page-size-pref";
 import { createClient } from "@/lib/supabase";
-import { listItems } from "@/lib/services/items";
-import { parseListCriteria } from "@/lib/services/list-criteria";
+import { getSessionMeta } from "@/lib/services/import-session";
+import { getSessionItems, listItems } from "@/lib/services/items";
+import { ITEM_PAGE_SIZES, parseListCriteria } from "@/lib/services/list-criteria";
+import type { SessionRowData } from "@/components/import-sessions/SessionCard";
 import type { Item } from "@/types";
 
 export const prerender = false;
@@ -14,32 +20,92 @@ const { user } = Astro.locals;
 
 // Kryteria listy z adresu strony (filtr typu/sort/szukanie) — ten sam parser co klient → render SSR
 // i pierwszy stan wyspy są identyczne (hydration-stable, bez przeskoku). `view` na sztywno per strona.
-const criteria = parseListCriteria("pending", Astro.url.searchParams);
+// Preferencja rozmiaru strony z COOKIE nakładana już przy SSR (URL z `size` ma pierwszeństwo) —
+// bez migotania „domyślna strona → docięta po adopcji"; obowiązuje też w trybie sesji (wspólny klucz).
+let criteria = withPageSizePref(
+  parseListCriteria("pending", Astro.url.searchParams),
+  Astro.url.searchParams,
+  Astro.cookies.get(ITEMS_LIST_PAGE_SIZE_KEY)?.value,
+  ITEM_PAGE_SIZES,
+);
 
-// Middleware chroni /items (PROTECTED_ROUTES) — `user` zawsze ustawiony. Pendingi liczymy serwerowo
-// (klient z cookies usera → RLS izoluje). To cel auto-przejścia z modalu klasyfikacji.
+// Tryb sesji (S-13 F4): `?session=<id>` przełącza stronę w kontekstowy rejestr wpisów JEDNEJ sesji.
+// Zły format UUID rozstrzygamy PRZED bazą (ten sam `z.uuid()` co endpoint sesyjny); nieistniejąca/cudza
+// sesja → `null` z `getSessionMeta` (RLS) → wariant „sesja niedostępna" (baner z wyjściami, bez listy).
+const sessionMode = criteria.session != null;
+let sessionMeta: SessionRowData | null = null;
+
+// Middleware chroni /items (PROTECTED_ROUTES) — `user` zawsze ustawiony. Odczyt serwerowy (klient z
+// cookies usera → RLS izoluje); okno strony z kryteriów (S-13 F2) + `total` dla licznika stron wyspy.
+// Bez trybu to cel auto-przejścia z modalu klasyfikacji.
 let items: Item[] = [];
+let total = 0;
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 if (user && supabase) {
   try {
-    items = await listItems(supabase, user.id, criteria);
+    if (criteria.session) {
+      if (z.uuid().safeParse(criteria.session).success) {
+        sessionMeta = await getSessionMeta(supabase, user.id, criteria.session);
+      }
+      if (sessionMeta) {
+        ({ items, total } = await getSessionItems(supabase, user.id, criteria.session, {
+          page: criteria.page,
+          size: criteria.size,
+        }));
+      }
+    } else {
+      ({ items, total } = await listItems(supabase, user.id, criteria, { page: criteria.page, size: criteria.size }));
+    }
   } catch {
-    // Przejściowy błąd odczytu → pusta lista (łagodna degradacja).
+    // Przejściowy błąd odczytu → pusta lista (łagodna degradacja); w trybie sesji bez metadanych
+    // strona pokaże wariant „sesja niedostępna" z akcjami wyjścia.
     items = [];
+    total = 0;
   }
 }
+
+// Strona poza zakresem (S-13 impl-review F2): ręcznie wpisany adres / popstate z `?page=N` większym niż
+// liczba stron zwraca pustą listę (offset za końcem → PGRST103 → catch wyżej), przez co paginacja znika
+// (pageCount ≤ 1), a w trybie sesji ekran fałszywie mówi „ta sesja nie ma elementów" mimo istniejących
+// wpisów. Zamiast maskować, cofnij na stronę 1 i dociągnij jej dane — licznik stron wraca, użytkownik widzi
+// treść, a hook wyspy zsynchronizuje adres przy pierwszej interakcji. Bez `return Astro.redirect` (top-level
+// return w .astro wywraca regułę no-misused-promises). Strażniki: strona 1 z total=0 to prawdziwie pusty
+// wynik; `sessionMode && !sessionMeta` to wariant „sesja niedostępna".
+if (user && supabase && criteria.page > 1 && total === 0 && (!sessionMode || sessionMeta)) {
+  criteria = { ...criteria, page: 1 };
+  try {
+    ({ items, total } = criteria.session
+      ? await getSessionItems(supabase, user.id, criteria.session, { page: 1, size: criteria.size })
+      : await listItems(supabase, user.id, criteria, { page: 1, size: criteria.size }));
+  } catch {
+    items = [];
+    total = 0;
+  }
+}
+
+// „Do akceptacji" (dawniej „Elementy do akceptacji") — osobna pozycja menu górnego; pozostałe widoki
+// wpisów żyją na stronie „Wpisy" z przełącznikiem-listą (EntriesViewSelect, decyzja 2026-07-02).
+const pageTitle = sessionMode ? "Wpisy sesji importu" : "Do akceptacji";
 ---
 
-<Layout title="Elementy do akceptacji">
+<Layout title={pageTitle}>
   <div class="bg-cosmic min-h-screen p-4">
-    <div class="mx-auto max-w-2xl">
+    <div class="mx-auto max-w-6xl">
       <Topbar />
       <main class="mt-8 flex flex-col gap-6">
         <h1 class="bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-2xl font-bold text-transparent">
-          Elementy do akceptacji
+          {pageTitle}
         </h1>
-        <MainFilterNav />
-        <PendingItemsView client:load initialItems={items} initialCriteria={criteria} />
+        {sessionMode && <SessionBanner meta={sessionMeta} />}
+        {
+          sessionMode ? (
+            sessionMeta && (
+              <SessionEntriesView client:load initialItems={items} initialCriteria={criteria} initialTotal={total} />
+            )
+          ) : (
+            <PendingItemsView client:load initialItems={items} initialCriteria={criteria} initialTotal={total} />
+          )
+        }
       </main>
     </div>
   </div>

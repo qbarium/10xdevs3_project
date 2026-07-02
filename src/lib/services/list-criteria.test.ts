@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { criteriaToQuery, defaultCriteria, hasActiveFilters, parseListCriteria } from "@/lib/services/list-criteria";
+import {
+  criteriaToQuery,
+  defaultCriteria,
+  hasActiveFilters,
+  ITEM_PAGE_SIZE,
+  ITEM_PAGE_SIZES,
+  parseItemPage,
+  parseItemSize,
+  parseListCriteria,
+} from "@/lib/services/list-criteria";
 import type { ListCriteria } from "@/lib/services/list-criteria";
 
 function params(query: string): URLSearchParams {
@@ -8,7 +17,7 @@ function params(query: string): URLSearchParams {
 }
 
 describe("parseListCriteria — domyślne wg widoku", () => {
-  it("pending → sort:created, dir:desc, type:all, q:'', brak opstatus", () => {
+  it("pending → sort:created, dir:desc, type:all, q:'', brak opstatus, strona 1 domyślnego rozmiaru", () => {
     expect(parseListCriteria("pending", params(""))).toEqual({
       view: "pending",
       type: "all",
@@ -16,6 +25,8 @@ describe("parseListCriteria — domyślne wg widoku", () => {
       dir: "desc",
       q: "",
       opstatus: undefined,
+      page: 1,
+      size: ITEM_PAGE_SIZE,
     });
   });
 
@@ -25,6 +36,8 @@ describe("parseListCriteria — domyślne wg widoku", () => {
     expect(c.dir).toBe("desc");
     expect(c.type).toBe("all");
     expect(c.q).toBe("");
+    expect(c.page).toBe(1);
+    expect(c.size).toBe(ITEM_PAGE_SIZE);
   });
 });
 
@@ -34,6 +47,18 @@ describe("parseListCriteria — fallback dla śmieci", () => {
     expect(c.sort).toBe("updated");
     expect(c.dir).toBe("desc");
     expect(c.type).toBe("all");
+  });
+
+  it("śmieciowe okno → strona 1 domyślnego rozmiaru (S-13 F2)", () => {
+    const c = parseListCriteria("active", params("page=abc&size=999"));
+    expect(c.page).toBe(1);
+    expect(c.size).toBe(ITEM_PAGE_SIZE);
+  });
+
+  it("poprawne okno czytane z adresu", () => {
+    const c = parseListCriteria("active", params("page=3&size=25"));
+    expect(c.page).toBe(3);
+    expect(c.size).toBe(25);
   });
 });
 
@@ -68,7 +93,16 @@ describe("criteriaToQuery — pomija domyślne", () => {
   });
 
   it("emituje tylko pola różne od domyślnych, bez view", () => {
-    const c: ListCriteria = { view: "active", type: "task", sort: "title", dir: "asc", q: "x", opstatus: "new" };
+    const c: ListCriteria = {
+      view: "active",
+      type: "task",
+      sort: "title",
+      dir: "asc",
+      q: "x",
+      opstatus: "new",
+      page: 1,
+      size: ITEM_PAGE_SIZE,
+    };
     const parsed = params(criteriaToQuery(c));
     expect(parsed.has("view")).toBe(false);
     expect(parsed.get("type")).toBe("task");
@@ -76,23 +110,121 @@ describe("criteriaToQuery — pomija domyślne", () => {
     expect(parsed.get("dir")).toBe("asc");
     expect(parsed.get("q")).toBe("x");
     expect(parsed.get("opstatus")).toBe("new");
+    expect(parsed.has("page")).toBe(false);
+    expect(parsed.has("size")).toBe(false);
+  });
+
+  it("okno: page emitowane tylko gdy > 1, size tylko gdy ≠ domyślny (S-13 F2)", () => {
+    const base = defaultCriteria("active");
+    expect(criteriaToQuery({ ...base, page: 2 })).toBe("page=2");
+    expect(criteriaToQuery({ ...base, size: 25 })).toBe("size=25");
+    expect(criteriaToQuery({ ...base, page: 3, size: 50 })).toBe("page=3&size=50");
+    expect(criteriaToQuery({ ...base, page: 1, size: ITEM_PAGE_SIZE })).toBe("");
   });
 
   it("opstatus nie emitowane poza widokiem active", () => {
-    const c: ListCriteria = { view: "done", type: "all", sort: "updated", dir: "desc", q: "", opstatus: "new" };
+    const c: ListCriteria = {
+      view: "done",
+      type: "all",
+      sort: "updated",
+      dir: "desc",
+      q: "",
+      opstatus: "new",
+      page: 1,
+      size: ITEM_PAGE_SIZE,
+    };
     expect(criteriaToQuery(c)).toBe("");
   });
 });
 
 describe("round-trip parse(query(c)) === c", () => {
   const cases: ListCriteria[] = [
-    { view: "pending", type: "all", sort: "created", dir: "desc", q: "", opstatus: undefined },
-    { view: "active", type: "task", sort: "title", dir: "asc", q: "foo bar", opstatus: "in_progress" },
-    { view: "trash", type: "note", sort: "created", dir: "asc", q: "%weird,(input)", opstatus: undefined },
-    { view: "done", type: "idea", sort: "updated", dir: "desc", q: "", opstatus: undefined },
+    { view: "pending", type: "all", sort: "created", dir: "desc", q: "", opstatus: undefined, page: 1, size: 10 },
+    {
+      view: "active",
+      type: "task",
+      sort: "title",
+      dir: "asc",
+      q: "foo bar",
+      opstatus: "in_progress",
+      page: 4,
+      size: 25,
+    },
+    {
+      view: "trash",
+      type: "note",
+      sort: "created",
+      dir: "asc",
+      q: "%weird,(input)",
+      opstatus: undefined,
+      page: 1,
+      size: 100,
+    },
+    { view: "done", type: "idea", sort: "updated", dir: "desc", q: "", opstatus: undefined, page: 7, size: 10 },
   ];
-  it.each(cases)("round-trips $view/$type/$sort", (c) => {
+  it.each(cases)("round-trips $view/$type/$sort (page $page, size $size)", (c) => {
     expect(parseListCriteria(c.view, params(criteriaToQuery(c)))).toEqual(c);
+  });
+});
+
+describe("parseListCriteria — tryb sesji (S-13 F4)", () => {
+  it("niepusty session wchodzi do kryteriów ze STAŁYMI domyślnymi trybu", () => {
+    expect(parseListCriteria("pending", params("session=abc-123"))).toEqual({
+      view: "pending",
+      session: "abc-123",
+      type: "all",
+      sort: "created",
+      dir: "asc",
+      q: "",
+      opstatus: undefined,
+      page: 1,
+      size: ITEM_PAGE_SIZE,
+    });
+  });
+
+  it("parametry filtrów w adresie są w trybie IGNOROWANE (stałe domyślne trybu)", () => {
+    const c = parseListCriteria("active", params("session=s1&type=task&sort=title&dir=desc&q=foo&opstatus=new"));
+    expect(c).toMatchObject({ session: "s1", type: "all", sort: "created", dir: "asc", q: "", opstatus: undefined });
+  });
+
+  it("okno strony czytane także w trybie", () => {
+    const c = parseListCriteria("pending", params("session=s1&page=3&size=25"));
+    expect(c.page).toBe(3);
+    expect(c.size).toBe(25);
+  });
+
+  it("pusty / białoznakowy session → brak trybu (undefined)", () => {
+    expect(parseListCriteria("pending", params("session=")).session).toBeUndefined();
+    expect(parseListCriteria("pending", params("session=%20%20")).session).toBeUndefined();
+    expect(parseListCriteria("pending", params("")).session).toBeUndefined();
+  });
+
+  it("session przycięty i ograniczony do 64 znaków (format UUID walidują SSR/endpoint, nie parser)", () => {
+    expect(parseListCriteria("pending", params("session=%20s1%20")).session).toBe("s1");
+    expect(parseListCriteria("pending", params(`session=${"a".repeat(80)}`)).session).toHaveLength(64);
+  });
+});
+
+describe("criteriaToQuery — tryb sesji emituje wyłącznie session + okno", () => {
+  const base = parseListCriteria("pending", params("session=s1"));
+
+  it("domyślne okno → sam session", () => {
+    expect(criteriaToQuery(base)).toBe("session=s1");
+  });
+
+  it("page > 1 i size ≠ domyślny dołączane", () => {
+    expect(criteriaToQuery({ ...base, page: 2, size: 25 })).toBe("session=s1&page=2&size=25");
+  });
+
+  it("NIE emituje pól filtrów, nawet gdy odbiegają od domyślnych trybu", () => {
+    expect(criteriaToQuery({ ...base, type: "task", sort: "title", dir: "desc", q: "x", opstatus: "new" })).toBe(
+      "session=s1",
+    );
+  });
+
+  it("round-trip: parse(query(c)) === c", () => {
+    const c = { ...base, page: 4, size: 50 };
+    expect(parseListCriteria("pending", params(criteriaToQuery(c)))).toEqual(c);
   });
 });
 
@@ -111,8 +243,59 @@ describe("hasActiveFilters", () => {
     expect(hasActiveFilters({ ...defaultCriteria("active"), opstatus: "new" })).toBe(true);
   });
 
+  it("okno page/size NIE liczy się jako filtr (preferencja widoku, nie zawężenie — S-13 F2)", () => {
+    expect(hasActiveFilters({ ...defaultCriteria("active"), page: 5 })).toBe(false);
+    expect(hasActiveFilters({ ...defaultCriteria("active"), size: 100 })).toBe(false);
+    expect(hasActiveFilters({ ...defaultCriteria("active"), page: 5, size: 100 })).toBe(false);
+    // …ale filtr przy niedomyślnym oknie nadal liczy się jako filtr.
+    expect(hasActiveFilters({ ...defaultCriteria("active"), type: "task", page: 5 })).toBe(true);
+  });
+
   it("opstatus poza widokiem active nie liczy się jako filtr (nie jest emitowany)", () => {
     expect(hasActiveFilters({ ...defaultCriteria("done"), opstatus: "new" })).toBe(false);
     expect(hasActiveFilters({ ...defaultCriteria("trash"), opstatus: "in_progress" })).toBe(false);
+  });
+
+  it("session ustawione → true (pusty wynik trybu ma oferować wyjście — S-13 F4)", () => {
+    expect(hasActiveFilters(parseListCriteria("pending", params("session=s1")))).toBe(true);
+    expect(hasActiveFilters(parseListCriteria("pending", params("session=s1&page=5&size=100")))).toBe(true);
+  });
+});
+
+describe("parseItemPage — clamp do całkowitej ≥ 1 (S-13 F1)", () => {
+  it("poprawna liczba → wartość (podłoga dla ułamka)", () => {
+    expect(parseItemPage("1")).toBe(1);
+    expect(parseItemPage("5")).toBe(5);
+    expect(parseItemPage("2.7")).toBe(2);
+  });
+
+  it("brak / śmieć / zero / ujemna → 1 (nie rzuca)", () => {
+    expect(parseItemPage(null)).toBe(1);
+    expect(parseItemPage("")).toBe(1);
+    expect(parseItemPage("abc")).toBe(1);
+    expect(parseItemPage("0")).toBe(1);
+    expect(parseItemPage("-3")).toBe(1);
+    expect(parseItemPage("Infinity")).toBe(1);
+  });
+});
+
+describe("parseItemSize — pula albo null = brak okna (S-13 F1)", () => {
+  it("wartość z puli → liczba", () => {
+    for (const size of ITEM_PAGE_SIZES) {
+      expect(parseItemSize(String(size))).toBe(size);
+    }
+  });
+
+  it("brak / śmieć / spoza puli → null (pełna lista, kompat przejściowy)", () => {
+    expect(parseItemSize(null)).toBeNull();
+    expect(parseItemSize("")).toBeNull();
+    expect(parseItemSize("abc")).toBeNull();
+    expect(parseItemSize("11")).toBeNull();
+    expect(parseItemSize("0")).toBeNull();
+    expect(parseItemSize("-10")).toBeNull();
+  });
+
+  it("domyślny rozmiar należy do puli", () => {
+    expect(ITEM_PAGE_SIZES).toContain(ITEM_PAGE_SIZE);
   });
 });

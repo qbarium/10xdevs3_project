@@ -117,12 +117,14 @@ export function FileDropZone({ selectedFile, onFile, disabled = false }: Props) 
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         className={cn(
-          "flex flex-col items-center justify-center gap-2 rounded-md border border-dashed px-4 py-6 text-center transition-colors",
+          // Jeden WIERSZ (ikona + tekst + przycisk, flex-wrap na wąskich ekranach) zamiast pionowej kolumny
+          // — formularz wsadu mieści się na laptopie bez przewijania (decyzja użytkownika 2026-07-02).
+          "flex flex-wrap items-center justify-center gap-3 rounded-md border border-dashed px-4 py-3 text-center transition-colors",
           dragActive ? "border-purple-400 bg-purple-400/5" : "border-input",
           disabled && "pointer-events-none opacity-50",
         )}
       >
-        <Upload className="text-muted-foreground size-6" />
+        <Upload className="text-muted-foreground size-5" />
         <p className="text-muted-foreground text-sm">
           Przeciągnij plik <span className="font-medium">.txt</span> lub <span className="font-medium">.md</span> (maks.{" "}
           {Math.round(MAX_FILE_BYTES / 1024)} KB)

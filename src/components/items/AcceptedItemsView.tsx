@@ -1,3 +1,4 @@
+import { Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -6,11 +7,16 @@ import { useItemMutation } from "@/components/hooks/useItemMutation";
 import AddItemDialog from "@/components/items/AddItemDialog";
 import { defaultCreateType, nextFilterAfterCreate } from "@/components/items/create-form";
 import EditItemDialog from "@/components/items/EditItemDialog";
+import EntriesViewSelect from "@/components/items/EntriesViewSelect";
+import ItemCard, { ITEM_CHECKBOX_CLASS } from "@/components/items/ItemCard";
 import ListFilterBar from "@/components/items/ListFilterBar";
-import OperationalStatusBadge from "@/components/items/OperationalStatusBadge";
-import { reconcileAfterChange, type AcceptedView } from "@/components/items/operational-view";
+import { matchesView, reconcileAfterChange, type AcceptedView } from "@/components/items/operational-view";
 import { allIds, isAllSelected, requiresConfirmation, toggleSelection } from "@/components/items/selection";
 import type { TypeFilterValue } from "@/components/items/type-filter";
+import { ITEMS_LIST_PAGE_SIZE_KEY, writePageSizePref } from "@/components/lists/page-size-pref";
+import PageSizeSelect from "@/components/lists/PageSizeSelect";
+import Pagination from "@/components/lists/Pagination";
+import { resetToFirstPage } from "@/components/lists/list-pagination";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -22,10 +28,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Toaster } from "@/components/ui/sonner";
-import { itemTypeLabel, operationalStatusLabel } from "@/lib/labels";
-import { defaultCriteria, hasActiveFilters } from "@/lib/services/list-criteria";
+import { operationalStatusLabel } from "@/lib/labels";
+import { defaultCriteria, hasActiveFilters, ITEM_PAGE_SIZES } from "@/lib/services/list-criteria";
 import type { ListCriteria } from "@/lib/services/list-criteria";
-import { cn } from "@/lib/utils";
 import type { Item, OperationalStatus } from "@/types";
 
 interface Props {
@@ -34,6 +39,8 @@ interface Props {
   /** Kryteria z adresu strony (czytane SERWEROWO tym samym parserem co klient) — stan startowy hooka, by SSR
       i pierwszy render wyspy były identyczne (hydration-stable, bez przeskoku). */
   initialCriteria: ListCriteria;
+  /** Łączna liczba itemów pasujących do kryteriów (SSR z `count`) — stan startowy licznika stron (S-13 F2). */
+  initialTotal: number;
   /** Czy pokazać akcję „Dodaj item" (S-07) — tylko widok Aktywne; Zakończone/Anulowane pomijają (domyślnie false). */
   canAdd?: boolean;
 }
@@ -54,10 +61,6 @@ const EMPTY_LABEL: Record<AcceptedView, string> = {
   cancelled: "Brak anulowanych elementów.",
 };
 
-// Checkbox wyraźnie widoczny na ciemnym tle „cosmic" (jak PendingItemsView).
-const CHECKBOX_CLASS =
-  "size-5 border-white/40 data-[state=checked]:border-purple-400 data-[state=checked]:bg-purple-500 data-[state=checked]:text-white data-[state=indeterminate]:border-purple-400 data-[state=indeterminate]:bg-purple-500 data-[state=indeterminate]:text-white";
-
 /** Polska odmiana rzeczownika „element" wg liczby (lokalne, jak w PendingItemsView — bez sprzęgania islandów). */
 function elementNoun(n: number): string {
   if (n === 1) return "element";
@@ -77,12 +80,24 @@ function elementNoun(n: number): string {
 // (autorytatywna lista z serwera), mutacje = optimistic przez `applyOptimistic` (bez re-fetchu). Stąd brak
 // klienckiego `applyTypeFilter`/`pinnedIds`/cookie: re-fetch przy zmianie filtra (nie edycja) usuwa item
 // z widoku, więc edytowany item zostaje widoczny do następnej zmiany kryteriów (decyzja #6 — naturalnie).
-export default function AcceptedItemsView({ initialItems, view, initialCriteria, canAdd = false }: Props) {
-  const { items, criteria, settledCriteria, setCriteria, applyOptimistic, error } = useItemList(
-    view,
-    initialItems,
-    initialCriteria,
-  );
+export default function AcceptedItemsView({
+  initialItems,
+  view,
+  initialCriteria,
+  initialTotal,
+  canAdd = false,
+}: Props) {
+  const {
+    items,
+    criteria,
+    settledCriteria,
+    setCriteria,
+    applyOptimistic,
+    refetchAfterRemoval,
+    error,
+    page,
+    pageCount,
+  } = useItemList(view, initialItems, initialCriteria, initialTotal);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   // Żądanie potwierdzenia (select-all) — unia rozróżniająca: zmiana stanu operacyjnego ALBO przeniesienie
   // do kosza (S-06). Dyskryminator `kind` steruje gałęzią `execute` i treścią dialogu.
@@ -146,6 +161,9 @@ export default function AcceptedItemsView({ initialItems, view, initialCriteria,
       idSet.forEach((id) => next.delete(id));
       return next;
     });
+    // Kolejka się dosuwa (decyzja 2026-07-02): dociągnij bieżącą stronę (clamp do nowej liczby stron) —
+    // po koszu/zmianie stanu wypadającej poza widok wjeżdżają wpisy z kolejnych stron.
+    refetchAfterRemoval();
     // Licznik z serwera = liczba FAKTYCZNIE zmienionych (guard `accepted` pomija nie-uprawnione).
     if (count > 0) {
       if (req.kind === "trash") {
@@ -188,11 +206,17 @@ export default function AcceptedItemsView({ initialItems, view, initialCriteria,
     void execute(req);
   }
 
-  // Edycja zapisana — podmiana itemu w miejscu (optimistic, bez re-fetchu). Edytowany item ZOSTAJE widoczny
-  // do następnej zmiany kryteriów / odświeżenia (decyzja #6) — także gdy zmieniony stan operacyjny lub typ
-  // wypada poza bieżący widok/filtr. NIE znika spod kursora; przepada dopiero przy re-fetchu (zmiana filtra)
-  // lub reloadzie SSR (który ładuje listę wg kryteriów). Inaczej niż bulk, który usuwa od razu.
+  // Edycja zapisana — podmiana itemu w miejscu (optimistic, bez re-fetchu), ALE gdy zmieniony stan
+  // operacyjny wypada poza predykat widoku (np. Aktywne → „Anulowane"), wpis ZNIKA i kolejka się dosuwa —
+  // spójnie z akcjami zbiorczymi (rewizja decyzji #6 z 2026-06-19; decyzja użytkownika 2026-07-02:
+  // pozostawiony wiersz z aktywnymi akcjami sugerował, że wpis nadal należy do widoku). Niezgodność z
+  // FILTREM typu nadal zostawia wpis widoczny do następnej zmiany kryteriów (create-flow bez zmian).
   function handleSaved(updated: Item): void {
+    if (!matchesView(updated.operational_status, view)) {
+      applyOptimistic((prev) => prev.filter((current) => current.id !== updated.id));
+      refetchAfterRemoval();
+      return;
+    }
     applyOptimistic((prev) => prev.map((current) => (current.id === updated.id ? updated : current)));
   }
 
@@ -204,9 +228,10 @@ export default function AcceptedItemsView({ initialItems, view, initialCriteria,
   }
 
   // Zmiana samego filtra typu — cienka nakładka na `applyCriteria` zachowująca kontrakt `TypeFilterValue`
-  // używany przez create-flow S-07 (`nextFilterAfterCreate` w `handleCreated`).
+  // używany przez create-flow S-07 (`nextFilterAfterCreate` w `handleCreated`). Reset do strony 1 jak każda
+  // zmiana filtra (offset za końcem zbioru to błąd PGRST103).
   function handleFilterChange(next: TypeFilterValue): void {
-    applyCriteria({ ...criteria, type: next });
+    applyCriteria(resetToFirstPage({ ...criteria, type: next }));
   }
 
   // Ponów ostatni fetch wg bieżących kryteriów (po błędzie sieci) — bez zmiany kryteriów i bez czyszczenia
@@ -215,7 +240,8 @@ export default function AcceptedItemsView({ initialItems, view, initialCriteria,
     setCriteria({ ...criteria });
   }
 
-  // 404 (item nieedytowalny / zniknął) — usuń z listy (optimistic) i z zaznaczenia.
+  // 404 (item nieedytowalny / zniknął) — usuń z listy (optimistic) i z zaznaczenia,
+  // po czym dociągnij stronę (kolejka się dosuwa).
   function handleRemoved(id: string): void {
     applyOptimistic((prev) => prev.filter((current) => current.id !== id));
     setSelected((prev) => {
@@ -224,6 +250,7 @@ export default function AcceptedItemsView({ initialItems, view, initialCriteria,
       next.delete(id);
       return next;
     });
+    refetchAfterRemoval();
   }
 
   // Utworzenie itemu ręcznego (S-07): focus + wstawienie. Jeśli aktywny jest KONKRETNY filtr innego typu,
@@ -258,30 +285,41 @@ export default function AcceptedItemsView({ initialItems, view, initialCriteria,
     }
   }, [items]);
 
+  // Kompaktowa akcja „Dodaj item" (S-07; plus zamiast całego wiersza — decyzja użytkownika 2026-07-02)
+  // w slocie akcji paska filtrów (wiersz wyszukiwania, po prawej).
+  const addButton = canAdd ? (
+    <Button
+      size="sm"
+      aria-label="Dodaj item"
+      title="Dodaj item"
+      onClick={() => {
+        setAddOpen(true);
+      }}
+    >
+      <Plus className="size-4" />
+    </Button>
+  ) : null;
+
   return (
     <div className="flex flex-col gap-3">
       <Toaster />
 
-      {/* Trwały rząd akcji — PRZED gałęzią pustej listy, więc „Dodaj item" jest widoczny także przy pustym
-          widoku / pustym wyniku filtra (tylko Aktywne: `canAdd`). Osobny od paska bulk (ten zależy od selekcji). */}
-      {canAdd && (
-        <div className="flex items-center justify-end">
-          <Button
-            size="sm"
-            onClick={() => {
-              setAddOpen(true);
-            }}
-          >
-            Dodaj item
-          </Button>
-        </div>
-      )}
-
-      {/* Pasek filtrów widoczny, gdy jest co filtrować ALBO gdy jakikolwiek filtr jest aktywny — w drugim
-          przypadku lista może być pusta (zawężona), a kontrolki MUSZĄ zostać dostępne (powrót do domyślnych). */}
-      {(items.length > 0 || filtersActive) && (
-        <ListFilterBar criteria={criteria} onChange={applyCriteria} error={error} onRetry={retry} />
-      )}
+      {/* Pasek filtrów ZAWSZE widoczny: od 2026-07-02 niesie przełącznik widoku strony „Wpisy"
+          (EntriesViewSelect zastąpił zakładki) — nawigacja nie może znikać przy pustym widoku. */}
+      <ListFilterBar
+        criteria={criteria}
+        onChange={(next) => {
+          // Zmiana filtra/sortu/frazy → strona 1 (zakres wyników się zmienia; strona N mogłaby nie istnieć —
+          // offset za końcem to błąd PGRST103). Wzorzec dziennika (S-11). Reset nie psuje debounce frazy:
+          // isSearchOnlyChange ignoruje `page`.
+          applyCriteria(resetToFirstPage(next));
+        }}
+        error={error}
+        onRetry={retry}
+        leading={<EntriesViewSelect view={view} type={criteria.type} />}
+      >
+        {addButton}
+      </ListFilterBar>
 
       {items.length === 0 ? (
         filtersActive ? (
@@ -294,7 +332,8 @@ export default function AcceptedItemsView({ initialItems, view, initialCriteria,
               size="sm"
               variant="outline"
               onClick={() => {
-                applyCriteria(defaultCriteria(view));
+                // Czyść filtry/sort (i wróć na stronę 1), ale ZACHOWAJ rozmiar strony — preferencja widoku.
+                applyCriteria({ ...defaultCriteria(view), size: criteria.size });
               }}
               className="border-white/15 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white"
             >
@@ -317,7 +356,7 @@ export default function AcceptedItemsView({ initialItems, view, initialCriteria,
                 checked={allSelected ? true : selectedCount > 0 ? "indeterminate" : false}
                 onCheckedChange={toggleAll}
                 aria-label="Zaznacz wszystkie"
-                className={CHECKBOX_CLASS}
+                className={ITEM_CHECKBOX_CLASS}
               />
               Zaznacz wszystkie
             </label>
@@ -347,59 +386,49 @@ export default function AcceptedItemsView({ initialItems, view, initialCriteria,
           </div>
 
           {items.map((item) => (
-            <article
+            <ItemCard
               key={item.id}
-              data-item-id={item.id}
-              tabIndex={-1}
-              className={cn(
-                "flex gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl transition-opacity focus:ring-2 focus:ring-purple-400/60 focus:outline-none",
-                inFlightIds.has(item.id) && "pointer-events-none opacity-50",
-              )}
-            >
-              <Checkbox
-                checked={selected.has(item.id)}
-                onCheckedChange={() => {
-                  toggleItem(item.id);
-                }}
-                aria-label={`Zaznacz: ${item.title}`}
-                className={cn("mt-1", CHECKBOX_CLASS)}
-              />
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-block rounded-full border border-purple-300/30 bg-purple-400/10 px-2 py-0.5 text-xs font-medium text-purple-100">
-                    {itemTypeLabel(item.type)}
-                  </span>
-                  <OperationalStatusBadge item={item} />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="ml-auto text-white/60 hover:bg-white/10 hover:text-white"
-                    onClick={() => {
-                      setEditing(item);
-                    }}
-                  >
-                    Edytuj
-                  </Button>
-                  {/* Per-item „Do kosza" (S-06) — akcja bezpośrednia na jednym itemie, bez dialogu. */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-white/60 hover:bg-white/10 hover:text-white"
-                    disabled={pending}
-                    onClick={() => {
-                      void execute({ kind: "trash", ids: [item.id] });
-                    }}
-                  >
-                    Do kosza
-                  </Button>
-                </div>
-                <h3 className="mt-2 font-semibold text-white/90">{item.title}</h3>
-                {item.description && <p className="mt-1 line-clamp-2 text-sm text-white/70">{item.description}</p>}
-              </div>
-            </article>
+              item={item}
+              badges={{ operational: true }}
+              selectable
+              selected={selected.has(item.id)}
+              onToggleSelect={() => {
+                toggleItem(item.id);
+              }}
+              inFlight={inFlightIds.has(item.id)}
+              actionsDisabled={pending}
+              onEdit={setEditing}
+              onTrash={(it) => {
+                // Per-item „Do kosza" (S-06) — akcja bezpośrednia na jednym itemie, bez dialogu.
+                void execute({ kind: "trash", ids: [it.id] });
+              }}
+            />
           ))}
         </>
       )}
+
+      {/* Kontrolki stron (S-13 F2, parytet z dziennikiem): rozmiar strony (trwała preferencja + reset do 1)
+          i nawigacja stron (zachowuje filtry z wyświetlanej listy). Zmiana czyści zaznaczenie (applyCriteria —
+          invariant „selected ⊆ widoczne"). Pagination sama znika przy jednej stronie. */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <PageSizeSelect
+          value={criteria.size}
+          sizes={ITEM_PAGE_SIZES}
+          ariaLabel="Liczba elementów na stronę"
+          onChange={(size) => {
+            writePageSizePref(ITEMS_LIST_PAGE_SIZE_KEY, ITEM_PAGE_SIZES, size);
+            applyCriteria(resetToFirstPage({ ...criteria, size }));
+          }}
+        />
+        <Pagination
+          page={page}
+          pageCount={pageCount}
+          ariaLabel="Paginacja listy elementów"
+          onPage={(nextPage) => {
+            applyCriteria({ ...settledCriteria, page: nextPage });
+          }}
+        />
+      </div>
 
       <Dialog
         open={confirmRequest !== null}

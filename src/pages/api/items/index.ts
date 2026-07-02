@@ -1,10 +1,13 @@
 // /api/items — endpoint kolekcji itemów zalogowanego usera.
 //
-// GET (S-09, filtry dodatkowe FR-008): czyta kryteria listy z query string (`view` + type/sort/dir/q/opstatus),
-// egzekwuje logowanie i RLS (klient z cookies usera), woła `listItems` i zwraca `{ ok, items }`. Pierwszy
-// endpoint czytający `url.searchParams`. `view` walidowane manualnie (pojedyncze pole skalarne — selektor
-// predykatu); pozostałe pola przez tolerancyjny `parseListCriteria` (śmieć → fallback do domyślnej, clamp `q`),
-// świadomie BEZ osobnego zod (jeden współdzielony walidator z SSR i klientem — patrz `list-criteria.ts`).
+// GET (S-09, filtry dodatkowe FR-008; okno strony S-13 F2): czyta kryteria listy z query string (`view` +
+// type/sort/dir/q/opstatus + page/size), egzekwuje logowanie i RLS (klient z cookies usera), woła `listItems`
+// z oknem Z KRYTERIÓW (spójnie z SSR stron — ten sam parser, brak rozjazdu hydratacji) i zwraca
+// `{ ok, items, total, page, pageSize }` (wzorzec GET /api/import-sessions). Lista wpisów ZAWSZE stronicuje
+// (brak/śmieciowy `size` → domyślny `ITEM_PAGE_SIZE` z parsera). `view` walidowane manualnie (pojedyncze
+// pole skalarne — selektor predykatu); pozostałe pola przez tolerancyjny `parseListCriteria` (śmieć →
+// fallback do domyślnej, clamp `q`), świadomie BEZ osobnego zod (jeden współdzielony walidator z SSR
+// i klientem — patrz `list-criteria.ts`).
 //
 // POST (S-07): utworzenie pojedynczego itemu RĘCZNEGO — pomija klasyfikację AI i kolejkę pendingów: serwer
 // wstawia item od razu jako accepted/new/NULL-session. Sekwencja jak bulk.ts/[id].ts: guard sesji (401) →
@@ -40,10 +43,14 @@ export const GET: APIRoute = async (context) => {
   if (!supabase) return json({ ok: false, code: "internal", error: "Błąd serwera." }, 500);
 
   try {
-    // Pozostałe pola: tolerancyjny parser (niepoprawne → fallback do domyślnej; `q` clamp do 200).
+    // Pozostałe pola: tolerancyjny parser (niepoprawne → fallback do domyślnej; `q` clamp do 200; okno
+    // strony znormalizowane — page ≥ 1, size z puli). Okno idzie z KRYTERIÓW (spójnie z SSR stron).
     const criteria = parseListCriteria(view, searchParams);
-    const items = await listItems(supabase, user.id, criteria);
-    return json({ ok: true, items }, 200);
+    const { items, total } = await listItems(supabase, user.id, criteria, {
+      page: criteria.page,
+      size: criteria.size,
+    });
+    return json({ ok: true, items, total, page: criteria.page, pageSize: criteria.size }, 200);
   } catch (err) {
     reportError(err);
     return json({ ok: false, code: "internal", error: "Błąd serwera." }, 500);

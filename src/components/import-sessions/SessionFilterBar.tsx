@@ -34,7 +34,9 @@ export default function SessionFilterBar({ criteria, onChange }: Props) {
         }}
       >
         <SelectTrigger size="sm" aria-label="Sortowanie" className={TRIGGER}>
-          <SelectValue />
+          {/* Etykieta jawnie jako dziecko: Radix wyprowadza tekst wybranej opcji z elementów portalu,
+              których SSR nie renderuje — pusty trigger „wskakiwałby" po hydracji (mignięcie). */}
+          <SelectValue>{SORT_OPTIONS.find((opt) => opt.value === criteria.sort)?.label}</SelectValue>
         </SelectTrigger>
         <SelectContent>
           {SORT_OPTIONS.map((opt) => (
@@ -52,7 +54,9 @@ export default function SessionFilterBar({ criteria, onChange }: Props) {
         }}
       >
         <SelectTrigger size="sm" aria-label="Status" className={TRIGGER}>
-          <SelectValue />
+          <SelectValue>
+            {criteria.status === "all" ? "Wszystkie" : importSessionStatusLabel(criteria.status)}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Wszystkie</SelectItem>

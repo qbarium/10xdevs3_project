@@ -1,24 +1,26 @@
-// Kontrolki stron dziennika sesji (S-11): pierwsza/poprzednia + wpisanie konkretnej strony + następna/ostatnia.
-// KONTROLOWANE przez rodzica (`page`/`pageCount` z hooka `useSessionList`). Pole strony jest NIEKONTROLOWANE
-// (`defaultValue` + `key={page}`): pozwala wpisać kilka cyfr przed zatwierdzeniem, a `key` wymusza remount, gdy
-// strona zmieni się z zewnątrz (przyciski, reset filtra) — bez `useState`/`useEffect` (omija
-// react-hooks/set-state-in-effect). Commit na Enter/blur przez `clampPage` (parsowanie + clamp do [1, pageCount];
-// puste → bieżąca strona). Przy jednej stronie (pageCount ≤ 1) nie renderuje nic.
+// Kontrolki stron listy (S-11, uogólnione w S-13 F2): pierwsza/poprzednia + wpisanie konkretnej strony +
+// następna/ostatnia. KONTROLOWANE przez rodzica (`page`/`pageCount` z hooka listy). Pole strony jest
+// NIEKONTROLOWANE (`defaultValue` + `key={page}`): pozwala wpisać kilka cyfr przed zatwierdzeniem, a `key`
+// wymusza remount, gdy strona zmieni się z zewnątrz (przyciski, reset filtra) — bez `useState`/`useEffect`
+// (omija react-hooks/set-state-in-effect). Commit na Enter/blur przez `clampPage` (parsowanie + clamp do
+// [1, pageCount]; puste → bieżąca strona). Przy jednej stronie (pageCount ≤ 1) nie renderuje nic.
+// Wcześniej `import-sessions/SessionPagination.tsx`; `ariaLabel` parametryzuje etykietę nav per lista.
 
 import type { ChangeEvent, KeyboardEvent } from "react";
 
+import { clampPage, pageNav } from "@/components/lists/list-pagination";
 import { Button } from "@/components/ui/button";
-import { clampPage, pageNav } from "@/components/import-sessions/session-pagination";
 
 interface Props {
   page: number;
   pageCount: number;
   onPage: (page: number) => void;
+  ariaLabel: string;
 }
 
 const NAV_BUTTON = "rounded-full border-white/10 bg-white/5 text-white/80 hover:bg-white/10";
 
-export default function SessionPagination({ page, pageCount, onPage }: Props) {
+export default function Pagination({ page, pageCount, onPage, ariaLabel }: Props) {
   if (pageCount <= 1) return null;
   const nav = pageNav(page, pageCount);
 
@@ -48,10 +50,7 @@ export default function SessionPagination({ page, pageCount, onPage }: Props) {
   }
 
   return (
-    <nav
-      className="flex flex-wrap items-center justify-center gap-2 text-sm text-white/70"
-      aria-label="Paginacja sesji"
-    >
+    <nav className="flex flex-wrap items-center justify-center gap-2 text-sm text-white/70" aria-label={ariaLabel}>
       <Button
         type="button"
         size="sm"

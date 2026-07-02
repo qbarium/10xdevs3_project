@@ -1,0 +1,74 @@
+---
+// Baner trybu sesji (S-13 F4) na `/items?session=<id>`: identyfikuje sesję (źródło, data, status)
+// i niesie akcję powrotu do dziennika. Wariant `meta === null` = „sesja niedostępna" (śmieciowy /
+// nieistniejący / cudzy odnośnik — rozstrzygnięte serwerowo w items.astro): komunikat + akcje wyjścia,
+// strona nie renderuje wtedy listy. Statyczny .astro — treść liczona serwerowo, zero interaktywności.
+
+import { importSessionStatusLabel } from "@/lib/labels";
+import { STATUS_BADGE } from "@/components/import-sessions/SessionCard";
+import type { SessionRowData } from "@/components/import-sessions/SessionCard";
+
+interface Props {
+  /** Metadane sesji (SSR z `getSessionMeta`) albo `null` → wariant „sesja niedostępna". */
+  meta: SessionRowData | null;
+}
+
+const { meta } = Astro.props;
+
+const EXIT_LINK =
+  "rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white";
+---
+
+{
+  meta ? (
+    <section
+      aria-label="Kontekst sesji importu"
+      class="flex flex-wrap items-center gap-3 rounded-xl border border-purple-300/25 bg-purple-400/10 px-4 py-3 backdrop-blur-xl"
+    >
+      <div class="min-w-0 flex-1">
+        <p class="text-sm text-white/90">
+          Wpisy dla sesji importu — <span class="font-medium text-purple-100">{meta.preview}</span>
+          <span class="whitespace-nowrap text-white/60">, {meta.dateLabel}</span>
+        </p>
+      </div>
+      <span
+        class:list={[
+          "rounded-full border px-2 py-0.5 text-xs font-medium whitespace-nowrap",
+          STATUS_BADGE[meta.status],
+        ]}
+      >
+        {importSessionStatusLabel(meta.status)}
+      </span>
+      <a href="/import-sessions" data-session-log-return class:list={EXIT_LINK}>
+        Wróć do dziennika
+      </a>
+    </section>
+  ) : (
+    <section
+      role="alert"
+      class="flex flex-col gap-3 rounded-xl border border-amber-300/30 bg-amber-400/10 px-4 py-4 backdrop-blur-xl"
+    >
+      <p class="text-sm text-amber-100">Sesja niedostępna — odnośnik jest nieprawidłowy albo sesja nie istnieje.</p>
+      <div class="flex flex-wrap gap-2">
+        <a href="/import-sessions" data-session-log-return class:list={EXIT_LINK}>
+          Wróć do dziennika
+        </a>
+        <a href="/items" class:list={EXIT_LINK}>
+          Przejdź do listy wpisów
+        </a>
+      </div>
+    </section>
+  )
+}
+
+<script>
+  // Powrót do dziennika w miejsce wyjścia (strona/filtr/sort): karta „Pokaż wpisy" zapisała query
+  // dziennika w sessionStorage — podmieniamy href odnośników powrotu. Brak zapisu (deep-link) lub brak
+  // storage → zostaje domyślny goły /import-sessions z SSR.
+  import { sessionLogReturnHref } from "@/components/import-sessions/session-log-return";
+
+  const href = sessionLogReturnHref();
+  document.querySelectorAll("a[data-session-log-return]").forEach((link) => {
+    link.setAttribute("href", href);
+  });
+</script>

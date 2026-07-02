@@ -32,6 +32,11 @@ export type SortDir = "asc" | "desc";
 /**
  * Komplet kryteriów listy. `view` na sztywno per strona (nie z URL); reszta czytana z query string.
  * `opstatus` honorowany WYŁĄCZNIE dla `view==="active"` (jedyny widok z >1 stanem operacyjnym).
+ * `page`/`size` (S-13 F2) to OKNO strony: `size` jest preferencją widoku, nie filtrem — nie liczy się
+ * do `hasActiveFilters` (wzorzec `session-list-criteria.ts`).
+ * `session` (S-13 F4) to TRYB SESJI: rejestr wpisów jednej sesji importu na `/items?session=<id>` —
+ * pola filtrów mają wtedy stałe domyślne trybu (`created ASC`, bez filtrów), a `session` LICZY SIĘ
+ * jako aktywny filtr (pusty wynik oferuje wyjście przez „Wyczyść filtry").
  */
 export interface ListCriteria {
   view: MainView;
@@ -40,6 +45,12 @@ export interface ListCriteria {
   dir: SortDir;
   q: string;
   opstatus?: OperationalStatus;
+  /** Numer strony (1-based); domyślnie 1. */
+  page: number;
+  /** Rozmiar strony z puli `ITEM_PAGE_SIZES`; domyślnie `ITEM_PAGE_SIZE`. */
+  size: number;
+  /** Id sesji importu — obecność przełącza listę w tryb sesji (S-13 F4). Format UUID walidują SSR/endpoint. */
+  session?: string;
 }
 
 const SORT_FIELDS = ["created", "updated", "title"] as const satisfies readonly SortField[];
@@ -73,13 +84,36 @@ export function isMainView(value: string | null): value is MainView {
   return value != null && (MAIN_VIEWS as readonly string[]).includes(value);
 }
 
+/** Twardy limit długości parametru `session` (UUID ma 36 znaków; dłuższy śmieć ucinamy, nie rzucamy). */
+const MAX_SESSION_LENGTH = 64;
+
+/**
+ * Tolerancyjny odczyt `?session=`: przycięty, ograniczony do 64 znaków; pusty/białoznakowy → `undefined`
+ * (brak trybu). Format UUID CELOWO niewalidowany tutaj (parser nie rzuca) — rozstrzygają SSR i endpoint.
+ */
+function parseSessionScope(value: string | null): string | undefined {
+  const trimmed = (value ?? "").trim().slice(0, MAX_SESSION_LENGTH);
+  return trimmed === "" ? undefined : trimmed;
+}
+
 /**
  * Czyta kryteria z `params` dla danego `view`. TOLERANCYJNY: każde niepoprawne/brakujące pole → wartość
  * domyślna wg widoku (nie rzuca). `q` przycięte do 200 znaków. `opstatus` honorowany tylko dla `active`
- * i tylko z dozwolonych wartości (new/in_progress) — inaczej `undefined`. JEDYNY walidator kryteriów:
- * używają go SSR, klient ORAZ endpoint.
+ * i tylko z dozwolonych wartości (new/in_progress) — inaczej `undefined`. Okno strony (S-13 F2): `page`
+ * clampowane do ≥ 1, `size` spoza puli → `ITEM_PAGE_SIZE`. Niepusty `?session=` (S-13 F4) przełącza wynik
+ * w tryb sesji ze stałymi domyślnymi filtrów. JEDYNY walidator kryteriów: używają go SSR, klient ORAZ endpoint.
  */
 export function parseListCriteria(view: MainView, params: URLSearchParams): ListCriteria {
+  const page = parseItemPage(params.get("page"));
+  const size = parseItemSize(params.get("size")) ?? ITEM_PAGE_SIZE;
+  // Tryb sesji (S-13 F4): tożsamość trybu żyje w kryteriach i przeżywa cały cykl adresu. Pola filtrów
+  // przyjmują STAŁE domyślne trybu (`created ASC`, bez filtrów) — parametry filtrów w adresie są
+  // IGNOROWANE, bo tryb nie oferuje filtrowania (kontrolki wyszarzone), a ich honorowanie psułoby
+  // round-trip względem `criteriaToQuery` (które w trybie emituje wyłącznie `session` + okno).
+  const session = parseSessionScope(params.get("session"));
+  if (session) {
+    return { view, session, type: "all", sort: "created", dir: "asc", q: "", opstatus: undefined, page, size };
+  }
   const def = defaultSort(view);
   const sortRaw = params.get("sort");
   const dirRaw = params.get("dir");
@@ -91,21 +125,33 @@ export function parseListCriteria(view: MainView, params: URLSearchParams): List
     dir: isSortDir(dirRaw) ? dirRaw : def.dir,
     q: (params.get("q") ?? "").slice(0, MAX_QUERY_LENGTH),
     opstatus: view === "active" && isActiveOperational(opstatusRaw) ? opstatusRaw : undefined,
+    page,
+    size,
   };
 }
 
 /**
  * Serializuje kryteria do query string — TYLKO pola różne od domyślnych dla widoku (czysty, krótki URL).
- * `view` NIE jest emitowane (wynika ze ścieżki). Odwrotność `parseListCriteria`: round-trip zachowuje kryteria.
+ * `view` NIE jest emitowane (wynika ze ścieżki); `page` tylko gdy > 1, `size` tylko gdy ≠ domyślny.
+ * Tryb sesji (S-13 F4): emitowane WYŁĄCZNIE `session` + okno — pola filtrów mają w trybie stałe domyślne,
+ * więc ich emisja zaśmiecałaby adres i psuła round-trip. Odwrotność `parseListCriteria`.
  */
 export function criteriaToQuery(criteria: ListCriteria): string {
-  const def = defaultSort(criteria.view);
   const params = new URLSearchParams();
+  if (criteria.session) {
+    params.set("session", criteria.session);
+    if (criteria.page > 1) params.set("page", String(criteria.page));
+    if (criteria.size !== ITEM_PAGE_SIZE) params.set("size", String(criteria.size));
+    return params.toString();
+  }
+  const def = defaultSort(criteria.view);
   if (criteria.type !== "all") params.set("type", criteria.type);
   if (criteria.sort !== def.sort) params.set("sort", criteria.sort);
   if (criteria.dir !== def.dir) params.set("dir", criteria.dir);
   if (criteria.q !== "") params.set("q", criteria.q);
   if (criteria.view === "active" && criteria.opstatus) params.set("opstatus", criteria.opstatus);
+  if (criteria.page > 1) params.set("page", String(criteria.page));
+  if (criteria.size !== ITEM_PAGE_SIZE) params.set("size", String(criteria.size));
   return params.toString();
 }
 
@@ -115,11 +161,43 @@ export function defaultCriteria(view: MainView): ListCriteria {
 }
 
 /**
- * Czy JAKIEKOLWIEK kryterium odbiega od domyślnego dla widoku (typ / sort / dir / q / opstatus). Reużywa
+ * Czy JAKIKOLWIEK FILTR odbiega od domyślnego dla widoku (typ / sort / dir / q / opstatus). Reużywa
  * `criteriaToQuery` — ono emituje WYŁĄCZNIE pola różne od domyślnych, więc niepusty query string ⇔ aktywny
- * filtr (zamiast osobnego, dryfującego porównania pól). Steruje rozróżnieniem pustego wyniku w wyspach:
- * „brak elementów dla wybranych filtrów" (+ akcja „Wyczyść filtry") vs zwykły pusty widok.
+ * filtr (zamiast osobnego, dryfującego porównania pól). Okno `page`/`size` jest PRZED porównaniem
+ * normalizowane do domyślnych — to preferencja widoku, nie filtr (inaczej sama zmiana strony pokazywałaby
+ * „Wyczyść filtry"; wzorzec `hasActiveSessionFilters`). `session` (S-13 F4) natomiast LICZY SIĘ jako
+ * aktywny filtr (jest emitowane → niepusty query string): pusty wynik trybu ma oferować wyjście.
+ * Steruje rozróżnieniem pustego wyniku w wyspach: „brak elementów dla wybranych filtrów" (+ akcja
+ * „Wyczyść filtry") vs zwykły pusty widok.
  */
 export function hasActiveFilters(criteria: ListCriteria): boolean {
-  return criteriaToQuery(criteria).length > 0;
+  return criteriaToQuery({ ...criteria, page: 1, size: ITEM_PAGE_SIZE }).length > 0;
+}
+
+// --- S-13: okno strony listy wpisów (paginacja) -----------------------------------------------------------
+// Pula rozmiarów i tolerancyjne parsery okna — jedno źródło dla endpointów (S-13 Faza 1) oraz parsera
+// kryteriów i UI (Faza 2). Lustro `SESSION_PAGE_SIZES`/`parsePage`/`parseSize` z `session-list-criteria.ts`.
+
+/** Dozwolone rozmiary strony listy wpisów (pula do wyboru w UI). Domyślny: `ITEM_PAGE_SIZE`. */
+export const ITEM_PAGE_SIZES = [5, 10, 15, 25, 50, 100] as const;
+
+/** Domyślny rozmiar strony listy wpisów. MUSI należeć do `ITEM_PAGE_SIZES`. */
+export const ITEM_PAGE_SIZE = 10;
+
+/** Parsuje numer strony: liczba całkowita ≥ 1; brak / śmieć / < 1 → 1 (clamp, nie rzuca). */
+export function parseItemPage(value: string | null): number {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 1) return 1;
+  return Math.floor(n);
+}
+
+/**
+ * Waliduje rozmiar strony względem puli `ITEM_PAGE_SIZES`; brak / śmieć / spoza puli → `null`.
+ * Dwie ścieżki konsumpcji: KRYTERIA listy (`parseListCriteria`) rozstrzygają `null` na `ITEM_PAGE_SIZE`
+ * (lista wpisów zawsze stronicuje od F2); endpoint sesyjny (`[id]/items`, warstwa danych panelu S-10)
+ * traktuje `null` jako BRAK okna (pełna lista — kompatybilność do demontażu panelu w F5).
+ */
+export function parseItemSize(value: string | null): number | null {
+  const n = Number(value);
+  return (ITEM_PAGE_SIZES as readonly number[]).includes(n) ? n : null;
 }

@@ -2,12 +2,11 @@
 // w JEDNO zapytanie: predykat widoku (stan akceptacji/operacyjny), filtr typu, podfiltr operacyjny
 // (tylko `active`), wyszukiwanie (`ilike` OR po title/description) i sortowanie z łańcuchem tie-break.
 // Filtry dodatkowe FR-008 (S-09) działają po stronie serwera, sterowane parametrami URL przez `ListCriteria`.
-// Stare `getXItems` zostają jako CIENKIE NAKŁADKI (domyślne kryteria widoku) — strony `.astro` migrują do
-// `listItems` dopiero w Fazie 4, więc do tego czasu działają bez zmian.
+// Od S-13 (Faza 1) odczyty zwracają `{ items, total }` i przyjmują OPCJONALNE okno strony — brak okna
+// = pełna lista (dzisiejsze zachowanie; kompatybilność wstecz dla stron SSR i panelu S-10).
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { defaultCriteria } from "@/lib/services/list-criteria";
 import type { ListCriteria, SortField } from "@/lib/services/list-criteria";
 import type { Item } from "@/types";
 
@@ -46,6 +45,18 @@ export function buildSearchOrFilter(term: string): string {
   return `title.ilike.${quoted},description.ilike.${quoted}`;
 }
 
+/** Okno strony (1-based). Wartości walidują parsery `parseItemPage`/`parseItemSize` — serwis im ufa. */
+export interface ListWindow {
+  page: number;
+  size: number;
+}
+
+/** Jedna strona (lub pełna lista przy braku okna) + łączna liczba pasujących wierszy (do kontrolek stron). */
+export interface ItemsPage {
+  items: Item[];
+  total: number;
+}
+
 /**
  * Lista itemów usera wg kryteriów — jedno zapytanie zastępujące pięć osobnych funkcji widoku. Predykat
  * widoku, filtr typu, podfiltr operacyjny (active), wyszukiwanie i sort składane warunkowo. Filtr `user_id`
@@ -53,9 +64,18 @@ export function buildSearchOrFilter(term: string): string {
  * kolumna sortu ≠ created_at, potem zawsze `id ASC`) — `items.id` to losowy UUID (`gen_random_uuid`), więc
  * sam stabilizuje, ale układa losowo; `created_at DESC` daje chronologiczny porządek paczek bulk-akcji o
  * wspólnym `updated_at`, a `id` jest finalnym stabilizatorem. Odwzorowuje dotychczasową kolejność (F6).
+ *
+ * Opcjonalne `window` dokłada `.range(from, to)` (paginacja offsetowa, wzorzec `getImportSessions`);
+ * brak okna = pełna lista. `count: "exact"` liczy WSZYSTKIE pasujące wiersze — świadomy kompromis MVP
+ * jak w S-11 (koszt rośnie ze skalą; przy setkach wpisów pomijalny).
  */
-export async function listItems(supabase: SupabaseClient, userId: string, criteria: ListCriteria): Promise<Item[]> {
-  let query = supabase.from("items").select(ITEM_COLUMNS).eq("user_id", userId);
+export async function listItems(
+  supabase: SupabaseClient,
+  userId: string,
+  criteria: ListCriteria,
+  window?: ListWindow,
+): Promise<ItemsPage> {
+  let query = supabase.from("items").select(ITEM_COLUMNS, { count: "exact" }).eq("user_id", userId);
 
   // Predykat widoku (stan akceptacji + operacyjny).
   switch (criteria.view) {
@@ -94,57 +114,45 @@ export async function listItems(supabase: SupabaseClient, userId: string, criter
   if (column !== "created_at") ordered = ordered.order("created_at", { ascending: false });
   ordered = ordered.order("id", { ascending: true });
 
-  const { data, error } = await ordered.overrideTypes<Item[], { merge: false }>();
+  // Okno strony — tylko gdy podane (brak = pełna lista, dzisiejsze zachowanie).
+  if (window) {
+    const from = (window.page - 1) * window.size;
+    ordered = ordered.range(from, from + window.size - 1);
+  }
+
+  const { data, error, count } = await ordered.overrideTypes<Item[], { merge: false }>();
   if (error) throw new Error("Odczyt itemów nie powiódł się.", { cause: error });
-  return data;
-}
-
-/** Pendingi usera („Elementy do akceptacji", FR-008). */
-export function getPendingItems(supabase: SupabaseClient, userId: string): Promise<Item[]> {
-  return listItems(supabase, userId, defaultCriteria("pending"));
-}
-
-/** Aktywne: accepted ze stanem `new`/`in_progress` (widok „Aktywne", S-04). */
-export function getActiveItems(supabase: SupabaseClient, userId: string): Promise<Item[]> {
-  return listItems(supabase, userId, defaultCriteria("active"));
-}
-
-/** Zakończone: accepted ze stanem `done` (widok „Zakończone", S-04). */
-export function getDoneItems(supabase: SupabaseClient, userId: string): Promise<Item[]> {
-  return listItems(supabase, userId, defaultCriteria("done"));
-}
-
-/** Anulowane: accepted ze stanem `cancelled` (widok „Anulowane", S-04). */
-export function getCancelledItems(supabase: SupabaseClient, userId: string): Promise<Item[]> {
-  return listItems(supabase, userId, defaultCriteria("cancelled"));
+  return { items: data, total: count ?? 0 };
 }
 
 /**
- * Kosz (S-06): OBA statusy kosza — `rejected` (odrzucone w stagingu) ORAZ `deleted` (zaakceptowane
- * przeniesione do kosza). Karmi wyspę `TrashItemsView`, w której badge na karcie rozróżnia pochodzenie (FR-012).
+ * Wszystkie elementy JEDNEJ sesji importu bieżącego usera (S-10, master-detail; od S-13 też tryb sesji) —
+ * odpowiednik `listItems`, ale po `import_session_id` zamiast `view`. Sesja to SCOPE, nie widok: świadomie
+ * BEZ filtra `acceptance_status`, więc konsument dostaje wszystkie cztery stany naraz (`pending`/`accepted`/
+ * `rejected`/`deleted`). Filtr `user_id` redundantny względem RLS (`items_select_own`), ale jawny —
+ * nieistniejąca lub cudza sesja zwróci po prostu pustą listę (RLS odfiltrowuje), bez osobnego sprawdzania
+ * istnienia. Sort `created_at ASC` (niezmienny dla elementu, więc zmiana stanu NIGDY nie przesuwa wiersza)
+ * + stały tie-break `id ASC`. Reużywa `ITEM_COLUMNS` (kształt `Item` 1:1 z `listItems`). Opcjonalne
+ * `window` jak w `listItems` (brak = pełna lista — tolerancja; od F5 tryb sesji zawsze podaje okno).
  */
-export function getTrashItems(supabase: SupabaseClient, userId: string): Promise<Item[]> {
-  return listItems(supabase, userId, defaultCriteria("trash"));
-}
-
-/**
- * Wszystkie elementy JEDNEJ sesji importu bieżącego usera (S-10, master-detail) — odpowiednik `listItems`,
- * ale po `import_session_id` zamiast `view`. Sesja to SCOPE, nie widok: świadomie BEZ filtra
- * `acceptance_status`, więc panel dostaje wszystkie cztery stany naraz (`pending`/`accepted`/`rejected`/
- * `deleted`). Filtr `user_id` redundantny względem RLS (`items_select_own`), ale jawny — nieistniejąca lub
- * cudza sesja zwróci po prostu pustą listę (RLS odfiltrowuje), bez osobnego sprawdzania istnienia. Sort
- * `created_at ASC` (niezmienny dla elementu, więc zmiana stanu NIGDY nie przesuwa wiersza w panelu) + stały
- * tie-break `id ASC`. Reużywa `ITEM_COLUMNS` (kształt `Item` 1:1 z `listItems`).
- */
-export async function getSessionItems(supabase: SupabaseClient, userId: string, sessionId: string): Promise<Item[]> {
-  const { data, error } = await supabase
+export async function getSessionItems(
+  supabase: SupabaseClient,
+  userId: string,
+  sessionId: string,
+  window?: ListWindow,
+): Promise<ItemsPage> {
+  let query = supabase
     .from("items")
-    .select(ITEM_COLUMNS)
+    .select(ITEM_COLUMNS, { count: "exact" })
     .eq("user_id", userId)
     .eq("import_session_id", sessionId)
     .order("created_at", { ascending: true })
-    .order("id", { ascending: true })
-    .overrideTypes<Item[], { merge: false }>();
+    .order("id", { ascending: true });
+  if (window) {
+    const from = (window.page - 1) * window.size;
+    query = query.range(from, from + window.size - 1);
+  }
+  const { data, error, count } = await query.overrideTypes<Item[], { merge: false }>();
   if (error) throw new Error("Odczyt elementów sesji nie powiódł się.", { cause: error });
-  return data;
+  return { items: data, total: count ?? 0 };
 }

@@ -104,11 +104,14 @@ export default function ApiKeyManager({ initialStatus }: Props) {
           <form onSubmit={handleSave} className="flex flex-col gap-3">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="apiKey">Klucz API {AI_PROVIDER_NAME}</Label>
+              {/* autoFocus: jedyne pole formatki — kursor od razu w polu po wejściu na stronę
+                  (decyzja użytkownika 2026-07-02), bez dodatkowego kliknięcia. */}
               <Input
                 id="apiKey"
                 type="password"
                 autoComplete="off"
                 placeholder="sk-…"
+                autoFocus
                 value={draft}
                 onChange={(e) => {
                   setDraft(e.target.value);

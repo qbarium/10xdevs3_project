@@ -82,6 +82,8 @@ export default function IngestForm({ initialKeyStatus }: Props) {
       <CardContent>
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <Label htmlFor="ingest-text">Tekst do klasyfikacji</Label>
+          {/* Wysokość względem viewportu (clamp 6rem–14rem): na laptopie cały formularz (pole + strefa
+              dropu + „Wyślij") mieści się bez przewijania, na dużym ekranie pole nadal rośnie do 14rem. */}
           <Textarea
             id="ingest-text"
             value={text}
@@ -89,7 +91,7 @@ export default function IngestForm({ initialKeyStatus }: Props) {
             onKeyDown={handleKeyDown}
             disabled={!configured || processing || hasFile}
             placeholder="Wklej luźne myśli, notatki, listę zadań…"
-            className="field-sizing-fixed h-64 resize-none overflow-y-auto font-mono text-sm"
+            className="field-sizing-fixed h-[clamp(6rem,22vh,14rem)] resize-none overflow-y-auto font-mono text-sm"
           />
           <div className="flex flex-col">
             <span className={cn("text-xs", atLimit ? "text-amber-400" : "text-muted-foreground")}>

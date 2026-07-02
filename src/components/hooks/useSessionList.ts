@@ -1,7 +1,7 @@
 // Hook listy dziennika sesji importu (S-11): jedyny właściciel listy w wyspie. Pobiera stronę listy wg
 // `SessionListCriteria` z GET /api/import-sessions i utrzymuje adres strony w zgodzie z kryteriami
 // (hydration-stable — ten sam parser co SSR). Wzorzec `useItemList` (S-09), ale PROSTSZY: dziennik nie ma
-// wyszukiwania tekstowego, więc brak gałęzi debounce/`q`; retry sesji żyje niezależnie w `SessionRow`
+// wyszukiwania tekstowego, więc brak gałęzi debounce/`q`; retry sesji żyje niezależnie w `SessionCard`
 // (`useSessionRetry`, mutacja in-place), więc lista nie potrzebuje `applyOptimistic`. Czyste funkcje
 // (`buildSessionListUrl`/`mapSessionResponse`/`fetchSessionList`) testowane w node; pełen hook
 // (popstate/history/AbortController) weryfikowany ręcznie na `npm run preview`.
@@ -16,9 +16,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { readPageSizePref } from "@/components/import-sessions/page-size-pref";
-import type { SessionRowData } from "@/components/import-sessions/SessionRow";
-import { parseSessionListCriteria, sessionCriteriaToQuery } from "@/lib/services/session-list-criteria";
+import type { SessionRowData } from "@/components/import-sessions/SessionCard";
+import { readPageSizePref, SESSION_LOG_PAGE_SIZE_KEY } from "@/components/lists/page-size-pref";
+import {
+  parseSessionListCriteria,
+  SESSION_PAGE_SIZES,
+  sessionCriteriaToQuery,
+} from "@/lib/services/session-list-criteria";
 import type { SessionListCriteria } from "@/lib/services/session-list-criteria";
 
 const FETCH_ERROR = "Nie udało się zaktualizować listy. Spróbuj ponownie.";
@@ -161,11 +165,12 @@ export function useSessionList(
     };
   }, [runFetch]);
 
-  // Trwała preferencja rozmiaru strony: na „gołym" wejściu (URL bez `size`) adoptuj zapamiętaną wartość z
-  // localStorage i re-fetchuj BEZ zapisu URL (preferencja nie zaśmieca adresu). URL z `size` ma pierwszeństwo.
+  // Trwała preferencja rozmiaru strony: na „gołym" wejściu (URL bez `size`) adoptuj zapamiętaną wartość
+  // (cookie; fallback legacy localStorage) i re-fetchuj BEZ zapisu URL. URL z `size` ma pierwszeństwo.
+  // SSR nakłada preferencję z cookie już przy renderze (withPageSizePref) — efekt jest wtedy no-opem.
   useEffect(() => {
     if (new URLSearchParams(window.location.search).has("size")) return;
-    const stored = readPageSizePref();
+    const stored = readPageSizePref(SESSION_LOG_PAGE_SIZE_KEY, SESSION_PAGE_SIZES);
     if (stored == null || stored === criteriaRef.current.size) return;
     const next = { ...criteriaRef.current, size: stored, page: 1 };
     criteriaRef.current = next;

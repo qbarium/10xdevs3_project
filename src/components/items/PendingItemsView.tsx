@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useItemList } from "@/components/hooks/useItemList";
 import { useItemMutation } from "@/components/hooks/useItemMutation";
 import EditItemDialog from "@/components/items/EditItemDialog";
+import ItemCard, { ITEM_CHECKBOX_CLASS } from "@/components/items/ItemCard";
 import ListFilterBar from "@/components/items/ListFilterBar";
 import {
   allIds,
@@ -12,6 +13,10 @@ import {
   requiresConfirmation,
   toggleSelection,
 } from "@/components/items/selection";
+import { ITEMS_LIST_PAGE_SIZE_KEY, writePageSizePref } from "@/components/lists/page-size-pref";
+import PageSizeSelect from "@/components/lists/PageSizeSelect";
+import Pagination from "@/components/lists/Pagination";
+import { resetToFirstPage } from "@/components/lists/list-pagination";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -23,10 +28,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Toaster } from "@/components/ui/sonner";
-import { itemTypeLabel } from "@/lib/labels";
-import { defaultCriteria, hasActiveFilters } from "@/lib/services/list-criteria";
+import { defaultCriteria, hasActiveFilters, ITEM_PAGE_SIZES } from "@/lib/services/list-criteria";
 import type { ListCriteria } from "@/lib/services/list-criteria";
-import { cn } from "@/lib/utils";
 import type { Item } from "@/types";
 
 interface Props {
@@ -34,15 +37,13 @@ interface Props {
   /** Kryteria z adresu strony (czytane SERWEROWO tym samym parserem co klient) — stan startowy hooka, by SSR
       i pierwszy render wyspy były identyczne (hydration-stable, bez przeskoku). */
   initialCriteria: ListCriteria;
+  /** Łączna liczba itemów pasujących do kryteriów (SSR z `count`) — stan startowy licznika stron (S-13 F2). */
+  initialTotal: number;
 }
 
 type PendingAction = "accept" | "reject";
 
 const ACTION_LABEL: Record<PendingAction, string> = { accept: "Zatwierdź", reject: "Odrzuć" };
-
-// Checkbox wyraźnie widoczny na ciemnym tle „cosmic" (domyślny border-input jest zbyt subtelny).
-const CHECKBOX_CLASS =
-  "size-5 border-white/40 data-[state=checked]:border-purple-400 data-[state=checked]:bg-purple-500 data-[state=checked]:text-white data-[state=indeterminate]:border-purple-400 data-[state=indeterminate]:bg-purple-500 data-[state=indeterminate]:text-white";
 
 /** Polska odmiana rzeczownika „element" wg liczby (1 / 2–4 / pozostałe). */
 function elementNoun(n: number): string {
@@ -59,12 +60,18 @@ function elementNoun(n: number): string {
 //
 // S-09: lista należy do `useItemList` (filtr typu SERWEROWY przez kryteria z URL — pending zyskuje filtr,
 // którego wcześniej nie miał). Zmiana filtra = re-fetch; mutacje = optimistic przez `applyOptimistic`.
-export default function PendingItemsView({ initialItems, initialCriteria }: Props) {
-  const { items, criteria, settledCriteria, setCriteria, applyOptimistic, error } = useItemList(
-    "pending",
-    initialItems,
-    initialCriteria,
-  );
+export default function PendingItemsView({ initialItems, initialCriteria, initialTotal }: Props) {
+  const {
+    items,
+    criteria,
+    settledCriteria,
+    setCriteria,
+    applyOptimistic,
+    refetchAfterRemoval,
+    error,
+    page,
+    pageCount,
+  } = useItemList("pending", initialItems, initialCriteria, initialTotal);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmRequest, setConfirmRequest] = useState<{ action: PendingAction; ids: string[] } | null>(null);
   const [editing, setEditing] = useState<Item | null>(null);
@@ -128,6 +135,9 @@ export default function PendingItemsView({ initialItems, initialCriteria }: Prop
       idSet.forEach((id) => next.delete(id));
       return next;
     });
+    // Kolejka się dosuwa (decyzja 2026-07-02): dociągnij bieżącą stronę (clamp do nowej liczby stron) —
+    // w miejsce usuniętych wjeżdżają wpisy z kolejnych stron, licznik stron mówi prawdę.
+    refetchAfterRemoval();
     // Licznik z serwera = liczba FAKTYCZNIE zmienionych (guard pomija itemy zmienione w innej karcie).
     if (count > 0) {
       const verb = action === "accept" ? "Zatwierdzono" : "Odrzucono";
@@ -161,7 +171,8 @@ export default function PendingItemsView({ initialItems, initialCriteria }: Prop
     applyOptimistic((prev) => prev.map((current) => (current.id === updated.id ? updated : current)));
   }
 
-  // 404 podczas edycji (item nie jest już pending) — usuń z listy (optimistic) i z zaznaczenia.
+  // 404 podczas edycji (item nie jest już pending) — usuń z listy (optimistic) i z zaznaczenia,
+  // po czym dociągnij stronę (kolejka się dosuwa).
   function handleRemoved(id: string): void {
     applyOptimistic((prev) => prev.filter((current) => current.id !== id));
     setSelected((prev) => {
@@ -170,6 +181,7 @@ export default function PendingItemsView({ initialItems, initialCriteria }: Prop
       next.delete(id);
       return next;
     });
+    refetchAfterRemoval();
   }
 
   return (
@@ -179,7 +191,17 @@ export default function PendingItemsView({ initialItems, initialCriteria }: Prop
       {/* Pasek filtrów widoczny, gdy jest co filtrować ALBO gdy jakikolwiek filtr jest aktywny — w drugim
           przypadku lista może być pusta (zawężona), a kontrolki MUSZĄ zostać dostępne (powrót do domyślnych). */}
       {(items.length > 0 || filtersActive) && (
-        <ListFilterBar criteria={criteria} onChange={applyCriteria} error={error} onRetry={retry} />
+        <ListFilterBar
+          criteria={criteria}
+          onChange={(next) => {
+            // Zmiana filtra/sortu/frazy → strona 1 (zakres wyników się zmienia; strona N mogłaby nie istnieć —
+            // offset za końcem to błąd PGRST103). Wzorzec dziennika (S-11). Reset nie psuje debounce frazy:
+            // isSearchOnlyChange ignoruje `page`.
+            applyCriteria(resetToFirstPage(next));
+          }}
+          error={error}
+          onRetry={retry}
+        />
       )}
 
       {items.length === 0 ? (
@@ -193,7 +215,8 @@ export default function PendingItemsView({ initialItems, initialCriteria }: Prop
               size="sm"
               variant="outline"
               onClick={() => {
-                applyCriteria(defaultCriteria("pending"));
+                // Czyść filtry/sort (i wróć na stronę 1), ale ZACHOWAJ rozmiar strony — preferencja widoku.
+                applyCriteria({ ...defaultCriteria("pending"), size: criteria.size });
               }}
               className="border-white/15 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white"
             >
@@ -216,7 +239,7 @@ export default function PendingItemsView({ initialItems, initialCriteria }: Prop
                 checked={allSelected ? true : selectedCount > 0 ? "indeterminate" : false}
                 onCheckedChange={toggleAll}
                 aria-label="Zaznacz wszystkie"
-                className={CHECKBOX_CLASS}
+                className={ITEM_CHECKBOX_CLASS}
               />
               Zaznacz wszystkie
             </label>
@@ -248,64 +271,51 @@ export default function PendingItemsView({ initialItems, initialCriteria }: Prop
           </div>
 
           {items.map((item) => (
-            <article
+            <ItemCard
               key={item.id}
-              className={cn(
-                "flex gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl transition-opacity",
-                inFlightIds.has(item.id) && "pointer-events-none opacity-50",
-              )}
-            >
-              <Checkbox
-                checked={selected.has(item.id)}
-                onCheckedChange={() => {
-                  toggleItem(item.id);
-                }}
-                aria-label={`Zaznacz: ${item.title}`}
-                className={cn("mt-1", CHECKBOX_CLASS)}
-              />
-              <div className="min-w-0 flex-1">
-                <span className="inline-block rounded-full border border-purple-300/30 bg-purple-400/10 px-2 py-0.5 text-xs font-medium text-purple-100">
-                  {itemTypeLabel(item.type)}
-                </span>
-                <h3 className="mt-2 font-semibold text-white/90">{item.title}</h3>
-                {item.description && <p className="mt-1 line-clamp-2 text-sm text-white/70">{item.description}</p>}
-              </div>
-              <div className="flex shrink-0 items-start gap-1">
-                <Button
-                  variant="default"
-                  size="sm"
-                  disabled={pending}
-                  onClick={() => {
-                    void execute("accept", [item.id]);
-                  }}
-                >
-                  Zatwierdź
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={pending}
-                  onClick={() => {
-                    void execute("reject", [item.id]);
-                  }}
-                >
-                  Odrzuć
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-white/60 hover:bg-white/10 hover:text-white"
-                  onClick={() => {
-                    setEditing(item);
-                  }}
-                >
-                  Edytuj
-                </Button>
-              </div>
-            </article>
+              item={item}
+              badges={{}}
+              selectable
+              selected={selected.has(item.id)}
+              onToggleSelect={() => {
+                toggleItem(item.id);
+              }}
+              inFlight={inFlightIds.has(item.id)}
+              actionsDisabled={pending}
+              onEdit={setEditing}
+              onAccept={(it) => {
+                void execute("accept", [it.id]);
+              }}
+              onReject={(it) => {
+                void execute("reject", [it.id]);
+              }}
+            />
           ))}
         </>
       )}
+
+      {/* Kontrolki stron (S-13 F2, parytet z dziennikiem): rozmiar strony (trwała preferencja + reset do 1)
+          i nawigacja stron (zachowuje filtry z wyświetlanej listy). Zmiana czyści zaznaczenie (applyCriteria —
+          invariant „selected ⊆ widoczne"). Pagination sama znika przy jednej stronie. */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <PageSizeSelect
+          value={criteria.size}
+          sizes={ITEM_PAGE_SIZES}
+          ariaLabel="Liczba elementów na stronę"
+          onChange={(size) => {
+            writePageSizePref(ITEMS_LIST_PAGE_SIZE_KEY, ITEM_PAGE_SIZES, size);
+            applyCriteria(resetToFirstPage({ ...criteria, size }));
+          }}
+        />
+        <Pagination
+          page={page}
+          pageCount={pageCount}
+          ariaLabel="Paginacja listy elementów"
+          onPage={(nextPage) => {
+            applyCriteria({ ...settledCriteria, page: nextPage });
+          }}
+        />
+      </div>
 
       <Dialog
         open={confirmRequest !== null}

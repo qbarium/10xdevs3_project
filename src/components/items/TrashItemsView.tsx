@@ -3,6 +3,8 @@ import { toast } from "sonner";
 
 import { useItemList } from "@/components/hooks/useItemList";
 import { useItemMutation } from "@/components/hooks/useItemMutation";
+import EntriesViewSelect from "@/components/items/EntriesViewSelect";
+import ItemCard, { ITEM_CHECKBOX_CLASS } from "@/components/items/ItemCard";
 import ListFilterBar from "@/components/items/ListFilterBar";
 import {
   allIds,
@@ -11,6 +13,10 @@ import {
   requiresConfirmation,
   toggleSelection,
 } from "@/components/items/selection";
+import { ITEMS_LIST_PAGE_SIZE_KEY, writePageSizePref } from "@/components/lists/page-size-pref";
+import PageSizeSelect from "@/components/lists/PageSizeSelect";
+import Pagination from "@/components/lists/Pagination";
+import { resetToFirstPage } from "@/components/lists/list-pagination";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -22,10 +28,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Toaster } from "@/components/ui/sonner";
-import { acceptanceOriginLabel, itemTypeLabel } from "@/lib/labels";
-import { defaultCriteria, hasActiveFilters } from "@/lib/services/list-criteria";
+import { defaultCriteria, hasActiveFilters, ITEM_PAGE_SIZES } from "@/lib/services/list-criteria";
 import type { ListCriteria } from "@/lib/services/list-criteria";
-import { cn } from "@/lib/utils";
 import type { Item } from "@/types";
 
 interface Props {
@@ -33,11 +37,9 @@ interface Props {
   /** Kryteria z adresu strony (czytane SERWEROWO tym samym parserem co klient) — stan startowy hooka, by SSR
       i pierwszy render wyspy były identyczne (hydration-stable, bez przeskoku). */
   initialCriteria: ListCriteria;
+  /** Łączna liczba itemów pasujących do kryteriów (SSR z `count`) — stan startowy licznika stron (S-13 F2). */
+  initialTotal: number;
 }
-
-// Checkbox wyraźnie widoczny na ciemnym tle „cosmic" (jak AcceptedItemsView).
-const CHECKBOX_CLASS =
-  "size-5 border-white/40 data-[state=checked]:border-purple-400 data-[state=checked]:bg-purple-500 data-[state=checked]:text-white data-[state=indeterminate]:border-purple-400 data-[state=indeterminate]:bg-purple-500 data-[state=indeterminate]:text-white";
 
 /** Polska odmiana rzeczownika „element" wg liczby (lokalne, jak w AcceptedItemsView — bez sprzęgania islandów). */
 function elementNoun(n: number): string {
@@ -60,12 +62,19 @@ function elementNoun(n: number): string {
 // serwerowo, więc nie znamy już łącznej liczby kosza po stronie klienta — dialog „Wyczyść kosz" pokazuje
 // konkretną liczbę tylko bez aktywnego filtra (`type==="all"`); przy filtrze opiera się na treści „CAŁY kosz"
 // i liczbie z toastu po akcji (serwer zwraca faktycznie usuniętą liczbę).
-export default function TrashItemsView({ initialItems, initialCriteria }: Props) {
-  const { items, criteria, settledCriteria, setCriteria, applyOptimistic, error } = useItemList(
-    "trash",
-    initialItems,
-    initialCriteria,
-  );
+export default function TrashItemsView({ initialItems, initialCriteria, initialTotal }: Props) {
+  const {
+    items,
+    criteria,
+    settledCriteria,
+    setCriteria,
+    applyOptimistic,
+    refetchAfterRemoval,
+    error,
+    total,
+    page,
+    pageCount,
+  } = useItemList("trash", initialItems, initialCriteria, initialTotal);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [inFlightIds, setInFlightIds] = useState<Set<string>>(new Set());
   // Potwierdzenie restore (select-all): id do przywrócenia po akceptacji. Potwierdzenie empty: boolean.
@@ -113,6 +122,8 @@ export default function TrashItemsView({ initialItems, initialCriteria }: Props)
       idSet.forEach((id) => next.delete(id));
       return next;
     });
+    // Kolejka się dosuwa (decyzja 2026-07-02): dociągnij bieżącą stronę (clamp do nowej liczby stron).
+    refetchAfterRemoval();
     // Licznik z serwera = liczba FAKTYCZNIE przywróconych (guard statusem pomija nie-uprawnione).
     if (count > 0) {
       toast.success(`Przywrócono ${count} ${elementNoun(count)}.`);
@@ -143,6 +154,8 @@ export default function TrashItemsView({ initialItems, initialCriteria }: Props)
 
   // „Wyczyść kosz": globalny twardy DELETE. Po potwierdzeniu kasuje CAŁY kosz (rejected + deleted, ponad
   // filtrami) — stan listy czyścimy do pustej (optimistic), bo serwer skasował wszystkie wiersze usera.
+  // Dociągnięcie JAWNIE na stronę 1: lokalna korekta `total` zna tylko bieżącą stronę, a serwer wyzerował
+  // wszystko — fetch strony 1 przynosi prawdziwy (pusty) stan i licznik.
   async function executeEmpty(): Promise<void> {
     if (inFlightRef.current) return;
     inFlightRef.current = true;
@@ -154,6 +167,7 @@ export default function TrashItemsView({ initialItems, initialCriteria }: Props)
     }
     applyOptimistic(() => []);
     setSelected(new Set());
+    refetchAfterRemoval(1);
     toast.success(`Kosz opróżniony — trwale usunięto ${count} ${elementNoun(count)}.`);
     inFlightRef.current = false;
   }
@@ -180,23 +194,31 @@ export default function TrashItemsView({ initialItems, initialCriteria }: Props)
     <div className="flex flex-col gap-3">
       <Toaster />
 
-      {/* Pasek filtrów + „Wyczyść kosz" widoczny, gdy jest co filtrować ALBO gdy jakikolwiek filtr jest
-          aktywny — w drugim przypadku lista może być pusta (zawężona), a kontrolki MUSZĄ zostać dostępne
-          (powrót do domyślnych oraz globalne czyszczenie kosza, który poza filtrem wciąż może mieć itemy). */}
-      {(items.length > 0 || filtersActive) && (
-        <ListFilterBar criteria={criteria} onChange={applyCriteria} error={error} onRetry={retry}>
-          <Button
-            size="sm"
-            variant="destructive"
-            disabled={pending}
-            onClick={() => {
-              setConfirmEmpty(true);
-            }}
-          >
-            Wyczyść kosz
-          </Button>
-        </ListFilterBar>
-      )}
+      {/* Pasek filtrów ZAWSZE widoczny: od 2026-07-02 niesie przełącznik widoku strony „Wpisy"
+          (EntriesViewSelect zastąpił zakładki) — nawigacja nie może znikać przy pustym koszu. */}
+      <ListFilterBar
+        criteria={criteria}
+        onChange={(next) => {
+          // Zmiana filtra/sortu/frazy → strona 1 (zakres wyników się zmienia; strona N mogłaby nie istnieć —
+          // offset za końcem to błąd PGRST103). Wzorzec dziennika (S-11). Reset nie psuje debounce frazy:
+          // isSearchOnlyChange ignoruje `page`.
+          applyCriteria(resetToFirstPage(next));
+        }}
+        error={error}
+        onRetry={retry}
+        leading={<EntriesViewSelect view="trash" type={criteria.type} />}
+      >
+        <Button
+          size="sm"
+          variant="destructive"
+          disabled={pending}
+          onClick={() => {
+            setConfirmEmpty(true);
+          }}
+        >
+          Wyczyść kosz
+        </Button>
+      </ListFilterBar>
 
       {items.length === 0 ? (
         filtersActive ? (
@@ -209,7 +231,8 @@ export default function TrashItemsView({ initialItems, initialCriteria }: Props)
               size="sm"
               variant="outline"
               onClick={() => {
-                applyCriteria(defaultCriteria("trash"));
+                // Czyść filtry/sort (i wróć na stronę 1), ale ZACHOWAJ rozmiar strony — preferencja widoku.
+                applyCriteria({ ...defaultCriteria("trash"), size: criteria.size });
               }}
               className="border-white/15 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white"
             >
@@ -232,7 +255,7 @@ export default function TrashItemsView({ initialItems, initialCriteria }: Props)
                 checked={allSelected ? true : selectedCount > 0 ? "indeterminate" : false}
                 onCheckedChange={toggleAll}
                 aria-label="Zaznacz wszystkie"
-                className={CHECKBOX_CLASS}
+                className={ITEM_CHECKBOX_CLASS}
               />
               Zaznacz wszystkie
             </label>
@@ -247,49 +270,47 @@ export default function TrashItemsView({ initialItems, initialCriteria }: Props)
           </div>
 
           {items.map((item) => (
-            <article
+            <ItemCard
               key={item.id}
-              className={cn(
-                "flex gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl transition-opacity",
-                inFlightIds.has(item.id) && "pointer-events-none opacity-50",
-              )}
-            >
-              <Checkbox
-                checked={selected.has(item.id)}
-                onCheckedChange={() => {
-                  toggleItem(item.id);
-                }}
-                aria-label={`Zaznacz: ${item.title}`}
-                className={cn("mt-1", CHECKBOX_CLASS)}
-              />
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-block rounded-full border border-purple-300/30 bg-purple-400/10 px-2 py-0.5 text-xs font-medium text-purple-100">
-                    {itemTypeLabel(item.type)}
-                  </span>
-                  {/* Item w koszu ma zawsze status rejected|deleted (gwarancja predykatu widoku „trash"). */}
-                  <span className="inline-block rounded-full border border-white/15 bg-white/5 px-2 py-0.5 text-xs font-medium text-white/70">
-                    {acceptanceOriginLabel(item.acceptance_status as "rejected" | "deleted")}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="ml-auto text-white/60 hover:bg-white/10 hover:text-white"
-                    disabled={pending}
-                    onClick={() => {
-                      void executeRestore([item.id]);
-                    }}
-                  >
-                    Przywróć
-                  </Button>
-                </div>
-                <h3 className="mt-2 font-semibold text-white/90">{item.title}</h3>
-                {item.description && <p className="mt-1 line-clamp-2 text-sm text-white/70">{item.description}</p>}
-              </div>
-            </article>
+              item={item}
+              badges={{ origin: true }}
+              selectable
+              selected={selected.has(item.id)}
+              onToggleSelect={() => {
+                toggleItem(item.id);
+              }}
+              inFlight={inFlightIds.has(item.id)}
+              actionsDisabled={pending}
+              onRestore={(it) => {
+                void executeRestore([it.id]);
+              }}
+            />
           ))}
         </>
       )}
+
+      {/* Kontrolki stron (S-13 F2, parytet z dziennikiem): rozmiar strony (trwała preferencja + reset do 1)
+          i nawigacja stron (zachowuje filtry z wyświetlanej listy). Zmiana czyści zaznaczenie (applyCriteria —
+          invariant „selected ⊆ widoczne"). Pagination sama znika przy jednej stronie. */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <PageSizeSelect
+          value={criteria.size}
+          sizes={ITEM_PAGE_SIZES}
+          ariaLabel="Liczba elementów na stronę"
+          onChange={(size) => {
+            writePageSizePref(ITEMS_LIST_PAGE_SIZE_KEY, ITEM_PAGE_SIZES, size);
+            applyCriteria(resetToFirstPage({ ...criteria, size }));
+          }}
+        />
+        <Pagination
+          page={page}
+          pageCount={pageCount}
+          ariaLabel="Paginacja listy elementów"
+          onPage={(nextPage) => {
+            applyCriteria({ ...settledCriteria, page: nextPage });
+          }}
+        />
+      </div>
 
       {/* Potwierdzenie bulk restore (select-all). */}
       <Dialog
@@ -323,7 +344,8 @@ export default function TrashItemsView({ initialItems, initialCriteria }: Props)
 
       {/* Potwierdzenie „Wyczyść kosz" — łączna liczba znana klientowi tylko BEZ filtra zawężającego liczbę
           (type==="all" ORAZ pusta fraza q — oba filtrują wiersze kosza); przy aktywnym filtrze pomijamy liczbę
-          (lista jest zawężona), a treść niesie zakres „CAŁY kosz". Sort/dir nie zmieniają liczby — pomijane. */}
+          (lista jest zawężona), a treść niesie zakres „CAŁY kosz". Sort/dir nie zmieniają liczby — pomijane.
+          Od paginacji (S-13 F2) liczbą jest `total` z hooka (items.length to tylko bieżąca strona). */}
       <Dialog
         open={confirmEmpty}
         onOpenChange={(open) => {
@@ -334,7 +356,7 @@ export default function TrashItemsView({ initialItems, initialCriteria }: Props)
           <DialogHeader>
             <DialogTitle>
               {criteria.type === "all" && criteria.q === ""
-                ? `Wyczyścić kosz? Trwale usuniesz ${items.length} ${elementNoun(items.length)}.`
+                ? `Wyczyścić kosz? Trwale usuniesz ${total} ${elementNoun(total)}.`
                 : "Wyczyścić kosz?"}
             </DialogTitle>
             <DialogDescription>

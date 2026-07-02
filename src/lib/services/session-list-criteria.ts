@@ -15,8 +15,8 @@
 
 import type { ImportSessionStatus } from "@/types";
 
-/** Dozwolone rozmiary strony dziennika (pula do wyboru w UI). Pierwszy element jest domyślny. */
-export const SESSION_PAGE_SIZES = [10, 15, 25, 50, 100] as const;
+/** Dozwolone rozmiary strony dziennika (pula do wyboru w UI). Domyślny: `SESSION_PAGE_SIZE`. */
+export const SESSION_PAGE_SIZES = [5, 10, 15, 25, 50, 100] as const;
 
 /** Domyślny rozmiar strony (gdy brak/niepoprawny `size`). MUSI należeć do `SESSION_PAGE_SIZES`. */
 export const SESSION_PAGE_SIZE = 10;

@@ -1,8 +1,13 @@
 ---
 import Welcome from "@/components/Welcome.astro";
 import Layout from "@/layouts/Layout.astro";
+
+export const prerender = false;
+
+// Strona startowa dla NIEZALOGOWANYCH — zalogowanego przekierowuje middleware (patrz src/middleware.ts:
+// `/` + user → /ingest), więc ta strona renderuje się wyłącznie anonimowo.
 ---
 
-<Layout>
+<Layout title="TaskerLight">
   <Welcome />
 </Layout>
