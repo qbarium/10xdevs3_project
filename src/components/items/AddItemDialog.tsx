@@ -41,9 +41,14 @@ export default function AddItemDialog({ open, defaultType, onOpenChange, onCreat
   const [description, setDescription] = useState("");
   const [type, setType] = useState<ItemType>(defaultType);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  // Czy użytkownik DOTKNĄŁ pola tytułu (wpisał coś / opuścił pole). Komunikat „wymagany" pokazujemy
+  // dopiero wtedy — świeżo otwarty dialog nie krzyczy o pustym polu (decyzja użytkownika 2026-07-02).
+  // „Dodaj" i tak jest nieaktywne do czasu poprawnego tytułu.
+  const [titleTouched, setTitleTouched] = useState(false);
   const { createItem, pending } = useItemMutation();
 
   const titleInvalid = !isTitleValid(title);
+  const showTitleError = titleInvalid && titleTouched;
   const isDirty = title.trim() !== "" || description.trim() !== "";
 
   async function handleSave(): Promise<void> {
@@ -85,12 +90,16 @@ export default function AddItemDialog({ open, defaultType, onOpenChange, onCreat
               <Input
                 id="add-title"
                 value={title}
-                aria-invalid={titleInvalid}
+                aria-invalid={showTitleError}
                 onChange={(event) => {
                   setTitle(event.target.value);
+                  setTitleTouched(true);
+                }}
+                onBlur={() => {
+                  setTitleTouched(true);
                 }}
               />
-              {titleInvalid && <p className="text-destructive text-sm">Tytuł jest wymagany.</p>}
+              {showTitleError && <p className="text-destructive text-sm">Tytuł jest wymagany.</p>}
             </div>
 
             <div className="flex flex-col gap-2">
