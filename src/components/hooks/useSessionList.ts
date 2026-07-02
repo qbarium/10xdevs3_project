@@ -165,8 +165,9 @@ export function useSessionList(
     };
   }, [runFetch]);
 
-  // Trwała preferencja rozmiaru strony: na „gołym" wejściu (URL bez `size`) adoptuj zapamiętaną wartość z
-  // localStorage i re-fetchuj BEZ zapisu URL (preferencja nie zaśmieca adresu). URL z `size` ma pierwszeństwo.
+  // Trwała preferencja rozmiaru strony: na „gołym" wejściu (URL bez `size`) adoptuj zapamiętaną wartość
+  // (cookie; fallback legacy localStorage) i re-fetchuj BEZ zapisu URL. URL z `size` ma pierwszeństwo.
+  // SSR nakłada preferencję z cookie już przy renderze (withPageSizePref) — efekt jest wtedy no-opem.
   useEffect(() => {
     if (new URLSearchParams(window.location.search).has("size")) return;
     const stored = readPageSizePref(SESSION_LOG_PAGE_SIZE_KEY, SESSION_PAGE_SIZES);

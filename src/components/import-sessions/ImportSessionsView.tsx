@@ -95,7 +95,7 @@ export default function ImportSessionsView({
             sizes={SESSION_PAGE_SIZES}
             ariaLabel="Liczba wpisów na stronę"
             onChange={(size) => {
-              // Zmiana rozmiaru = nowy zakres → reset do strony 1; zapamiętujemy wybór w localStorage.
+              // Zmiana rozmiaru = nowy zakres → reset do strony 1; wybór zapamiętany w cookie (czyta też SSR).
               writePageSizePref(SESSION_LOG_PAGE_SIZE_KEY, SESSION_PAGE_SIZES, size);
               setCriteria(resetToFirstPage({ ...criteria, size }));
             }}

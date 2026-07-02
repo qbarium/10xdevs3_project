@@ -251,8 +251,10 @@ export function useItemList(
     };
   }, [view, runFetch]);
 
-  // Trwała preferencja rozmiaru strony: na „gołym" wejściu (URL bez `size`) adoptuj zapamiętaną wartość z
-  // localStorage i re-fetchuj BEZ zapisu URL (preferencja nie zaśmieca adresu). URL z `size` ma pierwszeństwo.
+  // Trwała preferencja rozmiaru strony: na „gołym" wejściu (URL bez `size`) adoptuj zapamiętaną wartość
+  // (cookie; fallback legacy localStorage) i re-fetchuj BEZ zapisu URL. URL z `size` ma pierwszeństwo.
+  // SSR nakłada preferencję z cookie już przy renderze (withPageSizePref), więc normalnie stored ===
+  // criteria.size i efekt jest no-opem — realnie odpala się tylko przy migracji z localStorage.
   // Wzorzec useSessionList; klucz wspólny dla wszystkich widoków listy wpisów.
   useEffect(() => {
     if (new URLSearchParams(window.location.search).has("size")) return;

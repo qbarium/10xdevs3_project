@@ -3,9 +3,10 @@ import Layout from "@/layouts/Layout.astro";
 import Topbar from "@/components/Topbar.astro";
 import ImportSessionsView from "@/components/import-sessions/ImportSessionsView";
 import type { SessionRowData } from "@/components/import-sessions/SessionCard";
+import { SESSION_LOG_PAGE_SIZE_KEY, withPageSizePref } from "@/components/lists/page-size-pref";
 import { createClient } from "@/lib/supabase";
 import { getImportSessions, toSessionRow } from "@/lib/services/import-session";
-import { parseSessionListCriteria } from "@/lib/services/session-list-criteria";
+import { parseSessionListCriteria, SESSION_PAGE_SIZES } from "@/lib/services/session-list-criteria";
 
 export const prerender = false;
 
@@ -13,7 +14,14 @@ const { user } = Astro.locals;
 
 // S-11: kryteria dziennika (status/sort/page) z adresu strony przez TEN SAM tolerancyjny parser, co endpoint
 // i hook — render serwerowy i pierwszy stan wyspy są identyczne (hydration-stable, brak przeskoku po hydracji).
-const criteria = parseSessionListCriteria(Astro.url.searchParams);
+// Preferencja rozmiaru strony z COOKIE nakładana już przy SSR (URL z `size` ma pierwszeństwo) — serwer
+// renderuje od razu właściwą liczbę wierszy, kliencka adopcja jest no-opem (bez migotania listy).
+const criteria = withPageSizePref(
+  parseSessionListCriteria(Astro.url.searchParams),
+  Astro.url.searchParams,
+  Astro.cookies.get(SESSION_LOG_PAGE_SIZE_KEY)?.value,
+  SESSION_PAGE_SIZES,
+);
 
 // Middleware chroni /import-sessions (PROTECTED_ROUTES) — `user` zawsze ustawiony. Pierwsza strona listy
 // serwerowo (klient z cookies usera → RLS izoluje per-user). Przejściowy błąd odczytu → pusta strona

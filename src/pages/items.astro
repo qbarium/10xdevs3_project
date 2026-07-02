@@ -7,10 +7,11 @@ import MainFilterNav from "@/components/items/MainFilterNav.astro";
 import PendingItemsView from "@/components/items/PendingItemsView.tsx";
 import SessionBanner from "@/components/items/SessionBanner.astro";
 import SessionEntriesView from "@/components/items/SessionEntriesView.tsx";
+import { ITEMS_LIST_PAGE_SIZE_KEY, withPageSizePref } from "@/components/lists/page-size-pref";
 import { createClient } from "@/lib/supabase";
 import { getSessionMeta } from "@/lib/services/import-session";
 import { getSessionItems, listItems } from "@/lib/services/items";
-import { parseListCriteria } from "@/lib/services/list-criteria";
+import { ITEM_PAGE_SIZES, parseListCriteria } from "@/lib/services/list-criteria";
 import type { SessionRowData } from "@/components/import-sessions/SessionCard";
 import type { Item } from "@/types";
 
@@ -20,7 +21,14 @@ const { user } = Astro.locals;
 
 // Kryteria listy z adresu strony (filtr typu/sort/szukanie) — ten sam parser co klient → render SSR
 // i pierwszy stan wyspy są identyczne (hydration-stable, bez przeskoku). `view` na sztywno per strona.
-const criteria = parseListCriteria("pending", Astro.url.searchParams);
+// Preferencja rozmiaru strony z COOKIE nakładana już przy SSR (URL z `size` ma pierwszeństwo) —
+// bez migotania „domyślna strona → docięta po adopcji"; obowiązuje też w trybie sesji (wspólny klucz).
+const criteria = withPageSizePref(
+  parseListCriteria("pending", Astro.url.searchParams),
+  Astro.url.searchParams,
+  Astro.cookies.get(ITEMS_LIST_PAGE_SIZE_KEY)?.value,
+  ITEM_PAGE_SIZES,
+);
 
 // Tryb sesji (S-13 F4): `?session=<id>` przełącza stronę w kontekstowy rejestr wpisów JEDNEJ sesji.
 // Zły format UUID rozstrzygamy PRZED bazą (ten sam `z.uuid()` co endpoint sesyjny); nieistniejąca/cudza

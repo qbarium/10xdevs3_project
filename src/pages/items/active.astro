@@ -8,9 +8,10 @@ import Layout from "@/layouts/Layout.astro";
 import Topbar from "@/components/Topbar.astro";
 import MainFilterNav from "@/components/items/MainFilterNav.astro";
 import AcceptedItemsView from "@/components/items/AcceptedItemsView.tsx";
+import { ITEMS_LIST_PAGE_SIZE_KEY, withPageSizePref } from "@/components/lists/page-size-pref";
 import { createClient } from "@/lib/supabase";
 import { listItems } from "@/lib/services/items";
-import { parseListCriteria } from "@/lib/services/list-criteria";
+import { ITEM_PAGE_SIZES, parseListCriteria } from "@/lib/services/list-criteria";
 import type { Item } from "@/types";
 
 export const prerender = false;
@@ -19,7 +20,13 @@ const { user } = Astro.locals;
 
 // Kryteria listy z adresu strony (filtr typu/sort/szukanie/podfiltr operacyjny) — ten sam parser co klient
 // → render SSR i pierwszy stan wyspy są identyczne (hydration-stable, bez przeskoku). `view` na sztywno.
-const criteria = parseListCriteria("active", Astro.url.searchParams);
+// Preferencja rozmiaru strony z COOKIE nakładana już przy SSR (URL z `size` ma pierwszeństwo).
+const criteria = withPageSizePref(
+  parseListCriteria("active", Astro.url.searchParams),
+  Astro.url.searchParams,
+  Astro.cookies.get(ITEMS_LIST_PAGE_SIZE_KEY)?.value,
+  ITEM_PAGE_SIZES,
+);
 
 let items: Item[] = [];
 let total = 0;
