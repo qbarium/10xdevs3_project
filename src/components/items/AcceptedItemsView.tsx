@@ -10,7 +10,7 @@ import EditItemDialog from "@/components/items/EditItemDialog";
 import EntriesViewSelect from "@/components/items/EntriesViewSelect";
 import ItemCard, { ITEM_CHECKBOX_CLASS } from "@/components/items/ItemCard";
 import ListFilterBar from "@/components/items/ListFilterBar";
-import { reconcileAfterChange, type AcceptedView } from "@/components/items/operational-view";
+import { matchesView, reconcileAfterChange, type AcceptedView } from "@/components/items/operational-view";
 import { allIds, isAllSelected, requiresConfirmation, toggleSelection } from "@/components/items/selection";
 import type { TypeFilterValue } from "@/components/items/type-filter";
 import { ITEMS_LIST_PAGE_SIZE_KEY, writePageSizePref } from "@/components/lists/page-size-pref";
@@ -206,11 +206,17 @@ export default function AcceptedItemsView({
     void execute(req);
   }
 
-  // Edycja zapisana — podmiana itemu w miejscu (optimistic, bez re-fetchu). Edytowany item ZOSTAJE widoczny
-  // do następnej zmiany kryteriów / odświeżenia (decyzja #6) — także gdy zmieniony stan operacyjny lub typ
-  // wypada poza bieżący widok/filtr. NIE znika spod kursora; przepada dopiero przy re-fetchu (zmiana filtra)
-  // lub reloadzie SSR (który ładuje listę wg kryteriów). Inaczej niż bulk, który usuwa od razu.
+  // Edycja zapisana — podmiana itemu w miejscu (optimistic, bez re-fetchu), ALE gdy zmieniony stan
+  // operacyjny wypada poza predykat widoku (np. Aktywne → „Anulowane"), wpis ZNIKA i kolejka się dosuwa —
+  // spójnie z akcjami zbiorczymi (rewizja decyzji #6 z 2026-06-19; decyzja użytkownika 2026-07-02:
+  // pozostawiony wiersz z aktywnymi akcjami sugerował, że wpis nadal należy do widoku). Niezgodność z
+  // FILTREM typu nadal zostawia wpis widoczny do następnej zmiany kryteriów (create-flow bez zmian).
   function handleSaved(updated: Item): void {
+    if (!matchesView(updated.operational_status, view)) {
+      applyOptimistic((prev) => prev.filter((current) => current.id !== updated.id));
+      refetchAfterRemoval();
+      return;
+    }
     applyOptimistic((prev) => prev.map((current) => (current.id === updated.id ? updated : current)));
   }
 
