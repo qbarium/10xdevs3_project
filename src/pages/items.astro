@@ -69,7 +69,12 @@ const pageTitle = sessionMode ? "Wpisy sesji importu" : "Elementy do akceptacji"
           {pageTitle}
         </h1>
         {sessionMode && <SessionBanner meta={sessionMeta} />}
-        <MainFilterNav disabled={sessionMode} />
+        {
+          /* Zakładki widoków UKRYTE w trybie sesji (decyzja użytkownika 2026-07-02): lista trybu pokazuje
+            wszystkie 4 stany naraz, więc żadna zakładka nie jest prawdziwa, a wiersz zabierał miejsce.
+            Wyjście z trybu („Wyczyść filtry" / „Wróć do dziennika") przywraca je pełnym renderem serwera. */
+        }
+        {!sessionMode && <MainFilterNav />}
         {
           sessionMode ? (
             sessionMeta && (

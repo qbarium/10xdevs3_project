@@ -1,3 +1,4 @@
+import { Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -267,28 +268,31 @@ export default function AcceptedItemsView({
     }
   }, [items]);
 
+  // Kompaktowa akcja „Dodaj item" (S-07; plus zamiast całego wiersza — decyzja użytkownika 2026-07-02):
+  // normalnie w slocie akcji paska filtrów (wiersz wyszukiwania, po prawej), a gdy pasek nie jest
+  // renderowany (pusty widok bez filtrów) — w małym wierszu zapasowym, by akcja nigdy nie znikała.
+  const addButton = canAdd ? (
+    <Button
+      size="sm"
+      aria-label="Dodaj item"
+      title="Dodaj item"
+      onClick={() => {
+        setAddOpen(true);
+      }}
+    >
+      <Plus className="size-4" />
+    </Button>
+  ) : null;
+
+  const showFilterBar = items.length > 0 || filtersActive;
+
   return (
     <div className="flex flex-col gap-3">
       <Toaster />
 
-      {/* Trwały rząd akcji — PRZED gałęzią pustej listy, więc „Dodaj item" jest widoczny także przy pustym
-          widoku / pustym wyniku filtra (tylko Aktywne: `canAdd`). Osobny od paska bulk (ten zależy od selekcji). */}
-      {canAdd && (
-        <div className="flex items-center justify-end">
-          <Button
-            size="sm"
-            onClick={() => {
-              setAddOpen(true);
-            }}
-          >
-            Dodaj item
-          </Button>
-        </div>
-      )}
-
       {/* Pasek filtrów widoczny, gdy jest co filtrować ALBO gdy jakikolwiek filtr jest aktywny — w drugim
           przypadku lista może być pusta (zawężona), a kontrolki MUSZĄ zostać dostępne (powrót do domyślnych). */}
-      {(items.length > 0 || filtersActive) && (
+      {showFilterBar ? (
         <ListFilterBar
           criteria={criteria}
           onChange={(next) => {
@@ -299,7 +303,11 @@ export default function AcceptedItemsView({
           }}
           error={error}
           onRetry={retry}
-        />
+        >
+          {addButton}
+        </ListFilterBar>
+      ) : (
+        addButton && <div className="flex items-center justify-end">{addButton}</div>
       )}
 
       {items.length === 0 ? (
