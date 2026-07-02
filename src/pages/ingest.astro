@@ -1,8 +1,10 @@
 ---
+import { CLASSIFIER_MODEL } from "astro:env/server";
+
 import Layout from "@/layouts/Layout.astro";
 import Topbar from "@/components/Topbar.astro";
+import ByokOnboarding from "@/components/ingest/ByokOnboarding.astro";
 import IngestForm from "@/components/ingest/IngestForm";
-import MissingKeyBanner from "@/components/profile/MissingKeyBanner.astro";
 import { createClient } from "@/lib/supabase";
 import { getKeyStatus } from "@/lib/services/profile-key";
 import { AI_PROVIDER_KEYS_URL, AI_PROVIDER_NAME } from "@/lib/config/byok";
@@ -38,7 +40,7 @@ if (user && supabase) {
           keyStatus.configured ? (
             <IngestForm initialKeyStatus={keyStatus} client:load />
           ) : (
-            <MissingKeyBanner keysUrl={AI_PROVIDER_KEYS_URL} providerName={AI_PROVIDER_NAME} />
+            <ByokOnboarding keysUrl={AI_PROVIDER_KEYS_URL} providerName={AI_PROVIDER_NAME} model={CLASSIFIER_MODEL} />
           )
         }
       </main>
