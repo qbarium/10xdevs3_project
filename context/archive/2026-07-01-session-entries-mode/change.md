@@ -1,10 +1,10 @@
 ---
 change_id: session-entries-mode
 title: Tryb „Pokaż wpisy" — kontekstowy widok wpisów sesji zamiast master-detail
-status: impl_reviewed
+status: archived
 created: 2026-07-01
 updated: 2026-07-02
-archived_at: null
+archived_at: 2026-07-02T20:21:18Z
 ---
 
 ## Notes
