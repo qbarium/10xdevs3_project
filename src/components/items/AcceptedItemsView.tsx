@@ -300,7 +300,7 @@ export default function AcceptedItemsView({
         }}
         error={error}
         onRetry={retry}
-        leading={<EntriesViewSelect view={view} />}
+        leading={<EntriesViewSelect view={view} type={criteria.type} />}
       >
         {addButton}
       </ListFilterBar>

@@ -195,7 +195,7 @@ export default function TrashItemsView({ initialItems, initialCriteria, initialT
         }}
         error={error}
         onRetry={retry}
-        leading={<EntriesViewSelect view="trash" />}
+        leading={<EntriesViewSelect view="trash" type={criteria.type} />}
       >
         <Button
           size="sm"
