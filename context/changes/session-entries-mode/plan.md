@@ -443,22 +443,22 @@ Dziennik staje się jedną kolumną pełnoszerokich kart z akcjami nawigacyjnymi
 
 #### Manual
 
-- [ ] 4.4 Baner + wyszarzone zakładki/filtry; `?session=` przeżywa stronicowanie / wstecz-dalej / odświeżenie
-- [ ] 4.5 Akcje trybu: świeży wiersz po akceptuj/odrzuć/przywróć (edycja po akcji bez 409), kosz w miejscu, podgląd read-only
-- [ ] 4.6 „Wyczyść filtry" → `/items` (kontrolki aktywne); „Wróć do dziennika" → `/import-sessions`
-- [ ] 4.7 Zły odnośnik: komunikat „sesja niedostępna" + wyjścia, bez błędów
-- [ ] 4.8 Zimny start dev bez `--force`: zero re-optymalizacji (tryb + dialog + API)
+- [x] 4.4 Baner + wyszarzone zakładki/filtry; `?session=` przeżywa stronicowanie / wstecz-dalej / odświeżenie — abbd6b5
+- [x] 4.5 Akcje trybu: świeży wiersz po akceptuj/odrzuć/przywróć (edycja po akcji bez 409), kosz w miejscu, podgląd read-only — abbd6b5
+- [x] 4.6 „Wyczyść filtry" → `/items` (kontrolki aktywne); „Wróć do dziennika" → `/import-sessions` — abbd6b5
+- [x] 4.7 Zły odnośnik: komunikat „sesja niedostępna" + wyjścia, bez błędów — abbd6b5
+- [x] 4.8 Zimny start dev bez `--force`: zero re-optymalizacji (tryb + dialog + API) — abbd6b5
 
 ### Phase 5: Dziennik jako karty + demontaż master-detail
 
 #### Automated
 
-- [x] 5.1 Lint przechodzi (`npm run lint`)
-- [x] 5.2 Testy jednostkowe przechodzą (`npm run test`; zestaw `useSessionItems` usunięty)
-- [x] 5.3 Build produkcyjny przechodzi (`npm run build`)
+- [x] 5.1 Lint przechodzi (`npm run lint`) — 57887d7
+- [x] 5.2 Testy jednostkowe przechodzą (`npm run test`; zestaw `useSessionItems` usunięty) — 57887d7
+- [x] 5.3 Build produkcyjny przechodzi (`npm run build`) — 57887d7
 
 #### Manual
 
-- [ ] 5.4 Karty dziennika: akcje wg stanu sesji; „Ponów" → po sukcesie karta pokazuje „Pokaż wpisy"; filtry/paginacja dziennika bez regresji
-- [ ] 5.5 Przepływ end-to-end: dziennik → „Pokaż wpisy" → tryb sesji → „Wyczyść filtry" → `/items`; wstecz przeglądarki przez cały łańcuch
-- [ ] 5.6 Zimny start dev bez `--force` + `npm run preview`: zero re-optymalizacji, render produkcyjny bez błędów
+- [x] 5.4 Karty dziennika: akcje wg stanu sesji; „Ponów" → po sukcesie karta pokazuje „Pokaż wpisy"; filtry/paginacja dziennika bez regresji — 57887d7
+- [x] 5.5 Przepływ end-to-end: dziennik → „Pokaż wpisy" → tryb sesji → „Wyczyść filtry" → `/items`; wstecz przeglądarki przez cały łańcuch — 57887d7
+- [x] 5.6 Zimny start dev bez `--force` + `npm run preview`: zero re-optymalizacji, render produkcyjny bez błędów — 57887d7
