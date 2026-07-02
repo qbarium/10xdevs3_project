@@ -61,12 +61,17 @@ function elementNoun(n: number): string {
 // S-09: lista należy do `useItemList` (filtr typu SERWEROWY przez kryteria z URL — pending zyskuje filtr,
 // którego wcześniej nie miał). Zmiana filtra = re-fetch; mutacje = optimistic przez `applyOptimistic`.
 export default function PendingItemsView({ initialItems, initialCriteria, initialTotal }: Props) {
-  const { items, criteria, settledCriteria, setCriteria, applyOptimistic, error, page, pageCount } = useItemList(
-    "pending",
-    initialItems,
-    initialCriteria,
-    initialTotal,
-  );
+  const {
+    items,
+    criteria,
+    settledCriteria,
+    setCriteria,
+    applyOptimistic,
+    refetchAfterRemoval,
+    error,
+    page,
+    pageCount,
+  } = useItemList("pending", initialItems, initialCriteria, initialTotal);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmRequest, setConfirmRequest] = useState<{ action: PendingAction; ids: string[] } | null>(null);
   const [editing, setEditing] = useState<Item | null>(null);
@@ -130,6 +135,9 @@ export default function PendingItemsView({ initialItems, initialCriteria, initia
       idSet.forEach((id) => next.delete(id));
       return next;
     });
+    // Kolejka się dosuwa (decyzja 2026-07-02): dociągnij bieżącą stronę (clamp do nowej liczby stron) —
+    // w miejsce usuniętych wjeżdżają wpisy z kolejnych stron, licznik stron mówi prawdę.
+    refetchAfterRemoval();
     // Licznik z serwera = liczba FAKTYCZNIE zmienionych (guard pomija itemy zmienione w innej karcie).
     if (count > 0) {
       const verb = action === "accept" ? "Zatwierdzono" : "Odrzucono";
@@ -163,7 +171,8 @@ export default function PendingItemsView({ initialItems, initialCriteria, initia
     applyOptimistic((prev) => prev.map((current) => (current.id === updated.id ? updated : current)));
   }
 
-  // 404 podczas edycji (item nie jest już pending) — usuń z listy (optimistic) i z zaznaczenia.
+  // 404 podczas edycji (item nie jest już pending) — usuń z listy (optimistic) i z zaznaczenia,
+  // po czym dociągnij stronę (kolejka się dosuwa).
   function handleRemoved(id: string): void {
     applyOptimistic((prev) => prev.filter((current) => current.id !== id));
     setSelected((prev) => {
@@ -172,6 +181,7 @@ export default function PendingItemsView({ initialItems, initialCriteria, initia
       next.delete(id);
       return next;
     });
+    refetchAfterRemoval();
   }
 
   return (

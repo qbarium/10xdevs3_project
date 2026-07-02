@@ -87,12 +87,17 @@ export default function AcceptedItemsView({
   initialTotal,
   canAdd = false,
 }: Props) {
-  const { items, criteria, settledCriteria, setCriteria, applyOptimistic, error, page, pageCount } = useItemList(
-    view,
-    initialItems,
-    initialCriteria,
-    initialTotal,
-  );
+  const {
+    items,
+    criteria,
+    settledCriteria,
+    setCriteria,
+    applyOptimistic,
+    refetchAfterRemoval,
+    error,
+    page,
+    pageCount,
+  } = useItemList(view, initialItems, initialCriteria, initialTotal);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   // Żądanie potwierdzenia (select-all) — unia rozróżniająca: zmiana stanu operacyjnego ALBO przeniesienie
   // do kosza (S-06). Dyskryminator `kind` steruje gałęzią `execute` i treścią dialogu.
@@ -156,6 +161,9 @@ export default function AcceptedItemsView({
       idSet.forEach((id) => next.delete(id));
       return next;
     });
+    // Kolejka się dosuwa (decyzja 2026-07-02): dociągnij bieżącą stronę (clamp do nowej liczby stron) —
+    // po koszu/zmianie stanu wypadającej poza widok wjeżdżają wpisy z kolejnych stron.
+    refetchAfterRemoval();
     // Licznik z serwera = liczba FAKTYCZNIE zmienionych (guard `accepted` pomija nie-uprawnione).
     if (count > 0) {
       if (req.kind === "trash") {
@@ -226,7 +234,8 @@ export default function AcceptedItemsView({
     setCriteria({ ...criteria });
   }
 
-  // 404 (item nieedytowalny / zniknął) — usuń z listy (optimistic) i z zaznaczenia.
+  // 404 (item nieedytowalny / zniknął) — usuń z listy (optimistic) i z zaznaczenia,
+  // po czym dociągnij stronę (kolejka się dosuwa).
   function handleRemoved(id: string): void {
     applyOptimistic((prev) => prev.filter((current) => current.id !== id));
     setSelected((prev) => {
@@ -235,6 +244,7 @@ export default function AcceptedItemsView({
       next.delete(id);
       return next;
     });
+    refetchAfterRemoval();
   }
 
   // Utworzenie itemu ręcznego (S-07): focus + wstawienie. Jeśli aktywny jest KONKRETNY filtr innego typu,

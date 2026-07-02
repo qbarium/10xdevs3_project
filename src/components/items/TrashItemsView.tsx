@@ -63,12 +63,18 @@ function elementNoun(n: number): string {
 // konkretną liczbę tylko bez aktywnego filtra (`type==="all"`); przy filtrze opiera się na treści „CAŁY kosz"
 // i liczbie z toastu po akcji (serwer zwraca faktycznie usuniętą liczbę).
 export default function TrashItemsView({ initialItems, initialCriteria, initialTotal }: Props) {
-  const { items, criteria, settledCriteria, setCriteria, applyOptimistic, error, total, page, pageCount } = useItemList(
-    "trash",
-    initialItems,
-    initialCriteria,
-    initialTotal,
-  );
+  const {
+    items,
+    criteria,
+    settledCriteria,
+    setCriteria,
+    applyOptimistic,
+    refetchAfterRemoval,
+    error,
+    total,
+    page,
+    pageCount,
+  } = useItemList("trash", initialItems, initialCriteria, initialTotal);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [inFlightIds, setInFlightIds] = useState<Set<string>>(new Set());
   // Potwierdzenie restore (select-all): id do przywrócenia po akceptacji. Potwierdzenie empty: boolean.
@@ -116,6 +122,8 @@ export default function TrashItemsView({ initialItems, initialCriteria, initialT
       idSet.forEach((id) => next.delete(id));
       return next;
     });
+    // Kolejka się dosuwa (decyzja 2026-07-02): dociągnij bieżącą stronę (clamp do nowej liczby stron).
+    refetchAfterRemoval();
     // Licznik z serwera = liczba FAKTYCZNIE przywróconych (guard statusem pomija nie-uprawnione).
     if (count > 0) {
       toast.success(`Przywrócono ${count} ${elementNoun(count)}.`);
@@ -146,6 +154,8 @@ export default function TrashItemsView({ initialItems, initialCriteria, initialT
 
   // „Wyczyść kosz": globalny twardy DELETE. Po potwierdzeniu kasuje CAŁY kosz (rejected + deleted, ponad
   // filtrami) — stan listy czyścimy do pustej (optimistic), bo serwer skasował wszystkie wiersze usera.
+  // Dociągnięcie JAWNIE na stronę 1: lokalna korekta `total` zna tylko bieżącą stronę, a serwer wyzerował
+  // wszystko — fetch strony 1 przynosi prawdziwy (pusty) stan i licznik.
   async function executeEmpty(): Promise<void> {
     if (inFlightRef.current) return;
     inFlightRef.current = true;
@@ -157,6 +167,7 @@ export default function TrashItemsView({ initialItems, initialCriteria, initialT
     }
     applyOptimistic(() => []);
     setSelected(new Set());
+    refetchAfterRemoval(1);
     toast.success(`Kosz opróżniony — trwale usunięto ${count} ${elementNoun(count)}.`);
     inFlightRef.current = false;
   }

@@ -14,8 +14,10 @@
 //    back/forward je przełącza), `replaceState` dla kolejnych liter `q` (jeden wpis historii). `popstate`
 //    re-parsuje adres.
 //  - Okno strony (S-13 F2): preferencja rozmiaru adoptowana na „gołym" adresie (URL z `size` ma
-//    pierwszeństwo — wzorzec useSessionList); optimistic koryguje `total` o różnicę długości listy,
-//    a opustoszała strona > 1 auto-cofa się o jedną (PO naniesieniu mutacji, zwykłym setCriteria).
+//    pierwszeństwo — wzorzec useSessionList); optimistic koryguje `total` o różnicę długości listy.
+//  - Kolejka „dosuwa się" (decyzja użytkownika 2026-07-02): po akcji usuwającej wpisy widok woła
+//    `refetchAfterRemoval` — ciche dociągnięcie strony clampowanej do nowej liczby stron (replaceState,
+//    bez spamu historii). Strona nigdy nie zostaje pusta ani „krótsza", gdy kolejne strony mają wpisy.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -114,6 +116,12 @@ export interface UseItemList {
   setCriteria: (next: ListCriteria) => void;
   /** Nanosi optimistic mutację na listę hooka (bez re-fetchu); unieważnia fetch w locie, by jej nie cofnął. */
   applyOptimistic: (updater: (prev: Item[]) => Item[]) => void;
+  /**
+   * Ciche dociągnięcie po akcji USUWAJĄCEJ wpisy z listy (kolejka się dosuwa): re-fetch strony
+   * (domyślnie bieżącej; `targetPage` np. dla „Wyczyść kosz" → 1) clampowanej do nowej liczby stron
+   * wg lokalnie skorygowanego `total`. Zapis adresu przez replaceState — seria akcji nie spamuje historii.
+   */
+  refetchAfterRemoval: (targetPage?: number) => void;
   loading: boolean;
   error: string | null;
   /** Łączna liczba itemów pasujących do `settledCriteria` (korygowana lokalnie przez optimistic). */
@@ -145,6 +153,8 @@ export function useItemList(
   // Lustro `items` do synchronicznej matematyki optimistic (korekta `total` bez czekania na re-render);
   // aktualizowane WSZĘDZIE tam, gdzie `setItems` (runFetch + applyOptimistic).
   const itemsRef = useRef(initialItems);
+  // Lustro `total` — refetchAfterRemoval liczy clamp strony synchronicznie, zaraz po optimistic.
+  const totalRef = useRef(initialTotal);
   const abortRef = useRef<AbortController | null>(null);
   const tokenRef = useRef(0);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -163,6 +173,7 @@ export function useItemList(
       if (outcome.status === "ok") {
         itemsRef.current = outcome.items;
         setItems(outcome.items);
+        totalRef.current = outcome.total;
         setTotal(outcome.total);
         setSettledCriteria(next); // lista i jej kryteria zmieniają się razem (spójny układ, bez migotania)
         // Zapis adresu pomijamy dla popstate (adres już zmieniony przez back/forward).
@@ -207,34 +218,45 @@ export function useItemList(
     [scheduleFetch],
   );
 
-  const applyOptimistic = useCallback(
-    (updater: (prev: Item[]) => Item[]) => {
-      // Optimistic jest autorytatywny do następnej zmiany kryteriów: unieważnij fetch w locie (token + abort)
-      // i ubij oczekujący debounce, by spóźniona odpowiedź nie cofnęła naniesionej zmiany.
-      abortRef.current?.abort();
-      tokenRef.current++;
-      if (debounceRef.current !== null) {
-        clearTimeout(debounceRef.current);
-        debounceRef.current = null;
-      }
-      setLoading(false);
-      // Mutacja liczona synchronicznie na lustrze (itemsRef) — korekta `total` o różnicę długości listy
-      // (usunięcia/wstawienia w obrębie strony) bez re-fetchu; licznik z serwera przyjdzie przy następnej
-      // zmianie kryteriów. Wołane z handlerów zdarzeń (nie z renderu), więc efekt uboczny jest bezpieczny.
-      const prev = itemsRef.current;
-      const next = updater(prev);
-      itemsRef.current = next;
-      setItems(next);
-      const delta = next.length - prev.length;
-      if (delta !== 0) setTotal((t) => Math.max(0, t + delta));
-      // Auto-cofnięcie przy opustoszałej stronie (S-13 F2): PO naniesieniu mutacji (lista już podmieniona),
-      // nigdy przed — zwykłe setCriteria → re-fetch strony `page - 1`. W handlerze (nie w efekcie), więc
-      // bez kolizji z react-hooks/set-state-in-effect; kryteria z żywego lustra (po optimistic settled ≡ live).
-      if (next.length === 0 && criteriaRef.current.page > 1) {
-        setCriteria({ ...criteriaRef.current, page: criteriaRef.current.page - 1 });
-      }
+  const applyOptimistic = useCallback((updater: (prev: Item[]) => Item[]) => {
+    // Optimistic jest autorytatywny do następnej zmiany kryteriów: unieważnij fetch w locie (token + abort)
+    // i ubij oczekujący debounce, by spóźniona odpowiedź nie cofnęła naniesionej zmiany.
+    abortRef.current?.abort();
+    tokenRef.current++;
+    if (debounceRef.current !== null) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+    setLoading(false);
+    // Mutacja liczona synchronicznie na lustrze (itemsRef) — korekta `total` o różnicę długości listy
+    // (usunięcia/wstawienia w obrębie strony) bez re-fetchu. Widoki kolejkowe po akcji usuwającej wołają
+    // dodatkowo `refetchAfterRemoval` (dociągnięcie strony); tryb sesji podmienia wiersze w miejscu i
+    // dociągnięcia nie potrzebuje. Wołane z handlerów zdarzeń (nie z renderu) — efekt uboczny bezpieczny.
+    const prev = itemsRef.current;
+    const next = updater(prev);
+    itemsRef.current = next;
+    setItems(next);
+    const delta = next.length - prev.length;
+    if (delta !== 0) {
+      totalRef.current = Math.max(0, totalRef.current + delta);
+      setTotal(totalRef.current);
+    }
+  }, []);
+
+  // Dociągnięcie kolejki po akcji usuwającej (decyzja 2026-07-02): strona docelowa = min(bieżąca — lub
+  // jawna `targetPage` — nowa liczba stron wg lokalnego `total`), nie mniej niż 1. Re-fetch przez runFetch
+  // z `replace: true` — seria akcji nadpisuje jeden wpis historii zamiast produkować identyczne wpisy.
+  const refetchAfterRemoval = useCallback(
+    (targetPage?: number) => {
+      const current = criteriaRef.current;
+      const pageCount = Math.max(1, Math.ceil(totalRef.current / current.size));
+      const page = Math.max(1, Math.min(targetPage ?? current.page, pageCount));
+      const next = { ...current, page };
+      criteriaRef.current = next;
+      setCriteriaState(next);
+      runFetch(next, { replace: true, fromPopstate: false });
     },
-    [setCriteria],
+    [runFetch],
   );
 
   // Back/forward: re-parsuj adres tym samym parserem co SSR i re-fetchuj BEZ zapisu URL (adres już zmieniony).
@@ -282,6 +304,7 @@ export function useItemList(
     settledCriteria,
     setCriteria,
     applyOptimistic,
+    refetchAfterRemoval,
     loading,
     error,
     total,
