@@ -3,7 +3,7 @@ change_id: session-entries-mode
 title: Tryb „Pokaż wpisy" — kontekstowy widok wpisów sesji zamiast master-detail
 status: implementing
 created: 2026-07-01
-updated: 2026-07-01
+updated: 2026-07-02
 archived_at: null
 ---
 

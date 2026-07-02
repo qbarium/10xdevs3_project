@@ -408,30 +408,30 @@ Dziennik staje się jedną kolumną pełnoszerokich kart z akcjami nawigacyjnymi
 
 #### Automated
 
-- [x] 2.1 Lint przechodzi (`npm run lint`)
-- [x] 2.2 Testy jednostkowe przechodzą (`npm run test`)
-- [x] 2.3 Build produkcyjny przechodzi (`npm run build`)
+- [x] 2.1 Lint przechodzi (`npm run lint`) — 99ee13a
+- [x] 2.2 Testy jednostkowe przechodzą (`npm run test`) — 99ee13a
+- [x] 2.3 Build produkcyjny przechodzi (`npm run build`) — 99ee13a
 
 #### Manual
 
-- [x] 2.4 Parytet SSR↔wyspa na `?page=&size=` bez przeskoku po nawodnieniu (5 widoków)
-- [x] 2.5 Reset strony przy zmianie filtrów, trwałość przy zmianie strony, wstecz/dalej, adopcja preferencji rozmiaru
-- [x] 2.6 Auto-cofnięcie przy opustoszałej stronie
-- [x] 2.7 Dziennik sesji bez regresji (przyciski, skok, rozmiar, zapamiętywanie)
-- [x] 2.8 Zimny start dev bez `--force`: zero re-optymalizacji (pokrycie: wyspy + dialog + API)
+- [x] 2.4 Parytet SSR↔wyspa na `?page=&size=` bez przeskoku po nawodnieniu (5 widoków) — 99ee13a
+- [x] 2.5 Reset strony przy zmianie filtrów, trwałość przy zmianie strony, wstecz/dalej, adopcja preferencji rozmiaru — 99ee13a
+- [x] 2.6 Auto-cofnięcie przy opustoszałej stronie — 99ee13a
+- [x] 2.7 Dziennik sesji bez regresji (przyciski, skok, rozmiar, zapamiętywanie) — 99ee13a
+- [x] 2.8 Zimny start dev bez `--force`: zero re-optymalizacji (pokrycie: wyspy + dialog + API) — 99ee13a
 
 ### Phase 3: Wspólna karta wpisu
 
 #### Automated
 
-- [ ] 3.1 Lint przechodzi (`npm run lint`)
-- [ ] 3.2 Testy jednostkowe przechodzą (`npm run test`, w tym `item-card.test.ts`)
-- [ ] 3.3 Build produkcyjny przechodzi (`npm run build`)
+- [x] 3.1 Lint przechodzi (`npm run lint`)
+- [x] 3.2 Testy jednostkowe przechodzą (`npm run test`, w tym `item-card.test.ts`)
+- [x] 3.3 Build produkcyjny przechodzi (`npm run build`)
 
 #### Manual
 
-- [ ] 3.4 Przegląd wizualny 3 widoków + panelu S-10: zachowanie i wygląd identyczne jak przed refaktorem
-- [ ] 3.5 Zimny start dev bez `--force`: zero re-optymalizacji
+- [x] 3.4 Przegląd wizualny 3 widoków + panelu S-10: zachowanie i wygląd identyczne jak przed refaktorem
+- [x] 3.5 Zimny start dev bez `--force`: zero re-optymalizacji
 
 ### Phase 4: Tryb sesji na /items?session=
 

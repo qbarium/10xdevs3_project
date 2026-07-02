@@ -3,6 +3,7 @@ import { toast } from "sonner";
 
 import { useItemList } from "@/components/hooks/useItemList";
 import { useItemMutation } from "@/components/hooks/useItemMutation";
+import ItemCard, { ITEM_CHECKBOX_CLASS } from "@/components/items/ItemCard";
 import ListFilterBar from "@/components/items/ListFilterBar";
 import {
   allIds,
@@ -26,10 +27,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Toaster } from "@/components/ui/sonner";
-import { acceptanceOriginLabel, itemTypeLabel } from "@/lib/labels";
 import { defaultCriteria, hasActiveFilters, ITEM_PAGE_SIZES } from "@/lib/services/list-criteria";
 import type { ListCriteria } from "@/lib/services/list-criteria";
-import { cn } from "@/lib/utils";
 import type { Item } from "@/types";
 
 interface Props {
@@ -40,10 +39,6 @@ interface Props {
   /** Łączna liczba itemów pasujących do kryteriów (SSR z `count`) — stan startowy licznika stron (S-13 F2). */
   initialTotal: number;
 }
-
-// Checkbox wyraźnie widoczny na ciemnym tle „cosmic" (jak AcceptedItemsView).
-const CHECKBOX_CLASS =
-  "size-5 border-white/40 data-[state=checked]:border-purple-400 data-[state=checked]:bg-purple-500 data-[state=checked]:text-white data-[state=indeterminate]:border-purple-400 data-[state=indeterminate]:bg-purple-500 data-[state=indeterminate]:text-white";
 
 /** Polska odmiana rzeczownika „element" wg liczby (lokalne, jak w AcceptedItemsView — bez sprzęgania islandów). */
 function elementNoun(n: number): string {
@@ -250,7 +245,7 @@ export default function TrashItemsView({ initialItems, initialCriteria, initialT
                 checked={allSelected ? true : selectedCount > 0 ? "indeterminate" : false}
                 onCheckedChange={toggleAll}
                 aria-label="Zaznacz wszystkie"
-                className={CHECKBOX_CLASS}
+                className={ITEM_CHECKBOX_CLASS}
               />
               Zaznacz wszystkie
             </label>
@@ -265,46 +260,21 @@ export default function TrashItemsView({ initialItems, initialCriteria, initialT
           </div>
 
           {items.map((item) => (
-            <article
+            <ItemCard
               key={item.id}
-              className={cn(
-                "flex gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl transition-opacity",
-                inFlightIds.has(item.id) && "pointer-events-none opacity-50",
-              )}
-            >
-              <Checkbox
-                checked={selected.has(item.id)}
-                onCheckedChange={() => {
-                  toggleItem(item.id);
-                }}
-                aria-label={`Zaznacz: ${item.title}`}
-                className={cn("mt-1", CHECKBOX_CLASS)}
-              />
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-block rounded-full border border-purple-300/30 bg-purple-400/10 px-2 py-0.5 text-xs font-medium text-purple-100">
-                    {itemTypeLabel(item.type)}
-                  </span>
-                  {/* Item w koszu ma zawsze status rejected|deleted (gwarancja predykatu widoku „trash"). */}
-                  <span className="inline-block rounded-full border border-white/15 bg-white/5 px-2 py-0.5 text-xs font-medium text-white/70">
-                    {acceptanceOriginLabel(item.acceptance_status as "rejected" | "deleted")}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="ml-auto text-white/60 hover:bg-white/10 hover:text-white"
-                    disabled={pending}
-                    onClick={() => {
-                      void executeRestore([item.id]);
-                    }}
-                  >
-                    Przywróć
-                  </Button>
-                </div>
-                <h3 className="mt-2 font-semibold text-white/90">{item.title}</h3>
-                {item.description && <p className="mt-1 line-clamp-2 text-sm text-white/70">{item.description}</p>}
-              </div>
-            </article>
+              item={item}
+              badges={{ origin: true }}
+              selectable
+              selected={selected.has(item.id)}
+              onToggleSelect={() => {
+                toggleItem(item.id);
+              }}
+              inFlight={inFlightIds.has(item.id)}
+              actionsDisabled={pending}
+              onRestore={(it) => {
+                void executeRestore([it.id]);
+              }}
+            />
           ))}
         </>
       )}

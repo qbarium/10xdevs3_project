@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useItemList } from "@/components/hooks/useItemList";
 import { useItemMutation } from "@/components/hooks/useItemMutation";
 import EditItemDialog from "@/components/items/EditItemDialog";
+import ItemCard, { ITEM_CHECKBOX_CLASS } from "@/components/items/ItemCard";
 import ListFilterBar from "@/components/items/ListFilterBar";
 import {
   allIds,
@@ -27,10 +28,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Toaster } from "@/components/ui/sonner";
-import { itemTypeLabel } from "@/lib/labels";
 import { defaultCriteria, hasActiveFilters, ITEM_PAGE_SIZES } from "@/lib/services/list-criteria";
 import type { ListCriteria } from "@/lib/services/list-criteria";
-import { cn } from "@/lib/utils";
 import type { Item } from "@/types";
 
 interface Props {
@@ -45,10 +44,6 @@ interface Props {
 type PendingAction = "accept" | "reject";
 
 const ACTION_LABEL: Record<PendingAction, string> = { accept: "Zatwierdź", reject: "Odrzuć" };
-
-// Checkbox wyraźnie widoczny na ciemnym tle „cosmic" (domyślny border-input jest zbyt subtelny).
-const CHECKBOX_CLASS =
-  "size-5 border-white/40 data-[state=checked]:border-purple-400 data-[state=checked]:bg-purple-500 data-[state=checked]:text-white data-[state=indeterminate]:border-purple-400 data-[state=indeterminate]:bg-purple-500 data-[state=indeterminate]:text-white";
 
 /** Polska odmiana rzeczownika „element" wg liczby (1 / 2–4 / pozostałe). */
 function elementNoun(n: number): string {
@@ -234,7 +229,7 @@ export default function PendingItemsView({ initialItems, initialCriteria, initia
                 checked={allSelected ? true : selectedCount > 0 ? "indeterminate" : false}
                 onCheckedChange={toggleAll}
                 aria-label="Zaznacz wszystkie"
-                className={CHECKBOX_CLASS}
+                className={ITEM_CHECKBOX_CLASS}
               />
               Zaznacz wszystkie
             </label>
@@ -266,61 +261,25 @@ export default function PendingItemsView({ initialItems, initialCriteria, initia
           </div>
 
           {items.map((item) => (
-            <article
+            <ItemCard
               key={item.id}
-              className={cn(
-                "flex gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl transition-opacity",
-                inFlightIds.has(item.id) && "pointer-events-none opacity-50",
-              )}
-            >
-              <Checkbox
-                checked={selected.has(item.id)}
-                onCheckedChange={() => {
-                  toggleItem(item.id);
-                }}
-                aria-label={`Zaznacz: ${item.title}`}
-                className={cn("mt-1", CHECKBOX_CLASS)}
-              />
-              <div className="min-w-0 flex-1">
-                <span className="inline-block rounded-full border border-purple-300/30 bg-purple-400/10 px-2 py-0.5 text-xs font-medium text-purple-100">
-                  {itemTypeLabel(item.type)}
-                </span>
-                <h3 className="mt-2 font-semibold text-white/90">{item.title}</h3>
-                {item.description && <p className="mt-1 line-clamp-2 text-sm text-white/70">{item.description}</p>}
-              </div>
-              <div className="flex shrink-0 items-start gap-1">
-                <Button
-                  variant="default"
-                  size="sm"
-                  disabled={pending}
-                  onClick={() => {
-                    void execute("accept", [item.id]);
-                  }}
-                >
-                  Zatwierdź
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={pending}
-                  onClick={() => {
-                    void execute("reject", [item.id]);
-                  }}
-                >
-                  Odrzuć
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-white/60 hover:bg-white/10 hover:text-white"
-                  onClick={() => {
-                    setEditing(item);
-                  }}
-                >
-                  Edytuj
-                </Button>
-              </div>
-            </article>
+              item={item}
+              badges={{}}
+              selectable
+              selected={selected.has(item.id)}
+              onToggleSelect={() => {
+                toggleItem(item.id);
+              }}
+              inFlight={inFlightIds.has(item.id)}
+              actionsDisabled={pending}
+              onEdit={setEditing}
+              onAccept={(it) => {
+                void execute("accept", [it.id]);
+              }}
+              onReject={(it) => {
+                void execute("reject", [it.id]);
+              }}
+            />
           ))}
         </>
       )}
