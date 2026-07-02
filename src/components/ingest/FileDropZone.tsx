@@ -117,7 +117,7 @@ export function FileDropZone({ selectedFile, onFile, disabled = false }: Props) 
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         className={cn(
-          "flex flex-col items-center justify-center gap-2 rounded-md border border-dashed px-4 py-6 text-center transition-colors",
+          "flex flex-col items-center justify-center gap-1.5 rounded-md border border-dashed px-4 py-3 text-center transition-colors",
           dragActive ? "border-purple-400 bg-purple-400/5" : "border-input",
           disabled && "pointer-events-none opacity-50",
         )}
