@@ -91,7 +91,7 @@ describe("round-trip parse(query(c)) === c", () => {
 });
 
 describe("parseSessionListCriteria — size (pula wartości)", () => {
-  it.each([10, 15, 25, 50, 100])("czyta dozwolony rozmiar %i", (size) => {
+  it.each([5, 10, 15, 25, 50, 100])("czyta dozwolony rozmiar %i", (size) => {
     expect(parseSessionListCriteria(params(`size=${size}`)).size).toBe(size);
   });
 

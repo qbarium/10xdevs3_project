@@ -178,8 +178,8 @@ export function hasActiveFilters(criteria: ListCriteria): boolean {
 // Pula rozmiarów i tolerancyjne parsery okna — jedno źródło dla endpointów (S-13 Faza 1) oraz parsera
 // kryteriów i UI (Faza 2). Lustro `SESSION_PAGE_SIZES`/`parsePage`/`parseSize` z `session-list-criteria.ts`.
 
-/** Dozwolone rozmiary strony listy wpisów (pula do wyboru w UI). Pierwszy element jest domyślny. */
-export const ITEM_PAGE_SIZES = [10, 15, 25, 50, 100] as const;
+/** Dozwolone rozmiary strony listy wpisów (pula do wyboru w UI). Domyślny: `ITEM_PAGE_SIZE`. */
+export const ITEM_PAGE_SIZES = [5, 10, 15, 25, 50, 100] as const;
 
 /** Domyślny rozmiar strony listy wpisów. MUSI należeć do `ITEM_PAGE_SIZES`. */
 export const ITEM_PAGE_SIZE = 10;

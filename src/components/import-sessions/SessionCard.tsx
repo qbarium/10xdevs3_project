@@ -12,6 +12,7 @@
 import { Loader2 } from "lucide-react";
 
 import { useSessionRetry } from "@/components/hooks/useSessionRetry";
+import { rememberSessionLogReturn } from "@/components/import-sessions/session-log-return";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ingestErrorMessage } from "@/lib/ingest-errors";
@@ -93,19 +94,21 @@ export function SessionCard({ row }: Props) {
         </span>
       </div>
 
-      {/* Źródło: nazwa pliku albo skrót treści paste (≤120 zn.) — gotowe pole `preview` z DTO. */}
-      <p className="truncate text-sm text-white/80">{row.preview}</p>
-
-      {showEntriesLink && (
-        <div>
+      {/* Źródło (nazwa pliku albo skrót paste — gotowe pole `preview`) i „Pokaż wpisy" w JEDNYM wierszu
+          (link po prawej): karty z akcją i bez niej mają RÓWNĄ wysokość. Klik zapamiętuje query dziennika,
+          by „Wróć do dziennika" w trybie sesji prowadziło na tę samą stronę/filtr. */}
+      <div className="flex items-center gap-3">
+        <p className="min-w-0 flex-1 truncate text-sm text-white/80">{row.preview}</p>
+        {showEntriesLink && (
           <a
             href={`/items?session=${row.id}`}
-            className="inline-block rounded-full border border-purple-300/30 bg-purple-400/10 px-3 py-1.5 text-sm font-medium text-purple-100 transition hover:bg-purple-400/20"
+            onClick={rememberSessionLogReturn}
+            className="shrink-0 rounded-full border border-purple-300/30 bg-purple-400/10 px-3 py-1.5 text-sm font-medium text-purple-100 transition hover:bg-purple-400/20"
           >
             Pokaż wpisy
           </a>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Tylko `failed`: komunikat + „Ponów" (po sukcesie karta w miejscu pokaże nowy status i „Pokaż wpisy"). */}
       {status === "failed" && (

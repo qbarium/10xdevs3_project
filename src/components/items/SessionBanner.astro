@@ -39,7 +39,7 @@ const EXIT_LINK =
       >
         {importSessionStatusLabel(meta.status)}
       </span>
-      <a href="/import-sessions" class:list={EXIT_LINK}>
+      <a href="/import-sessions" data-session-log-return class:list={EXIT_LINK}>
         Wróć do dziennika
       </a>
     </section>
@@ -50,7 +50,7 @@ const EXIT_LINK =
     >
       <p class="text-sm text-amber-100">Sesja niedostępna — odnośnik jest nieprawidłowy albo sesja nie istnieje.</p>
       <div class="flex flex-wrap gap-2">
-        <a href="/import-sessions" class:list={EXIT_LINK}>
+        <a href="/import-sessions" data-session-log-return class:list={EXIT_LINK}>
           Wróć do dziennika
         </a>
         <a href="/items" class:list={EXIT_LINK}>
@@ -60,3 +60,15 @@ const EXIT_LINK =
     </section>
   )
 }
+
+<script>
+  // Powrót do dziennika w miejsce wyjścia (strona/filtr/sort): karta „Pokaż wpisy" zapisała query
+  // dziennika w sessionStorage — podmieniamy href odnośników powrotu. Brak zapisu (deep-link) lub brak
+  // storage → zostaje domyślny goły /import-sessions z SSR.
+  import { sessionLogReturnHref } from "@/components/import-sessions/session-log-return";
+
+  const href = sessionLogReturnHref();
+  document.querySelectorAll("a[data-session-log-return]").forEach((link) => {
+    link.setAttribute("href", href);
+  });
+</script>
