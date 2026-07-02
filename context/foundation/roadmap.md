@@ -43,7 +43,7 @@ TaskerLight przyjmuje surowy, nieuporządkowany wsad głosowo-tekstowy i rozdzie
 | S-10  | session-items-detail     | w dzienniku sesji wybrać sesję i zobaczyć/edytować jej elementy (master-detail) | S-08, S-05, S-06 | FR-027 (rozszerzony); nadpisuje FR-008/FR-015 | done |
 | S-11  | session-log-filter-ux    | filtrować dziennik sesji reaktywnie (bez „Zastosuj"), spójne dropdowny, „Wyczyść filtry" | S-08 | FR-027 / FR-008 (parytet UX) | done |
 | S-12  | dup-react-ssr-dev-fix    | (naprawa, dev-only) wyeliminować błąd podwójnego React-a na `/import-sessions` w `npm run dev` | — | — (dług techniczny; lessons.md) | done |
-| S-13  | session-entries-mode     | otworzyć wpisy danej sesji jako pełną listę („Pokaż wpisy") zamiast master-detail; lista sesji jako karty + paginacja wpisów | S-10, S-11 | FR-027 / FR-008 (zastępuje master-detail S-10) | in-progress |
+| S-13  | session-entries-mode     | otworzyć wpisy danej sesji jako pełną listę („Pokaż wpisy") zamiast master-detail; lista sesji jako karty + paginacja wpisów | S-10, S-11 | FR-027 / FR-008 (zastępuje master-detail S-10) | in-review |
 
 ## Strumienie
 
@@ -246,7 +246,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Niewiadome:** —
 - **Decyzje (uzgodnione 2026-07-01):** (1) tryb sesji pokazuje WSZYSTKIE itemy sesji niezależnie od stanu akceptacji (jak panel S-10); (2) akcje (edycja/akceptacja/odrzucenie) ZACHOWANE, nie read-only; (3) paginacja zostaje w trybie sesji i dochodzi też do zwykłej listy wpisów (reużycie dorobku S-11). Warstwa danych istnieje (S-10), więc zmiana jest głównie prezentacyjna (panel → pełna strona + baner) plus tryb/filtr sesji na liście wpisów i paginacja wpisów.
 - **Ryzyko:** Cofa decyzję S-10 (master-detail) — usuwa `SessionItemsPanel`/`useSessionItems`/dwukolumnowy layout z `ImportSessionsView`. Reużywa endpoint S-10, więc warstwa danych zostaje. Główny koszt: redesign listy sesji na karty + tryb kontekstowy na liście wpisów (baner, wyszarzone filtry, deep-link `?session=`) + paginacja wpisów. Prowadzone przez `/10x-frame` (2026-07-01, `frame.md` — pewność WYSOKA) i zaplanowane `/10x-plan` (2026-07-01, 5 faz, `plan.md` + `plan-brief.md`).
-- **Status:** ready
+- **Status:** in-review
 
 ## Przekazanie backlogu
 
@@ -265,7 +265,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 | S-10             | session-items-detail       | Widok elementów sesji (master-detail w dzienniku)        | no                    | Po S-08 + S-05 + S-06                              |
 | S-11             | session-log-filter-ux      | Reaktywne filtry dziennika sesji (parytet UX z S-09)     | yes                   | Zaplanowane (`plan.md`); `/10x-implement … phase 1` |
 | S-12             | dup-react-ssr-dev-fix      | Naprawa błędu podwójnego React-a (tylko dev) na `/import-sessions` | no          | Po S-11; dług techniczny, dev-only                  |
-| S-13             | session-entries-mode       | Tryb „Pokaż wpisy" + filtr sesji na liście wpisów (zastępuje master-detail) | yes         | Zaplanowane (`plan.md`, 5 faz); `/10x-implement session-entries-mode phase 1` |
+| S-13             | session-entries-mode       | Tryb „Pokaż wpisy" + filtr sesji na liście wpisów (zastępuje master-detail) | yes         | Zaimplementowane (5 faz + poprawki po testach ręcznych 2026-07-02); czeka na `/10x-impl-review` |
 
 ## Otwarte pytania dotyczące mapy drogowej
 
