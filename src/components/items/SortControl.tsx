@@ -33,7 +33,9 @@ export default function SortControl({ value, onChange }: Props) {
           aria-label="Pole sortowania"
           className="w-[168px] rounded-full border-white/10 bg-white/5 text-white/80 hover:bg-white/10"
         >
-          <SelectValue />
+          {/* Etykieta jawnie jako dziecko: Radix wyprowadza tekst wybranej opcji z elementów portalu,
+              których SSR nie renderuje — pusty trigger „wskakiwałby" po hydracji (mignięcie). */}
+          <SelectValue>{SORT_FIELDS.find((field) => field.value === value.sort)?.label}</SelectValue>
         </SelectTrigger>
         <SelectContent>
           {SORT_FIELDS.map((field) => (
