@@ -72,11 +72,15 @@ export function SessionCard({ row }: Props) {
     countText = "—";
   }
 
-  // „Pokaż wpisy" wyłącznie dla ROZSTRZYGNIĘTEGO (po ewentualnym ponowieniu) statusu z żywymi wpisami —
-  // `processing`/`completed_no_items`/wyczyszczone do zera nie mają dokąd prowadzić.
-  const showEntriesLink = status === "completed_with_items" && liveItemCount > 0;
+  // „Pokaż wpisy" jest ZAWSZE widoczne (równa wysokość kart — decyzja użytkownika 2026-07-02): jako
+  // aktywny odnośnik tylko dla ROZSTRZYGNIĘTEGO (po ewentualnym ponowieniu) statusu z żywymi wpisami;
+  // inaczej wariant niedostępny (`aria-disabled`, bez `href`) — `processing`/`completed_no_items`/
+  // wyczyszczone do zera nie mają dokąd prowadzić.
+  const entriesLinkActive = status === "completed_with_items" && liveItemCount > 0;
 
   return (
+    // Odstępy jak w karcie wpisu (px-4 py-3): karty dziennika i listy wpisów mają tę samą wysokość
+    // — jednolity wygląd aplikacji (decyzja użytkownika 2026-07-02).
     <li className="flex flex-col gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl">
       <div className="flex flex-wrap items-center gap-3">
         <span className="rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-center text-xs font-medium text-white/70">
@@ -95,11 +99,11 @@ export function SessionCard({ row }: Props) {
       </div>
 
       {/* Źródło (nazwa pliku albo skrót paste — gotowe pole `preview`) i „Pokaż wpisy" w JEDNYM wierszu
-          (link po prawej): karty z akcją i bez niej mają RÓWNĄ wysokość. Klik zapamiętuje query dziennika,
-          by „Wróć do dziennika" w trybie sesji prowadziło na tę samą stronę/filtr. */}
+          (po prawej, zawsze obecne — aktywne albo wyszarzone): każda karta ma RÓWNĄ wysokość. Klik
+          zapamiętuje query dziennika, by „Wróć do dziennika" w trybie prowadziło na tę samą stronę/filtr. */}
       <div className="flex items-center gap-3">
         <p className="min-w-0 flex-1 truncate text-sm text-white/80">{row.preview}</p>
-        {showEntriesLink && (
+        {entriesLinkActive ? (
           <a
             href={`/items?session=${row.id}`}
             onClick={rememberSessionLogReturn}
@@ -107,6 +111,13 @@ export function SessionCard({ row }: Props) {
           >
             Pokaż wpisy
           </a>
+        ) : (
+          <span
+            aria-disabled="true"
+            className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-medium text-white/30"
+          >
+            Pokaż wpisy
+          </span>
         )}
       </div>
 

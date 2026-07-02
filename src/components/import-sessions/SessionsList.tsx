@@ -46,6 +46,7 @@ export function SessionsList({
   }
 
   return (
+    // gap-3 jak między kartami wpisów — jednolity rytm list w całej aplikacji.
     <ul aria-label="Lista sesji importu" className="flex flex-col gap-3">
       {rows.map((row) => (
         <SessionCard key={row.id} row={row} />
