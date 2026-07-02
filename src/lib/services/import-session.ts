@@ -88,6 +88,24 @@ interface ImportSessionRow extends ImportSession {
   items?: { count: number }[] | null;
 }
 
+/** Kolumny + embedy wiersza dziennika — wspólny kształt `select` listy (`getImportSessions`) i `getSessionMeta`. */
+const SESSION_ROW_SELECT =
+  "id, user_id, status, raw_input, item_count, error_message, created_at, updated_at, import_files(file_name, file_mime), items(count)";
+
+/** Spłaszcza surowy wiersz z embedami do `ImportSessionWithFile` (pola pomocnicze embedów nie wyciekają). */
+function flattenSessionRow(row: ImportSessionRow): ImportSessionWithFile {
+  const { import_files, items, ...session } = row;
+  const file = Array.isArray(import_files) ? import_files[0] : null;
+  // `items(count)` zwraca [{ count: N }] (RLS-scoped → liczba ŻYWYCH elementów sesji usera).
+  const live_item_count = Array.isArray(items) ? (items[0]?.count ?? 0) : 0;
+  return {
+    ...session,
+    file_name: file?.file_name ?? null,
+    file_mime: file?.file_mime ?? null,
+    live_item_count,
+  };
+}
+
 /**
  * Listuje JEDNĄ STRONĘ sesji importu użytkownika do dziennika (S-08 + paginacja S-11) z metadanymi pliku
  * (LEFT JOIN `import_files`). Sort po `created_at` (domyślnie malejąco) ze STABILIZATOREM `id` (tie-break)
@@ -110,13 +128,7 @@ export async function getImportSessions(
   // Uwaga skali (świadomy kompromis MVP): `count: "exact"` liczy WSZYSTKIE pasujące wiersze (nie estymuje),
   // a `.range` to paginacja offsetowa — koszt rośnie z liczbą sesji i głębokością strony. Dla solo-MVP
   // (dziesiątki/setki sesji) nieistotne; przy dziesiątkach tysięcy → keyset/cursor lub `count: "estimated"`.
-  let query = supabase
-    .from("import_sessions")
-    .select(
-      "id, user_id, status, raw_input, item_count, error_message, created_at, updated_at, import_files(file_name, file_mime), items(count)",
-      { count: "exact" },
-    )
-    .eq("user_id", userId);
+  let query = supabase.from("import_sessions").select(SESSION_ROW_SELECT, { count: "exact" }).eq("user_id", userId);
   if (opts.status) query = query.eq("status", opts.status);
   const { data, error, count } = await query
     .order("created_at", { ascending })
@@ -124,19 +136,7 @@ export async function getImportSessions(
     .range(from, to);
   if (error) throw new Error("Pobranie listy sesji importu nie powiodło się.", { cause: error });
   const rows = (data as unknown as ImportSessionRow[] | null) ?? [];
-  const sessions = rows.map((row) => {
-    const { import_files, items, ...session } = row;
-    const file = Array.isArray(import_files) ? import_files[0] : null;
-    // `items(count)` zwraca [{ count: N }] (RLS-scoped → liczba ŻYWYCH elementów sesji usera).
-    const live_item_count = Array.isArray(items) ? (items[0]?.count ?? 0) : 0;
-    return {
-      ...session,
-      file_name: file?.file_name ?? null,
-      file_mime: file?.file_mime ?? null,
-      live_item_count,
-    };
-  });
-  return { sessions, total: count ?? 0, page, pageSize };
+  return { sessions: rows.map(flattenSessionRow), total: count ?? 0, page, pageSize };
 }
 
 // --- S-11: mapowanie wiersza do odchudzonego DTO wyspy (współdzielone: strona + endpoint) ----------------
@@ -167,6 +167,28 @@ export function toSessionRow(session: ImportSessionWithFile): SessionRowData {
     liveItemCount: session.live_item_count,
     errorCode: session.error_message,
   };
+}
+
+/**
+ * Metadane JEDNEJ sesji dla banera trybu sesji (S-13 F4): ten sam kształt `select` co lista dziennika
+ * (`SESSION_ROW_SELECT` z embedami `import_files` + `items(count)`), mapowany współdzielonym
+ * `toSessionRow` — baner i wiersz dziennika pokazują IDENTYCZNE dane. Nieistniejąca lub cudza sesja →
+ * `null` (RLS odfiltrowuje wiersz). Format UUID rozstrzyga wywołujący (strona/endpoint) PRZED wywołaniem.
+ */
+export async function getSessionMeta(
+  supabase: SupabaseClient,
+  userId: string,
+  sessionId: string,
+): Promise<SessionRowData | null> {
+  const { data, error } = await supabase
+    .from("import_sessions")
+    .select(SESSION_ROW_SELECT)
+    .eq("user_id", userId)
+    .eq("id", sessionId)
+    .maybeSingle();
+  if (error) throw new Error("Pobranie sesji importu nie powiodło się.", { cause: error });
+  if (!data) return null;
+  return toSessionRow(flattenSessionRow(data));
 }
 
 /**

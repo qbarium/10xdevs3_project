@@ -5,6 +5,7 @@ import SearchBox from "@/components/items/SearchBox";
 import SortControl from "@/components/items/SortControl";
 import TypeFilter from "@/components/items/TypeFilter";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { ListCriteria } from "@/lib/services/list-criteria";
 
 interface Props {
@@ -17,6 +18,13 @@ interface Props {
   onRetry: () => void;
   /** Slot na akcje swoiste dla widoku (np. „Wyczyść kosz" w Koszu). */
   children?: ReactNode;
+  /**
+   * Tryb sesji (S-13 F4): kontrolki wyszarzone i nieaktywne (natywny `<fieldset disabled>` — wszystkie
+   * kontrolki paska to elementy formularzowe), AKTYWNY zostaje wyłącznie odnośnik „Wyczyść filtry"
+   * wykonujący PEŁNĄ nawigację na `/items` (wyjście z trybu wymaga ponownego renderu serwerowego —
+   * zakładki wracają do życia). Baner błędu i „Ponów" pozostają aktywne (fetch trybu też może polec).
+   */
+  disabled?: boolean;
 }
 
 // Wspólny pasek filtrów dodatkowych (S-09 Faza 5): typ + sort + szukaj (+ podfiltr stanu w „Aktywne").
@@ -24,43 +32,60 @@ interface Props {
 // zaznaczenie i re-fetchuje). Podfiltr operacyjny renderowany wyłącznie dla `view==="active"` (jedyny widok
 // z >1 stanem). Bez wskaźnika ładowania (dane małe/lokalne — migający tekst szkodził; swap listy jest płynny);
 // zostaje baner błędu z „Ponów" zsynchronizowany ze stanem hooka.
-export default function ListFilterBar({ criteria, onChange, error, onRetry, children }: Props) {
+export default function ListFilterBar({ criteria, onChange, error, onRetry, children, disabled = false }: Props) {
   return (
     <div className="flex flex-col gap-2">
-      {/* Rząd kategorii (pigułki): filtr typu + podfiltr stanu (tylko Aktywne). */}
-      <div className="flex flex-wrap items-center gap-2">
-        <TypeFilter
-          value={criteria.type}
-          onChange={(type) => {
-            onChange({ ...criteria, type });
-          }}
-        />
-        {criteria.view === "active" && (
-          <OperationalSubFilter
-            value={criteria.opstatus}
-            onChange={(opstatus) => {
-              onChange({ ...criteria, opstatus });
+      <fieldset
+        disabled={disabled}
+        aria-disabled={disabled || undefined}
+        className={cn("flex flex-col gap-2", disabled && "opacity-50")}
+      >
+        {/* Rząd kategorii (pigułki): filtr typu + podfiltr stanu (tylko Aktywne). */}
+        <div className="flex flex-wrap items-center gap-2">
+          <TypeFilter
+            value={criteria.type}
+            onChange={(type) => {
+              onChange({ ...criteria, type });
             }}
           />
-        )}
-      </div>
+          {criteria.view === "active" && (
+            <OperationalSubFilter
+              value={criteria.opstatus}
+              onChange={(opstatus) => {
+                onChange({ ...criteria, opstatus });
+              }}
+            />
+          )}
+        </div>
 
-      {/* Rząd sort + szukaj + akcje widoku + wskaźnik ładowania. */}
-      <div className="flex flex-wrap items-center gap-2">
-        <SortControl
-          value={{ sort: criteria.sort, dir: criteria.dir }}
-          onChange={({ sort, dir }) => {
-            onChange({ ...criteria, sort, dir });
-          }}
-        />
-        <SearchBox
-          value={criteria.q}
-          onChange={(q) => {
-            onChange({ ...criteria, q });
-          }}
-        />
-        {children && <div className="ml-auto flex items-center gap-2">{children}</div>}
-      </div>
+        {/* Rząd sort + szukaj + akcje widoku + wskaźnik ładowania. */}
+        <div className="flex flex-wrap items-center gap-2">
+          <SortControl
+            value={{ sort: criteria.sort, dir: criteria.dir }}
+            onChange={({ sort, dir }) => {
+              onChange({ ...criteria, sort, dir });
+            }}
+          />
+          <SearchBox
+            value={criteria.q}
+            onChange={(q) => {
+              onChange({ ...criteria, q });
+            }}
+          />
+          {children && <div className="ml-auto flex items-center gap-2">{children}</div>}
+        </div>
+      </fieldset>
+
+      {disabled && (
+        <div>
+          <a
+            href="/items"
+            className="inline-block rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white"
+          >
+            Wyczyść filtry
+          </a>
+        </div>
+      )}
 
       {error && (
         <div

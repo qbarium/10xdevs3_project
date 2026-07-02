@@ -1,11 +1,17 @@
 ---
+import { z } from "zod";
+
 import Layout from "@/layouts/Layout.astro";
 import Topbar from "@/components/Topbar.astro";
 import MainFilterNav from "@/components/items/MainFilterNav.astro";
 import PendingItemsView from "@/components/items/PendingItemsView.tsx";
+import SessionBanner from "@/components/items/SessionBanner.astro";
+import SessionEntriesView from "@/components/items/SessionEntriesView.tsx";
 import { createClient } from "@/lib/supabase";
-import { listItems } from "@/lib/services/items";
+import { getSessionMeta } from "@/lib/services/import-session";
+import { getSessionItems, listItems } from "@/lib/services/items";
 import { parseListCriteria } from "@/lib/services/list-criteria";
+import type { SessionRowData } from "@/components/import-sessions/SessionRow";
 import type { Item } from "@/types";
 
 export const prerender = false;
@@ -16,33 +22,63 @@ const { user } = Astro.locals;
 // i pierwszy stan wyspy są identyczne (hydration-stable, bez przeskoku). `view` na sztywno per strona.
 const criteria = parseListCriteria("pending", Astro.url.searchParams);
 
-// Middleware chroni /items (PROTECTED_ROUTES) — `user` zawsze ustawiony. Pendingi liczymy serwerowo
-// (klient z cookies usera → RLS izoluje); okno strony z kryteriów (S-13 F2) + `total` dla licznika stron
-// wyspy. To cel auto-przejścia z modalu klasyfikacji.
+// Tryb sesji (S-13 F4): `?session=<id>` przełącza stronę w kontekstowy rejestr wpisów JEDNEJ sesji.
+// Zły format UUID rozstrzygamy PRZED bazą (ten sam `z.uuid()` co endpoint sesyjny); nieistniejąca/cudza
+// sesja → `null` z `getSessionMeta` (RLS) → wariant „sesja niedostępna" (baner z wyjściami, bez listy).
+const sessionMode = criteria.session != null;
+let sessionMeta: SessionRowData | null = null;
+
+// Middleware chroni /items (PROTECTED_ROUTES) — `user` zawsze ustawiony. Odczyt serwerowy (klient z
+// cookies usera → RLS izoluje); okno strony z kryteriów (S-13 F2) + `total` dla licznika stron wyspy.
+// Bez trybu to cel auto-przejścia z modalu klasyfikacji.
 let items: Item[] = [];
 let total = 0;
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 if (user && supabase) {
   try {
-    ({ items, total } = await listItems(supabase, user.id, criteria, { page: criteria.page, size: criteria.size }));
+    if (criteria.session) {
+      if (z.uuid().safeParse(criteria.session).success) {
+        sessionMeta = await getSessionMeta(supabase, user.id, criteria.session);
+      }
+      if (sessionMeta) {
+        ({ items, total } = await getSessionItems(supabase, user.id, criteria.session, {
+          page: criteria.page,
+          size: criteria.size,
+        }));
+      }
+    } else {
+      ({ items, total } = await listItems(supabase, user.id, criteria, { page: criteria.page, size: criteria.size }));
+    }
   } catch {
-    // Przejściowy błąd odczytu → pusta lista (łagodna degradacja).
+    // Przejściowy błąd odczytu → pusta lista (łagodna degradacja); w trybie sesji bez metadanych
+    // strona pokaże wariant „sesja niedostępna" z akcjami wyjścia.
     items = [];
     total = 0;
   }
 }
+
+const pageTitle = sessionMode ? "Wpisy sesji importu" : "Elementy do akceptacji";
 ---
 
-<Layout title="Elementy do akceptacji">
+<Layout title={pageTitle}>
   <div class="bg-cosmic min-h-screen p-4">
     <div class="mx-auto max-w-2xl">
       <Topbar />
       <main class="mt-8 flex flex-col gap-6">
         <h1 class="bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-2xl font-bold text-transparent">
-          Elementy do akceptacji
+          {pageTitle}
         </h1>
-        <MainFilterNav />
-        <PendingItemsView client:load initialItems={items} initialCriteria={criteria} initialTotal={total} />
+        {sessionMode && <SessionBanner meta={sessionMeta} />}
+        <MainFilterNav disabled={sessionMode} />
+        {
+          sessionMode ? (
+            sessionMeta && (
+              <SessionEntriesView client:load initialItems={items} initialCriteria={criteria} initialTotal={total} />
+            )
+          ) : (
+            <PendingItemsView client:load initialItems={items} initialCriteria={criteria} initialTotal={total} />
+          )
+        }
       </main>
     </div>
   </div>

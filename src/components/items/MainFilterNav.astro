@@ -4,6 +4,16 @@
 // `Astro.url.pathname` (exact, nie startsWith — inaczej /items podświetlałoby się także na
 // /items/active). Osadzona na pięciu stronach widoków. Klasy warunkowe przez natywną dyrektywę
 // `class:list` (wzorzec .astro, np. Banner.astro).
+//
+// Tryb sesji (S-13 F4): `disabled` renderuje zakładki jako nieaktywne elementy (`aria-disabled`,
+// bez `href`, przygaszone, ŻADNA nie podświetlona) — lista trybu pokazuje wszystkie 4 stany naraz,
+// więc jakiekolwiek podświetlenie zakładki widoku kłamałoby nad zawartością.
+
+interface Props {
+  disabled?: boolean;
+}
+
+const { disabled = false } = Astro.props;
 
 const pathname = Astro.url.pathname;
 
@@ -15,24 +25,33 @@ const links = [
   { href: "/items/trash", label: "Kosz" },
 ];
 
-const isActive = (href: string): boolean => pathname === href;
+const isActive = (href: string): boolean => !disabled && pathname === href;
 ---
 
 <nav class="flex flex-wrap gap-2" aria-label="Filtr główny listy">
   {
-    links.map((link) => (
-      <a
-        href={link.href}
-        aria-current={isActive(link.href) ? "page" : undefined}
-        class:list={[
-          "rounded-full border px-3 py-1.5 text-sm font-medium transition",
-          isActive(link.href)
-            ? "border-purple-300/40 bg-purple-400/20 text-white"
-            : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10",
-        ]}
-      >
-        {link.label}
-      </a>
-    ))
+    links.map((link) =>
+      disabled ? (
+        <span
+          aria-disabled="true"
+          class="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-medium text-white/30"
+        >
+          {link.label}
+        </span>
+      ) : (
+        <a
+          href={link.href}
+          aria-current={isActive(link.href) ? "page" : undefined}
+          class:list={[
+            "rounded-full border px-3 py-1.5 text-sm font-medium transition",
+            isActive(link.href)
+              ? "border-purple-300/40 bg-purple-400/20 text-white"
+              : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10",
+          ]}
+        >
+          {link.label}
+        </a>
+      ),
+    )
   }
 </nav>

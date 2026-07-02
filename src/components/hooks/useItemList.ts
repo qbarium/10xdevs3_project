@@ -42,8 +42,13 @@ export type ListFetchOutcome =
 /**
  * URL ŻĄDANIA do endpointu — `criteriaToQuery` pomija `view` (wynika ze ścieżki strony), ale endpoint go
  * WYMAGA (selektor predykatu), więc dokładamy `view` jawnie. To URL fetchu, nie adres strony (ten bez `view`).
+ * Tryb sesji (S-13 F4): endpoint sesyjny, BEZ `view` (sesja to zakres, nie widok) i z oknem ZAWSZE jawnym —
+ * ten endpoint traktuje brak `size` jako pełną listę (kompat panelu S-10 do F5), a tryb zawsze stronicuje.
  */
 export function buildListUrl(criteria: ListCriteria): string {
+  if (criteria.session) {
+    return `/api/import-sessions/${encodeURIComponent(criteria.session)}/items?page=${criteria.page}&size=${criteria.size}`;
+  }
   const qs = criteriaToQuery(criteria);
   return `/api/items?view=${criteria.view}${qs ? `&${qs}` : ""}`;
 }

@@ -49,6 +49,19 @@ describe("buildListUrl — wstrzykuje view, pomija domyślne", () => {
   });
 });
 
+describe("buildListUrl — gałąź trybu sesji (S-13 F4)", () => {
+  it("session → endpoint sesyjny z oknem ZAWSZE jawnym, bez view", () => {
+    const c = criteria({ view: "pending", session: "11111111-1111-4111-8111-111111111111" });
+    expect(buildListUrl(c)).toBe("/api/import-sessions/11111111-1111-4111-8111-111111111111/items?page=1&size=10");
+  });
+
+  it("okno niedomyślne w adresie żądania", () => {
+    expect(buildListUrl(criteria({ view: "pending", session: "s1", page: 3, size: 25 }))).toBe(
+      "/api/import-sessions/s1/items?page=3&size=25",
+    );
+  });
+});
+
 describe("mapListResponse — sukces tylko przy ok+ok:true+tablica", () => {
   it("HTTP ok + ok:true + items + total → sukces z items i total", () => {
     expect(mapListResponse(true, { ok: true, items: [{ id: "a" } as never], total: 42 })).toEqual({

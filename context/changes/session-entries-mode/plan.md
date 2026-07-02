@@ -424,22 +424,22 @@ Dziennik staje się jedną kolumną pełnoszerokich kart z akcjami nawigacyjnymi
 
 #### Automated
 
-- [x] 3.1 Lint przechodzi (`npm run lint`)
-- [x] 3.2 Testy jednostkowe przechodzą (`npm run test`, w tym `item-card.test.ts`)
-- [x] 3.3 Build produkcyjny przechodzi (`npm run build`)
+- [x] 3.1 Lint przechodzi (`npm run lint`) — 8431b11
+- [x] 3.2 Testy jednostkowe przechodzą (`npm run test`, w tym `item-card.test.ts`) — 8431b11
+- [x] 3.3 Build produkcyjny przechodzi (`npm run build`) — 8431b11
 
 #### Manual
 
-- [x] 3.4 Przegląd wizualny 3 widoków + panelu S-10: zachowanie i wygląd identyczne jak przed refaktorem
-- [x] 3.5 Zimny start dev bez `--force`: zero re-optymalizacji
+- [x] 3.4 Przegląd wizualny 3 widoków + panelu S-10: zachowanie i wygląd identyczne jak przed refaktorem — 8431b11
+- [x] 3.5 Zimny start dev bez `--force`: zero re-optymalizacji — 8431b11
 
 ### Phase 4: Tryb sesji na /items?session=
 
 #### Automated
 
-- [ ] 4.1 Lint przechodzi (`npm run lint`)
-- [ ] 4.2 Testy jednostkowe przechodzą (`npm run test`)
-- [ ] 4.3 Build produkcyjny przechodzi (`npm run build`)
+- [x] 4.1 Lint przechodzi (`npm run lint`)
+- [x] 4.2 Testy jednostkowe przechodzą (`npm run test`)
+- [x] 4.3 Build produkcyjny przechodzi (`npm run build`)
 
 #### Manual
 
