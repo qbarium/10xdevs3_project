@@ -11,6 +11,10 @@ import OperationalStatusBadge from "@/components/items/OperationalStatusBadge";
 import { reconcileAfterChange, type AcceptedView } from "@/components/items/operational-view";
 import { allIds, isAllSelected, requiresConfirmation, toggleSelection } from "@/components/items/selection";
 import type { TypeFilterValue } from "@/components/items/type-filter";
+import { ITEMS_LIST_PAGE_SIZE_KEY, writePageSizePref } from "@/components/lists/page-size-pref";
+import PageSizeSelect from "@/components/lists/PageSizeSelect";
+import Pagination from "@/components/lists/Pagination";
+import { resetToFirstPage } from "@/components/lists/list-pagination";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -23,7 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { Toaster } from "@/components/ui/sonner";
 import { itemTypeLabel, operationalStatusLabel } from "@/lib/labels";
-import { defaultCriteria, hasActiveFilters } from "@/lib/services/list-criteria";
+import { defaultCriteria, hasActiveFilters, ITEM_PAGE_SIZES } from "@/lib/services/list-criteria";
 import type { ListCriteria } from "@/lib/services/list-criteria";
 import { cn } from "@/lib/utils";
 import type { Item, OperationalStatus } from "@/types";
@@ -34,6 +38,8 @@ interface Props {
   /** Kryteria z adresu strony (czytane SERWEROWO tym samym parserem co klient) — stan startowy hooka, by SSR
       i pierwszy render wyspy były identyczne (hydration-stable, bez przeskoku). */
   initialCriteria: ListCriteria;
+  /** Łączna liczba itemów pasujących do kryteriów (SSR z `count`) — stan startowy licznika stron (S-13 F2). */
+  initialTotal: number;
   /** Czy pokazać akcję „Dodaj item" (S-07) — tylko widok Aktywne; Zakończone/Anulowane pomijają (domyślnie false). */
   canAdd?: boolean;
 }
@@ -77,11 +83,18 @@ function elementNoun(n: number): string {
 // (autorytatywna lista z serwera), mutacje = optimistic przez `applyOptimistic` (bez re-fetchu). Stąd brak
 // klienckiego `applyTypeFilter`/`pinnedIds`/cookie: re-fetch przy zmianie filtra (nie edycja) usuwa item
 // z widoku, więc edytowany item zostaje widoczny do następnej zmiany kryteriów (decyzja #6 — naturalnie).
-export default function AcceptedItemsView({ initialItems, view, initialCriteria, canAdd = false }: Props) {
-  const { items, criteria, settledCriteria, setCriteria, applyOptimistic, error } = useItemList(
+export default function AcceptedItemsView({
+  initialItems,
+  view,
+  initialCriteria,
+  initialTotal,
+  canAdd = false,
+}: Props) {
+  const { items, criteria, settledCriteria, setCriteria, applyOptimistic, error, page, pageCount } = useItemList(
     view,
     initialItems,
     initialCriteria,
+    initialTotal,
   );
   const [selected, setSelected] = useState<Set<string>>(new Set());
   // Żądanie potwierdzenia (select-all) — unia rozróżniająca: zmiana stanu operacyjnego ALBO przeniesienie
@@ -204,9 +217,10 @@ export default function AcceptedItemsView({ initialItems, view, initialCriteria,
   }
 
   // Zmiana samego filtra typu — cienka nakładka na `applyCriteria` zachowująca kontrakt `TypeFilterValue`
-  // używany przez create-flow S-07 (`nextFilterAfterCreate` w `handleCreated`).
+  // używany przez create-flow S-07 (`nextFilterAfterCreate` w `handleCreated`). Reset do strony 1 jak każda
+  // zmiana filtra (offset za końcem zbioru to błąd PGRST103).
   function handleFilterChange(next: TypeFilterValue): void {
-    applyCriteria({ ...criteria, type: next });
+    applyCriteria(resetToFirstPage({ ...criteria, type: next }));
   }
 
   // Ponów ostatni fetch wg bieżących kryteriów (po błędzie sieci) — bez zmiany kryteriów i bez czyszczenia
@@ -280,7 +294,17 @@ export default function AcceptedItemsView({ initialItems, view, initialCriteria,
       {/* Pasek filtrów widoczny, gdy jest co filtrować ALBO gdy jakikolwiek filtr jest aktywny — w drugim
           przypadku lista może być pusta (zawężona), a kontrolki MUSZĄ zostać dostępne (powrót do domyślnych). */}
       {(items.length > 0 || filtersActive) && (
-        <ListFilterBar criteria={criteria} onChange={applyCriteria} error={error} onRetry={retry} />
+        <ListFilterBar
+          criteria={criteria}
+          onChange={(next) => {
+            // Zmiana filtra/sortu/frazy → strona 1 (zakres wyników się zmienia; strona N mogłaby nie istnieć —
+            // offset za końcem to błąd PGRST103). Wzorzec dziennika (S-11). Reset nie psuje debounce frazy:
+            // isSearchOnlyChange ignoruje `page`.
+            applyCriteria(resetToFirstPage(next));
+          }}
+          error={error}
+          onRetry={retry}
+        />
       )}
 
       {items.length === 0 ? (
@@ -294,7 +318,8 @@ export default function AcceptedItemsView({ initialItems, view, initialCriteria,
               size="sm"
               variant="outline"
               onClick={() => {
-                applyCriteria(defaultCriteria(view));
+                // Czyść filtry/sort (i wróć na stronę 1), ale ZACHOWAJ rozmiar strony — preferencja widoku.
+                applyCriteria({ ...defaultCriteria(view), size: criteria.size });
               }}
               className="border-white/15 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white"
             >
@@ -400,6 +425,29 @@ export default function AcceptedItemsView({ initialItems, view, initialCriteria,
           ))}
         </>
       )}
+
+      {/* Kontrolki stron (S-13 F2, parytet z dziennikiem): rozmiar strony (trwała preferencja + reset do 1)
+          i nawigacja stron (zachowuje filtry z wyświetlanej listy). Zmiana czyści zaznaczenie (applyCriteria —
+          invariant „selected ⊆ widoczne"). Pagination sama znika przy jednej stronie. */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <PageSizeSelect
+          value={criteria.size}
+          sizes={ITEM_PAGE_SIZES}
+          ariaLabel="Liczba elementów na stronę"
+          onChange={(size) => {
+            writePageSizePref(ITEMS_LIST_PAGE_SIZE_KEY, ITEM_PAGE_SIZES, size);
+            applyCriteria(resetToFirstPage({ ...criteria, size }));
+          }}
+        />
+        <Pagination
+          page={page}
+          pageCount={pageCount}
+          ariaLabel="Paginacja listy elementów"
+          onPage={(nextPage) => {
+            applyCriteria({ ...settledCriteria, page: nextPage });
+          }}
+        />
+      </div>
 
       <Dialog
         open={confirmRequest !== null}

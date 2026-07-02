@@ -396,29 +396,29 @@ Dziennik staje się jedną kolumną pełnoszerokich kart z akcjami nawigacyjnymi
 
 #### Automated
 
-- [x] 1.1 Lint przechodzi (`npm run lint`)
-- [x] 1.2 Testy jednostkowe przechodzą (`npm run test`)
-- [x] 1.3 Build produkcyjny przechodzi (`npm run build`)
+- [x] 1.1 Lint przechodzi (`npm run lint`) — cdf1ba1
+- [x] 1.2 Testy jednostkowe przechodzą (`npm run test`) — cdf1ba1
+- [x] 1.3 Build produkcyjny przechodzi (`npm run build`) — cdf1ba1
 
 #### Manual
 
-- [x] 1.4 `/items*` i `/import-sessions` (z panelem S-10) działają bez widocznej zmiany
+- [x] 1.4 `/items*` i `/import-sessions` (z panelem S-10) działają bez widocznej zmiany — cdf1ba1
 
 ### Phase 2: Paginacja na 5 widokach listy wpisów
 
 #### Automated
 
-- [ ] 2.1 Lint przechodzi (`npm run lint`)
-- [ ] 2.2 Testy jednostkowe przechodzą (`npm run test`)
-- [ ] 2.3 Build produkcyjny przechodzi (`npm run build`)
+- [x] 2.1 Lint przechodzi (`npm run lint`)
+- [x] 2.2 Testy jednostkowe przechodzą (`npm run test`)
+- [x] 2.3 Build produkcyjny przechodzi (`npm run build`)
 
 #### Manual
 
-- [ ] 2.4 Parytet SSR↔wyspa na `?page=&size=` bez przeskoku po nawodnieniu (5 widoków)
-- [ ] 2.5 Reset strony przy zmianie filtrów, trwałość przy zmianie strony, wstecz/dalej, adopcja preferencji rozmiaru
-- [ ] 2.6 Auto-cofnięcie przy opustoszałej stronie
-- [ ] 2.7 Dziennik sesji bez regresji (przyciski, skok, rozmiar, zapamiętywanie)
-- [ ] 2.8 Zimny start dev bez `--force`: zero re-optymalizacji (pokrycie: wyspy + dialog + API)
+- [x] 2.4 Parytet SSR↔wyspa na `?page=&size=` bez przeskoku po nawodnieniu (5 widoków)
+- [x] 2.5 Reset strony przy zmianie filtrów, trwałość przy zmianie strony, wstecz/dalej, adopcja preferencji rozmiaru
+- [x] 2.6 Auto-cofnięcie przy opustoszałej stronie
+- [x] 2.7 Dziennik sesji bez regresji (przyciski, skok, rozmiar, zapamiętywanie)
+- [x] 2.8 Zimny start dev bez `--force`: zero re-optymalizacji (pokrycie: wyspy + dialog + API)
 
 ### Phase 3: Wspólna karta wpisu
 

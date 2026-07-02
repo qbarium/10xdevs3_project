@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { clampPage, pageNav, resetToFirstPage } from "@/components/import-sessions/session-pagination";
+import { clampPage, pageNav, resetToFirstPage } from "@/components/lists/list-pagination";
+import { defaultCriteria } from "@/lib/services/list-criteria";
 import { defaultSessionCriteria } from "@/lib/services/session-list-criteria";
 
 describe("pageNav — stany krańcowe", () => {
@@ -49,8 +50,8 @@ describe("clampPage — zatwierdzenie wpisanej strony", () => {
   });
 });
 
-describe("resetToFirstPage — reset strony przy zmianie filtra/sortu", () => {
-  it("ustawia page 1, zachowując status, sort i rozmiar strony", () => {
+describe("resetToFirstPage — reset strony przy zmianie filtra/sortu (generyczne po typie kryteriów)", () => {
+  it("kryteria dziennika: ustawia page 1, zachowując status, sort i rozmiar strony", () => {
     expect(resetToFirstPage({ status: "failed", sort: "created_asc", page: 4, size: 25 })).toEqual({
       status: "failed",
       sort: "created_asc",
@@ -59,7 +60,12 @@ describe("resetToFirstPage — reset strony przy zmianie filtra/sortu", () => {
     });
   });
 
-  it("domyślne kryteria na stronie N → wracają na 1", () => {
+  it("domyślne kryteria dziennika na stronie N → wracają na 1", () => {
     expect(resetToFirstPage({ ...defaultSessionCriteria(), page: 7 }).page).toBe(1);
+  });
+
+  it("kryteria listy wpisów: page 1, reszta pól nietknięta (w tym size)", () => {
+    const c = { ...defaultCriteria("active"), type: "task" as const, page: 5, size: 25 };
+    expect(resetToFirstPage(c)).toEqual({ ...c, page: 1 });
   });
 });

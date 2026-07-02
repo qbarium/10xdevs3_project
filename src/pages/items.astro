@@ -17,15 +17,18 @@ const { user } = Astro.locals;
 const criteria = parseListCriteria("pending", Astro.url.searchParams);
 
 // Middleware chroni /items (PROTECTED_ROUTES) — `user` zawsze ustawiony. Pendingi liczymy serwerowo
-// (klient z cookies usera → RLS izoluje). To cel auto-przejścia z modalu klasyfikacji.
+// (klient z cookies usera → RLS izoluje); okno strony z kryteriów (S-13 F2) + `total` dla licznika stron
+// wyspy. To cel auto-przejścia z modalu klasyfikacji.
 let items: Item[] = [];
+let total = 0;
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 if (user && supabase) {
   try {
-    items = (await listItems(supabase, user.id, criteria)).items;
+    ({ items, total } = await listItems(supabase, user.id, criteria, { page: criteria.page, size: criteria.size }));
   } catch {
     // Przejściowy błąd odczytu → pusta lista (łagodna degradacja).
     items = [];
+    total = 0;
   }
 }
 ---
@@ -39,7 +42,7 @@ if (user && supabase) {
           Elementy do akceptacji
         </h1>
         <MainFilterNav />
-        <PendingItemsView client:load initialItems={items} initialCriteria={criteria} />
+        <PendingItemsView client:load initialItems={items} initialCriteria={criteria} initialTotal={total} />
       </main>
     </div>
   </div>

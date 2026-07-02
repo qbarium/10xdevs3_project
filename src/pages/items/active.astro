@@ -22,12 +22,14 @@ const { user } = Astro.locals;
 const criteria = parseListCriteria("active", Astro.url.searchParams);
 
 let items: Item[] = [];
+let total = 0;
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 if (user && supabase) {
   try {
-    items = (await listItems(supabase, user.id, criteria)).items;
+    ({ items, total } = await listItems(supabase, user.id, criteria, { page: criteria.page, size: criteria.size }));
   } catch {
     items = [];
+    total = 0;
   }
 }
 ---
@@ -41,7 +43,14 @@ if (user && supabase) {
           Aktywne
         </h1>
         <MainFilterNav />
-        <AcceptedItemsView client:load initialItems={items} view="active" initialCriteria={criteria} canAdd />
+        <AcceptedItemsView
+          client:load
+          initialItems={items}
+          view="active"
+          initialCriteria={criteria}
+          initialTotal={total}
+          canAdd
+        />
       </main>
     </div>
   </div>

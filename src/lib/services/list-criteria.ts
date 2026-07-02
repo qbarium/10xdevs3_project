@@ -32,6 +32,8 @@ export type SortDir = "asc" | "desc";
 /**
  * Komplet kryteriów listy. `view` na sztywno per strona (nie z URL); reszta czytana z query string.
  * `opstatus` honorowany WYŁĄCZNIE dla `view==="active"` (jedyny widok z >1 stanem operacyjnym).
+ * `page`/`size` (S-13 F2) to OKNO strony: `size` jest preferencją widoku, nie filtrem — nie liczy się
+ * do `hasActiveFilters` (wzorzec `session-list-criteria.ts`).
  */
 export interface ListCriteria {
   view: MainView;
@@ -40,6 +42,10 @@ export interface ListCriteria {
   dir: SortDir;
   q: string;
   opstatus?: OperationalStatus;
+  /** Numer strony (1-based); domyślnie 1. */
+  page: number;
+  /** Rozmiar strony z puli `ITEM_PAGE_SIZES`; domyślnie `ITEM_PAGE_SIZE`. */
+  size: number;
 }
 
 const SORT_FIELDS = ["created", "updated", "title"] as const satisfies readonly SortField[];
@@ -76,8 +82,9 @@ export function isMainView(value: string | null): value is MainView {
 /**
  * Czyta kryteria z `params` dla danego `view`. TOLERANCYJNY: każde niepoprawne/brakujące pole → wartość
  * domyślna wg widoku (nie rzuca). `q` przycięte do 200 znaków. `opstatus` honorowany tylko dla `active`
- * i tylko z dozwolonych wartości (new/in_progress) — inaczej `undefined`. JEDYNY walidator kryteriów:
- * używają go SSR, klient ORAZ endpoint.
+ * i tylko z dozwolonych wartości (new/in_progress) — inaczej `undefined`. Okno strony (S-13 F2): `page`
+ * clampowane do ≥ 1, `size` spoza puli → `ITEM_PAGE_SIZE`. JEDYNY walidator kryteriów: używają go SSR,
+ * klient ORAZ endpoint.
  */
 export function parseListCriteria(view: MainView, params: URLSearchParams): ListCriteria {
   const def = defaultSort(view);
@@ -91,12 +98,15 @@ export function parseListCriteria(view: MainView, params: URLSearchParams): List
     dir: isSortDir(dirRaw) ? dirRaw : def.dir,
     q: (params.get("q") ?? "").slice(0, MAX_QUERY_LENGTH),
     opstatus: view === "active" && isActiveOperational(opstatusRaw) ? opstatusRaw : undefined,
+    page: parseItemPage(params.get("page")),
+    size: parseItemSize(params.get("size")) ?? ITEM_PAGE_SIZE,
   };
 }
 
 /**
  * Serializuje kryteria do query string — TYLKO pola różne od domyślnych dla widoku (czysty, krótki URL).
- * `view` NIE jest emitowane (wynika ze ścieżki). Odwrotność `parseListCriteria`: round-trip zachowuje kryteria.
+ * `view` NIE jest emitowane (wynika ze ścieżki); `page` tylko gdy > 1, `size` tylko gdy ≠ domyślny.
+ * Odwrotność `parseListCriteria`: round-trip zachowuje kryteria.
  */
 export function criteriaToQuery(criteria: ListCriteria): string {
   const def = defaultSort(criteria.view);
@@ -106,6 +116,8 @@ export function criteriaToQuery(criteria: ListCriteria): string {
   if (criteria.dir !== def.dir) params.set("dir", criteria.dir);
   if (criteria.q !== "") params.set("q", criteria.q);
   if (criteria.view === "active" && criteria.opstatus) params.set("opstatus", criteria.opstatus);
+  if (criteria.page > 1) params.set("page", String(criteria.page));
+  if (criteria.size !== ITEM_PAGE_SIZE) params.set("size", String(criteria.size));
   return params.toString();
 }
 
@@ -115,13 +127,15 @@ export function defaultCriteria(view: MainView): ListCriteria {
 }
 
 /**
- * Czy JAKIEKOLWIEK kryterium odbiega od domyślnego dla widoku (typ / sort / dir / q / opstatus). Reużywa
+ * Czy JAKIKOLWIEK FILTR odbiega od domyślnego dla widoku (typ / sort / dir / q / opstatus). Reużywa
  * `criteriaToQuery` — ono emituje WYŁĄCZNIE pola różne od domyślnych, więc niepusty query string ⇔ aktywny
- * filtr (zamiast osobnego, dryfującego porównania pól). Steruje rozróżnieniem pustego wyniku w wyspach:
+ * filtr (zamiast osobnego, dryfującego porównania pól). Okno `page`/`size` jest PRZED porównaniem
+ * normalizowane do domyślnych — to preferencja widoku, nie filtr (inaczej sama zmiana strony pokazywałaby
+ * „Wyczyść filtry"; wzorzec `hasActiveSessionFilters`). Steruje rozróżnieniem pustego wyniku w wyspach:
  * „brak elementów dla wybranych filtrów" (+ akcja „Wyczyść filtry") vs zwykły pusty widok.
  */
 export function hasActiveFilters(criteria: ListCriteria): boolean {
-  return criteriaToQuery(criteria).length > 0;
+  return criteriaToQuery({ ...criteria, page: 1, size: ITEM_PAGE_SIZE }).length > 0;
 }
 
 // --- S-13: okno strony listy wpisów (paginacja) -----------------------------------------------------------
@@ -143,8 +157,9 @@ export function parseItemPage(value: string | null): number {
 
 /**
  * Waliduje rozmiar strony względem puli `ITEM_PAGE_SIZES`; brak / śmieć / spoza puli → `null`.
- * `null` = BRAK paginacji (pełna lista) — kompatybilność przejściowa Fazy 1: klienci nie wysyłający
- * okna dostają dzisiejsze zachowanie. Od Fazy 2 ścieżka kryteriów rozstrzyga `null` na `ITEM_PAGE_SIZE`.
+ * Dwie ścieżki konsumpcji: KRYTERIA listy (`parseListCriteria`) rozstrzygają `null` na `ITEM_PAGE_SIZE`
+ * (lista wpisów zawsze stronicuje od F2); endpoint sesyjny (`[id]/items`, warstwa danych panelu S-10)
+ * traktuje `null` jako BRAK okna (pełna lista — kompatybilność do demontażu panelu w F5).
  */
 export function parseItemSize(value: string | null): number | null {
   const n = Number(value);

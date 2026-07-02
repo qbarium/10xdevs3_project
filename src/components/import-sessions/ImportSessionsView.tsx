@@ -10,17 +10,21 @@ import { Loader2 } from "lucide-react";
 import { useCallback, useState } from "react";
 
 import { useSessionList } from "@/components/hooks/useSessionList";
-import PageSizeSelect from "@/components/import-sessions/PageSizeSelect";
-import { writePageSizePref } from "@/components/import-sessions/page-size-pref";
 import SessionFilterBar from "@/components/import-sessions/SessionFilterBar";
 import SessionItemsPanel from "@/components/import-sessions/SessionItemsPanel";
-import SessionPagination from "@/components/import-sessions/SessionPagination";
-import { resetToFirstPage } from "@/components/import-sessions/session-pagination";
 import type { SessionRowData } from "@/components/import-sessions/SessionRow";
 import { SessionsList } from "@/components/import-sessions/SessionsList";
+import { SESSION_LOG_PAGE_SIZE_KEY, writePageSizePref } from "@/components/lists/page-size-pref";
+import PageSizeSelect from "@/components/lists/PageSizeSelect";
+import Pagination from "@/components/lists/Pagination";
+import { resetToFirstPage } from "@/components/lists/list-pagination";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
-import { defaultSessionCriteria, hasActiveSessionFilters } from "@/lib/services/session-list-criteria";
+import {
+  defaultSessionCriteria,
+  hasActiveSessionFilters,
+  SESSION_PAGE_SIZES,
+} from "@/lib/services/session-list-criteria";
 import type { SessionListCriteria } from "@/lib/services/session-list-criteria";
 
 // Wspólny styl nagłówka kolumny — oba (lewy „Sesje", prawy „Elementy sesji") identyczne, by stały na tym
@@ -113,15 +117,18 @@ export default function ImportSessionsView({
             <div className="flex flex-wrap items-center justify-between gap-2">
               <PageSizeSelect
                 value={criteria.size}
+                sizes={SESSION_PAGE_SIZES}
+                ariaLabel="Liczba wpisów na stronę"
                 onChange={(size) => {
                   // Zmiana rozmiaru = nowy zakres → reset do strony 1; zapamiętujemy wybór w localStorage.
-                  writePageSizePref(size);
+                  writePageSizePref(SESSION_LOG_PAGE_SIZE_KEY, SESSION_PAGE_SIZES, size);
                   changeCriteria(resetToFirstPage({ ...criteria, size }));
                 }}
               />
-              <SessionPagination
+              <Pagination
                 page={page}
                 pageCount={pageCount}
+                ariaLabel="Paginacja sesji"
                 onPage={(nextPage) => {
                   // Paginacja zachowuje filtr/sort z wyświetlanej listy (settledCriteria), zmienia samą stronę.
                   changeCriteria({ ...settledCriteria, page: nextPage });

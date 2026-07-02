@@ -1,11 +1,12 @@
 // Testujemy CZYSTĄ logikę wyniesioną z useItemList (bez React — środowisko node, jak useSessionRetry):
-// budowa URL fetchu (wstrzyknięcie view + pominięcie domyślnych), mapowanie odpowiedzi oraz fetchList
-// z mockiem global `fetch` — w tym ścieżka anulowania (rdzeń „najnowsze wygrywa", F5). Pełne zachowanie
-// hooka (debounce/popstate/history/token) weryfikowane ręcznie w Fazach 4-5.
+// budowa URL fetchu (wstrzyknięcie view + pominięcie domyślnych, okno strony), mapowanie odpowiedzi
+// (z `total` i bez), klasyfikację zmiany kryteriów (isSearchOnlyChange z resetem strony) oraz fetchList
+// z mockiem global `fetch` — w tym ścieżkę anulowania (rdzeń „najnowsze wygrywa", F5). Pełne zachowanie
+// hooka (debounce/popstate/history/token/auto-cofnięcie) weryfikowane ręcznie.
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { buildListUrl, fetchList, mapListResponse } from "@/components/hooks/useItemList";
+import { buildListUrl, fetchList, isSearchOnlyChange, mapListResponse } from "@/components/hooks/useItemList";
 import { defaultCriteria } from "@/lib/services/list-criteria";
 import type { ListCriteria } from "@/lib/services/list-criteria";
 
@@ -41,13 +42,32 @@ describe("buildListUrl — wstrzykuje view, pomija domyślne", () => {
       "/api/items?view=active&opstatus=in_progress",
     );
   });
+
+  it("okno strony w adresie: page > 1 i size ≠ domyślny (S-13 F2)", () => {
+    expect(buildListUrl(criteria({ view: "active", page: 3, size: 25 }))).toBe("/api/items?view=active&page=3&size=25");
+    expect(buildListUrl(criteria({ view: "pending", page: 2 }))).toBe("/api/items?view=pending&page=2");
+  });
 });
 
 describe("mapListResponse — sukces tylko przy ok+ok:true+tablica", () => {
-  it("HTTP ok + ok:true + items → sukces z items", () => {
-    expect(mapListResponse(true, { ok: true, items: [{ id: "a" } as never] })).toEqual({
+  it("HTTP ok + ok:true + items + total → sukces z items i total", () => {
+    expect(mapListResponse(true, { ok: true, items: [{ id: "a" } as never], total: 42 })).toEqual({
       ok: true,
       items: [{ id: "a" }],
+      total: 42,
+    });
+  });
+
+  it("brak liczbowego total → items.length (tolerancyjnie)", () => {
+    expect(mapListResponse(true, { ok: true, items: [{ id: "a" } as never, { id: "b" } as never] })).toEqual({
+      ok: true,
+      items: [{ id: "a" }, { id: "b" }],
+      total: 2,
+    });
+    expect(mapListResponse(true, { ok: true, items: [], total: "x" as never })).toEqual({
+      ok: true,
+      items: [],
+      total: 0,
     });
   });
 
@@ -65,6 +85,29 @@ describe("mapListResponse — sukces tylko przy ok+ok:true+tablica", () => {
   });
 });
 
+describe("isSearchOnlyChange — klasyfikacja zmiany kryteriów (debounce + replaceState)", () => {
+  const base = defaultCriteria("active");
+
+  it("zmiana samej frazy q → true", () => {
+    expect(isSearchOnlyChange(base, { ...base, q: "foo" })).toBe(true);
+  });
+
+  it("zmiana q z resetem strony (page ignorowane) → nadal true (S-13 F2)", () => {
+    expect(isSearchOnlyChange({ ...base, page: 4 }, { ...base, q: "foo", page: 1 })).toBe(true);
+  });
+
+  it("zmiana q razem z filtrem/sortem/rozmiarem → false", () => {
+    expect(isSearchOnlyChange(base, { ...base, q: "foo", type: "task" })).toBe(false);
+    expect(isSearchOnlyChange(base, { ...base, q: "foo", sort: "title" })).toBe(false);
+    expect(isSearchOnlyChange(base, { ...base, q: "foo", size: 25 })).toBe(false);
+  });
+
+  it("brak zmiany q → false (nawet gdy zmienia się strona)", () => {
+    expect(isSearchOnlyChange(base, { ...base, page: 2 })).toBe(false);
+    expect(isSearchOnlyChange(base, base)).toBe(false);
+  });
+});
+
 describe("fetchList — fetch + mapowanie + anulowanie", () => {
   it("woła endpoint z URL z buildListUrl i przekazuje signal", async () => {
     const f = vi.fn().mockResolvedValue(fakeResponse(true, { ok: true, items: [] }));
@@ -76,10 +119,10 @@ describe("fetchList — fetch + mapowanie + anulowanie", () => {
     expect(init.signal).toBeInstanceOf(AbortSignal);
   });
 
-  it("sukces → status ok z items", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(fakeResponse(true, { ok: true, items: [{ id: "a" }] })));
+  it("sukces → status ok z items i total", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(fakeResponse(true, { ok: true, items: [{ id: "a" }], total: 7 })));
     const outcome = await fetchList(defaultCriteria("active"), new AbortController().signal);
-    expect(outcome).toEqual({ status: "ok", items: [{ id: "a" }] });
+    expect(outcome).toEqual({ status: "ok", items: [{ id: "a" }], total: 7 });
   });
 
   it("odpowiedź nie-ok → status error", async () => {

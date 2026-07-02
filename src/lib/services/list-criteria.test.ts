@@ -17,7 +17,7 @@ function params(query: string): URLSearchParams {
 }
 
 describe("parseListCriteria — domyślne wg widoku", () => {
-  it("pending → sort:created, dir:desc, type:all, q:'', brak opstatus", () => {
+  it("pending → sort:created, dir:desc, type:all, q:'', brak opstatus, strona 1 domyślnego rozmiaru", () => {
     expect(parseListCriteria("pending", params(""))).toEqual({
       view: "pending",
       type: "all",
@@ -25,6 +25,8 @@ describe("parseListCriteria — domyślne wg widoku", () => {
       dir: "desc",
       q: "",
       opstatus: undefined,
+      page: 1,
+      size: ITEM_PAGE_SIZE,
     });
   });
 
@@ -34,6 +36,8 @@ describe("parseListCriteria — domyślne wg widoku", () => {
     expect(c.dir).toBe("desc");
     expect(c.type).toBe("all");
     expect(c.q).toBe("");
+    expect(c.page).toBe(1);
+    expect(c.size).toBe(ITEM_PAGE_SIZE);
   });
 });
 
@@ -43,6 +47,18 @@ describe("parseListCriteria — fallback dla śmieci", () => {
     expect(c.sort).toBe("updated");
     expect(c.dir).toBe("desc");
     expect(c.type).toBe("all");
+  });
+
+  it("śmieciowe okno → strona 1 domyślnego rozmiaru (S-13 F2)", () => {
+    const c = parseListCriteria("active", params("page=abc&size=999"));
+    expect(c.page).toBe(1);
+    expect(c.size).toBe(ITEM_PAGE_SIZE);
+  });
+
+  it("poprawne okno czytane z adresu", () => {
+    const c = parseListCriteria("active", params("page=3&size=25"));
+    expect(c.page).toBe(3);
+    expect(c.size).toBe(25);
   });
 });
 
@@ -77,7 +93,16 @@ describe("criteriaToQuery — pomija domyślne", () => {
   });
 
   it("emituje tylko pola różne od domyślnych, bez view", () => {
-    const c: ListCriteria = { view: "active", type: "task", sort: "title", dir: "asc", q: "x", opstatus: "new" };
+    const c: ListCriteria = {
+      view: "active",
+      type: "task",
+      sort: "title",
+      dir: "asc",
+      q: "x",
+      opstatus: "new",
+      page: 1,
+      size: ITEM_PAGE_SIZE,
+    };
     const parsed = params(criteriaToQuery(c));
     expect(parsed.has("view")).toBe(false);
     expect(parsed.get("type")).toBe("task");
@@ -85,22 +110,59 @@ describe("criteriaToQuery — pomija domyślne", () => {
     expect(parsed.get("dir")).toBe("asc");
     expect(parsed.get("q")).toBe("x");
     expect(parsed.get("opstatus")).toBe("new");
+    expect(parsed.has("page")).toBe(false);
+    expect(parsed.has("size")).toBe(false);
+  });
+
+  it("okno: page emitowane tylko gdy > 1, size tylko gdy ≠ domyślny (S-13 F2)", () => {
+    const base = defaultCriteria("active");
+    expect(criteriaToQuery({ ...base, page: 2 })).toBe("page=2");
+    expect(criteriaToQuery({ ...base, size: 25 })).toBe("size=25");
+    expect(criteriaToQuery({ ...base, page: 3, size: 50 })).toBe("page=3&size=50");
+    expect(criteriaToQuery({ ...base, page: 1, size: ITEM_PAGE_SIZE })).toBe("");
   });
 
   it("opstatus nie emitowane poza widokiem active", () => {
-    const c: ListCriteria = { view: "done", type: "all", sort: "updated", dir: "desc", q: "", opstatus: "new" };
+    const c: ListCriteria = {
+      view: "done",
+      type: "all",
+      sort: "updated",
+      dir: "desc",
+      q: "",
+      opstatus: "new",
+      page: 1,
+      size: ITEM_PAGE_SIZE,
+    };
     expect(criteriaToQuery(c)).toBe("");
   });
 });
 
 describe("round-trip parse(query(c)) === c", () => {
   const cases: ListCriteria[] = [
-    { view: "pending", type: "all", sort: "created", dir: "desc", q: "", opstatus: undefined },
-    { view: "active", type: "task", sort: "title", dir: "asc", q: "foo bar", opstatus: "in_progress" },
-    { view: "trash", type: "note", sort: "created", dir: "asc", q: "%weird,(input)", opstatus: undefined },
-    { view: "done", type: "idea", sort: "updated", dir: "desc", q: "", opstatus: undefined },
+    { view: "pending", type: "all", sort: "created", dir: "desc", q: "", opstatus: undefined, page: 1, size: 10 },
+    {
+      view: "active",
+      type: "task",
+      sort: "title",
+      dir: "asc",
+      q: "foo bar",
+      opstatus: "in_progress",
+      page: 4,
+      size: 25,
+    },
+    {
+      view: "trash",
+      type: "note",
+      sort: "created",
+      dir: "asc",
+      q: "%weird,(input)",
+      opstatus: undefined,
+      page: 1,
+      size: 100,
+    },
+    { view: "done", type: "idea", sort: "updated", dir: "desc", q: "", opstatus: undefined, page: 7, size: 10 },
   ];
-  it.each(cases)("round-trips $view/$type/$sort", (c) => {
+  it.each(cases)("round-trips $view/$type/$sort (page $page, size $size)", (c) => {
     expect(parseListCriteria(c.view, params(criteriaToQuery(c)))).toEqual(c);
   });
 });
@@ -118,6 +180,14 @@ describe("hasActiveFilters", () => {
     expect(hasActiveFilters({ ...defaultCriteria("active"), dir: "asc" })).toBe(true);
     expect(hasActiveFilters({ ...defaultCriteria("active"), q: "foo" })).toBe(true);
     expect(hasActiveFilters({ ...defaultCriteria("active"), opstatus: "new" })).toBe(true);
+  });
+
+  it("okno page/size NIE liczy się jako filtr (preferencja widoku, nie zawężenie — S-13 F2)", () => {
+    expect(hasActiveFilters({ ...defaultCriteria("active"), page: 5 })).toBe(false);
+    expect(hasActiveFilters({ ...defaultCriteria("active"), size: 100 })).toBe(false);
+    expect(hasActiveFilters({ ...defaultCriteria("active"), page: 5, size: 100 })).toBe(false);
+    // …ale filtr przy niedomyślnym oknie nadal liczy się jako filtr.
+    expect(hasActiveFilters({ ...defaultCriteria("active"), type: "task", page: 5 })).toBe(true);
   });
 
   it("opstatus poza widokiem active nie liczy się jako filtr (nie jest emitowany)", () => {

@@ -16,9 +16,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { readPageSizePref } from "@/components/import-sessions/page-size-pref";
 import type { SessionRowData } from "@/components/import-sessions/SessionRow";
-import { parseSessionListCriteria, sessionCriteriaToQuery } from "@/lib/services/session-list-criteria";
+import { readPageSizePref, SESSION_LOG_PAGE_SIZE_KEY } from "@/components/lists/page-size-pref";
+import {
+  parseSessionListCriteria,
+  SESSION_PAGE_SIZES,
+  sessionCriteriaToQuery,
+} from "@/lib/services/session-list-criteria";
 import type { SessionListCriteria } from "@/lib/services/session-list-criteria";
 
 const FETCH_ERROR = "Nie udało się zaktualizować listy. Spróbuj ponownie.";
@@ -165,7 +169,7 @@ export function useSessionList(
   // localStorage i re-fetchuj BEZ zapisu URL (preferencja nie zaśmieca adresu). URL z `size` ma pierwszeństwo.
   useEffect(() => {
     if (new URLSearchParams(window.location.search).has("size")) return;
-    const stored = readPageSizePref();
+    const stored = readPageSizePref(SESSION_LOG_PAGE_SIZE_KEY, SESSION_PAGE_SIZES);
     if (stored == null || stored === criteriaRef.current.size) return;
     const next = { ...criteriaRef.current, size: stored, page: 1 };
     criteriaRef.current = next;

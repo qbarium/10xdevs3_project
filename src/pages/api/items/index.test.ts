@@ -142,26 +142,31 @@ describe("GET /api/items", () => {
     expect(vi.mocked(listItems)).not.toHaveBeenCalled();
   });
 
-  // 200 + serwis dostaje user.id ORAZ kryteria sparsowane z query stringa. Bez `size` → wywołanie BEZ okna
-  // (pełna lista, kompat wstecz) i odpowiedź BEZ echa page/pageSize — ale zawsze z total (addytywnie).
-  it("poprawne parametry bez okna → 200, serwis bez okna, odpowiedź {ok,items,total} bez page/pageSize", async () => {
+  // 200 + serwis dostaje user.id, kryteria sparsowane z query stringa ORAZ okno Z KRYTERIÓW (S-13 F2:
+  // lista wpisów zawsze stronicuje — brak `size` w adresie ⇒ domyślne okno strona 1 × ITEM_PAGE_SIZE).
+  it("poprawne parametry bez okna w adresie → 200, serwis z DOMYŚLNYM oknem, echo page/pageSize", async () => {
     const res = await GET(getCtx("?view=active&type=task&sort=title&dir=asc"));
     expect(res.status).toBe(200);
     const body = (await res.json()) as ListBody;
-    expect(body).toMatchObject({ ok: true, items: [ITEM], total: 1 });
-    expect(body.page).toBeUndefined();
-    expect(body.pageSize).toBeUndefined();
-    expect(vi.mocked(listItems)).toHaveBeenCalledWith(expect.anything(), "user-1", {
-      view: "active",
-      type: "task",
-      sort: "title",
-      dir: "asc",
-      q: "",
-      opstatus: undefined,
-    });
+    expect(body).toMatchObject({ ok: true, items: [ITEM], total: 1, page: 1, pageSize: 10 });
+    expect(vi.mocked(listItems)).toHaveBeenCalledWith(
+      expect.anything(),
+      "user-1",
+      {
+        view: "active",
+        type: "task",
+        sort: "title",
+        dir: "asc",
+        q: "",
+        opstatus: undefined,
+        page: 1,
+        size: 10,
+      },
+      { page: 1, size: 10 },
+    );
   });
 
-  it("page+size z puli → 200, serwis z oknem, odpowiedź z echem page/pageSize", async () => {
+  it("page+size z puli → 200, serwis z oknem z adresu, odpowiedź z echem page/pageSize", async () => {
     vi.mocked(listItems).mockResolvedValue({ items: [ITEM], total: 60 } as never);
     const res = await GET(getCtx("?view=active&page=2&size=25"));
     expect(res.status).toBe(200);
@@ -170,32 +175,20 @@ describe("GET /api/items", () => {
     expect(vi.mocked(listItems)).toHaveBeenCalledWith(
       expect.anything(),
       "user-1",
-      expect.objectContaining({ view: "active" }),
+      expect.objectContaining({ view: "active", page: 2, size: 25 }),
       { page: 2, size: 25 },
     );
   });
 
-  it("size spoza puli / śmieć → traktowane jak brak okna (pełna lista)", async () => {
-    const res = await GET(getCtx("?view=active&page=2&size=999"));
+  it("size spoza puli / śmieciowy page → fallback do domyślnego okna (tolerancyjny parser)", async () => {
+    const res = await GET(getCtx("?view=active&page=abc&size=999"));
     expect(res.status).toBe(200);
     const body = (await res.json()) as ListBody;
-    expect(body.page).toBeUndefined();
-    expect(body.pageSize).toBeUndefined();
-    // Wywołanie 3-argumentowe (bez okna) — page bez size jest ignorowane.
+    expect(body).toMatchObject({ page: 1, pageSize: 10 });
     expect(vi.mocked(listItems)).toHaveBeenCalledWith(
       expect.anything(),
       "user-1",
-      expect.objectContaining({ view: "active" }),
-    );
-  });
-
-  it("śmieciowy page z poprawnym size → clamp do strony 1", async () => {
-    const res = await GET(getCtx("?view=active&page=abc&size=10"));
-    expect(res.status).toBe(200);
-    expect(vi.mocked(listItems)).toHaveBeenCalledWith(
-      expect.anything(),
-      "user-1",
-      expect.objectContaining({ view: "active" }),
+      expect.objectContaining({ page: 1, size: 10 }),
       { page: 1, size: 10 },
     );
   });
@@ -204,14 +197,21 @@ describe("GET /api/items", () => {
   it("niepoprawny sort/type tolerowany → 200, fallback do domyślnych kryteriów", async () => {
     const res = await GET(getCtx("?view=active&sort=garbage&type=archived"));
     expect(res.status).toBe(200);
-    expect(vi.mocked(listItems)).toHaveBeenCalledWith(expect.anything(), "user-1", {
-      view: "active",
-      type: "all",
-      sort: "updated",
-      dir: "desc",
-      q: "",
-      opstatus: undefined,
-    });
+    expect(vi.mocked(listItems)).toHaveBeenCalledWith(
+      expect.anything(),
+      "user-1",
+      {
+        view: "active",
+        type: "all",
+        sort: "updated",
+        dir: "desc",
+        q: "",
+        opstatus: undefined,
+        page: 1,
+        size: 10,
+      },
+      { page: 1, size: 10 },
+    );
   });
 
   it("filtr bez trafień → 200, items: [] + total 0", async () => {

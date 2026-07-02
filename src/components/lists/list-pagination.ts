@@ -1,7 +1,9 @@
-// Czysta logika paginacji dziennika sesji (S-11) — wydzielona z komponentu, by była testowalna w node
-// (konwencja projektu: logika w `.ts`, render w `.tsx`). `SessionPagination.tsx` ją konsumuje.
-
-import type { SessionListCriteria } from "@/lib/services/session-list-criteria";
+// Czysta logika paginacji list (S-11, uogólniona w S-13 F2) — wydzielona z komponentów, by była testowalna
+// w node (konwencja projektu: logika w `.ts`, render w `.tsx`). Konsumują ją `Pagination.tsx` oraz wyspy
+// dziennika sesji i listy wpisów. Wcześniej żyła w `import-sessions/session-pagination.ts` przyspawana do
+// kryteriów dziennika; `resetToFirstPage` jest teraz generyczne po typie kryteriów (każde z polem `page`).
+// Nazwa pliku `list-pagination.ts` (nie `pagination.ts`): na case-insensitive FS (Windows) kolidowałaby
+// z `Pagination.tsx` w tym samym katalogu — serwis projektu TS gubi wtedy jeden z plików.
 
 /** Stan kontrolek stron: czy można cofnąć/przejść dalej oraz docelowe numery (z clampem do zakresu). */
 export interface PageNav {
@@ -33,7 +35,8 @@ export function clampPage(value: number, pageCount: number, current: number): nu
 /**
  * Kryteria po zmianie FILTRA lub SORTU — zawsze wracają na stronę 1, bo zmienił się zakres wyników (bieżąca
  * strona N mogłaby już nie istnieć). Paginacja zmienia samą stronę, więc jej NIE przepuszczamy przez to.
+ * Generyczne: działa dla `SessionListCriteria` (dziennik) i `ListCriteria` (lista wpisów).
  */
-export function resetToFirstPage(criteria: SessionListCriteria): SessionListCriteria {
+export function resetToFirstPage<T extends { page: number }>(criteria: T): T {
   return { ...criteria, page: 1 };
 }
