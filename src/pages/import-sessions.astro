@@ -2,7 +2,7 @@
 import Layout from "@/layouts/Layout.astro";
 import Topbar from "@/components/Topbar.astro";
 import ImportSessionsView from "@/components/import-sessions/ImportSessionsView";
-import type { SessionRowData } from "@/components/import-sessions/SessionRow";
+import type { SessionRowData } from "@/components/import-sessions/SessionCard";
 import { createClient } from "@/lib/supabase";
 import { getImportSessions, toSessionRow } from "@/lib/services/import-session";
 import { parseSessionListCriteria } from "@/lib/services/session-list-criteria";

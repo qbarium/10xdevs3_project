@@ -4,7 +4,7 @@
 // więc zwraca wszystkie cztery stany naraz (`pending`/`accepted`/`rejected`/`deleted`). Od S-13 Fazy 1
 // przyjmuje OPCJONALNE okno `page`/`size` (te same parsery i pula co GET /api/items) i zwraca
 // `{ ok, items, total }` (+ echo `page`/`pageSize` przy oknie); brak/śmieciowy `size` → pełna lista bez
-// okna (panel S-10 działa bez zmian). Sekwencja jak w sąsiednich endpointach: guard sesji (401) →
+// okna (tolerancja — od F5 tryb sesji zawsze podaje okno). Sekwencja jak w sąsiednich endpointach: guard sesji (401) →
 // walidacja UUID ścieżki (400; ten sam `z.uuid()` co PATCH /api/items/[id] — pojedynczy skalar, zod już
 // jest zależnością tej trasy) → klient z cookies usera (RLS izoluje per-user) → serwis → odpowiedź.
 // Nieistniejąca/cudza sesja → pusta lista (RLS odfiltrowuje; brak osobnego sprawdzania istnienia — jedno

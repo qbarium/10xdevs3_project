@@ -1,7 +1,7 @@
 // Hook listy dziennika sesji importu (S-11): jedyny właściciel listy w wyspie. Pobiera stronę listy wg
 // `SessionListCriteria` z GET /api/import-sessions i utrzymuje adres strony w zgodzie z kryteriami
 // (hydration-stable — ten sam parser co SSR). Wzorzec `useItemList` (S-09), ale PROSTSZY: dziennik nie ma
-// wyszukiwania tekstowego, więc brak gałęzi debounce/`q`; retry sesji żyje niezależnie w `SessionRow`
+// wyszukiwania tekstowego, więc brak gałęzi debounce/`q`; retry sesji żyje niezależnie w `SessionCard`
 // (`useSessionRetry`, mutacja in-place), więc lista nie potrzebuje `applyOptimistic`. Czyste funkcje
 // (`buildSessionListUrl`/`mapSessionResponse`/`fetchSessionList`) testowane w node; pełen hook
 // (popstate/history/AbortController) weryfikowany ręcznie na `npm run preview`.
@@ -16,7 +16,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import type { SessionRowData } from "@/components/import-sessions/SessionRow";
+import type { SessionRowData } from "@/components/import-sessions/SessionCard";
 import { readPageSizePref, SESSION_LOG_PAGE_SIZE_KEY } from "@/components/lists/page-size-pref";
 import {
   parseSessionListCriteria,

@@ -133,7 +133,7 @@ export async function listItems(
  * nieistniejąca lub cudza sesja zwróci po prostu pustą listę (RLS odfiltrowuje), bez osobnego sprawdzania
  * istnienia. Sort `created_at ASC` (niezmienny dla elementu, więc zmiana stanu NIGDY nie przesuwa wiersza)
  * + stały tie-break `id ASC`. Reużywa `ITEM_COLUMNS` (kształt `Item` 1:1 z `listItems`). Opcjonalne
- * `window` jak w `listItems` (brak = pełna lista — panel S-10 działa bez zmian do Fazy 5).
+ * `window` jak w `listItems` (brak = pełna lista — tolerancja; od F5 tryb sesji zawsze podaje okno).
  */
 export async function getSessionItems(
   supabase: SupabaseClient,

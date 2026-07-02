@@ -5,7 +5,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { SessionRowData } from "@/components/import-sessions/SessionRow";
+import type { SessionRowData } from "@/components/import-sessions/SessionCard";
 import { SESSION_PAGE_SIZE } from "@/lib/services/session-list-criteria";
 import type { ClassifiedItem, ImportFile, ImportSession, ImportSessionStatus, ImportSessionWithFile } from "@/types";
 

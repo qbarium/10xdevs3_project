@@ -17,7 +17,7 @@ interface BulkResponse {
   updatedIds?: string[];
   count?: number;
   status?: OperationalStatus;
-  /** S-10: tylko dla `action:"restore"` — świeże wiersze (panel sesji podmienia element z poprawnym `updated_at`). */
+  /** S-10/S-13: dla accept/reject/restore — świeże wiersze (tryb sesji podmienia wpis z poprawnym `updated_at`). */
   items?: Item[];
 }
 interface EmptyResponse {
@@ -57,11 +57,11 @@ export interface UseItemMutation {
   moveToTrash: (ids: string[]) => Promise<number | null>;
   /** Przywraca zaznaczone z kosza (S-06, dwukierunkowo deleted→accepted / rejected→pending); zwraca liczbę FAKTYCZNIE przywróconych, null przy błędzie. */
   restoreFromTrash: (ids: string[]) => Promise<number | null>;
-  /** S-10: przywraca z kosza i ZWRACA świeże wiersze (panel sesji podmienia element z poprawnym `updated_at`); null przy błędzie. */
+  /** Tryb sesji (S-13; wcześniej panel S-10): przywraca z kosza i ZWRACA świeże wiersze (podmiana wpisu z poprawnym `updated_at`); null przy błędzie. */
   restoreFromTrashItems: (ids: string[]) => Promise<Item[] | null>;
-  /** S-10: akceptuje pending (→accepted) i ZWRACA świeże wiersze (panel sesji — edycja po akceptacji bez 409); null przy błędzie. */
+  /** Tryb sesji: akceptuje pending (→accepted) i ZWRACA świeże wiersze (edycja po akceptacji bez fałszywego 409); null przy błędzie. */
   acceptItems: (ids: string[]) => Promise<Item[] | null>;
-  /** S-10: odrzuca pending (→rejected) i ZWRACA świeże wiersze (panel sesji podmienia element w miejscu); null przy błędzie. */
+  /** Tryb sesji: odrzuca pending (→rejected) i ZWRACA świeże wiersze (podmiana wpisu w miejscu); null przy błędzie. */
   rejectItems: (ids: string[]) => Promise<Item[] | null>;
   /** Trwale opróżnia kosz usera (S-06, FR-016); zwraca liczbę skasowanych wierszy (`deletedCount`), null przy błędzie. */
   emptyTrash: () => Promise<number | null>;
@@ -104,9 +104,10 @@ export function useItemMutation(): UseItemMutation {
   const moveToTrash = (ids: string[]): Promise<number | null> => bulk(ids, "trash");
   const restoreFromTrash = (ids: string[]): Promise<number | null> => bulk(ids, "restore");
 
-  // S-10: warianty bulk zwracające ŚWIEŻE wiersze (`items` z odpowiedzi), nie liczbę. Panel sesji podmienia
-  // element z poprawnym `updated_at`, by edycja po accept/restore nie dała fałszywego 409. Główne listy
-  // używają wariantów count-owych (`bulkAccept`/`bulkReject`/`restoreFromTrash`) — te ich nie dotykają.
+  // Warianty bulk zwracające ŚWIEŻE wiersze (`items` z odpowiedzi), nie liczbę (S-10; od S-13 konsumowane
+  // przez tryb sesji — polityka „rejestr": wpis zostaje w miejscu z poprawnym `updated_at`, by edycja po
+  // accept/reject/restore nie dała fałszywego 409). Główne listy używają wariantów count-owych
+  // (`bulkAccept`/`bulkReject`/`restoreFromTrash`) — te ich nie dotykają.
   async function bulkItems(ids: string[], action: "accept" | "reject" | "restore"): Promise<Item[] | null> {
     setPending(true);
     setError(null);

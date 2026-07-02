@@ -1,15 +1,15 @@
-// Pojedynczy wiersz dziennika sesji importu (S-08; układ grid + wybór z S-10). Komponent React, by status
-// mógł zmieniać się W MIEJSCU po ponowieniu — bez przeładowania strony i bez znikania wiersza z listy. Po
-// rozstrzygnięciu ponowienia (stan `done`) wiersz bierze nowy status/itemCount/code z wyniku i przerysowuje
-// sam siebie. Błąd ŻĄDANIA (`error`) NIE zmienia statusu sesji → wiersz pozostaje `failed`, a pod linią
-// główną pojawia się komunikat + przycisk „Spróbuj ponownie" (retry, jedyny element interaktywny w środku).
+// Karta sesji w dzienniku (S-13 F5; wcześniej wiersz-listbox `SessionRow` z S-08/S-10). Komponent React,
+// by status mógł zmieniać się W MIEJSCU po ponowieniu — bez przeładowania strony i bez znikania karty
+// z listy. Po rozstrzygnięciu ponowienia (stan `done`) karta bierze nowy status/itemCount/code z wyniku
+// i przerysowuje samą siebie — naprawiona sesja od razu pokazuje „Pokaż wpisy". Błąd ŻĄDANIA (`error`)
+// NIE zmienia statusu sesji → karta pozostaje `failed` z komunikatem i przyciskiem „Ponów".
 //
-// S-10: wiersz to jeden, w pełni klikalny `role="option"` w liście-listboxie — klik gdziekolwiek zaznacza
-// sesję, a nawigacja strzałkami ↑/↓ jest delegowana do SessionsList (zna pełną listę). Kolumny linii głównej
-// (Typ · Data · Podgląd+wpisy · Status) mają stałe tracki, więc wyrównują się między wierszami (efekt grida).
+// Karta jest NAWIGACYJNA, nie zaznaczalna (master-detail zdemontowany w S-13): klikalne są WYŁĄCZNIE
+// akcje — „Pokaż wpisy" (odnośnik do trybu sesji `/items?session=<id>`; tylko gdy sesja ma żywe wpisy)
+// i „Ponów" (failed). Aparat wyboru (role="option", aria-selected, roving tabindex, klik na całej
+// powierzchni) usunięty razem z panelem.
 
 import { Loader2 } from "lucide-react";
-import type { KeyboardEvent } from "react";
 
 import { useSessionRetry } from "@/components/hooks/useSessionRetry";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -19,7 +19,7 @@ import { entryNoun, importSessionStatusLabel } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import type { ImportSessionStatus } from "@/types";
 
-/** Odchudzone dane wiersza (liczone serwerowo) — bez pełnego `raw_input`, tylko gotowy podgląd. */
+/** Odchudzone dane karty (liczone serwerowo) — bez pełnego `raw_input`, tylko gotowy podgląd. */
 export interface SessionRowData {
   id: string;
   isFile: boolean;
@@ -33,8 +33,8 @@ export interface SessionRowData {
   errorCode: string | null;
 }
 
-/** Kolor badge'a statusu (tailwind) — wizualne rozróżnienie stanów przebiegu. */
-const STATUS_BADGE: Record<ImportSessionStatus, string> = {
+/** Kolor badge'a statusu (tailwind) — wizualne rozróżnienie stanów przebiegu; współdzielone z SessionBanner. */
+export const STATUS_BADGE: Record<ImportSessionStatus, string> = {
   processing: "border-amber-300/30 bg-amber-400/10 text-amber-100",
   completed_with_items: "border-emerald-300/30 bg-emerald-400/10 text-emerald-100",
   completed_no_items: "border-white/15 bg-white/10 text-white/70",
@@ -43,17 +43,9 @@ const STATUS_BADGE: Record<ImportSessionStatus, string> = {
 
 interface Props {
   row: SessionRowData;
-  selected: boolean;
-  /** Roving tabindex: 0 dla punktu wejścia listy (wybrany lub pierwszy wiersz), -1 dla pozostałych. */
-  tabIndex: number;
-  /** Indeks wiersza — kotwica `data-row-index` do programowego fokusu przy nawigacji strzałkami. */
-  rowIndex: number;
-  onSelect: (id: string) => void;
-  /** Klawiatura listy (↑/↓/Enter/Spacja) — delegowana do SessionsList, która zna pełną listę wierszy. */
-  onKeyDown: (event: KeyboardEvent<HTMLLIElement>) => void;
 }
 
-export function SessionRow({ row, selected, tabIndex, rowIndex, onSelect, onKeyDown }: Props) {
+export function SessionCard({ row }: Props) {
   const { state, result, error, retry } = useSessionRetry();
 
   // Po rozstrzygnięciu ponowienia (done) nadpisujemy widok wyniku w miejscu; inaczej zostaje stan z SSR.
@@ -65,7 +57,7 @@ export function SessionRow({ row, selected, tabIndex, rowIndex, onSelect, onKeyD
   const errorCode = resolved ? resolved.code : row.errorCode;
   const isRetrying = state === "retrying";
 
-  // Kolumna „wpisy": liczba dla stanów zakończonych (processing/failed → „—"). Gdy część elementów trwale
+  // Licznik wpisów: liczba dla stanów zakończonych (processing/failed → „—"). Gdy część elementów trwale
   // usunięto („Wyczyść kosz"), żywych jest mniej niż w chwili klasyfikacji → „X z Y wpisów"; inaczej „Y wpisów".
   let countText: string;
   if (status === "completed_with_items" || status === "completed_no_items") {
@@ -79,33 +71,21 @@ export function SessionRow({ row, selected, tabIndex, rowIndex, onSelect, onKeyD
     countText = "—";
   }
 
+  // „Pokaż wpisy" wyłącznie dla ROZSTRZYGNIĘTEGO (po ewentualnym ponowieniu) statusu z żywymi wpisami —
+  // `processing`/`completed_no_items`/wyczyszczone do zera nie mają dokąd prowadzić.
+  const showEntriesLink = status === "completed_with_items" && liveItemCount > 0;
+
   return (
-    <li
-      role="option"
-      aria-selected={selected}
-      tabIndex={tabIndex}
-      data-row-index={rowIndex}
-      onClick={() => {
-        onSelect(row.id);
-      }}
-      onKeyDown={onKeyDown}
-      className={cn(
-        "cursor-pointer px-4 py-2.5 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-purple-400/50 focus-visible:ring-inset",
-        selected ? "bg-purple-500/15" : "hover:bg-white/5",
-      )}
-    >
-      {/* Linia główna — stałe, krótkie kolumny (Typ · Data · Wpisy · Status) wyrównują się między wierszami,
-          niezależnie od liczby plików (brak treści zmiennej długości). Bez podglądu i nazw plików — elementy
-          sesji są po prawej; podgląd/nazwę dorobimy w razie potrzeby (pole `preview` zostaje w DTO). */}
-      <div className="grid grid-cols-[4.5rem_9rem_1fr_8rem] items-center gap-3">
-        <span className="justify-self-start rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-center text-xs font-medium text-white/70">
+    <li className="flex flex-col gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl">
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-center text-xs font-medium text-white/70">
           {row.isFile ? "Plik" : "Tekst"}
         </span>
         <time className="text-sm whitespace-nowrap text-white/90">{row.dateLabel}</time>
-        <span className="justify-self-center text-xs whitespace-nowrap text-white/60">{countText}</span>
+        <span className="text-xs whitespace-nowrap text-white/60">{countText}</span>
         <span
           className={cn(
-            "justify-self-center rounded-full border px-2 py-0.5 text-xs font-medium whitespace-nowrap",
+            "ml-auto rounded-full border px-2 py-0.5 text-xs font-medium whitespace-nowrap",
             STATUS_BADGE[status],
           )}
         >
@@ -113,9 +93,23 @@ export function SessionRow({ row, selected, tabIndex, rowIndex, onSelect, onKeyD
         </span>
       </div>
 
-      {/* Tylko `failed`: komunikat + retry. `stopPropagation`, by klik/Enter na przycisku nie zaznaczał wiersza. */}
+      {/* Źródło: nazwa pliku albo skrót treści paste (≤120 zn.) — gotowe pole `preview` z DTO. */}
+      <p className="truncate text-sm text-white/80">{row.preview}</p>
+
+      {showEntriesLink && (
+        <div>
+          <a
+            href={`/items?session=${row.id}`}
+            className="inline-block rounded-full border border-purple-300/30 bg-purple-400/10 px-3 py-1.5 text-sm font-medium text-purple-100 transition hover:bg-purple-400/20"
+          >
+            Pokaż wpisy
+          </a>
+        </div>
+      )}
+
+      {/* Tylko `failed`: komunikat + „Ponów" (po sukcesie karta w miejscu pokaże nowy status i „Pokaż wpisy"). */}
       {status === "failed" && (
-        <div className="mt-2 flex flex-col gap-2 text-sm">
+        <div className="flex flex-col gap-2 text-sm">
           <p className="text-red-200/90">{ingestErrorMessage(errorCode)}</p>
           {state === "error" && (
             <Alert variant="destructive">
@@ -127,8 +121,7 @@ export function SessionRow({ row, selected, tabIndex, rowIndex, onSelect, onKeyD
             size="sm"
             variant="outline"
             disabled={isRetrying}
-            onClick={(event) => {
-              event.stopPropagation();
+            onClick={() => {
               void retry(row.id);
             }}
             className="w-fit"
@@ -139,7 +132,7 @@ export function SessionRow({ row, selected, tabIndex, rowIndex, onSelect, onKeyD
                 Ponawianie…
               </>
             ) : (
-              "Spróbuj ponownie"
+              "Ponów"
             )}
           </Button>
         </div>

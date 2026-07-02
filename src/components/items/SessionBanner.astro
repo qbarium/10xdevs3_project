@@ -5,8 +5,8 @@
 // strona nie renderuje wtedy listy. Statyczny .astro — treść liczona serwerowo, zero interaktywności.
 
 import { importSessionStatusLabel } from "@/lib/labels";
-import type { SessionRowData } from "@/components/import-sessions/SessionRow";
-import type { ImportSessionStatus } from "@/types";
+import { STATUS_BADGE } from "@/components/import-sessions/SessionCard";
+import type { SessionRowData } from "@/components/import-sessions/SessionCard";
 
 interface Props {
   /** Metadane sesji (SSR z `getSessionMeta`) albo `null` → wariant „sesja niedostępna". */
@@ -14,15 +14,6 @@ interface Props {
 }
 
 const { meta } = Astro.props;
-
-// Kolory badge'a statusu — lustro STATUS_BADGE z wiersza dziennika (drobna, świadoma kopia:
-// wiersz przechodzi przekształcenie w kartę w F5; wspólne źródło wtedy).
-const STATUS_BADGE: Record<ImportSessionStatus, string> = {
-  processing: "border-amber-300/30 bg-amber-400/10 text-amber-100",
-  completed_with_items: "border-emerald-300/30 bg-emerald-400/10 text-emerald-100",
-  completed_no_items: "border-white/15 bg-white/10 text-white/70",
-  failed: "border-red-300/30 bg-red-400/10 text-red-100",
-};
 
 const EXIT_LINK =
   "rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white";

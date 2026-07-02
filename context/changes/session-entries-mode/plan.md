@@ -437,9 +437,9 @@ Dziennik staje się jedną kolumną pełnoszerokich kart z akcjami nawigacyjnymi
 
 #### Automated
 
-- [x] 4.1 Lint przechodzi (`npm run lint`)
-- [x] 4.2 Testy jednostkowe przechodzą (`npm run test`)
-- [x] 4.3 Build produkcyjny przechodzi (`npm run build`)
+- [x] 4.1 Lint przechodzi (`npm run lint`) — abbd6b5
+- [x] 4.2 Testy jednostkowe przechodzą (`npm run test`) — abbd6b5
+- [x] 4.3 Build produkcyjny przechodzi (`npm run build`) — abbd6b5
 
 #### Manual
 
@@ -453,9 +453,9 @@ Dziennik staje się jedną kolumną pełnoszerokich kart z akcjami nawigacyjnymi
 
 #### Automated
 
-- [ ] 5.1 Lint przechodzi (`npm run lint`)
-- [ ] 5.2 Testy jednostkowe przechodzą (`npm run test`; zestaw `useSessionItems` usunięty)
-- [ ] 5.3 Build produkcyjny przechodzi (`npm run build`)
+- [x] 5.1 Lint przechodzi (`npm run lint`)
+- [x] 5.2 Testy jednostkowe przechodzą (`npm run test`; zestaw `useSessionItems` usunięty)
+- [x] 5.3 Build produkcyjny przechodzi (`npm run build`)
 
 #### Manual
 
