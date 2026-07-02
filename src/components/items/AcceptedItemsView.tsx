@@ -7,6 +7,7 @@ import { useItemMutation } from "@/components/hooks/useItemMutation";
 import AddItemDialog from "@/components/items/AddItemDialog";
 import { defaultCreateType, nextFilterAfterCreate } from "@/components/items/create-form";
 import EditItemDialog from "@/components/items/EditItemDialog";
+import EntriesViewSelect from "@/components/items/EntriesViewSelect";
 import ItemCard, { ITEM_CHECKBOX_CLASS } from "@/components/items/ItemCard";
 import ListFilterBar from "@/components/items/ListFilterBar";
 import { reconcileAfterChange, type AcceptedView } from "@/components/items/operational-view";
@@ -268,9 +269,8 @@ export default function AcceptedItemsView({
     }
   }, [items]);
 
-  // Kompaktowa akcja „Dodaj item" (S-07; plus zamiast całego wiersza — decyzja użytkownika 2026-07-02):
-  // normalnie w slocie akcji paska filtrów (wiersz wyszukiwania, po prawej), a gdy pasek nie jest
-  // renderowany (pusty widok bez filtrów) — w małym wierszu zapasowym, by akcja nigdy nie znikała.
+  // Kompaktowa akcja „Dodaj item" (S-07; plus zamiast całego wiersza — decyzja użytkownika 2026-07-02)
+  // w slocie akcji paska filtrów (wiersz wyszukiwania, po prawej).
   const addButton = canAdd ? (
     <Button
       size="sm"
@@ -284,31 +284,26 @@ export default function AcceptedItemsView({
     </Button>
   ) : null;
 
-  const showFilterBar = items.length > 0 || filtersActive;
-
   return (
     <div className="flex flex-col gap-3">
       <Toaster />
 
-      {/* Pasek filtrów widoczny, gdy jest co filtrować ALBO gdy jakikolwiek filtr jest aktywny — w drugim
-          przypadku lista może być pusta (zawężona), a kontrolki MUSZĄ zostać dostępne (powrót do domyślnych). */}
-      {showFilterBar ? (
-        <ListFilterBar
-          criteria={criteria}
-          onChange={(next) => {
-            // Zmiana filtra/sortu/frazy → strona 1 (zakres wyników się zmienia; strona N mogłaby nie istnieć —
-            // offset za końcem to błąd PGRST103). Wzorzec dziennika (S-11). Reset nie psuje debounce frazy:
-            // isSearchOnlyChange ignoruje `page`.
-            applyCriteria(resetToFirstPage(next));
-          }}
-          error={error}
-          onRetry={retry}
-        >
-          {addButton}
-        </ListFilterBar>
-      ) : (
-        addButton && <div className="flex items-center justify-end">{addButton}</div>
-      )}
+      {/* Pasek filtrów ZAWSZE widoczny: od 2026-07-02 niesie przełącznik widoku strony „Wpisy"
+          (EntriesViewSelect zastąpił zakładki) — nawigacja nie może znikać przy pustym widoku. */}
+      <ListFilterBar
+        criteria={criteria}
+        onChange={(next) => {
+          // Zmiana filtra/sortu/frazy → strona 1 (zakres wyników się zmienia; strona N mogłaby nie istnieć —
+          // offset za końcem to błąd PGRST103). Wzorzec dziennika (S-11). Reset nie psuje debounce frazy:
+          // isSearchOnlyChange ignoruje `page`.
+          applyCriteria(resetToFirstPage(next));
+        }}
+        error={error}
+        onRetry={retry}
+        leading={<EntriesViewSelect view={view} />}
+      >
+        {addButton}
+      </ListFilterBar>
 
       {items.length === 0 ? (
         filtersActive ? (

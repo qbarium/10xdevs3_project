@@ -3,6 +3,7 @@ import { toast } from "sonner";
 
 import { useItemList } from "@/components/hooks/useItemList";
 import { useItemMutation } from "@/components/hooks/useItemMutation";
+import EntriesViewSelect from "@/components/items/EntriesViewSelect";
 import ItemCard, { ITEM_CHECKBOX_CLASS } from "@/components/items/ItemCard";
 import ListFilterBar from "@/components/items/ListFilterBar";
 import {
@@ -182,33 +183,31 @@ export default function TrashItemsView({ initialItems, initialCriteria, initialT
     <div className="flex flex-col gap-3">
       <Toaster />
 
-      {/* Pasek filtrów + „Wyczyść kosz" widoczny, gdy jest co filtrować ALBO gdy jakikolwiek filtr jest
-          aktywny — w drugim przypadku lista może być pusta (zawężona), a kontrolki MUSZĄ zostać dostępne
-          (powrót do domyślnych oraz globalne czyszczenie kosza, który poza filtrem wciąż może mieć itemy). */}
-      {(items.length > 0 || filtersActive) && (
-        <ListFilterBar
-          criteria={criteria}
-          onChange={(next) => {
-            // Zmiana filtra/sortu/frazy → strona 1 (zakres wyników się zmienia; strona N mogłaby nie istnieć —
-            // offset za końcem to błąd PGRST103). Wzorzec dziennika (S-11). Reset nie psuje debounce frazy:
-            // isSearchOnlyChange ignoruje `page`.
-            applyCriteria(resetToFirstPage(next));
+      {/* Pasek filtrów ZAWSZE widoczny: od 2026-07-02 niesie przełącznik widoku strony „Wpisy"
+          (EntriesViewSelect zastąpił zakładki) — nawigacja nie może znikać przy pustym koszu. */}
+      <ListFilterBar
+        criteria={criteria}
+        onChange={(next) => {
+          // Zmiana filtra/sortu/frazy → strona 1 (zakres wyników się zmienia; strona N mogłaby nie istnieć —
+          // offset za końcem to błąd PGRST103). Wzorzec dziennika (S-11). Reset nie psuje debounce frazy:
+          // isSearchOnlyChange ignoruje `page`.
+          applyCriteria(resetToFirstPage(next));
+        }}
+        error={error}
+        onRetry={retry}
+        leading={<EntriesViewSelect view="trash" />}
+      >
+        <Button
+          size="sm"
+          variant="destructive"
+          disabled={pending}
+          onClick={() => {
+            setConfirmEmpty(true);
           }}
-          error={error}
-          onRetry={retry}
         >
-          <Button
-            size="sm"
-            variant="destructive"
-            disabled={pending}
-            onClick={() => {
-              setConfirmEmpty(true);
-            }}
-          >
-            Wyczyść kosz
-          </Button>
-        </ListFilterBar>
-      )}
+          Wyczyść kosz
+        </Button>
+      </ListFilterBar>
 
       {items.length === 0 ? (
         filtersActive ? (
