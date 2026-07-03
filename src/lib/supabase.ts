@@ -16,7 +16,10 @@ export function createClient(requestHeaders: Headers, cookies: AstroCookies) {
       },
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value, options }) => {
-          cookies.set(name, value, options);
+          // Anti-CSRF (S-14): wymuś jawny SameSite=Lax niezależnie od domyślnych `@supabase/ssr`
+          // (dziś `lax`, ale pin chroni przed cichą zmianą przy aktualizacji biblioteki). Druga,
+          // niezależna warstwa obrony obok origin-checku w `src/middleware.ts`.
+          cookies.set(name, value, { ...options, sameSite: "lax" });
         });
       },
     },

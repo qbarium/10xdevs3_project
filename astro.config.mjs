@@ -9,6 +9,12 @@ import cloudflare from "@astrojs/cloudflare";
 // https://astro.build/config
 export default defineConfig({
   output: "server",
+  // Anti-CSRF (S-14): jawny pin domyślnej ochrony Astro (`checkOrigin` jest domyślnie `true` od
+  // Astro 5). Wbudowany middleware odrzuca 403 cross-site żądania mutujące z formularzowym
+  // Content-Type (urlencoded/multipart/text-plain) lub bez Content-Type. Pin chroni przed cichym
+  // wyłączeniem przy aktualizacji frameworka/refaktorze. Warstwę aplikacyjną (pokrycie
+  // `application/json` + `Sec-Fetch-Site`) dokłada `src/middleware.ts` przez `src/lib/security/csrf.ts`.
+  security: { checkOrigin: true },
   integrations: [react(), sitemap()],
   vite: {
     plugins: [tailwindcss()],

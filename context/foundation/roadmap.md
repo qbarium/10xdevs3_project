@@ -44,6 +44,7 @@ TaskerLight przyjmuje surowy, nieuporządkowany wsad głosowo-tekstowy i rozdzie
 | S-11  | session-log-filter-ux    | filtrować dziennik sesji reaktywnie (bez „Zastosuj"), spójne dropdowny, „Wyczyść filtry" | S-08 | FR-027 / FR-008 (parytet UX) | done |
 | S-12  | dup-react-ssr-dev-fix    | (naprawa, dev-only) wyeliminować błąd podwójnego React-a na `/import-sessions` w `npm run dev` | — | — (dług techniczny; lessons.md) | done |
 | S-13  | session-entries-mode     | otworzyć wpisy danej sesji jako pełną listę („Pokaż wpisy") zamiast master-detail; lista sesji jako karty + paginacja wpisów | S-10, S-11 | FR-027 / FR-008 (zastępuje master-detail S-10) | done |
+| S-14  | csrf-hardening           | (utwardzenie) endpointy mutujące odporne na CSRF — aplikacyjny origin-check + jawny SameSite | — | NFR Bezpieczeństwo (obrona w głąb) | in-progress |
 
 ## Strumienie
 
@@ -248,6 +249,18 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Ryzyko:** Cofa decyzję S-10 (master-detail) — usuwa `SessionItemsPanel`/`useSessionItems`/dwukolumnowy layout z `ImportSessionsView`. Reużywa endpoint S-10, więc warstwa danych zostaje. Główny koszt: redesign listy sesji na karty + tryb kontekstowy na liście wpisów (baner, wyszarzone filtry, deep-link `?session=`) + paginacja wpisów. Prowadzone przez `/10x-frame` (2026-07-01, `frame.md` — pewność WYSOKA) i zaplanowane `/10x-plan` (2026-07-01, 5 faz, `plan.md` + `plan-brief.md`).
 - **Status:** done
 
+### S-14: Utwardzenie anty-CSRF mutujących endpointów
+
+- **Wynik:** (utwardzenie bezpieczeństwa, poza pierwotnym zakresem MVP) każde żądanie mutujące (POST/PUT/PATCH/DELETE) niepochodzące z tego samego originu jest odrzucane z 403 — egzekwowane w dwóch niezależnych warstwach: wbudowanej Astro (jawnie przypiętej `checkOrigin: true`) oraz aplikacyjnej w `middleware.ts` (fail-closed `Origin`/`Sec-Fetch-Site`, pokrywającej też klasę `application/json`, którą Astro przepuszcza). Ciasteczko sesji ma jawny `SameSite=Lax`. Test jednostkowy pinuje predykat przeciw regresji.
+- **Change ID:** csrf-hardening
+- **Odnośniki PRD:** — (NFR Bezpieczeństwo, obrona w głąb; brak dedykowanego FR — CSRF nie był w pierwotnym PRD)
+- **Wymagania wstępne:** — (samodzielna, na istniejącej powierzchni mutującej)
+- **Równolegle z:** —
+- **Blokady:** —
+- **Niewiadome:** —
+- **Ryzyko:** Badanie wykazało, że powierzchnia jest już chroniona niejawnie (domyślny `checkOrigin: true` Astro + `SameSite=Lax` Supabase + preflight CORS) — zmiana czyni ochronę jawną, testowaną i odporną na cichą regresję, dokładając warstwę aplikacyjną dla klasy JSON. Wariant tokenowy świadomie odrzucony jako redundantny (brak wspólnego wrappera `fetch`). Plan: 2 fazy (`plan.md` + `plan-brief.md`, 2026-07-02).
+- **Status:** in-progress
+
 ## Przekazanie backlogu
 
 | ID mapy drogowej | Change ID                  | Sugerowany tytuł problemu                                  | Gotowe do `/10x-plan` | Uwagi                                              |
@@ -266,6 +279,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 | S-11             | session-log-filter-ux      | Reaktywne filtry dziennika sesji (parytet UX z S-09)     | yes                   | Zaplanowane (`plan.md`); `/10x-implement … phase 1` |
 | S-12             | dup-react-ssr-dev-fix      | Naprawa błędu podwójnego React-a (tylko dev) na `/import-sessions` | no          | Po S-11; dług techniczny, dev-only                  |
 | S-13             | session-entries-mode       | Tryb „Pokaż wpisy" + filtr sesji na liście wpisów (zastępuje master-detail) | yes         | Zaimplementowane (5 faz + poprawki po testach ręcznych 2026-07-02); czeka na `/10x-impl-review` |
+| S-14             | csrf-hardening             | Utwardzenie anty-CSRF mutujących endpointów (origin-check + jawny SameSite) | yes         | Zaplanowane (`plan.md`, 2 fazy, 2026-07-02); w trakcie implementacji |
 
 ## Otwarte pytania dotyczące mapy drogowej
 
