@@ -271,26 +271,26 @@ Origin-check to porównanie dwóch stringów nagłówków — koszt pomijalny. U
 
 #### Automatyczne
 
-- [x] 1.1 Lint przechodzi: `npm run lint`
-- [x] 1.2 Build (z kontrolą typów) przechodzi: `npm run build`
-- [x] 1.3 Testy jednostkowe przechodzą: `npm test` (7 nowych, 512 łącznie)
+- [x] 1.1 Lint przechodzi: `npm run lint` — 720ba4d
+- [x] 1.2 Build (z kontrolą typów) przechodzi: `npm run build` — 720ba4d
+- [x] 1.3 Testy jednostkowe przechodzą: `npm test` (7 nowych, 512 łącznie) — 720ba4d
 
 #### Ręczne
 
-- [x] 1.4 Cross-origin POST → 403 (`curl` z obcym `Origin`; potwierdzone dev + prod-preview + na 4321)
+- [x] 1.4 Cross-origin POST → 403 (`curl` z obcym `Origin`; potwierdzone dev + prod-preview + na 4321) — 720ba4d
 - [ ] 1.5 Legalne przepływy UI działają (dodanie itemu, akcja zbiorcza, edycja) — opcjonalny sanity, niezrobiony
-- [x] 1.6 Żądanie bez `Origin` + `Sec-Fetch-Site: same-origin` przechodzi (401, nie 403)
-- [x] 1.7 Logowanie (formularz `signin`) działa (sesja obecna w ciasteczkach)
+- [x] 1.6 Żądanie bez `Origin` + `Sec-Fetch-Site: same-origin` przechodzi (401, nie 403) — 720ba4d
+- [x] 1.7 Logowanie (formularz `signin`) działa (sesja obecna w ciasteczkach) — 720ba4d
 
 ### Faza 2: Jawny SameSite=Lax na ciasteczku sesji
 
 #### Automatyczne
 
-- [x] 2.1 Lint przechodzi: `npm run lint`
-- [x] 2.2 Build przechodzi: `npm run build`
+- [x] 2.1 Lint przechodzi: `npm run lint` — 720ba4d
+- [x] 2.2 Build przechodzi: `npm run build` — 720ba4d
 
 #### Ręczne
 
-- [x] 2.3 Logowanie działa; sesja utrzymana (ciasteczko `sb-127-auth-token` obecne, długi expiry)
-- [x] 2.4 Ciasteczko sesji ma atrybut `SameSite=Lax` (DevTools — potwierdzone zrzutem)
+- [x] 2.3 Logowanie działa; sesja utrzymana (ciasteczko `sb-127-auth-token` obecne, długi expiry) — 720ba4d
+- [x] 2.4 Ciasteczko sesji ma atrybut `SameSite=Lax` (DevTools — potwierdzone zrzutem) — 720ba4d
 - [ ] 2.5 Wylogowanie (formularz `signout`) działa — niezrobiony
