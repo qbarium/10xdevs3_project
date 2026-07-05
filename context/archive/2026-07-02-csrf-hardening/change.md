@@ -1,9 +1,10 @@
 ---
 id: csrf-hardening
 title: Utwardzenie anty-CSRF mutujących endpointów (origin-check)
-status: impl_reviewed
+status: archived
 created: 2026-07-02
 updated: 2026-07-05
+archived_at: 2026-07-05T13:07:56Z
 ---
 
 # Utwardzenie anty-CSRF mutujących endpointów
