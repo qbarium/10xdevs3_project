@@ -3,7 +3,7 @@ project: TaskerLight
 version: 1
 status: draft
 created: 2026-06-05
-updated: 2026-07-02
+updated: 2026-07-05
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -44,7 +44,7 @@ TaskerLight przyjmuje surowy, nieuporządkowany wsad głosowo-tekstowy i rozdzie
 | S-11  | session-log-filter-ux    | filtrować dziennik sesji reaktywnie (bez „Zastosuj"), spójne dropdowny, „Wyczyść filtry" | S-08 | FR-027 / FR-008 (parytet UX) | done |
 | S-12  | dup-react-ssr-dev-fix    | (naprawa, dev-only) wyeliminować błąd podwójnego React-a na `/import-sessions` w `npm run dev` | — | — (dług techniczny; lessons.md) | done |
 | S-13  | session-entries-mode     | otworzyć wpisy danej sesji jako pełną listę („Pokaż wpisy") zamiast master-detail; lista sesji jako karty + paginacja wpisów | S-10, S-11 | FR-027 / FR-008 (zastępuje master-detail S-10) | done |
-| S-14  | csrf-hardening           | (utwardzenie) endpointy mutujące odporne na CSRF — aplikacyjny origin-check + jawny SameSite | — | NFR Bezpieczeństwo (obrona w głąb) | in-review |
+| S-14  | csrf-hardening           | (utwardzenie) endpointy mutujące odporne na CSRF — aplikacyjny origin-check + jawny SameSite | — | NFR Bezpieczeństwo (obrona w głąb) | done |
 
 ## Strumienie
 
@@ -259,7 +259,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Blokady:** —
 - **Niewiadome:** —
 - **Ryzyko:** Badanie wykazało, że powierzchnia jest już chroniona niejawnie (domyślny `checkOrigin: true` Astro + `SameSite=Lax` Supabase + preflight CORS) — zmiana czyni ochronę jawną, testowaną i odporną na cichą regresję, dokładając warstwę aplikacyjną dla klasy JSON. Wariant tokenowy świadomie odrzucony jako redundantny (brak wspólnego wrappera `fetch`). Plan: 2 fazy (`plan.md` + `plan-brief.md`, 2026-07-02).
-- **Status:** in-review
+- **Status:** done
 
 ## Przekazanie backlogu
 
@@ -312,6 +312,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **S-07: użytkownik może dodać item ręcznie (wybór typu + `title` + `description`) z pominięciem klasyfikacji; item powstaje od razu jako `accepted` / `nowe` i pojawia się w Aktywne. Akcja NIE wymaga klucza API.** — Zarchiwizowano 2026-06-19 → `context/archive/2026-06-16-manual-item-entry/`. Lekcja: —.
 - **S-09: użytkownik może sortować listy po dacie utworzenia/modyfikacji i tytule, wyszukiwać po tytule i opisie oraz zawężać po stanie operacyjnym w widoku Aktywne; filtr typu i sortowanie/wyszukiwanie działają na modelu serwer + parametry w adresie strony. (Filtr po sesji importu przeniesiony do S-10; rozróżnienie statusu w Koszu realizuje etykieta wg FR-012.)** — Zarchiwizowano 2026-06-23 → `context/archive/2026-06-20-list-filters-search/`. Lekcja: —.
 - **S-10: użytkownik może w dzienniku sesji importu wybrać sesję i zobaczyć po prawej wszystkie jej elementy naraz (wszystkie stany akceptacji — `pending`/`accepted`/`rejected`/`deleted` — rozróżniane etykietą, bez filtrów), a następnie podejrzeć, edytować lub usunąć element bezpośrednio w tym widoku, reużywając operacje z list głównych (dialog edycji z S-05, przeniesienie do kosza z S-06). Wybrana sesja zapisana w adresie strony.** — Zarchiwizowano 2026-06-28 → `context/archive/2026-06-24-session-items-detail/`. Lekcja: dup-React SSR (dev-only) — fix configu niepełny, znana wada; kryterium naprawy (reopt_fired=0) w lessons.md.
+- **S-14: (utwardzenie bezpieczeństwa, poza pierwotnym zakresem MVP) każde żądanie mutujące (POST/PUT/PATCH/DELETE) niepochodzące z tego samego originu jest odrzucane z 403 — egzekwowane w dwóch niezależnych warstwach: wbudowanej Astro (jawnie przypiętej `checkOrigin: true`) oraz aplikacyjnej w `middleware.ts` (fail-closed `Origin`/`Sec-Fetch-Site`, pokrywającej też klasę `application/json`, którą Astro przepuszcza). Ciasteczko sesji ma jawny `SameSite=Lax`. Test jednostkowy pinuje predykat przeciw regresji.** — Zarchiwizowano 2026-07-05 → `context/archive/2026-07-02-csrf-hardening/`. Lekcja: —.
 - **S-11: użytkownik filtruje i sortuje dziennik sesji importu (`/import-sessions`) reaktywnie — zmiana kontrolki natychmiast zawęża listę bez przycisku „Zastosuj", kryteria w adresie strony (refresh / „wstecz-dalej" / odnośnik je zachowują); dropdowny sort/status spójne wizualnie (custom `Select`, nie natywne `<select>`); pusty wynik z filtrem pokazuje „Wyczyść filtry"; doszła paginacja stronowa (indeks + serwis + endpoint) oraz — poza planem — rozmiar strony z zapamiętywaniem i skok do strony.** — Zarchiwizowano 2026-07-01 → `context/archive/2026-06-28-session-log-filter-ux/`. Lekcja: wspólne kryterium przekazuj przez WSZYSTKIE warstwy (SSR + endpoint) — częściowe wpięcie `size` dało rozjazd hydratacji (F1, impl-review).
 - **S-12: (naprawa, dług techniczny) strona `/import-sessions` przestaje wywalać render serwerowy („Invalid hook call / more than one copy of React") w `npm run dev`; build produkcyjny i tak był wolny od błędu, więc to poprawa doświadczenia deweloperskiego, nie wydania.** — Zarchiwizowano 2026-07-01 → `context/archive/2026-07-01-dup-react-ssr-dev-fix/`. Lekcja: przypnij CAŁĄ populację późno-odkrywanych depów w `ssr.optimizeDeps.include` (nie jeden), weryfikuj dwutorowo z pokryciem dialog/API (lessons.md).
 - **S-13: użytkownik w dzienniku sesji (lista kart: status, źródło, data, liczba wpisów) klika „Pokaż wpisy" na sesji i trafia na pełną listę wpisów w trybie kontekstowym sesji (adres `?session=<id>`): baner „Wpisy dla sesji importu — <źródło>, <data>" z akcją powrotu, normalne filtry/wyszukiwanie ukryte, widoczne WSZYSTKIE elementy sesji (wszystkie stany akceptacji), z zachowanymi akcjami (edycja/akceptacja/odrzucenie reużyte z list głównych). Sesje `niepowodzenie` mają „Ponów" zamiast „Pokaż wpisy". Master-detail (prawy panel) znika — lista sesji staje się pełnoszerokimi kartami.** — Zarchiwizowano 2026-07-02 → `context/archive/2026-07-01-session-entries-mode/`. Lekcja: nie używaj top-level `return` we frontmatterze `.astro` — crash lint no-misused-promises (lessons.md).
