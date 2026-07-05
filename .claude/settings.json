@@ -13,16 +13,19 @@
       "Bash(git branch *)",
       "Bash(git checkout *)",
       "Bash(git stash *)",
+      "Bash(git push *)",
+      "Bash(git push)",
       "Bash(gh pr create *)",
       "Bash(gh pr checks *)",
       "Bash(gh pr view *)",
+      "Bash(gh pr merge *)",
       "Bash(gh run *)",
       "Bash(curl *)",
       "Read",
       "Edit",
       "Write"
     ],
-    "ask": ["Bash(git push *)", "Bash(git push)"],
+    "ask": ["Bash(git push --force*)", "Bash(git push -f*)"],
     "deny": ["Bash(rm -rf *)"]
   },
   "hooks": {

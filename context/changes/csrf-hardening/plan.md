@@ -68,9 +68,10 @@ akcje zbiorcze, logowanie) działają bez zmian.
 - **Nie rozważamy `SameSite=Strict`** (zrywa sesję przy wejściu z linku zewnętrznego za
   marginalny zysk — origin-check już pokrywa CSRF).
 - **Nie dotykamy 10 wywołań `fetch` ani 3 formularzy** — pozostają bez zmian.
-- **Nie tworzymy wpisu roadmapy ani zgłoszeń GitHub w ramach tego planu** — to zmiana spoza
-  bieżącej roadmapy; umiejscowienie jej jako wycinka utwardzającego + sync boardu to osobna
-  decyzja użytkownika (patrz „Uwagi dotyczące migracji").
+- **Warstwa kodu tego planu nie zależy od wpisu roadmapy ani zgłoszeń GitHub** — to zmiana spoza
+  pierwotnej roadmapy. Decyzją użytkownika umiejscowiono ją jednak jako wycinek utwardzający **S-14**
+  (wpis dodany do `roadmap.md` w commicie 720ba4d; sync boardu zgodnie z „Uwagami dotyczącymi
+  migracji"). — _zaktualizowano w impl-review 2026-07-05: sekcja odzwierciedla podjętą decyzję._
 
 ## Podejście do implementacji
 
@@ -293,4 +294,4 @@ Origin-check to porównanie dwóch stringów nagłówków — koszt pomijalny. U
 
 - [x] 2.3 Logowanie działa; sesja utrzymana (ciasteczko `sb-127-auth-token` obecne, długi expiry) — 720ba4d
 - [x] 2.4 Ciasteczko sesji ma atrybut `SameSite=Lax` (DevTools — potwierdzone zrzutem) — 720ba4d
-- [ ] 2.5 Wylogowanie (formularz `signout`) działa — niezrobiony
+- [x] 2.5 Wylogowanie (formularz `signout`) działa — bramka zweryfikowana auto-proxy (impl-review 2026-07-05): same-origin form POST → 302 `/`; cross-origin form → 403 (warstwa Astro); cross-origin `application/json` → 403 `{code:forbidden}` (warstwa aplikacyjna). Pełny wizualny wylog w przeglądarce nie sterowany headless.
