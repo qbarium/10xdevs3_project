@@ -1,41 +1,40 @@
 # Test Plan — TaskerLight
 
-> Fazowe wdrożenie testów dla tego projektu. Strategia zamrożona na górze
-> (§1–§5); wzorce książki kucharskiej na dole (§6) wypełniają się w miarę
-> dostarczania faz. Czytaj przed napisaniem jakiegokolwiek nowego testu.
+> Plan testów dla tego projektu. Na górze (§1–§5) jest strategia — ustalona i
+> niezmienna. Na dole (§6) jest „książka kucharska", która rośnie w miarę
+> dopisywania testów. Przeczytaj to, zanim napiszesz nowy test.
 >
-> Odświeżanie: uruchom ponownie `/10x-test-plan --refresh`, gdy się zdezaktualizuje (patrz §8).
+> Gdy plan się zdezaktualizuje, odśwież go: `/10x-test-plan --refresh` (patrz §8).
 >
-> Last updated: 2026-07-07
+> Ostatnia aktualizacja: 2026-07-09
 
 ## 1. Strategia
 
-Testy w tym projekcie kierują się trzema nienegocjowalnymi zasadami:
+Testy w tym projekcie trzymają się trzech zasad, od których nie ma odstępstw:
 
-1. **Koszt × sygnał.** Wygrywa najtańszy test, który daje prawdziwy sygnał
-   dla danego ryzyka. Nie promuj do e2e dlatego, że „e2e wydaje się
-   bezpieczniejsze". Nie nakładaj modelu wizyjnego na deterministyczną różnicę,
-   która i tak łapie regresję.
-2. **Obawy użytkownika to pełnoprawny dowód.** Ryzyka zakotwiczone w
-   „zespół martwi się o X, a awaria ujawniłaby się gdzieś w obszarze <…>"
-   mają tę samą wagę co linie PRD czy dane hot-spotów.
-3. **Ryzyka to scenariusze, nie lokalizacje kodu.** Ten plan dokumentuje
-   *co może zawieść* i *dlaczego uważamy, że jest to prawdopodobne* —
-   wyprowadzone z dokumentów, wywiadu i *sygnału* z bazy kodu (zmienność,
-   struktura, baza testowa). NIE twierdzi, że wie, która linia jest
-   właścicielem awarii. Ta wiedza powstaje w `/10x-research` podczas każdej
-   fazy wdrożenia. Jeśli plan i badanie nie zgadzają się co do tego, gdzie
-   żyje awaria, źródłem prawdy jest badanie.
+1. **Najtańszy test, który daje prawdziwy sygnał, wygrywa.** Nie rób ciężkiego
+   testu „od kliknięcia do wyniku" (e2e) tylko dlatego, że wydaje się
+   bezpieczniejszy. Nie stawiaj modelu AI oglądającego ekran tam, gdzie zwykłe
+   porównanie i tak wyłapie błąd.
+2. **Obawa zespołu to pełnoprawny powód.** „Martwimy się, że coś się zepsuje w
+   obszarze X" waży tyle samo, co zapis w dokumencie wymagań czy dane o tym,
+   które pliki zmieniają się najczęściej.
+3. **Ryzyko to scenariusz awarii, nie miejsce w kodzie.** Ten plan opisuje, *co*
+   może się zepsuć i *dlaczego* uważamy to za prawdopodobne. Nie wskazuje, która
+   linia kodu za to odpowiada — to ustala się osobno, w kroku `/10x-research`,
+   dla każdej fazy. Jeśli plan i badanie różnią się co do tego, gdzie leży błąd,
+   rację ma badanie.
 
-Zakres hot-spotów użyty do ważenia prawdopodobieństwa: `src/`, `supabase/migrations/`.
+Przy ocenie „jak prawdopodobna jest awaria" patrzymy na to, jak często zmieniają
+się pliki w `src/` i `supabase/migrations/`.
 
 ## 2. Mapa ryzyka
 
-Najważniejsze scenariusze awarii, przed którymi ten projekt musi się bronić,
-uporządkowane wg ryzyka = wpływ × prawdopodobieństwo. Ryzyka to scenariusze
-awarii w kategoriach użytkownika/biznesu, nie nazwy testów. Kolumna Źródło
-cytuje *dowód, który podniósł to ryzyko* — nigdy konkretnego pliku jako
-„miejsca, w którym żyje awaria" (to zadanie badania, patrz §1 zasada #3).
+Najważniejsze awarie, przed którymi projekt musi się bronić, uszeregowane wg
+wagi (waga = jak bardzo boli × jak prawdopodobne). Każdy wiersz to sytuacja
+widziana oczami użytkownika lub firmy, nie nazwa testu. Kolumna „Źródło" mówi,
+*skąd wiemy, że to realne ryzyko* — a nie wskazuje pliku, w którym „siedzi błąd"
+(to ustala badanie, patrz §1 zasada 3).
 
 | # | Ryzyko (scenariusz awarii) | Wpływ | Prawd. | Źródło (dowód — nie kotwica) |
 |---|---|---|---|---|
@@ -46,8 +45,9 @@ cytuje *dowód, który podniósł to ryzyko* — nigdy konkretnego pliku jako
 | 5 | Refaktor list/mutacji cicho łamie model dwóch wymiarów stanu (kosz gubi stan operacyjny; `rejected→pending` nie wraca do bramy walidacji; `zrealizowane` nie znika z Aktywne) | Średni | Wysoki | FR-009, FR-012, FR-013; hot-spot `src/components/items` (101 zmian/30d), `src/lib/services` (53/30d) |
 | 6 | Naruszenie kontraktu klasyfikatora zapisane albo źle obsłużone (brak pól obowiązkowych / >100 itemów / pusta odpowiedź mylona z błędem) | Średni | Średni | FR-005, FR-020; hot-spot `src/lib/ai` (7 zmian/30d) |
 
-**Rubryka wpływ × prawdopodobieństwo.** Oceniaj obie osie w skali Wysoki /
-Średni / Niski, żeby dwóch czytelników zgodziło się na ten sam wiersz.
+**Jak oceniać wagę.** Obie rzeczy — „jak bardzo boli" i „jak prawdopodobne" —
+oceniaj w skali Wysoki / Średni / Niski, tak żeby dwie osoby niezależnie trafiły
+w ten sam wiersz.
 
 | Ocena | Wpływ | Prawdopodobieństwo |
 |---|---|---|
@@ -55,17 +55,17 @@ cytuje *dowód, który podniósł to ryzyko* — nigdy konkretnego pliku jako
 | Średni | funkcja degraduje, istnieje obejście, dotyka tylko części użytkowników | dotykany okazjonalnie, bywał źródłem błędów |
 | Niski | kosmetyka, łatwo cofnąć, brak wpływu na dane | kod stabilny, rzadko dotykany |
 
-Uwaga o kolejności: brak scenariuszy Wysoki × Wysoki. Ryzyka #1–#3 (Wysoki
-wpływ) bronione są najpierw, mimo że siedzą w obszarach o niższej zmienności
-niż #5 — kolejność broni najpierw tego, co najdroższe do zepsucia, nie tego,
-co najczęściej dotykane. Ryzyko #4 (Wysoki × Niski) zależy od inwariantu
-konfiguracji, który już istnieje — test pinuje go przeciw cichej regresji.
+Uwaga o kolejności: nie ma tu nic w kategorii „bardzo boli i bardzo
+prawdopodobne". Ryzyka #1–#3 (te, które bardzo bolą) bierzemy najpierw, choć
+siedzą w spokojniejszych częściach kodu niż #5 — bronimy najpierw tego, co
+najdroższe do zepsucia, a nie tego, co najczęściej dotykane. Ryzyko #4 (bardzo
+boli, mało prawdopodobne) opiera się na zabezpieczeniu, które już istnieje — test
+pilnuje tylko, żeby ktoś go po cichu nie zepsuł.
 
-**Soczewka nadużyć/bezpieczeństwa.** Produkt ma uwierzytelnianie, BYOK i
-przyjmuje wejście użytkownika, więc mapa zawiera scenariusze nadużyć:
-autoryzacja/dostęp (#2 IDOR), wyciek sekretu/PII (#1 klucz, #4 wsad),
-nadużycie zasobów / degradacja pod obciążeniem (#3). Nie są to osobna
-struktura — to zwykłe scenariusze awarii na tych samych osiach.
+**Kątem oka na nadużycia.** Aplikacja ma logowanie, przyjmuje klucz użytkownika
+i jego dane, więc mapa uwzględnia typowe nadużycia: dostęp do cudzych danych
+(#2), wyciek klucza lub danych (#1, #4) i przeciążenie pod dużym obciążeniem
+(#3). To nie osobna kategoria — to zwykłe awarie na tej samej skali wagi.
 
 ### Wskazówki reagowania na ryzyko
 
@@ -80,10 +80,10 @@ struktura — to zwykłe scenariusze awarii na tych samych osiach.
 
 ## 3. Phased Rollout
 
-Każdy wiersz to odrębna faza wdrożenia, która otworzy własny folder zmiany
-przez `/10x-new`. Status przesuwa się od lewej do prawej wg wartości poniżej;
-orkiestrator aktualizuje Status w miarę pojawiania się artefaktów na dysku.
-Wartości Status są literałami parsera — nie tłumacz ich.
+Każdy wiersz to osobna faza, która dostaje własny folder zmiany (przez
+`/10x-new`). Status przesuwa się od lewej do prawej wraz z postępem prac. Uwaga:
+wartości w kolumnie Status to słowa kluczowe odczytywane przez program — nie
+tłumacz ich ani nie zmieniaj.
 
 | # | Nazwa fazy | Cel (jedna linia) | Ryzyka | Typy testów | Status | Change folder |
 |---|---|---|---|---|---|---|
@@ -93,7 +93,7 @@ Wartości Status są literałami parsera — nie tłumacz ich.
 | 4 | Regresja cyklu życia itemu | Model dwóch wymiarów stanu trzyma przy refaktorze | #5 | unit + integration | not started | — |
 | 5 | Podłączenie bramek + obserwacja obciążenia | Testy jako wymagana bramka CI; realne zachowanie dużego wsadu na Workers | #3 (część runtime) | gates + obserwacja | not started | — |
 
-**Słownik statusu** (stały — literały parsera):
+**Co znaczą statusy** (słowa kluczowe programu — nie zmieniaj):
 
 | Wartość | Znaczenie |
 |---|---|
@@ -106,9 +106,9 @@ Wartości Status są literałami parsera — nie tłumacz ich.
 
 ## 4. Stos
 
-Klasyczna baza testowa tego projektu. Narzędzia AI-natywne (jeśli są) niosą
-datę `checked:`. Rekomendacje ugruntowane w lokalnych manifestach/configach
-plus MCP/narzędzia faktycznie wystawione w bieżącej sesji.
+Czym testujemy w tym projekcie. Narzędzia oparte na AI (jeśli są) mają datę
+sprawdzenia (`checked:`). Wszystko poniżej wynika z plików konfiguracyjnych
+projektu i z narzędzi realnie dostępnych w tej sesji.
 
 | Warstwa | Narzędzie | Wersja | Uwagi |
 |---|---|---|---|
@@ -118,7 +118,7 @@ plus MCP/narzędzia faktycznie wystawione w bieżącej sesji.
 | dostępność (a11y) | brak | — | Poza zakresem (UI wyłączone w §7) |
 | (opcjonalna) AI-natywna | brak — świadomie pominięta (§7) | n/a | Playwright MCP niedostępny w sesji; klasyfikacja jest BYOK, więc eval mierzyłby cudzy model, nie nasz kod; checked: 2026-07-06 |
 
-**Narzędzia ugruntowania stosu (bieżąca sesja):**
+**Skąd te informacje (ta sesja):**
 - Docs: brak (Context7 / framework docs MCP niedostępny) — oparto na lokalnych manifestach; checked: 2026-07-06
 - Search: `WebSearch` (host-owy) dostępny — nieużyty (stos w pełni ugruntowany lokalnie); checked: 2026-07-06
 - Runtime/browser: Playwright MCP niedostępny; istnieje `playwright-skill` (skill hosta) — nieużyty w tym wdrożeniu; checked: 2026-07-06
@@ -126,9 +126,9 @@ plus MCP/narzędzia faktycznie wystawione w bieżącej sesji.
 
 ## 5. Bramki jakości
 
-Pełen zestaw bramek, które muszą przejść, zanim zmiana trafi na produkcję.
-„Wymagana po §3 Faza N" oznacza, że bramka jest egzekwowana, gdy ta faza
-wdrożenia wyląduje; wcześniej jest `planowana`.
+Sprawdzenia, które muszą przejść, zanim zmiana trafi na produkcję. „Wymagana po
+§3 Faza N" znaczy: to sprawdzenie zaczyna obowiązywać, gdy dana faza zostanie
+zrobiona — wcześniej jest dopiero planowane.
 
 | Bramka | Gdzie | Wymagana? | Łapie |
 |---|---|---|---|
@@ -137,60 +137,75 @@ wdrożenia wyląduje; wcześniej jest `planowana`.
 | hook po edycji | lokalnie (pętla agenta) | zalecana (konfiguracja to Moduł 3 Lekcja 3, poza tym wdrożeniem) | regresje w momencie edycji |
 | smoke przed-produkcyjny | między merge a prod | opcjonalna | awarie specyficzne dla środowiska (istnieje `/api/health`: `hasKek`/`hasSupabase`) |
 
-Uwaga: dziś CI uruchamia **lint + build**; testy jednostkowe i integracyjne
-istnieją (`npm test`, `npm run test:integration`), ale **nie są jeszcze
-podłączone jako bramka CI** — podłącza to §3 Faza 5.
+Uwaga: dziś CI (automat sprawdzający kod po wysłaniu) uruchamia tylko sprawdzenie
+składni i budowanie. Testy jednostkowe i integracyjne już istnieją (`npm test`,
+`npm run test:integration`), ale nie są jeszcze wpięte do CI jako wymóg — zrobi
+to Faza 5.
 
 ## 6. Wzorce książki kucharskiej
 
-Jak dodawać nowe testy w tym projekcie. Każda podsekcja wypełnia się, gdy
-odpowiednia faza wdrożenia wyląduje; wcześniej czyta „TBD — patrz §3 Faza N".
+Jak dodawać nowe testy w tym projekcie. Każdy podpunkt uzupełnia się, gdy
+odpowiednia faza zostanie zrobiona; wcześniej stoi w nim „TBD — patrz §3 Faza N".
 
 ### 6.1 Dodanie testu jednostkowego
 
-- **Lokalizacja**: współlokowany obok testowanego modułu w `src/**` (konwencja obecnego zestawu).
+- **Lokalizacja**: obok testowanego pliku w `src/**` (tak wygląda cały obecny zestaw).
 - **Nazewnictwo**: `<moduł>.test.ts`.
-- **Test referencyjny**: TBD — najbliższy istniejący w `src/lib/services/` do wskazania przez §3 Faza 1/Faza 4.
-- **Uruchomienie lokalnie**: `npm test`.
+- **Test do naśladowania**: `src/lib/services/mask.test.ts` (prosty test zwykłej funkcji). Gdy testujesz coś, co sprawdza ustawienia już przy starcie aplikacji, zobacz `src/lib/config/ai.test.ts`. (Faza 4 może dodać kolejny przykład.)
+- **Jak uruchomić**: `npm test`.
 
 ### 6.2 Dodanie testu integracyjnego
 
-- **Lokalizacja**: współlokowany, nazwa `<moduł>.integration.test.ts` (wykluczony z configu jednostkowego).
-- **Polityka mockowania**: mockuj wyłącznie na granicy sieci; nigdy nie mockuj wewnętrznych modułów ani RLS (izolacja per-user musi iść przez realny lokalny Supabase).
-- **Test referencyjny**: TBD — patrz §3 Faza 2 (izolacja per-user).
-- **Uruchomienie lokalnie**: `npm run test:integration` (wymaga lokalnego Supabase).
+- **Lokalizacja**: obok testowanego pliku, nazwa `<moduł>.integration.test.ts` (config testów jednostkowych je pomija).
+- **Co wolno udawać**: tylko połączenia sieciowe na zewnątrz. Nigdy nie udawaj wewnętrznych części aplikacji ani reguł dostępu do bazy (RLS) — sprawdzenie „czy użytkownik widzi tylko swoje dane" musi iść przez prawdziwą, lokalną bazę Supabase.
+- **Test do naśladowania**: TBD — patrz §3 Faza 2 (izolacja per-user).
+- **Jak uruchomić**: `npm run test:integration` (wymaga lokalnego Supabase).
 
 ### 6.3 Dodanie testu e2e
 
-- TBD — brak fazy e2e w bieżącym wdrożeniu; rozważ przy `--refresh`.
+- TBD — w tym wdrożeniu nie ma fazy e2e; rozważ przy `--refresh`.
 
 ### 6.4 Dodanie testu dla nowego endpointu API
 
-- **Typ testu**: integration (preferowany) — asercja żądanie → kształt odpowiedzi ORAZ efekty uboczne (zapis w bazie), z mockiem tylko zewnętrznej granicy HTTP.
-- **Wzorzec błędu**: endpointy zwracają `{ ok:false, code, error }` (lessons.md) — asercja kontraktu błędu, nie tylko statusu.
-- **Test referencyjny**: TBD — patrz §3 Faza 2/Faza 3.
-- **Kiedy zamiast tego e2e**: tylko gdy tryb awarii wymaga pełnego wdrożonego kształtu (auth + cookie + handler).
+- **Rodzaj testu**: najlepiej integracyjny — sprawdź, co endpoint zwraca ORAZ co realnie zapisał w bazie; udawaj tylko połączenia na zewnątrz.
+- **Format błędu**: endpointy zwracają błąd w stałym kształcie `{ ok:false, code, error }` (patrz lessons.md) — sprawdzaj ten kształt, nie tylko kod odpowiedzi HTTP.
+- **Test do naśladowania**: TBD — patrz §3 Faza 2/Faza 3.
+- **Kiedy zamiast tego zrobić test e2e**: tylko gdy błąd ujawnia się dopiero na w pełni złożonej aplikacji (logowanie + ciasteczko + obsługa żądania).
 
-### 6.5 Dodanie testu dla inwariantu bezpieczeństwa/prywatności
+### 6.5 Dodanie testu bezpieczeństwa lub prywatności
 
-- TBD — patrz §3 Faza 1 (wzorzec: klucz nigdy w logach; egress fail-closed przeciw wrogiej konfiguracji).
+Takie testy pilnują dwóch rzeczy: żeby klucz użytkownika nie wyciekł do logów i żeby jego dane nie poszły tam, gdzie nie powinny.
+
+**Gdzie położyć plik i jak go nazwać.** Test leży w tym samym folderze co plik, który sprawdza, i nazywa się tak samo, tyle że z końcówką `.test.ts`. Gdy test dotyczy sytuacji „brakuje jakiegoś ustawienia" (np. klucza szyfrującego), robimy osobny plik z tą sytuacją w nazwie, np. `byok-crypto.no-kek.test.ts`.
+
+**Cztery gotowe wzorce — wybierz ten pasujący do tego, co sprawdzasz:**
+
+1. **Samo maskowanie klucza** (funkcja, która zamienia klucz na `[REDACTED]`). Wywołaj ją wprost i sprawdź wynik. Przykład: `src/lib/services/mask.test.ts`.
+2. **Aplikacja odmawia startu przy złym ustawieniu** (np. gdyby klucz miał polecieć na obcy adres). Test podmienia ustawienia i sprawdza, że wczytanie się wywala. Przykład: `src/lib/config/ai.test.ts`.
+3. **Nic nie wycieka w żądaniu do dostawcy AI** — klucz jest tylko w nagłówku, a dane nie są zapamiętywane po stronie dostawcy. Podstawiasz atrapę wysyłki i oglądasz, co naprawdę poszło. Przykład: `src/lib/ai/classifier.test.ts`.
+4. **Nic tajnego nie trafia do logów.** Podglądasz, co poszło na konsolę, i sprawdzasz, że klucz jest zamaskowany. Przykład: `src/lib/services/logger.test.ts`, `src/lib/services/byok-endpoint.test.ts`.
+
+**Jedna pułapka, o którą łatwo się potknąć.** Nie buduj testu z takiej wartości, którą filtr i tak rozpoznaje — bo wtedy test przejdzie, mimo że niczego nie sprawdza. Gdy chcesz pokazać, że filtr czegoś **nie** łapie, użyj klucza w kształcie, którego filtr nie zna (krótszego niż jego próg). Gdy sprawdzasz, że coś **nie** trafiło do logu, użyj takiego znacznika, którego maskowanie by nie ruszyło — inaczej maskowanie „posprząta" dowód i problem Ci umknie.
+
+**Jak uruchomić:** `npm test`.
 
 ### 6.6 Notatki per faza wdrożenia
 
-(Opcjonalne. Po wylądowaniu każdej fazy `/10x-implement` dopisuje tu 2–3 linie
-uchwytujące, czego faza nauczyła — np. reużywalny katalog fixture'ów.)
+(Opcjonalne. Po każdej zrobionej fazie `/10x-implement` dopisuje tu 2–3 zdania o
+tym, czego faza nauczyła — np. gotowy zestaw danych testowych do ponownego użycia.)
+
+- **Faza 1 — bezpieczeństwo i prywatność (lipiec 2026):** Maskowanie klucza to druga linia obrony, nie pierwsza — rozpoznaje klucze OpenAI (te z `sk-` i długie), ale nie każdy możliwy klucz. Pierwsza linia to prosta zasada: klucz nigdy nie jest przekazywany do logów. Dopisaliśmy test, który pilnuje, że surowy błąd sieci od dostawcy nie trafia do logów — zaświeci się na czerwono, gdyby ktoś zaczął go tam wypisywać. Wysyłkę danych do dostawcy sprawdzały już wcześniejsze testy; dołożyliśmy tylko jeden, pilnujący, że w żądaniu jest ustawienie „nie zapamiętuj".
 
 ## 7. Czego świadomie NIE testujemy
 
-Wykluczenia uzgodnione podczas wdrożenia (wywiad Fazy 2, Q5). Przyszli
-kontrybutorzy powinni je uszanować, dopóki nie zmieni się leżące u ich
-podstaw założenie.
+Rzeczy, których świadomie nie testujemy — ustalone podczas rozmowy planistycznej.
+Trzymaj się tego, dopóki nie zmieni się powód, dla którego coś tu trafiło.
 
-- **Komponenty `src/components/ui` (shadcn)** — wygenerowana biblioteka, generator jest testem. Zrewiduj, jeśli dołożymy do nich własną logikę. (Źródło: wywiad Fazy 2, Q5.)
-- **Bugi dev-only (np. dup-React SSR)** — dług deweloperski, nie ryzyko produkcyjne; kryterium naprawy w `lessons.md`, nie w zestawie testów. (Źródło: wywiad Fazy 2, Q5 + lessons.md.)
-- **Audio jako wsad** — nice-to-have poza MVP; nie testujemy czegoś, czego nie ma. Zrewiduj, jeśli audio wejdzie do zakresu (PRD OQ2). (Źródło: PRD Non-Goals.)
-- **Mitygacja prompt injection** — PRD Non-Goal; ryzyko przeniesione na klucz BYOK użytkownika. (Źródło: PRD Non-Goals.)
-- **Warstwa AI-natywna (eval jakości klasyfikacji / acceptance-rate)** — model jest BYOK, aplikacja nie kontroluje jego trafności; ryzyko #6 celuje w *obsługę* wyjścia, nie w jego jakość. (Źródło: synteza Fazy 3, koszt × sygnał.)
+- **Gotowe komponenty `src/components/ui` (shadcn)** — to gotowa biblioteka, jej twórcy ją testują. Wróć do tego, jeśli dołożymy do nich własną logikę. (Źródło: rozmowa planistyczna, Q5.)
+- **Błędy widoczne tylko w trybie deweloperskim (np. podwójny React)** — to dług deweloperski, nie ryzyko na produkcji; jak je naprawiać, opisuje `lessons.md`, nie zestaw testów. (Źródło: rozmowa planistyczna, Q5 + lessons.md.)
+- **Audio jako wejście** — miłe, ale poza zakresem MVP; nie testujemy czegoś, czego nie ma. Wróć do tego, jeśli audio wejdzie do zakresu (PRD OQ2). (Źródło: PRD Non-Goals.)
+- **Obrona przed „prompt injection"** — świadomie poza zakresem produktu; to ryzyko po stronie klucza użytkownika (BYOK). (Źródło: PRD Non-Goals.)
+- **Ocena jakości samej AI** (czy dobrze klasyfikuje) — model podłącza użytkownik, nie kontrolujemy jego trafności; ryzyko #6 dotyczy tego, jak *obsługujemy* jego odpowiedź, a nie jak dobra ona jest. (Źródło: synteza Fazy 3, koszt × sygnał.)
 
 ## 8. Rejestr świeżości
 
@@ -198,9 +213,9 @@ podstaw założenie.
 - Wersje stosu ostatnio zweryfikowane: 2026-07-06
 - Referencje narzędzi AI-natywnych ostatnio zweryfikowane: 2026-07-06
 
-Odśwież (`/10x-test-plan --refresh`), gdy:
+Odśwież plan (`/10x-test-plan --refresh`), gdy:
 
-- pojawi się nowe ryzyko z top-3 z mapy drogowej lub archiwum,
-- data `checked:` zalecanego narzędzia jest starsza niż trzy miesiące,
-- zmieni się stos technologiczny projektu (nowy framework, nowy runner testów),
-- §7 przestrzeń negatywna przestanie odpowiadać temu, w co wierzy zespół.
+- pojawi się nowe ważne ryzyko z mapy drogowej lub z archiwum,
+- narzędzie z §4 nie było sprawdzane od ponad trzech miesięcy,
+- zmieni się technologia projektu (nowy framework, nowy program do testów),
+- lista z §7 („czego nie testujemy") przestanie pasować do tego, w co wierzy zespół.

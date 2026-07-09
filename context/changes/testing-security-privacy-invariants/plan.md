@@ -237,25 +237,25 @@ Brak — żadnych zmian schematu, danych ani konfiguracji runtime.
 
 #### Automatyczne
 
-- [x] 1.1 Testy granicy maskera przechodzą: `npm test`
-- [x] 1.2 Pin „cause nie trafia do sinka" przechodzi: `npm test`
-- [x] 1.3 Lint + typecheck czyste: `npm run lint`
+- [x] 1.1 Testy granicy maskera przechodzą: `npm test` — f2597b9
+- [x] 1.2 Pin „cause nie trafia do sinka" przechodzi: `npm test` — f2597b9
+- [x] 1.3 Lint + typecheck czyste: `npm run lint` — f2597b9
 
 #### Ręczne
 
-- [x] 1.4 Testy granicy jawnie opisują znane ograniczenie backstopu; oracle nie z kształtu regexu maskera
-- [x] 1.5 Pin `cause` staje się czerwony po tymczasowym dodaniu `reportError(err)` — zweryfikowane ręcznie
+- [x] 1.4 Testy granicy jawnie opisują znane ograniczenie backstopu; oracle nie z kształtu regexu maskera — f2597b9
+- [x] 1.5 Pin `cause` staje się czerwony po tymczasowym dodaniu `reportError(err)` — zweryfikowane ręcznie — f2597b9
 
 ### Faza 2: Audyt egress #4 + pin „store:false na drucie" + książka kucharska
 
 #### Automatyczne
 
-- [ ] 2.1 Asercja „store:false na drucie" przechodzi: `npm test`
-- [ ] 2.2 Cały zestaw zielony bez regresji: `npm test`
-- [ ] 2.3 Lint + typecheck czyste: `npm run lint`
-- [ ] 2.4 `test-plan.md §6.5` nie zawiera już „TBD — patrz §3 Faza 1"
+- [x] 2.1 Asercja „store:false na drucie" przechodzi: `npm test`
+- [x] 2.2 Cały zestaw zielony bez regresji: `npm test`
+- [x] 2.3 Lint + typecheck czyste: `npm run lint`
+- [x] 2.4 `test-plan.md §6.5` nie zawiera już „TBD — patrz §3 Faza 1"
 
 #### Ręczne
 
-- [ ] 2.5 §6.5/§6.1/§6.6 opisują realny wzorzec zgodny z tym, co faza zrobiła
-- [ ] 2.6 Audyt #4 potwierdzony: dodano tylko pin „na drucie", zero duplikacji
+- [x] 2.5 §6.5/§6.1/§6.6 opisują realny wzorzec zgodny z tym, co faza zrobiła
+- [x] 2.6 Audyt #4 potwierdzony: dodano tylko pin „na drucie", zero duplikacji
