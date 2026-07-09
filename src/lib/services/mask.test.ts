@@ -42,4 +42,19 @@ describe("mask — maskowanie sekretów", () => {
     expect(out).not.toContain("abcdefghij");
     expect(out).toContain("ok");
   });
+
+  // --- Granica backstopu (ryzyko #1) ------------------------------------------------------------
+  // Masker to BACKSTOP, nie obrona pierwszej linii. Walidacja wejścia klucza (byok-key.ts) to tylko
+  // trim + niepusty, więc krótki lub nie-`sk-` klucz jest DOPUSZCZONY, ale NIE pasuje do wzorca maskera
+  // (`sk-`+{20,} znaków albo ≥32-znakowa wysoka entropia) → przechodzi NIEzamaskowany. To znane,
+  // świadome ograniczenie: pierwsza linia obrony to „klucz nigdy nie trafia do loggera" (ESLint
+  // no-console + dyscyplina), a klucze OpenAI są zawsze `sk-`+długie. Poniższe testy CHARAKTERYZUJĄ
+  // granicę (nie zgłaszają buga); jeśli kiedyś rozszerzymy masker/walidację, świadomie je zaktualizuj.
+  it("NIE maskuje krótkiego klucza sk- poniżej progu długości (znana granica backstopu)", () => {
+    expect(maskSecrets("sk-abc123")).toBe("sk-abc123");
+  });
+
+  it("NIE maskuje krótkiego klucza bez prefiksu sk- (znana granica backstopu)", () => {
+    expect(maskSecrets("moj-tajny-klucz-42")).toBe("moj-tajny-klucz-42");
+  });
 });

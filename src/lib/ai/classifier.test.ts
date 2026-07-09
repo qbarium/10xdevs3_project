@@ -67,6 +67,20 @@ describe("classify — gałąź chat (gpt-4o-mini)", () => {
     expect((init.headers as Record<string, string>).Authorization).toBe("Bearer sk-test-klucz");
   });
 
+  it("wysyła store:false w body żądania (inwariant prywatności wsadu #4 na drucie)", async () => {
+    fetchMock.mockResolvedValue(
+      mockResponse({
+        ok: true,
+        status: 200,
+        body: { choices: [{ message: { content: JSON.stringify({ items: [] }) }, finish_reason: "stop" }] },
+      }),
+    );
+    await runClassify();
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(init.body as string) as { store?: unknown };
+    expect(body.store).toBe(false); // aiConfig.store (=assertNoStore, zawsze false) ląduje na drucie
+  });
+
   it("401 → ClassifierAuthError", async () => {
     fetchMock.mockResolvedValue(mockResponse({ ok: false, status: 401, body: {} }));
     await expect(runClassify()).rejects.toThrow(ClassifierAuthError);

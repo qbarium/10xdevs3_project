@@ -15,8 +15,9 @@ import { classify } from "@/lib/ai/classifier";
 import { classifyResultToResponse, runClassification } from "@/lib/ai/classify-core";
 import type { ClassificationResult } from "@/lib/ai/classify-core";
 import { failSession, finalizeEmpty, persistItems } from "@/lib/services/import-session";
+import { maskSecrets } from "@/lib/services/mask";
 import type { ClassifiedItem } from "@/types";
-import { ClassifierAuthError } from "@/types";
+import { ClassifierAuthError, ClassifierProviderError } from "@/types";
 
 const supa = {} as unknown as Parameters<typeof runClassification>[0];
 const params = (text = "wsad") => ({ sessionId: "s1", apiKey: "k", userId: "u", text });
@@ -85,5 +86,32 @@ describe("runClassification — współdzielony rdzeń (reuse sessionId)", () =>
     vi.mocked(classify).mockRejectedValue(new ClassifierAuthError());
     expect(await runClassification(supa, params())).toEqual({ status: "failed", code: "invalid_key" });
     expect(vi.mocked(failSession)).toHaveBeenCalledWith(supa, "s1", "invalid_key");
+  });
+
+  // Pin near-miss (ryzyko #1, classifier.ts:75-78): surowy `cause` błędu sieci klasyfikatora NIE może
+  // trafić do żadnego sinka logów. Dziś mapClassifyError zwraca "provider" BEZ reportError, więc cause
+  // nie jest logowany — ten test zamraża ten inwariant, by przyszłe dodanie reportError(err) w tej
+  // gałęzi zapaliło się na czerwono.
+  it("ClassifierProviderError: surowy `cause` NIE trafia do żadnego sinka logów", async () => {
+    // Sentinel celowo NIEmaskowalny: bez prefiksu `sk-`, < 32 znaków, niska entropia → masker go nie
+    // redaguje. Gdyby był maskowalny, reportError zredagowałby dowód i test byłby zielony przypadkiem.
+    const SENTINEL = "cause-leak-canary-42";
+    expect(maskSecrets(SENTINEL)).toBe(SENTINEL); // strażnik oracle: sentinel musi pozostać niemaskowalny
+
+    const lines: string[] = [];
+    const push = (arg: unknown) => lines.push(typeof arg === "string" ? arg : String(arg));
+    const spies = (["info", "warn", "error"] as const).map((m) => vi.spyOn(console, m).mockImplementation(push));
+
+    vi.mocked(classify).mockRejectedValue(
+      new ClassifierProviderError(undefined, { cause: new Error(`network detail ${SENTINEL}`) }),
+    );
+
+    const result = await runClassification(supa, params());
+
+    expect(result).toEqual({ status: "failed", code: "provider" });
+    expect(lines.join("\n")).not.toContain(SENTINEL); // cause nie wyciekł do żadnego console.*
+    spies.forEach((s) => {
+      s.mockRestore();
+    });
   });
 });
