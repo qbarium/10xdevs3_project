@@ -250,12 +250,12 @@ Brak — żadnych zmian schematu, danych ani konfiguracji runtime.
 
 #### Automatyczne
 
-- [x] 2.1 Asercja „store:false na drucie" przechodzi: `npm test`
-- [x] 2.2 Cały zestaw zielony bez regresji: `npm test`
-- [x] 2.3 Lint + typecheck czyste: `npm run lint`
-- [x] 2.4 `test-plan.md §6.5` nie zawiera już „TBD — patrz §3 Faza 1"
+- [x] 2.1 Asercja „store:false na drucie" przechodzi: `npm test` — e4e2890
+- [x] 2.2 Cały zestaw zielony bez regresji: `npm test` — e4e2890
+- [x] 2.3 Lint + typecheck czyste: `npm run lint` — e4e2890
+- [x] 2.4 `test-plan.md §6.5` nie zawiera już „TBD — patrz §3 Faza 1" — e4e2890
 
 #### Ręczne
 
-- [x] 2.5 §6.5/§6.1/§6.6 opisują realny wzorzec zgodny z tym, co faza zrobiła
-- [x] 2.6 Audyt #4 potwierdzony: dodano tylko pin „na drucie", zero duplikacji
+- [x] 2.5 §6.5/§6.1/§6.6 opisują realny wzorzec zgodny z tym, co faza zrobiła — e4e2890
+- [x] 2.6 Audyt #4 potwierdzony: dodano tylko pin „na drucie", zero duplikacji — e4e2890
