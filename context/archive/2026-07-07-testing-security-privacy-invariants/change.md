@@ -1,10 +1,10 @@
 ---
 change_id: testing-security-privacy-invariants
 title: Testing security privacy invariants
-status: implemented
+status: archived
 created: 2026-07-07
-updated: 2026-07-09
-archived_at: null
+updated: 2026-07-11
+archived_at: 2026-07-11T20:30:30Z
 ---
 
 ## Notes
