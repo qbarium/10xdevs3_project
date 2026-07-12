@@ -340,27 +340,27 @@ Brak — żadnych zmian schematu, danych ani konfiguracji runtime.
 
 #### Automatyczne
 
-- [x] 2.1 Testy IDOR retry/reopen przechodzą: `npm run test:integration`
-- [x] 2.2 Testy IDOR odczytu sesji i itemów przechodzą: `npm run test:integration`
-- [x] 2.3 Cały zestaw integracyjny zielony bez regresji: `npm run test:integration`
-- [x] 2.4 Lint + typecheck czyste: `npm run lint`
+- [x] 2.1 Testy IDOR retry/reopen przechodzą: `npm run test:integration` — f72a48d
+- [x] 2.2 Testy IDOR odczytu sesji i itemów przechodzą: `npm run test:integration` — f72a48d
+- [x] 2.3 Cały zestaw integracyjny zielony bez regresji: `npm run test:integration` — f72a48d
+- [x] 2.4 Lint + typecheck czyste: `npm run lint` — f72a48d
 
 #### Ręczne
 
-- [x] 2.5 `getSessionForRetry` cross-user zwraca dokładnie `null` (inwariant „cudzy = nieistniejący")
-- [x] 2.6 Odczyty cross-user zwracają pusty wynik i wykluczają zasób A — potwierdzone w przeglądzie
-- [x] 2.7 Wszystkie ścieżki idą przez klienta user-scoped B, nie service-role
+- [x] 2.5 `getSessionForRetry` cross-user zwraca dokładnie `null` (inwariant „cudzy = nieistniejący") — f72a48d
+- [x] 2.6 Odczyty cross-user zwracają pusty wynik i wykluczają zasób A — potwierdzone w przeglądzie — f72a48d
+- [x] 2.7 Wszystkie ścieżki idą przez klienta user-scoped B, nie service-role — f72a48d
 
 ### Faza 3: Książka kucharska §6.2/§6.4 + przestrzeń negatywna + świeżość
 
 #### Automatyczne
 
-- [ ] 3.1 `test-plan.md §6.2` nie zawiera już „TBD — patrz §3 Faza 2" (grep pusty)
-- [ ] 3.2 `test-plan.md §6.4` nie zawiera już „TBD — patrz §3 Faza 2/Faza 3" (grep pusty)
-- [ ] 3.3 Lint/format markdown czyste: `npm run format`
+- [x] 3.1 `test-plan.md §6.2` nie zawiera już „TBD — patrz §3 Faza 2" (grep pusty)
+- [x] 3.2 `test-plan.md §6.4` nie zawiera już „TBD — patrz §3 Faza 2/Faza 3" (grep pusty)
+- [x] 3.3 Lint/format markdown czyste: `npm run format`
 
 #### Ręczne
 
-- [ ] 3.4 §6.2/§6.4/§6.6 opisują realny wzorzec zgodny z tym, co faza zrobiła
-- [ ] 3.5 §7 zawiera oba wpisy przestrzeni negatywnej (HTTP-e2e; utwardzenie mutacji)
-- [ ] 3.6 Przegląd potwierdza, że §6 czytelne dla kogoś spoza tej fazy
+- [x] 3.4 §6.2/§6.4/§6.6 opisują realny wzorzec zgodny z tym, co faza zrobiła
+- [x] 3.5 §7 zawiera oba wpisy przestrzeni negatywnej (HTTP-e2e; utwardzenie mutacji)
+- [x] 3.6 Przegląd potwierdza, że §6 czytelne dla kogoś spoza tej fazy
