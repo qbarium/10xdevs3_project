@@ -82,6 +82,16 @@ describe("runClassification — współdzielony rdzeń (reuse sessionId)", () =>
     expect(vi.mocked(persistItems)).not.toHaveBeenCalled();
   });
 
+  // Strażnik off-by-one komplementarny do 101: dokładnie na granicy MAX_ITEMS wsad PRZECHODZI i jest
+  // zapisany. Zapala się na czerwono, gdyby ktoś zmienił `>` na `>=` w classify-core.ts.
+  it("dokładnie 100 → completed_with_items + persist, bez failSession (granica MAX_ITEMS)", async () => {
+    vi.mocked(classify).mockResolvedValue(items(100));
+    vi.mocked(persistItems).mockResolvedValue(100);
+    expect(await runClassification(supa, params())).toEqual({ status: "completed_with_items", itemCount: 100 });
+    expect(vi.mocked(persistItems)).toHaveBeenCalledOnce();
+    expect(vi.mocked(failSession)).not.toHaveBeenCalled();
+  });
+
   it("ClassifierAuthError → failed/invalid_key + failSession", async () => {
     vi.mocked(classify).mockRejectedValue(new ClassifierAuthError());
     expect(await runClassification(supa, params())).toEqual({ status: "failed", code: "invalid_key" });

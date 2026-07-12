@@ -157,6 +157,20 @@ describe("POST /api/import-sessions/retry", () => {
     expect(vi.mocked(failSession)).toHaveBeenCalledWith(expect.anything(), "sess-1", "storage");
   });
 
+  // Nieodwracalność sesji `storage` (świadomy tryb awarii, §7 planu testów): skoro pliku nie da się
+  // wczytać, retry znów kończy failed/storage — i to PRZED reopenem oraz klasyfikacją (loadSessionInput
+  // pada wcześniej w sekwencji, więc sesja nigdy nie rusza do ponownej klasyfikacji).
+  it("sesja storage: retry nie przechodzi do reopenu ani klasyfikacji (trwale nie-do-ponowienia)", async () => {
+    vi.mocked(loadSessionInput).mockRejectedValue(new SessionInputStorageError());
+    const res = await POST(ctx({ sessionId: "sess-1" }));
+    const body = (await res.json()) as ResultBody;
+    expect(body.status).toBe("failed");
+    expect(body.code).toBe("storage");
+    expect(vi.mocked(failSession)).toHaveBeenCalledWith(expect.anything(), "sess-1", "storage");
+    expect(vi.mocked(reopenSession)).not.toHaveBeenCalled();
+    expect(vi.mocked(classify)).not.toHaveBeenCalled();
+  });
+
   it("RLS: cudza/nieistniejąca sesja → 404", async () => {
     vi.mocked(getSessionForRetry).mockResolvedValue(null);
     const res = await POST(ctx({ sessionId: "obca" }));

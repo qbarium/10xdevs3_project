@@ -278,18 +278,18 @@ Brak. Żadnych zmian w schemacie ani danych; wyłącznie testy i dokumentacja.
 
 #### Automatyczne (agent)
 
-- [x] 1.1 Testy jednostkowe przechodzą: `npm test`
-- [x] 1.2 Lint i typecheck przechodzą: `npm run lint`
-- [x] 1.3 Sanity mutacyjny: osłabienie `title.min(1)` → `z.string()` zapala test „title pusty" na czerwono; zmiana cofnięta
+- [x] 1.1 Testy jednostkowe przechodzą: `npm test` — 827c4d1
+- [x] 1.2 Lint i typecheck przechodzą: `npm run lint` — 827c4d1
+- [x] 1.3 Sanity mutacyjny: osłabienie `title.min(1)` → `z.string()` zapala test „title pusty" na czerwono; zmiana cofnięta — 827c4d1
 
 ### Faza 2: Strażniki brzegowe i spłaszczenie
 
 #### Automatyczne (agent)
 
-- [ ] 2.1 Testy jednostkowe przechodzą: `npm test`
-- [ ] 2.2 Lint przechodzi: `npm run lint`
-- [ ] 2.3 Sanity mutacyjny: `>` → `>=` w `MAX_ITEMS` zapala test granicy 100 na czerwono; zmiana cofnięta
-- [ ] 2.4 Sanity mutacyjny: zmapowanie `ClassifierContractError` na inny kod zapala test spłaszczenia na czerwono; zmiana cofnięta
+- [x] 2.1 Testy jednostkowe przechodzą: `npm test`
+- [x] 2.2 Lint przechodzi: `npm run lint`
+- [x] 2.3 Sanity mutacyjny: `>` → `>=` w `MAX_ITEMS` zapala test granicy 100 na czerwono; zmiana cofnięta
+- [x] 2.4 Sanity mutacyjny: zmapowanie `ClassifierContractError` na inny kod zapala test spłaszczenia na czerwono; zmiana cofnięta
 
 ### Faza 3: Dokumentacja planu testów
 
