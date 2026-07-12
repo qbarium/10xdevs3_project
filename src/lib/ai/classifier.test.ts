@@ -35,6 +35,14 @@ function runClassify() {
   });
 }
 
+// Koperta OpenAI ze statusem 200 i podaną treścią (`content`). Kontrakt itemów żyje w treści,
+// więc scenariusze różnią się wyłącznie nią — HTTP jest zawsze ok:true.
+function stubChatOk(content: string) {
+  fetchMock.mockResolvedValue(
+    mockResponse({ ok: true, status: 200, body: { choices: [{ message: { content }, finish_reason: "stop" }] } }),
+  );
+}
+
 describe("classify — gałąź chat (gpt-4o-mini)", () => {
   beforeEach(() => fetchMock.mockReset());
   afterEach(() => vi.clearAllMocks());
@@ -108,5 +116,65 @@ describe("classify — gałąź chat (gpt-4o-mini)", () => {
       mockResponse({ ok: true, status: 200, body: { choices: [{ message: { content }, finish_reason: "stop" }] } }),
     );
     await expect(runClassify()).rejects.toThrow(ClassifierContractError);
+  });
+
+  // --- Rodzina "naruszenie kontraktu itemu": każde brakujące/niepoprawne pole obowiązkowe pada na
+  //     granicy zod (schema.ts) jako ClassifierContractError. Dotąd pokryty był tylko zły `type` wyżej.
+
+  it("item bez wymaganego pola: brak title → ClassifierContractError", async () => {
+    stubChatOk(JSON.stringify({ items: [{ type: "task", description: "x" }] }));
+    await expect(runClassify()).rejects.toThrow(ClassifierContractError);
+  });
+
+  it("item bez wymaganego pola: title pusty (min(1)) → ClassifierContractError", async () => {
+    stubChatOk(JSON.stringify({ items: [{ type: "task", title: "", description: "x" }] }));
+    await expect(runClassify()).rejects.toThrow(ClassifierContractError);
+  });
+
+  it("item bez wymaganego pola: brak type → ClassifierContractError", async () => {
+    stubChatOk(JSON.stringify({ items: [{ title: "x", description: "y" }] }));
+    await expect(runClassify()).rejects.toThrow(ClassifierContractError);
+  });
+
+  it("item bez wymaganego pola: brak description → ClassifierContractError", async () => {
+    stubChatOk(JSON.stringify({ items: [{ type: "task", title: "x" }] }));
+    await expect(runClassify()).rejects.toThrow(ClassifierContractError);
+  });
+
+  it("treść bez klucza items → ClassifierContractError (payload undefined → zod pada)", async () => {
+    stubChatOk(JSON.stringify({ foo: 1 }));
+    await expect(runClassify()).rejects.toThrow(ClassifierContractError);
+  });
+
+  // --- Nie-błędy: kształty łatwe do pomylenia z awarią, a to poprawne ścieżki.
+
+  it("nadmiarowe pole itemu jest cicho usuwane (sukces bez pola, nie błąd)", async () => {
+    // schema.ts to zwykły z.object (bez .strict()) → pole `foo` znika, item przechodzi jako sukces.
+    stubChatOk(JSON.stringify({ items: [{ type: "task", title: "x", description: "y", foo: "bar" }] }));
+    expect(await runClassify()).toEqual([{ type: "task", title: "x", description: "y" }]);
+  });
+
+  it("poprawne items:[] → [] (pusta tablica to sukces, nie błąd)", async () => {
+    stubChatOk(JSON.stringify({ items: [] }));
+    expect(await runClassify()).toEqual([]);
+  });
+
+  it("pusty content koperty → ClassifierContractError (kontrast do items:[])", async () => {
+    // Pusta *treść koperty* to naruszenie kontraktu (parseChatResponse, request.ts:67-70) — odrębne
+    // od zera itemów: brak content ≠ poprawne items:[]. To dwie różne ścieżki, nie jedna.
+    stubChatOk("");
+    await expect(runClassify()).rejects.toThrow(ClassifierContractError);
+  });
+
+  // --- Jawny "poprawne N" (N > 1); happy path wyżej testuje tylko N=1.
+
+  it("poprawne N itemów (N=3, różne typy) → zwalidowana tablica, kolejność zachowana", async () => {
+    const items = [
+      { type: "task", title: "Zadanie", description: "a" },
+      { type: "idea", title: "Pomysł", description: "" },
+      { type: "decision", title: "Decyzja", description: "c" },
+    ];
+    stubChatOk(JSON.stringify({ items }));
+    expect(await runClassify()).toEqual(items);
   });
 });
