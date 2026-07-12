@@ -90,7 +90,7 @@ tłumacz ich ani nie zmieniaj.
 | 1   | Inwarianty bezpieczeństwa/prywatności      | Klucz nigdy w logach; wsad nie wychodzi poza allowlistę hostów           | #1, #4                          | unit               | complete    | testing-security-privacy-invariants       |
 | 2   | Izolacja per-user (IDOR)                   | A nie sięga po zasób B — odczyt i mutacja                                | #2                              | integration        | complete    | testing-per-user-isolation                |
 | 3   | Kontrakt klasyfikatora + stan sesji        | Naruszenie kontraktu i degradacja obsłużone czysto; 0-itemów ≠ błąd      | #6, #3 (część deterministyczna) | unit               | complete    | testing-classifier-contract-session-state |
-| 4   | Regresja cyklu życia itemu                 | Model dwóch wymiarów stanu trzyma przy refaktorze                        | #5                              | unit + integration | not started | —                                         |
+| 4   | Regresja cyklu życia itemu                 | Model dwóch wymiarów stanu trzyma przy refaktorze                        | #5                              | unit + integration | complete    | testing-item-lifecycle-regression                                         |
 | 5   | Podłączenie bramek + obserwacja obciążenia | Testy jako wymagana bramka CI; realne zachowanie dużego wsadu na Workers | #3 (część runtime)              | gates + obserwacja | not started | —                                         |
 
 **Co znaczą statusy** (słowa kluczowe programu — nie zmieniaj):
