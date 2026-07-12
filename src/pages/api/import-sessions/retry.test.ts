@@ -161,6 +161,14 @@ describe("POST /api/import-sessions/retry", () => {
   // wczytać, retry znów kończy failed/storage — i to PRZED reopenem oraz klasyfikacją (loadSessionInput
   // pada wcześniej w sekwencji, więc sesja nigdy nie rusza do ponownej klasyfikacji).
   it("sesja storage: retry nie przechodzi do reopenu ani klasyfikacji (trwale nie-do-ponowienia)", async () => {
+    // Sesja plikowa (raw_input null) — storage dotyczy tylko plików; zgodnie z realnym źródłem błędu.
+    vi.mocked(getSessionForRetry).mockResolvedValue(
+      failedSession({
+        raw_input: null,
+        // @ts-expect-error: w teście dokładamy zsymulowany rekord pliku (sesja plikowa)
+        file: { id: "f1", file_path: "user-1/sess-1/f1.txt", file_name: "n.txt", file_mime: "text/plain" },
+      }),
+    );
     vi.mocked(loadSessionInput).mockRejectedValue(new SessionInputStorageError());
     const res = await POST(ctx({ sessionId: "sess-1" }));
     const body = (await res.json()) as ResultBody;

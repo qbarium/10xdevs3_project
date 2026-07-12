@@ -226,8 +226,8 @@ Dwie notki w `context/foundation/test-plan.md` — bez zmian w strategii §1–�
 #### Weryfikacja automatyczna (agent)
 
 - `test-plan.md` zawiera nowy punkt §7 (sesja `storage`) oraz §6.6 (notka per faza 3) — agent grepuje nagłówki/treść
-- Prettier nie zgłasza zmian po zapisie: `npm run format`
-- `git diff context/foundation/test-plan.md` pokazuje zmiany wyłącznie w §6.6 i §7 — agent sprawdza zakres diffa, potwierdzając, że §1–§5 są nietknięte
+- Prettier nie zgłasza zmian po zapisie: `prettier --write context/foundation/test-plan.md` (celowana ścieżka, nie `npm run format` na całym repo — zob. lessons.md „Formatuj celowanymi ścieżkami…")
+- `git diff context/foundation/test-plan.md` pokazuje zmiany treści wyłącznie w §6.6 i §7 — agent sprawdza zakres diffa, potwierdzając, że strategia §1–§5 jest nietknięta, z wyjątkiem słowa-klucza Status w tabeli §3 (flip wiersza fazy 3 → `complete` jest wymagany przez model orkiestratora)
 
 **Uwaga implementacyjna**: Całą fazę wykonuje i weryfikuje agent. To ostatnia faza — po zielonej weryfikacji agent oznacza wiersz §3 planu testów jako `complete`.
 
