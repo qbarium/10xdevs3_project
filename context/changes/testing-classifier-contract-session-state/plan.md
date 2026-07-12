@@ -286,15 +286,15 @@ Brak. Żadnych zmian w schemacie ani danych; wyłącznie testy i dokumentacja.
 
 #### Automatyczne (agent)
 
-- [x] 2.1 Testy jednostkowe przechodzą: `npm test`
-- [x] 2.2 Lint przechodzi: `npm run lint`
-- [x] 2.3 Sanity mutacyjny: `>` → `>=` w `MAX_ITEMS` zapala test granicy 100 na czerwono; zmiana cofnięta
-- [x] 2.4 Sanity mutacyjny: zmapowanie `ClassifierContractError` na inny kod zapala test spłaszczenia na czerwono; zmiana cofnięta
+- [x] 2.1 Testy jednostkowe przechodzą: `npm test` — a202d54
+- [x] 2.2 Lint przechodzi: `npm run lint` — a202d54
+- [x] 2.3 Sanity mutacyjny: `>` → `>=` w `MAX_ITEMS` zapala test granicy 100 na czerwono; zmiana cofnięta — a202d54
+- [x] 2.4 Sanity mutacyjny: zmapowanie `ClassifierContractError` na inny kod zapala test spłaszczenia na czerwono; zmiana cofnięta — a202d54
 
 ### Faza 3: Dokumentacja planu testów
 
 #### Automatyczne (agent)
 
-- [ ] 3.1 `test-plan.md` zawiera nowy punkt §7 (sesja `storage`) oraz §6.6 (notka per faza 3)
-- [ ] 3.2 Prettier nie zgłasza zmian po zapisie: `npm run format`
-- [ ] 3.3 `git diff test-plan.md` dotyka wyłącznie §6.6 i §7 (§1–§5 nietknięte); wiersz §3 planu testów → `complete`
+- [x] 3.1 `test-plan.md` zawiera nowy punkt §7 (sesja `storage`) oraz §6.6 (notka per faza 3)
+- [x] 3.2 Prettier nie zgłasza zmian po zapisie: `npm run format`
+- [x] 3.3 `git diff test-plan.md` dotyka wyłącznie §6.6 i §7 (§1–§5 nietknięte); wiersz §3 planu testów → `complete`
