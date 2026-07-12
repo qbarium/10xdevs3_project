@@ -355,12 +355,12 @@ Brak — żadnych zmian schematu, danych ani konfiguracji runtime.
 
 #### Automatyczne
 
-- [x] 3.1 `test-plan.md §6.2` nie zawiera już „TBD — patrz §3 Faza 2" (grep pusty)
-- [x] 3.2 `test-plan.md §6.4` nie zawiera już „TBD — patrz §3 Faza 2/Faza 3" (grep pusty)
-- [x] 3.3 Lint/format markdown czyste: `npm run format`
+- [x] 3.1 `test-plan.md §6.2` nie zawiera już „TBD — patrz §3 Faza 2" (grep pusty) — b5d7d2c
+- [x] 3.2 `test-plan.md §6.4` nie zawiera już „TBD — patrz §3 Faza 2/Faza 3" (grep pusty) — b5d7d2c
+- [x] 3.3 Lint/format markdown czyste: `npm run format` — b5d7d2c
 
 #### Ręczne
 
-- [x] 3.4 §6.2/§6.4/§6.6 opisują realny wzorzec zgodny z tym, co faza zrobiła
-- [x] 3.5 §7 zawiera oba wpisy przestrzeni negatywnej (HTTP-e2e; utwardzenie mutacji)
-- [x] 3.6 Przegląd potwierdza, że §6 czytelne dla kogoś spoza tej fazy
+- [x] 3.4 §6.2/§6.4/§6.6 opisują realny wzorzec zgodny z tym, co faza zrobiła — b5d7d2c
+- [x] 3.5 §7 zawiera oba wpisy przestrzeni negatywnej (HTTP-e2e; utwardzenie mutacji) — b5d7d2c
+- [x] 3.6 Przegląd potwierdza, że §6 czytelne dla kogoś spoza tej fazy — b5d7d2c

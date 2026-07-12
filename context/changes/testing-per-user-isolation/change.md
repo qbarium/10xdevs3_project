@@ -1,7 +1,7 @@
 ---
 change_id: testing-per-user-isolation
 title: Testing per-user isolation (IDOR)
-status: implementing
+status: implemented
 created: 2026-07-12
 updated: 2026-07-12
 archived_at: null
