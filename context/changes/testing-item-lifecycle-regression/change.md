@@ -1,7 +1,7 @@
 ---
 change_id: testing-item-lifecycle-regression
 title: Regresja cyklu życia itemu (plan testów — Faza 4)
-status: implemented
+status: impl_reviewed
 created: 2026-07-12
 updated: 2026-07-12
 archived_at: null
