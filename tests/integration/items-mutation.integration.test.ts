@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { listItems } from "@/lib/services/items";
 import {
   createManualItem,
   editItem,
@@ -11,6 +12,7 @@ import {
   restoreFromTrash,
   setAcceptanceStatus,
 } from "@/lib/services/items-mutation";
+import { defaultCriteria } from "@/lib/services/list-criteria";
 
 // Mutacje `items` przeciw lokalnemu Supabase. Dwóch userów przez signUp (config.toml
 // enable_confirmations=false → sesja od razu). Sprawdzamy: izolację RLS (B nie rusza itemów A),
@@ -304,5 +306,75 @@ d("items-mutation — RLS + status-guard + derywacja (integracja)", () => {
     await expect(rowOf(B.supabase, itemB)).rejects.toThrow(); // item B zniknął → emptyTrash B naprawdę zadziałał
     const row = await rowOf(A.supabase, itemA); // KLUCZOWE: item A przetrwał globalny hard-delete B
     expect(row.acceptance_status).toBe("deleted");
+  });
+
+  // --- Round-trip cyklu życia itemu (Faza 4, ryzyko #5): dwuwymiarowy model stanu trzyma przy cyklu kosza ---
+  // acceptance_status × operational_status to dwa NIEZALEŻNE wymiary (FR-009). moveToTrash/restoreFromTrash
+  // tykają wyłącznie acceptance_status; operational_status musi przeżyć podróż do kosza i z powrotem, a restore
+  // jest DETERMINISTYCZNY ze statusu źródłowego (deleted→accepted, rejected→pending) — nie odtwarza "poprzedniego"
+  // stanu akceptacji z pamięci. Round-trip właściciela (nie IDOR): asercja przez odczyt z bazy (rowOf), bo dowodem
+  // inwariantu jest przeżycie kolumny w bazie, nie kształt zapytania (to pokrywa unit items-mutation.test.ts).
+
+  it("round-trip kosza zachowuje operational_status (in_progress i done przeżywają move→restore)", async () => {
+    const inProgressId = await insertItem(A.supabase, A.id, {
+      acceptance_status: "accepted",
+      operational_status: "in_progress",
+    });
+    const doneId = await insertItem(A.supabase, A.id, {
+      acceptance_status: "accepted",
+      operational_status: "done",
+    });
+
+    await moveToTrash(A.supabase, [inProgressId, doneId]);
+    const trashedInProgress = await rowOf(A.supabase, inProgressId);
+    expect(trashedInProgress.acceptance_status).toBe("deleted");
+    expect(trashedInProgress.operational_status).toBe("in_progress"); // kosz NIE resetuje wymiaru operacyjnego
+    expect((await rowOf(A.supabase, doneId)).operational_status).toBe("done");
+
+    await restoreFromTrash(A.supabase, [inProgressId, doneId]);
+    const restoredInProgress = await rowOf(A.supabase, inProgressId);
+    expect(restoredInProgress.acceptance_status).toBe("accepted");
+    expect(restoredInProgress.operational_status).toBe("in_progress"); // przeżył pełny round-trip
+    const restoredDone = await rowOf(A.supabase, doneId);
+    expect(restoredDone.acceptance_status).toBe("accepted");
+    expect(restoredDone.operational_status).toBe("done");
+  });
+
+  it("round-trip: przywrócony rejected wraca do bramki walidacji (kolumna pending + widok Do akceptacji)", async () => {
+    // Inwariant (b): restore jest deterministyczny ze statusu źródłowego (rejected → pending), więc item
+    // realnie ODKŁADA SIĘ z powrotem do bramy walidacji. Dowodzimy tego na DWÓCH poziomach: kolumny ORAZ
+    // widoku „Do akceptacji" (samo `pending` w kolumnie to za mało — zdanie o inwariancie dotyczy widoku).
+    const id = await insertItem(A.supabase, A.id, { acceptance_status: "rejected" });
+
+    await restoreFromTrash(A.supabase, [id]);
+
+    // (1) kolumna: rejected → pending (NIE „wraca jako odrzucone" — restore nie odtwarza pamięci akceptacji)
+    expect((await rowOf(A.supabase, id)).acceptance_status).toBe("pending");
+
+    // (2) widok: item faktycznie widoczny w „Do akceptacji". toContain (nie równość) — listItems('pending')
+    // zwraca wszystkie pendingi A z całego przebiegu pliku.
+    const pendingIds = (await listItems(A.supabase, A.id, defaultCriteria("pending"))).items.map((i) => i.id);
+    expect(pendingIds).toContain(id);
+  });
+
+  it("round-trip mieszany: restoreFromTrash([rejected, deleted]) rozdziela na pending i accepted (guardy nie kolidują)", async () => {
+    // Inwariant (b) część druga: dwa strzeżone UPDATE-y w restoreFromTrash nie kolidują — jedno wywołanie na
+    // mieszanej selekcji rozdziela itemy na właściwe gałęzie. To ten test zapala się na czerwono, gdyby ktoś
+    // „uprościł" restore do jednego UPDATE (rejected poleciałby wtedy na accepted, nie pending).
+    const rejectedId = await insertItem(A.supabase, A.id, { acceptance_status: "rejected" });
+    const deletedId = await insertItem(A.supabase, A.id, {
+      acceptance_status: "deleted",
+      operational_status: "in_progress",
+    });
+
+    const restored = await restoreFromTrash(A.supabase, [rejectedId, deletedId]);
+    // zwrotka Item[] to suma obu guarded UPDATE-ów — zawiera oba przywrócone id
+    expect(restored.map((i) => i.id).sort()).toEqual([rejectedId, deletedId].sort());
+
+    // rejected → pending (bramka walidacji); deleted → accepted z ZACHOWANYM stanem operacyjnym
+    expect((await rowOf(A.supabase, rejectedId)).acceptance_status).toBe("pending");
+    const deletedRow = await rowOf(A.supabase, deletedId);
+    expect(deletedRow.acceptance_status).toBe("accepted");
+    expect(deletedRow.operational_status).toBe("in_progress");
   });
 });
