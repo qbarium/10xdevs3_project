@@ -247,13 +247,13 @@ Brak — faza testowa, bez zmian schematu i kodu produkcyjnego.
 
 #### Automatyczne
 
-- [x] 1.1 Test inwariantu (a) — round-trip `move→restore` zachowuje `operational_status` (`in_progress` + `done`) — dodany, zielony
-- [x] 1.2 Test inwariantu (b) — `rejected→pending`: kolumna + widok `listItems('pending')` (dodane importy `listItems`/`defaultCriteria`) — dodany, zielony
-- [x] 1.3 Test mieszanej selekcji — `restoreFromTrash([rejected, deleted])` rozdziela na `pending`/`accepted` — dodany, zielony
-- [x] 1.4 `npm run test:integration` przechodzi, nowe testy wykonane (nie pominięte)
-- [x] 1.5 `npm run lint` przechodzi
+- [x] 1.1 Test inwariantu (a) — round-trip `move→restore` zachowuje `operational_status` (`in_progress` + `done`) — dodany, zielony — fa85a6f
+- [x] 1.2 Test inwariantu (b) — `rejected→pending`: kolumna + widok `listItems('pending')` (dodane importy `listItems`/`defaultCriteria`) — dodany, zielony — fa85a6f
+- [x] 1.3 Test mieszanej selekcji — `restoreFromTrash([rejected, deleted])` rozdziela na `pending`/`accepted` — dodany, zielony — fa85a6f
+- [x] 1.4 `npm run test:integration` przechodzi, nowe testy wykonane (nie pominięte) — fa85a6f
+- [x] 1.5 `npm run lint` przechodzi — fa85a6f
 
 #### Ręczne
 
-- [x] 1.6 Dowód zębów: regresja w `moveToTrash` zapala test (a); regresja „jeden UPDATE" w `restoreFromTrash` zapala test (b); oba cofnięte
-- [x] 1.7 §6.6 planu testów uzupełnione notatką Fazy 4 (przejrzane)
+- [x] 1.6 Dowód zębów: regresja w `moveToTrash` zapala test (a); regresja „jeden UPDATE" w `restoreFromTrash` zapala test (b); oba cofnięte — fa85a6f
+- [x] 1.7 §6.6 planu testów uzupełnione notatką Fazy 4 (przejrzane) — fa85a6f
