@@ -31,6 +31,7 @@ import { POST } from "@/pages/api/ingest/classify";
 import type { ClassifiedItem } from "@/types";
 import {
   ClassifierAuthError,
+  ClassifierContractError,
   ClassifierProviderError,
   FileTooLargeError,
   UnsupportedEncodingError,
@@ -148,6 +149,19 @@ describe("POST /api/ingest/classify", () => {
     vi.mocked(classify).mockRejectedValue(new DOMException("aborted", "AbortError"));
     const res = await POST(ctx({ text: "wsad" }));
     expect(((await res.json()) as ResultBody).code).toBe("timeout");
+  });
+
+  // Wszystkie przyczyny naruszenia kontraktu (obcięcie, brak pola, zły JSON) rozróżnialne są tylko na
+  // warstwie classify() — na wyjściu HTTP kolapsują do jednego kodu "contract" przy 200/ok:true, bo
+  // `failed` to normalny stan przepływu (FR-006), nie awaria transportu.
+  it("naruszenie kontraktu → 200 failed/contract (spłaszczenie przyczyn do jednego kodu)", async () => {
+    vi.mocked(classify).mockRejectedValue(new ClassifierContractError("dowolny powód"));
+    const res = await POST(ctx({ text: "wsad" }));
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as ResultBody;
+    expect(body.status).toBe("failed");
+    expect(body.code).toBe("contract");
+    expect(vi.mocked(failSession)).toHaveBeenCalledWith(expect.anything(), "sess-1", "contract");
   });
 
   // --- Plik (PR2, Faza 7) ---
