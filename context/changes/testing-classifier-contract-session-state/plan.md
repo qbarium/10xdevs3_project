@@ -295,6 +295,6 @@ Brak. Żadnych zmian w schemacie ani danych; wyłącznie testy i dokumentacja.
 
 #### Automatyczne (agent)
 
-- [x] 3.1 `test-plan.md` zawiera nowy punkt §7 (sesja `storage`) oraz §6.6 (notka per faza 3)
-- [x] 3.2 Prettier nie zgłasza zmian po zapisie: `npm run format`
-- [x] 3.3 `git diff test-plan.md` dotyka wyłącznie §6.6 i §7 (§1–§5 nietknięte); wiersz §3 planu testów → `complete`
+- [x] 3.1 `test-plan.md` zawiera nowy punkt §7 (sesja `storage`) oraz §6.6 (notka per faza 3) — 0c8fb08
+- [x] 3.2 Prettier nie zgłasza zmian po zapisie: `npm run format` — 0c8fb08
+- [x] 3.3 `git diff test-plan.md` dotyka wyłącznie §6.6 i §7 (§1–§5 nietknięte); wiersz §3 planu testów → `complete` — 0c8fb08

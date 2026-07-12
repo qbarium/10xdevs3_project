@@ -1,7 +1,7 @@
 ---
 change_id: testing-classifier-contract-session-state
 title: Testy kontraktu klasyfikatora i stanu sesji (Faza 3 planu testów)
-status: implementing
+status: implemented
 created: 2026-07-12
 updated: 2026-07-12
 archived_at: null
