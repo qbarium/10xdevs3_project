@@ -1,7 +1,8 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { listItems } from "@/lib/services/items";
+import { createSession } from "@/lib/services/import-session";
+import { getSessionItems, listItems } from "@/lib/services/items";
 import { setOperationalStatus } from "@/lib/services/items-mutation";
 import { defaultCriteria } from "@/lib/services/list-criteria";
 
@@ -122,5 +123,27 @@ d("items-operational — RLS + guard accepted + rozłączne podzbiory (integracj
     expect(cancelled).toContain(cancelledId);
     expect(cancelled).not.toContain(doneId);
     expect(cancelled).not.toContain(activeNew);
+  });
+
+  // --- IDOR odczytu itemów: getSessionItems (podwójny filtr user_id+import_session_id) + listItems ---
+  // Cudza sesja → pusta lista (nie błąd, nie cudze dane), a aktywna lista B nie zawiera itemu A.
+  // Domyka lukę „listItems testowany dziś tylko jednym userem" — przypina WYKLUCZENIE cross-user.
+  it("B nie odczytuje itemów sesji A (getSessionItems pusto) ani nie widzi ich w listItems", async () => {
+    // A: sesja + aktywny item w niej (accepted/new → wpada do widoku „active").
+    const { id: sessionA } = await createSession(A.supabase, A.id, "wsad A");
+    const itemA = await insertItem(A.supabase, A.id, { import_session_id: sessionA });
+
+    // getSessionItems: cudza sesja → pusta lista (podwójny filtr user_id + import_session_id + RLS), nie błąd.
+    const bSessionItems = await getSessionItems(B.supabase, B.id, sessionA);
+    expect(bSessionItems.items).toEqual([]);
+    expect(bSessionItems.total).toBe(0);
+
+    // Właściciel A widzi item sesji (kontrola pozytywna — pusto u B nie jest artefaktem złego setupu).
+    const aSessionItems = await getSessionItems(A.supabase, A.id, sessionA);
+    expect(aSessionItems.items.map((i) => i.id)).toContain(itemA);
+
+    // listItems: aktywna lista B nie zawiera itemu A (domknięcie cross-user obok rozłączności podzbiorów).
+    const bActive = (await listItems(B.supabase, B.id, defaultCriteria("active"))).items.map((i) => i.id);
+    expect(bActive).not.toContain(itemA);
   });
 });

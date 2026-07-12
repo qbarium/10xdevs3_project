@@ -1,7 +1,15 @@
 import { createClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { createSession, failSession, finalizeEmpty, persistItems } from "@/lib/services/import-session";
+import {
+  createSession,
+  failSession,
+  finalizeEmpty,
+  getImportSessions,
+  getSessionForRetry,
+  persistItems,
+  reopenSession,
+} from "@/lib/services/import-session";
 
 // Integ-test serwisu sesji importu + RPC persist_classification przeciw lokalnemu Supabase (S-02 Faza 3).
 // Dowodzi: atomowy zapis (itemy + status sesji), mapowanie operational_status, completed_no_items,
@@ -113,5 +121,45 @@ d("import-session serwis + RPC (S-02 Faza 3)", () => {
       .eq("status", "failed")
       .eq("error_message", "provider");
     expect(sess.count).toBe(1);
+  });
+
+  // --- IDOR ownership sesji: retry/reopen (jedyna JAWNA kontrola własności w kodzie serwera) ---
+  // getSessionForRetry dokłada `.eq("user_id")` PRZED mutacją → cudza sesja = null (endpoint → 404),
+  // inwariant „cudzy = nieistniejący". reopenSession polega na RLS + guard status='failed' → B na cudzej
+  // sesji przestawia 0 wierszy (false), a sesja A zostaje failed. Wszystko przez klienta user-scoped B.
+  it("B nie ponawia ani nie odblokowuje sesji failed usera A (getSessionForRetry/reopenSession)", async () => {
+    const { id: sessionA } = await createSession(A.supabase, A.id, "wsad A do ponowienia");
+    await failSession(A.supabase, sessionA, "provider");
+
+    // getSessionForRetry: cudza sesja = null (jawny user_id wyklucza) — „cudzy = nieistniejący", nie błąd.
+    expect(await getSessionForRetry(B.supabase, B.id, sessionA)).toBeNull();
+    // Właściciel A widzi swoją sesję (kontrola pozytywna — null nie jest artefaktem zepsutego zapytania).
+    const ownerView = await getSessionForRetry(A.supabase, A.id, sessionA);
+    expect(ownerView?.id).toBe(sessionA);
+    expect(ownerView?.status).toBe("failed");
+
+    // reopenSession przez B nie rusza sesji A (RLS → 0 wierszy → false).
+    expect(await reopenSession(B.supabase, sessionA)).toBe(false);
+    // Stan sesji A nietknięty — nadal failed, odczyt z perspektywy A.
+    const stillFailed = await A.supabase
+      .from("import_sessions")
+      .select("id", { count: "exact", head: true })
+      .eq("id", sessionA)
+      .eq("status", "failed");
+    expect(stillFailed.count).toBe(1);
+  });
+
+  // --- IDOR odczytu dziennika: getImportSessions wyklucza cross-user (jawny user_id + RLS) ---
+  it("dziennik sesji B nie zawiera sesji A i odwrotnie (getImportSessions wyklucza cross-user)", async () => {
+    const { id: sessionA } = await createSession(A.supabase, A.id, "sesja A w dzienniku");
+    const { id: sessionB } = await createSession(B.supabase, B.id, "sesja B w dzienniku");
+
+    const bIds = (await getImportSessions(B.supabase, B.id)).sessions.map((s) => s.id);
+    expect(bIds).toContain(sessionB); // B widzi swoją sesję (lista niepusta — asercja nie jest vacuous)
+    expect(bIds).not.toContain(sessionA); // ale NIE sesji A
+
+    const aIds = (await getImportSessions(A.supabase, A.id)).sessions.map((s) => s.id);
+    expect(aIds).toContain(sessionA);
+    expect(aIds).not.toContain(sessionB); // symetria: A nie widzi sesji B
   });
 });

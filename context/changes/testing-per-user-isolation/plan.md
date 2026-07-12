@@ -327,29 +327,29 @@ Brak — żadnych zmian schematu, danych ani konfiguracji runtime.
 
 #### Automatyczne
 
-- [x] 1.1 Testy IDOR kosza przechodzą: `npm run test:integration` (lokalny Supabase `Up`)
-- [x] 1.2 Cały zestaw integracyjny zielony bez regresji: `npm run test:integration`
-- [x] 1.3 Lint + typecheck czyste: `npm run lint`
+- [x] 1.1 Testy IDOR kosza przechodzą: `npm run test:integration` (lokalny Supabase `Up`) — 20dff59
+- [x] 1.2 Cały zestaw integracyjny zielony bez regresji: `npm run test:integration` — 20dff59
+- [x] 1.3 Lint + typecheck czyste: `npm run lint` — 20dff59
 
 #### Ręczne
 
-- [x] 1.4 Każdy scenariusz idzie przez klienta user-scoped B, nie service-role — potwierdzone w przeglądzie
-- [x] 1.5 Asercja obejmuje obie strony inwariantu: B nie zmienia ORAZ stan A nietknięty
+- [x] 1.4 Każdy scenariusz idzie przez klienta user-scoped B, nie service-role — potwierdzone w przeglądzie — 20dff59
+- [x] 1.5 Asercja obejmuje obie strony inwariantu: B nie zmienia ORAZ stan A nietknięty — 20dff59
 
 ### Faza 2: Ownership sesji importu + odczyty cross-user
 
 #### Automatyczne
 
-- [ ] 2.1 Testy IDOR retry/reopen przechodzą: `npm run test:integration`
-- [ ] 2.2 Testy IDOR odczytu sesji i itemów przechodzą: `npm run test:integration`
-- [ ] 2.3 Cały zestaw integracyjny zielony bez regresji: `npm run test:integration`
-- [ ] 2.4 Lint + typecheck czyste: `npm run lint`
+- [x] 2.1 Testy IDOR retry/reopen przechodzą: `npm run test:integration`
+- [x] 2.2 Testy IDOR odczytu sesji i itemów przechodzą: `npm run test:integration`
+- [x] 2.3 Cały zestaw integracyjny zielony bez regresji: `npm run test:integration`
+- [x] 2.4 Lint + typecheck czyste: `npm run lint`
 
 #### Ręczne
 
-- [ ] 2.5 `getSessionForRetry` cross-user zwraca dokładnie `null` (inwariant „cudzy = nieistniejący")
-- [ ] 2.6 Odczyty cross-user zwracają pusty wynik i wykluczają zasób A — potwierdzone w przeglądzie
-- [ ] 2.7 Wszystkie ścieżki idą przez klienta user-scoped B, nie service-role
+- [x] 2.5 `getSessionForRetry` cross-user zwraca dokładnie `null` (inwariant „cudzy = nieistniejący")
+- [x] 2.6 Odczyty cross-user zwracają pusty wynik i wykluczają zasób A — potwierdzone w przeglądzie
+- [x] 2.7 Wszystkie ścieżki idą przez klienta user-scoped B, nie service-role
 
 ### Faza 3: Książka kucharska §6.2/§6.4 + przestrzeń negatywna + świeżość
 
