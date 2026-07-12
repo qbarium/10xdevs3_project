@@ -23,7 +23,7 @@
 - **Lint** (`npm run lint`) — PASS (exit 0; ostrzeżenia `projectService` to znany szum parsera Astro).
 - **Grep §6.2/§6.4 test-plan.md** — PASS: brak placeholderów „TBD — patrz §3 Faza 2/Faza 3". Pozostałe TBD (:149 opis konwencji, :167 §6.3 e2e poza zakresem) są legalne.
 - **`.env.test.local`** — obecny.
-- **Testy integracyjne** (`npm run test:integration`) — NIE uruchomione ponownie podczas przeglądu: lokalny Supabase zdjęty (`docker ps` bez kontenerów), a stack nie był stawiany autonomicznie. Gate zaliczony w czasie implementacji — `## Progress` odhacza 1.1/1.2, 2.1-2.3 z SHA commitów faz (20dff59, f72a48d).
+- **Testy integracyjne** (`npm run test:integration`) — podczas przeglądu NIE uruchomione (lokalny Supabase zdjęty; Docker nie odpowiadał). **Potwierdzone później 2026-07-12: po restarcie Dockera lokalny Supabase wstał i pełny zestaw przeszedł 49/49 (9 plików) na żywej bazie** — łącznie z poprawionym `items-operational` (F1). Pierwszy bieg miał 1 przejściowy flake startowy (`invalid response from upstream server` z bramki PostgREST w niepowiązanym teście `items-mutation`); powtórny bieg bez zmian kodu = 49/49 zielone. Gate zaliczony też w czasie implementacji — `## Progress` odhacza 1.1/1.2, 2.1-2.3 z SHA (20dff59, f72a48d).
 - **Kryteria ręczne** — wszystkie odhaczone w `## Progress` z SHA; potwierdzone dowodowo przez pod-agentów (klient user-scoped B, obie strony inwariantu).
 
 ## Ustalenia
@@ -36,7 +36,7 @@
 - **Lokalizacja**: tests/integration/items-operational.integration.test.ts:147
 - **Szczegóły**: `expect(bActive).not.toContain(itemA)` było praktycznie tautologią — B nie miał własnych itemów `active`, więc `bActive` = `[]`, a `listItems` i tak nakłada `.eq("user_id", B.id)`. Linia przechodziłaby niezależnie od stanu izolacji. Prawdziwy dowód niosą wyżej `getSessionItems(B)` → pusto + kontrola pozytywna A. To była redundancja, nie defekt.
 - **Poprawka**: Zasianie B własnym itemem `active` (`insertItem(B.supabase, B.id)`) i asercja `expect(bActive).toContain(itemB)` przed `not.toContain(itemA)` — wykluczenie itemu A stało się znaczące (nie-vacuous). Wzorzec spójny z kontrolą pozytywną już użytą dla `getSessionItems` (linie 142-143 tego samego pliku).
-- **Decyzja**: FIXED (Napraw teraz) — zastosowano 2026-07-12; ESLint na pliku czysty (exit 0). Test nie został ponownie uruchomiony wobec żywej bazy (Supabase zdjęty), ale edycja jest minimalna, typuje się czysto i naśladuje istniejący wzorzec w tym samym pliku.
+- **Decyzja**: FIXED (Napraw teraz) — zastosowano 2026-07-12; ESLint na pliku czysty (exit 0). **Potwierdzone 2026-07-12 na żywej bazie: `items-operational` z poprawką F1 przechodzi (`test:integration` 49/49 zielone po restarcie Dockera).**
 
 ## Dowody czystości (z równoległego przeglądu pod-agentów)
 
