@@ -4,8 +4,11 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   createManualItem,
   editItem,
+  emptyTrash,
   ItemConflictError,
   ItemNotEditableError,
+  moveToTrash,
+  restoreFromTrash,
   setAcceptanceStatus,
 } from "@/lib/services/items-mutation";
 
@@ -121,10 +124,10 @@ d("items-mutation — RLS + status-guard + derywacja (integracja)", () => {
     await expect(rowOf(A.supabase, item.id)).rejects.toThrow();
   });
 
-  it("B nie zmienia itemu A (RLS → updatedIds puste, item nadal pending)", async () => {
+  it("B nie zmienia itemu A (RLS → wynik pusty, item nadal pending)", async () => {
     const itemId = await insertItem(A.supabase, A.id);
     const res = await setAcceptanceStatus(B.supabase, [itemId], "accepted");
-    expect(res.updatedIds).toEqual([]);
+    expect(res).toEqual([]); // setAcceptanceStatus zwraca Item[] (S-10) — B nie złapał żadnego wiersza
     expect(await statusOf(A.supabase, itemId)).toBe("pending");
   });
 
@@ -134,7 +137,7 @@ d("items-mutation — RLS + status-guard + derywacja (integracja)", () => {
 
     const res = await setAcceptanceStatus(A.supabase, [pendingId, acceptedId], "rejected");
 
-    expect(res.updatedIds).toEqual([pendingId]);
+    expect(res.map((r) => r.id)).toEqual([pendingId]);
     expect(await statusOf(A.supabase, pendingId)).toBe("rejected");
     expect(await statusOf(A.supabase, acceptedId)).toBe("accepted"); // niezmieniony (guard)
   });
@@ -145,7 +148,7 @@ d("items-mutation — RLS + status-guard + derywacja (integracja)", () => {
 
     const res = await setAcceptanceStatus(A.supabase, [rejectedId, pendingId], "accepted");
 
-    expect(res.updatedIds).toEqual([pendingId]); // tylko pending → count = 1, nie 2
+    expect(res.map((r) => r.id)).toEqual([pendingId]); // tylko pending → count = 1, nie 2
     expect(await statusOf(A.supabase, rejectedId)).toBe("rejected"); // odrzucony NIE nadpisany na accepted
     expect(await statusOf(A.supabase, pendingId)).toBe("accepted");
   });
@@ -262,5 +265,44 @@ d("items-mutation — RLS + status-guard + derywacja (integracja)", () => {
     expect(after.title).toBe("A-oryginał"); // brak cichego nadpisania
     expect(after.operational_status).toBe("in_progress");
     expect(after.updated_at).toBe(before.updated_at); // wiersz nietknięty
+  });
+
+  // --- IDOR cyklu kosza: mutacje polegające WYŁĄCZNIE na RLS (najsłabsze ogniwo obrony w głąb) ---
+  // moveToTrash/restoreFromTrash/emptyTrash NIE dokładają jawnego `.eq("user_id")` (świadoma decyzja,
+  // patrz items-mutation.ts:6-7) — izolację trzyma sam RLS. Te testy przypinają, że B nie przenosi,
+  // nie przywraca ani nie opróżnia kosza itemów A, a wiersze A pozostają nietknięte z perspektywy A.
+  // Każdy scenariusz idzie przez klienta user-scoped B (signUpClient("b") = anon key + sesja, RLS aktywny),
+  // nigdy service-role — inaczej RLS byłoby omijane i test niczego by nie dowodził. Kształt asercji jak
+  // przy setAcceptanceStatus (:124-129): puste `updatedIds`/przeżycie wiersza ORAZ ponowny odczyt A.
+
+  it("B nie przenosi do kosza itemu A (moveToTrash pod RLS → updatedIds puste, item A nadal accepted)", async () => {
+    const itemId = await insertItem(A.supabase, A.id, { acceptance_status: "accepted" });
+    const res = await moveToTrash(B.supabase, [itemId]);
+    expect(res.updatedIds).toEqual([]); // B nie złapał żadnego wiersza (RLS wyklucza item A)
+    expect(await statusOf(A.supabase, itemId)).toBe("accepted"); // stan A nietknięty (NIE 'deleted')
+  });
+
+  it("B nie przywraca z kosza itemu A (restoreFromTrash pod RLS → item A nadal w koszu)", async () => {
+    // A ma item w koszu — wstawiony bezpośrednio jako 'deleted' (DB nie waliduje tranzycji akceptacji;
+    // guard statusu żyje w serwisie, nie w bazie), co jest tańszym setupem niż moveToTrash przez A.
+    const itemId = await insertItem(A.supabase, A.id, { acceptance_status: "deleted" });
+    const res = await restoreFromTrash(B.supabase, [itemId]);
+    expect(res).toEqual([]); // żaden wiersz nie przywrócony przez B
+    expect(await statusOf(A.supabase, itemId)).toBe("deleted"); // item A nadal w koszu (nie 'accepted')
+  });
+
+  it("B nie opróżnia kosza A (emptyTrash B kasuje własny kosz, item A w koszu przetrwał)", async () => {
+    // emptyTrash jest GLOBALNY (bez wejścia `ids`) — kasuje cały kosz wołającego. IDOR dowodzimy przez
+    // PRZEŻYCIE wiersza A: B ma własny item w koszu, woła emptyTrash, item A zostaje nietknięty. Nie da się
+    // tego zrobić przez "B kasuje item A po id" — takiego wejścia nie ma, dowód idzie przez przeżycie A.
+    const itemA = await insertItem(A.supabase, A.id, { acceptance_status: "deleted" });
+    const itemB = await insertItem(B.supabase, B.id, { acceptance_status: "deleted" });
+
+    const res = await emptyTrash(B.supabase);
+
+    expect(res.deletedCount).toBeGreaterThanOrEqual(1); // B faktycznie skasował swój kosz (≥ itemB)
+    await expect(rowOf(B.supabase, itemB)).rejects.toThrow(); // item B zniknął → emptyTrash B naprawdę zadziałał
+    const row = await rowOf(A.supabase, itemA); // KLUCZOWE: item A przetrwał globalny hard-delete B
+    expect(row.acceptance_status).toBe("deleted");
   });
 });
