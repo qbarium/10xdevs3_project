@@ -142,8 +142,12 @@ d("items-operational — RLS + guard accepted + rozłączne podzbiory (integracj
     const aSessionItems = await getSessionItems(A.supabase, A.id, sessionA);
     expect(aSessionItems.items.map((i) => i.id)).toContain(itemA);
 
-    // listItems: aktywna lista B nie zawiera itemu A (domknięcie cross-user obok rozłączności podzbiorów).
+    // B ma własny aktywny item — wykluczenie itemu A staje się znaczące (lista B nie jest pusta).
+    const itemB = await insertItem(B.supabase, B.id);
+
+    // listItems: aktywna lista B zawiera własny item B, ale NIE item A (domknięcie cross-user).
     const bActive = (await listItems(B.supabase, B.id, defaultCriteria("active"))).items.map((i) => i.id);
+    expect(bActive).toContain(itemB);
     expect(bActive).not.toContain(itemA);
   });
 });
