@@ -52,6 +52,19 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/lint.sh",
+            "shell": "bash",
+            "timeout": 120
+          }
+        ]
+      }
     ]
   }
 }

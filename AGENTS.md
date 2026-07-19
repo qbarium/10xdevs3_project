@@ -13,7 +13,7 @@ This file is a **downstream mirror of `@CLAUDE.md`**: it follows the shared proj
 - New Supabase tables ship with RLS enabled and granular per-operation, per-role policies. Migrations live in `supabase/migrations/` named `YYYYMMDDHHmmss_short_description.sql`.
 - Path alias `@/*` → `./src/*`. Use it; never write `../../../`.
 - Tailwind composition goes through `cn()` from `@/lib/utils`. Never concatenate class strings manually.
-- Pre-commit hook runs `eslint --fix` + `prettier --write` via husky + lint-staged. Don't bypass with `--no-verify`.
+- Local quality gates, two layers: a per-edit agent hook (`.claude/hooks/lint.sh`, `PostToolUse: Write|Edit`) lints the edited file and blocks with `exit 2` on error so the agent sees the report; pre-commit (husky) runs `lint-staged` (`eslint --fix` + `prettier --write`) then `tsc --noEmit`. Don't bypass with `--no-verify`.
 
 ## GitHub sync (live project state)
 

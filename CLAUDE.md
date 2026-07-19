@@ -57,7 +57,7 @@ Reguły operacyjne:
 - `npm run lint:fix` — auto-fix lint issues
 - `npm run format` — Prettier (includes prettier-plugin-astro + prettier-plugin-tailwindcss)
 
-Pre-commit hooks: husky + lint-staged runs `eslint --fix` on `*.{ts,tsx,astro}` and `prettier --write` on `*.{json,css,md}`.
+Local quality gates (two layers): a **per-edit** agent hook `.claude/hooks/lint.sh` (wired as `PostToolUse: Write|Edit` in `.claude/settings.json`) lints just the edited file and blocks with `exit 2` on error, so the agent sees the report. **Pre-commit** (husky) runs `lint-staged` (`eslint --fix` on `*.{ts,tsx,astro}` + `prettier --write` on `*.{json,css,md}`) then `tsc --noEmit`. Don't bypass with `--no-verify`.
 
 ## Architecture
 
