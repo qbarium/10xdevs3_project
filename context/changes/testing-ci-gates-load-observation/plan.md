@@ -350,8 +350,8 @@ Issue → Review po zaimplementowaniu wszystkich faz (czeka na `/10x-impl-review
 
 #### Automatyczne
 
-- [x] 1.1 `ci.yml` zawiera krok `tsc --noEmit` w jobie `ci`
-- [x] 1.2 `npx --no-install tsc --noEmit` przechodzi lokalnie (exit 0)
+- [x] 1.1 `ci.yml` zawiera krok `tsc --noEmit` w jobie `ci` — 6d9f44a
+- [x] 1.2 `npx --no-install tsc --noEmit` przechodzi lokalnie (exit 0) — 6d9f44a
 - [ ] 1.3 CI zielony na PR z tą zmianą
 
 #### Ręczne
@@ -362,9 +362,9 @@ Issue → Review po zaimplementowaniu wszystkich faz (czeka na `/10x-impl-review
 
 #### Automatyczne
 
-- [ ] 2.1 `ci.yml` ma kroki: `supabase start`, eksport env, `npm run test:integration`
+- [x] 2.1 `ci.yml` ma kroki: `supabase start`, eksport env, `npm run test:integration`
 - [ ] 2.2 W logu CI testy integracyjne się uruchamiają (N przechodzących, nie „skipped")
-- [ ] 2.3 `npm run test:integration` zielony lokalnie na `npx supabase start`
+- [x] 2.3 `npm run test:integration` zielony lokalnie na `npx supabase start`
 - [ ] 2.4 CI zielony na PR z tą zmianą
 
 #### Ręczne
