@@ -55,7 +55,8 @@ function serializeError(value: unknown, depth = 0): unknown {
       stack: value.stack,
     };
     for (const key of Object.keys(value)) {
-      out[key] = (value as Record<string, unknown>)[key];
+      // Podwójne rzutowanie przez `unknown` — Error nie ma sygnatury indeksu; TS2352 wymaga jawnego kroku.
+      out[key] = (value as unknown as Record<string, unknown>)[key];
     }
     if (value.cause !== undefined && depth < MAX_CAUSE_DEPTH) {
       out.cause = serializeError(value.cause, depth + 1);
