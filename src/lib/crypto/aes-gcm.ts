@@ -41,7 +41,9 @@ export async function importAesKey(raw: Uint8Array): Promise<CryptoKey> {
   if (raw.byteLength !== KEY_LENGTH) {
     throw new RangeError(`Klucz AES musi mieć ${KEY_LENGTH} bajtów.`);
   }
-  return crypto.subtle.importKey("raw", raw, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
+  // `as BufferSource`: Uint8Array jest BufferSource w runtime — rzutowanie tłumi zawężenie
+  // Uint8Array<ArrayBufferLike>→ArrayBuffer z lib.dom TS 5.7+ (dług typów, bez zmiany runtime).
+  return crypto.subtle.importKey("raw", raw as BufferSource, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
 }
 
 /**
@@ -79,7 +81,12 @@ export async function decryptFromEnvelope(envelope: string, key: CryptoKey): Pro
   }
   let plaintext: ArrayBuffer;
   try {
-    plaintext = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ciphertext);
+    // `as BufferSource`: jw. — iv oraz ciphertext (Uint8Array) do Web Crypto.
+    plaintext = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: iv as BufferSource },
+      key,
+      ciphertext as BufferSource,
+    );
   } catch (cause) {
     throw new DecryptionError(undefined, { cause });
   }
