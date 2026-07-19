@@ -233,3 +233,29 @@ export async function reopenSession(supabase: SupabaseClient, sessionId: string)
   if (error) throw new Error("Ponowne otwarcie sesji nie powiodło się.", { cause: error });
   return Array.isArray(data) && data.length > 0;
 }
+
+/** Próg nieświeżości sesji `processing` (min). Komfortowo > 60 s timeoutu klasyfikacji (`AI_REQUEST_TIMEOUT_MS`). */
+const STALE_PROCESSING_MINUTES = 5;
+
+/**
+ * Reaper nieświeżych sesji `processing`. Gdy Worker zostanie ubity limitem CPU w trakcie klasyfikacji,
+ * blok `catch`/`finally` się nie wykona i sesja utyka w `processing`; retry ponawia tylko `failed`
+ * (`reopenSession`), więc bez tego wisiałaby na zawsze. Ten UPDATE przestawia `processing` starsze niż
+ * próg na `failed` (kod `timeout`) → istniejąca ścieżka „Ponów" je odzyskuje.
+ *
+ * Kotwica na `created_at` (niezmienny; brak triggera na `updated_at`), próg >> 60 s timeoutu — żywy
+ * przebieg finalizuje w ≤60 s, więc reaper nie tknie trwającej klasyfikacji. Cutoff liczony po stronie
+ * wywołującego (`Date.now()`): różnica zegara Worker↔DB jest znikoma wobec 5-min progu. Ubita sesja nie
+ * ma zapisanych itemów (persist to atomowe RPC dający od razu `completed_with_items`), więc flip na
+ * `failed` nie gubi danych. RLS + jawny `user_id` (obrona w głąb, parytet z resztą serwisu).
+ */
+export async function reapStaleProcessing(supabase: SupabaseClient, userId: string): Promise<void> {
+  const cutoff = new Date(Date.now() - STALE_PROCESSING_MINUTES * 60_000).toISOString();
+  const { error } = await supabase
+    .from("import_sessions")
+    .update({ status: "failed", error_message: "timeout", updated_at: new Date().toISOString() })
+    .eq("user_id", userId)
+    .eq("status", "processing")
+    .lt("created_at", cutoff);
+  if (error) throw new Error("Reap nieświeżych sesji processing nie powiódł się.", { cause: error });
+}

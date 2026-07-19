@@ -362,9 +362,9 @@ Issue → Review po zaimplementowaniu wszystkich faz (czeka na `/10x-impl-review
 
 #### Automatyczne
 
-- [x] 2.1 `ci.yml` ma kroki: `supabase start`, eksport env, `npm run test:integration`
+- [x] 2.1 `ci.yml` ma kroki: `supabase start`, eksport env, `npm run test:integration` — 9a36644
 - [ ] 2.2 W logu CI testy integracyjne się uruchamiają (N przechodzących, nie „skipped")
-- [x] 2.3 `npm run test:integration` zielony lokalnie na `npx supabase start`
+- [x] 2.3 `npm run test:integration` zielony lokalnie na `npx supabase start` — 9a36644
 - [ ] 2.4 CI zielony na PR z tą zmianą
 
 #### Ręczne
@@ -387,11 +387,11 @@ Issue → Review po zaimplementowaniu wszystkich faz (czeka na `/10x-impl-review
 
 #### Automatyczne
 
-- [ ] 4.1 `reapStaleProcessing` w `import-session.ts` (predykat `created_at < now()-5min`, `processing→failed`)
-- [ ] 4.2 Reaper wołany przed `getImportSessions` w ścieżce dziennika (best-effort)
-- [ ] 4.3 Nowy test integracyjny (nieświeża→failed, świeża nietknięta) zielony
+- [x] 4.1 `reapStaleProcessing` w `import-session.ts` (predykat `created_at < now()-5min`, `processing→failed`)
+- [x] 4.2 Reaper wołany przed `getImportSessions` w ścieżce dziennika (best-effort)
+- [x] 4.3 Nowy test integracyjny (nieświeża→failed, świeża nietknięta) zielony
 - [ ] 4.4 `npm run test:integration` zielony (lokalnie i w CI)
-- [ ] 4.5 lint + `tsc --noEmit` zielone
+- [x] 4.5 lint + `tsc --noEmit` zielone
 
 #### Ręczne
 
