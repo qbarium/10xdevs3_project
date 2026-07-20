@@ -3,7 +3,7 @@ project: TaskerLight
 version: 1
 status: draft
 created: 2026-06-05
-updated: 2026-07-05
+updated: 2026-07-20
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -283,13 +283,13 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 
 ## Otwarte pytania dotyczące mapy drogowej
 
-1. **Czy audio jako wsad wejdzie do MVP (FR-004 nice-to-have)?** — Właściciel: decyzja produktowa (PRD OQ2). Blokuje: `roadmap-wide` — jeśli `tak`, odparkowuje wycinek audio (transkrypcja + walidacja magic-bytes + zachowanie single-file synchronicznego); jeśli `nie`, pozostaje w Zaparkowane. Domyślnie odłożone zgodnie z celem „szybkość".
+1. **Czy audio jako wsad wejdzie do MVP (FR-004 nice-to-have)?** — **ROZSTRZYGNIĘTE 2026-07-20: NIE.** Audio pozostaje w Zaparkowane → V2 (PRD OQ2 rozstrzygnięte, Issue #14 zamknięte). Właściciel decyzji: produkt.
 
 (Niewiadome dotyczące poszczególnych wycinków — model AI, próg akcji zbiorczej, mapowanie stanów przy zmianie typu, UX edycji, rotacja KEK — pozostają przy swoich wycinkach jako niewiadome z `Block: no`; rozstrzyga je `/10x-plan`. Wybór providera auth (PRD OQ1) jest faktycznie rozstrzygnięty przez baseline (Supabase email); OAuth → Zaparkowane.)
 
 ## Zaparkowane
 
-- **Audio jako wsad (FR-004, FR-019, nice-to-have)** — Dlaczego: poza ścisłą ścieżką must-have; oś asynchroniczna/transkrypcyjna kosztuje nieproporcjonalnie dużo w budżecie 3 tygodni (PRD OQ2 / Non-Goals).
+- **Audio jako wsad (FR-004, FR-019, nice-to-have)** — Dlaczego: poza ścisłą ścieżką must-have; oś asynchroniczna/transkrypcyjna kosztuje nieproporcjonalnie dużo w budżecie 3 tygodni (PRD OQ2 / Non-Goals). **Potwierdzone 2026-07-20 (OQ2/#14): pozostawienie w Zaparkowane jest wiążącą decyzją produktową — audio → V2, nie domyślne odłożenie.**
 - **Email confirm + własny SMTP** — Dlaczego: wbudowany wysyłacz Supabase nie dostarcza maili; „Confirm email" = OFF do czasu podpięcia SMTP (decyzja użytkownika + `deploy-plan.md` Kolejne kroki). Poza MVP.
 - **OAuth providers (Google/GitHub) + custom domain** — Dlaczego: baseline auth = Supabase email wystarcza dla MVP; OAuth i domena custom w `deploy-plan.md` Kolejne kroki.
 - **Multi-file submit i przetwarzanie asynchroniczne** — Dlaczego: PRD Non-Goal; MVP = jeden element wsadu synchronicznie.
