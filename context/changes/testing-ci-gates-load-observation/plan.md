@@ -375,13 +375,13 @@ Issue → Review po zaimplementowaniu wszystkich faz (czeka na `/10x-impl-review
 
 #### Automatyczne
 
-- [ ] 3.1 `/api/health` na deployu zwraca `hasSupabase:true` i `hasKek:true`
+- [x] 3.1 `/api/health` na deployu zwraca `hasSupabase:true` i `hasKek:true` — 200, oba `true` (2026-07-20)
 
 #### Ręczne
 
-- [ ] 3.2 `wrangler tail` uruchomiony; wysłany graniczny wsad (~100k znaków oraz ~100+ itemów)
-- [ ] 3.3 Zanotowane: kody HTTP, sygnatury logów, stan `import_sessions` przy 5xx
-- [ ] 3.4 `observation.md` zapisana; werdykt, czy luka zawieszonej sesji reprodukuje
+- [x] 3.2 `wrangler tail` uruchomiony; wysłany graniczny wsad (~100k znaków oraz ~100+ itemów) — wsady A (99k znaków→7 itemów), B (120 linii→90), C (150 linii→150)
+- [x] 3.3 Zanotowane: kody HTTP, sygnatury logów, stan `import_sessions` przy 5xx — observation.md (HTTP 200/200/422; cpuTime 13–77 ms; zero 5xx)
+- [x] 3.4 `observation.md` zapisana; werdykt, czy luka zawieszonej sesji reprodukuje — werdykt: luka NIE reprodukuje (CPU 13–77 ms, nie wąskie gardło; czas to fetch-wait na AI)
 
 ### Faza 4: Naprawa zawieszonej sesji (reaper)
 
@@ -395,7 +395,7 @@ Issue → Review po zaimplementowaniu wszystkich faz (czeka na `/10x-impl-review
 
 #### Ręczne
 
-- [ ] 4.6 Po reapie zawieszona sesja pokazuje „Ponów" i daje się ponowić (ręcznie w UI)
+- [ ] 4.6 Po reapie zawieszona sesja pokazuje „Ponów" i daje się ponowić (ręcznie w UI) — live-demo świadomie pominięte: luka nie reprodukuje na prod (observation.md), inwariant pokryty testem integracyjnym reapera
 
 ### Faza 5: Domknięcie — dokumentacja + tablica
 
