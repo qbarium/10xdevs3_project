@@ -356,7 +356,7 @@ Issue → Review po zaimplementowaniu wszystkich faz (czeka na `/10x-impl-review
 
 #### Ręczne
 
-- [ ] 1.4 Wstrzyknięty błąd typu czerwieni check `ci` (potwierdzone raz, potem cofnięte)
+- [x] 1.4 Wstrzyknięty błąd typu czerwieni check `ci` (potwierdzone raz, potem cofnięte) — sonda PR #154: CI czerwony na kroku `tsc --noEmit` (TS2322 w `src/typecheck-probe.ts`), lint przeszedł; PR zamknięty bez merge
 
 ### Faza 2: Testy integracyjne w CI
 
