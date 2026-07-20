@@ -5,7 +5,7 @@ import ImportSessionsView from "@/components/import-sessions/ImportSessionsView"
 import type { SessionRowData } from "@/components/import-sessions/SessionCard";
 import { SESSION_LOG_PAGE_SIZE_KEY, withPageSizePref } from "@/components/lists/page-size-pref";
 import { createClient } from "@/lib/supabase";
-import { getImportSessions, toSessionRow } from "@/lib/services/import-session";
+import { getImportSessions, reapStaleProcessing, toSessionRow } from "@/lib/services/import-session";
 import { parseSessionListCriteria, SESSION_PAGE_SIZES } from "@/lib/services/session-list-criteria";
 
 export const prerender = false;
@@ -31,6 +31,13 @@ let initialRows: SessionRowData[] = [];
 let initialTotal = 0;
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 if (user && supabase) {
+  // Reaper best-effort: nieświeże `processing` (ubite bez terminalnego update'u, np. limit CPU Workers)
+  // → `failed`, by istniejący retry je odzyskał. Własny try/catch — awaria reapa NIE może zablankować dziennika.
+  try {
+    await reapStaleProcessing(supabase, user.id);
+  } catch {
+    // best-effort: świadomie połykamy — dziennik ma się wyrenderować niezależnie od reapa
+  }
   try {
     const { sessions, total } = await getImportSessions(supabase, user.id, {
       sort: criteria.sort,

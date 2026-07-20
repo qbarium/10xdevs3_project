@@ -10,16 +10,31 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
       - run: npm ci
       - run: npx astro sync
       - run: npm run lint
+      - run: npx --no-install tsc --noEmit
       - run: npm run build
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       - run: npm run test
+      - name: Start local Supabase (integration DB)
+        run: npx --no-install supabase start
+      - name: Export Supabase env for integration tests
+        run: |
+          eval "$(npx --no-install supabase status -o env)"
+          if [ -z "$API_URL" ] || [ -z "$ANON_KEY" ]; then
+            echo "::error::supabase status -o env nie zwrócił API_URL/ANON_KEY — testy integracyjne cicho by się pominęły (describe.skip)" >&2
+            exit 1
+          fi
+          {
+            echo "SUPABASE_TEST_URL=$API_URL"
+            echo "SUPABASE_TEST_ANON_KEY=$ANON_KEY"
+          } >> "$GITHUB_ENV"
+      - run: npm run test:integration

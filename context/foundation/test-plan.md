@@ -6,7 +6,7 @@
 >
 > Gdy plan się zdezaktualizuje, odśwież go: `/10x-test-plan --refresh` (patrz §8).
 >
-> Ostatnia aktualizacja: 2026-07-12
+> Ostatnia aktualizacja: 2026-07-20
 
 ## 1. Strategia
 
@@ -91,7 +91,7 @@ tłumacz ich ani nie zmieniaj.
 | 2   | Izolacja per-user (IDOR)                   | A nie sięga po zasób B — odczyt i mutacja                                | #2                              | integration        | complete    | testing-per-user-isolation                |
 | 3   | Kontrakt klasyfikatora + stan sesji        | Naruszenie kontraktu i degradacja obsłużone czysto; 0-itemów ≠ błąd      | #6, #3 (część deterministyczna) | unit               | complete    | testing-classifier-contract-session-state |
 | 4   | Regresja cyklu życia itemu                 | Model dwóch wymiarów stanu trzyma przy refaktorze                        | #5                              | unit + integration | complete    | testing-item-lifecycle-regression                                         |
-| 5   | Podłączenie bramek + obserwacja obciążenia | Testy jako wymagana bramka CI; realne zachowanie dużego wsadu na Workers | #3 (część runtime)              | gates + obserwacja | not started | —                                         |
+| 5   | Podłączenie bramek + obserwacja obciążenia | Testy jako wymagana bramka CI; realne zachowanie dużego wsadu na Workers | #3 (część runtime)              | gates + obserwacja | complete       | testing-ci-gates-load-observation         |
 
 **Co znaczą statusy** (słowa kluczowe programu — nie zmieniaj):
 
@@ -134,14 +134,15 @@ zrobiona — wcześniej jest dopiero planowane.
 | Bramka                  | Gdzie                   | Wymagana?                                                        | Łapie                                                                              |
 | ----------------------- | ----------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | lint + typecheck        | lokalnie + CI           | wymagana (już podłączona)                                        | dryf składni / typów                                                               |
-| unit + integration      | lokalnie + CI           | wymagana po §3 Faza 5                                            | regresje logiki                                                                    |
+| unit + integration      | lokalnie + CI           | wymagana (podłączona — §3 Faza 5)                                | regresje logiki                                                                    |
 | hook po edycji          | lokalnie (pętla agenta) | zalecana (konfiguracja to Moduł 3 Lekcja 3, poza tym wdrożeniem) | regresje w momencie edycji                                                         |
 | smoke przed-produkcyjny | między merge a prod     | opcjonalna                                                       | awarie specyficzne dla środowiska (istnieje `/api/health`: `hasKek`/`hasSupabase`) |
 
-Uwaga: dziś CI (automat sprawdzający kod po wysłaniu) uruchamia tylko sprawdzenie
-składni i budowanie. Testy jednostkowe i integracyjne już istnieją (`npm test`,
-`npm run test:integration`), ale nie są jeszcze wpięte do CI jako wymóg — zrobi
-to Faza 5.
+Uwaga: zmiana Fazy 5 (`testing-ci-gates-load-observation`) domknęła bramki. CI
+uruchamia teraz lint, `tsc --noEmit`, budowanie, testy jednostkowe ORAZ integracyjne
+na prawdziwym Supabase (`npx supabase start`) — wszystko jako wymagany check `ci` na
+każdym PR. Wcześniejsza notka „CI robi tylko lint + build" była nieaktualna (unit był
+w CI od F-01; teraz doszły typecheck i integracja).
 
 ## 6. Wzorce książki kucharskiej
 
@@ -199,6 +200,7 @@ tym, czego faza nauczyła — np. gotowy zestaw danych testowych do ponownego u�
 - **Faza 2 — izolacja per-user / IDOR (lipiec 2026):** Najsłabsze ogniwo to mutacje polegające **wyłącznie na regułach dostępu bazy (RLS)** — cykl kosza (`moveToTrash`/`restoreFromTrash`/`emptyTrash`) nie dokłada jawnego sprawdzenia właściciela w kodzie. Dołożone testy przypinają, że drugi użytkownik ich nie ruszy, a wiersz właściciela przeżyje; zaświecą się na czerwono, gdyby ktoś osłabił RLS. Każdy test idzie przez klienta drugiego użytkownika (`signUpClient("b")` — anon key + sesja), NIGDY przez service-role, bo inaczej reguły dostępu byłyby omijane i test niczego by nie dowodził. Warstwa testu to funkcja serwisowa, którą woła endpoint (nie żądanie HTTP), a asercja zawsze obejmuje obie strony: „B nie sięgnął" ORAZ „zasób A nietknięty" (inwariant „cudzy = nieistniejący": pusty wynik / `null`, nigdy cudze dane). Przy okazji naprawiliśmy trzy zastane, przeterminowane asercje (`setAcceptanceStatus` zwraca pełne wiersze `Item[]` od S-10, nie `{ updatedIds }`) — gniły po cichu, bo testy integracyjne domyślnie się pomijają (brak lokalnego Supabase / nie w CI do Fazy 5). To dokładnie ta klasa problemu, przed którą broni ten plan.
 - **Faza 3 — kontrakt klasyfikatora + stan sesji (lipiec 2026):** Kontrakt był już zaimplementowany zgodnie z intencją (żaden dryf do naprawy) — faza domknęła brakujące pokrycie, nie łatała kodu. Dołożone testy przypinają rodzinę „bez pola obowiązkowego" (brak lub pusty `title`, brak `type`, brak `description`, brak klucza `items` — każde kończy się `ClassifierContractError`) oraz rozróżnienie, które najłatwiej pomylić: poprawne `{"items":[]}` to sukces (zero itemów), a pusty `content` w kopercie modelu to naruszenie kontraktu — dwie osobne ścieżki. Pułapka do zapamiętania: konkretną przyczynę naruszenia rozróżnisz tylko na warstwie `classify()` (typ wyjątku), bo na wyjściu HTTP wszystkie spłaszczają się do jednego kodu `contract` przy odpowiedzi `200`/`ok:true` (`failed` to normalny stan przepływu, nie awaria transportu). Dlatego przyczynę asertuj na `classify()`, a samo spłaszczenie na endpoincie. Mock odpowiedzi idzie przez atrapę `fetch` na spreparowanej kopercie OpenAI (brak MSW, §4).
 - **Faza 4 — regresja cyklu życia itemu (lipiec 2026):** Dwuwymiarowy model stanu (akceptacja × operacyjny) najtaniej pilnuje się **round-tripem właściciela** na wspólnym serwisie mutacji (`moveToTrash`/`restoreFromTrash`) przez prawdziwą bazę — inwariant „kosz nie tyka stanu operacyjnego” żyje w tym, czego UPDATE **nie** zmienia, więc dowodzi go tylko realne przejście w bazie (atrapa kształtu zapytania by go nie złapała; kształt pokrywa już unit `items-mutation.test.ts`). Pułapka do zapamiętania: restore jest **deterministyczny ze statusu źródłowego** (`deleted→accepted`, `rejected→pending`), nie odtwarza „poprzedniego” stanu akceptacji z pamięci — więc NIE asertuj „odrzucone wraca jako odrzucone” (wraca jako `pending`), a „wraca do bramki” sprawdzaj na widoku „Do akceptacji” (`listItems(…, defaultCriteria("pending"))`), nie tylko na kolumnie. Mieszana selekcja `[rejected, deleted]` w jednym `restoreFromTrash` dowodzi, że dwa strzeżone UPDATE-y się nie zderzają. Do reużycia: helpery `insertItem`/`rowOf` w `items-mutation.integration.test.ts` + wstawianie wprost `rejected`/`deleted` (baza nie waliduje tranzycji akceptacji — guard żyje w serwisie, nie w bazie).
+- **Faza 5 — bramki CI + obserwacja obciążenia (lipiec 2026):** CI stawia teraz pełny Supabase (`npx supabase start`) i uruchamia `test:integration` na każdym PR — cały zestaw integracyjny (55 testów) biegnie jako wymagany check `ci`, obok `tsc --noEmit` (parytet z pre-commit) i unitów; bramkę typów potwierdzono sondą (celowy błąd typu → czerwony CI na kroku `tsc`). Runtime'owa część ryzyka #3 zaobserwowana na żywym Workerze (wsady ~100k znaków / 90 / 150 itemów): graniczny wsad degraduje **czysto** — 200 `completed_with_items` albo 422 `too_many_items`, nigdy 5xx; `cpuTime` 13–77 ms mimo `wallTime` do 55 s, bo czas to fetch-wait na AI, nie CPU (pełny zapis: `observation.md` w folderze zmiany). Utwardzenie: reaper nieświeżej sesji `processing`→`failed` (`reapStaleProcessing`, kotwica na niezmiennym `created_at`, próg 5 min) domyka lukę latentną (sesja ubita limitem CPU bez terminalnego update'u utyka w `processing`), odzysk przez istniejącą ścieżkę „Ponów"/retry. Luka NIE reprodukuje przy realnym wsadzie, więc reaper to obrona na wszelki wypadek, przypięta testem integracyjnym (`import-session-reap.integration.test.ts`).
 
 ## 7. Czego świadomie NIE testujemy
 
