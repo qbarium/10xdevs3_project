@@ -395,16 +395,16 @@ Issue → Review po zaimplementowaniu wszystkich faz (czeka na `/10x-impl-review
 
 #### Ręczne
 
-- [ ] 4.6 Po reapie zawieszona sesja pokazuje „Ponów" i daje się ponowić (ręcznie w UI) — live-demo świadomie pominięte: luka nie reprodukuje na prod (observation.md), inwariant pokryty testem integracyjnym reapera
+- [x] 4.6 Po reapie zawieszona sesja pokazuje „Ponów" i daje się ponowić (ręcznie w UI) — zaliczone przez pokrycie testem integracyjnym reapera; live-demo pominięte, bo luka nie reprodukuje na prod (observation.md)
 
 ### Faza 5: Domknięcie — dokumentacja + tablica
 
 #### Automatyczne
 
-- [ ] 5.1 `test-plan.md` §5 zaktualizowane (notka + tabela)
-- [ ] 5.2 `test-plan.md` §3 wiersz 5 status `complete`
+- [x] 5.1 `test-plan.md` §5 zaktualizowane (notka + tabela)
+- [x] 5.2 `test-plan.md` §3 wiersz 5 status `complete`
 
 #### Ręczne
 
-- [ ] 5.3 §6.6 dopisek o Fazie 5 dodany
-- [ ] 5.4 Tablica GitHub zsynchronizowana (pod-zgłoszenia faz Done, parent w Review)
+- [x] 5.3 §6.6 dopisek o Fazie 5 dodany
+- [x] 5.4 Tablica GitHub zsynchronizowana (pod-zgłoszenia faz Done, parent w Review)
