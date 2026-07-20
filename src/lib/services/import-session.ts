@@ -245,7 +245,9 @@ const STALE_PROCESSING_MINUTES = 5;
  *
  * Kotwica na `created_at` (niezmienny; brak triggera na `updated_at`), próg >> 60 s timeoutu — żywy
  * przebieg finalizuje w ≤60 s, więc reaper nie tknie trwającej klasyfikacji. Cutoff liczony po stronie
- * wywołującego (`Date.now()`): różnica zegara Worker↔DB jest znikoma wobec 5-min progu. Ubita sesja nie
+ * wywołującego (`Date.now()`): różnica zegara Worker↔DB jest znikoma wobec 5-min progu. Uwaga: test
+ * reapera jest integracyjny nie dlatego, że `now()` jest DB-side (tu jest klienckie), lecz bo wymaga
+ * bazy — wstawienia `created_at` w przeszłości i egzekwowanego RLS. Ubita sesja nie
  * ma zapisanych itemów (persist to atomowe RPC dający od razu `completed_with_items`), więc flip na
  * `failed` nie gubi danych. RLS + jawny `user_id` (obrona w głąb, parytet z resztą serwisu).
  */
