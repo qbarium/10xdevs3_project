@@ -313,9 +313,9 @@ Brak migracji danych ani zmian API. Adresy z `?opstatus=` pozostają kompatybiln
 
 #### Automatyczne
 
-- [x] 1.1 Testy jednostkowe przechodzą: `npm run test`
-- [x] 1.2 Linting przechodzi: `npm run lint`
-- [x] 1.3 Build/typecheck przechodzi: `npm run build`
+- [x] 1.1 Testy jednostkowe przechodzą: `npm run test` — 3e36a56
+- [x] 1.2 Linting przechodzi: `npm run lint` — 3e36a56
+- [x] 1.3 Build/typecheck przechodzi: `npm run build` — 3e36a56
 
 #### Ręczne
 
@@ -325,9 +325,9 @@ Brak migracji danych ani zmian API. Adresy z `?opstatus=` pozostają kompatybiln
 
 #### Automatyczne
 
-- [ ] 2.1 Istniejące testy przechodzą: `npm run test`
-- [ ] 2.2 Linting przechodzi: `npm run lint`
-- [ ] 2.3 Build/typecheck przechodzi: `npm run build`
+- [x] 2.1 Istniejące testy przechodzą: `npm run test`
+- [x] 2.2 Linting przechodzi: `npm run lint`
+- [x] 2.3 Build/typecheck przechodzi: `npm run build`
 
 #### Ręczne
 
