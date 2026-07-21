@@ -319,7 +319,7 @@ Brak migracji danych ani zmian API. Adresy z `?opstatus=` pozostają kompatybiln
 
 #### Ręczne
 
-- [ ] 1.4 Przegląd `state-filter.test.ts` potwierdza pokrycie matrycy 6 pozycji × strony źródłowe
+- [x] 1.4 Przegląd `state-filter.test.ts` potwierdza pokrycie matrycy 6 pozycji × strony źródłowe
 
 ### Faza 2: Komponent `StateFilterSelect` + podpięcie 3 wysp
 
@@ -331,21 +331,21 @@ Brak migracji danych ani zmian API. Adresy z `?opstatus=` pozostają kompatybiln
 
 #### Ręczne
 
-- [ ] 2.4 `/items/active`: 6 pozycji w kolejności; „Nowe"/„W toku" zawęża bez przeładowania, URL ma `?opstatus=`
-- [ ] 2.5 Parytet „Nowe" z listy == „Nowe" z pigułki (obie widoczne)
-- [ ] 2.6 Z done/trash „Nowe" nawiguje na `/items/active?opstatus=new` z niesionym `?type=`; „Zakończone/Anulowane/Kosz" nawiguje z `?type=`
-- [ ] 2.7 Zmiana podfiltra czyści zaznaczenie i wraca na stronę 1; trigger mieści „Wszystko aktywne"
+- [x] 2.4 `/items/active`: 6 pozycji w kolejności; „Nowe"/„W toku" zawęża bez przeładowania, URL ma `?opstatus=`
+- [x] 2.5 Parytet „Nowe" z listy == „Nowe" z pigułki (obie widoczne)
+- [x] 2.6 Z done/trash „Nowe" nawiguje na `/items/active?opstatus=new` z niesionym `?type=`; „Zakończone/Anulowane/Kosz" nawiguje z `?type=`
+- [x] 2.7 Zmiana podfiltra czyści zaznaczenie i wraca na stronę 1; trigger mieści „Wszystko aktywne"
 
 ### Faza 3: Usunięcie pigułek `OperationalSubFilter`
 
 #### Automatyczne
 
-- [x] 3.1 Brak referencji: `grep -r OperationalSubFilter src/` pusty
-- [x] 3.2 Testy przechodzą: `npm run test`
-- [x] 3.3 Linting przechodzi: `npm run lint`
-- [x] 3.4 Build/typecheck przechodzi: `npm run build`
+- [x] 3.1 Brak referencji: `grep -r OperationalSubFilter src/` pusty — 29a0da0
+- [x] 3.2 Testy przechodzą: `npm run test` — 29a0da0
+- [x] 3.3 Linting przechodzi: `npm run lint` — 29a0da0
+- [x] 3.4 Build/typecheck przechodzi: `npm run build` — 29a0da0
 
 #### Ręczne
 
-- [ ] 3.5 Pigułki zniknęły; jedyna kontrolka stanu to rozwijana lista
-- [ ] 3.6 Pełny obieg (podfiltr, nawigacje, „Wyczyść filtry" → „Wszystko aktywne") bez regresji rodzaju/sortu/szukania
+- [x] 3.5 Pigułki zniknęły; jedyna kontrolka stanu to rozwijana lista
+- [x] 3.6 Pełny obieg (podfiltr, nawigacje, „Wyczyść filtry" → „Wszystko aktywne") bez regresji rodzaju/sortu/szukania
