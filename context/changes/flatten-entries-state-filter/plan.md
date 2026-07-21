@@ -325,9 +325,9 @@ Brak migracji danych ani zmian API. Adresy z `?opstatus=` pozostają kompatybiln
 
 #### Automatyczne
 
-- [x] 2.1 Istniejące testy przechodzą: `npm run test`
-- [x] 2.2 Linting przechodzi: `npm run lint`
-- [x] 2.3 Build/typecheck przechodzi: `npm run build`
+- [x] 2.1 Istniejące testy przechodzą: `npm run test` — e827e0c
+- [x] 2.2 Linting przechodzi: `npm run lint` — e827e0c
+- [x] 2.3 Build/typecheck przechodzi: `npm run build` — e827e0c
 
 #### Ręczne
 
@@ -340,10 +340,10 @@ Brak migracji danych ani zmian API. Adresy z `?opstatus=` pozostają kompatybiln
 
 #### Automatyczne
 
-- [ ] 3.1 Brak referencji: `grep -r OperationalSubFilter src/` pusty
-- [ ] 3.2 Testy przechodzą: `npm run test`
-- [ ] 3.3 Linting przechodzi: `npm run lint`
-- [ ] 3.4 Build/typecheck przechodzi: `npm run build`
+- [x] 3.1 Brak referencji: `grep -r OperationalSubFilter src/` pusty
+- [x] 3.2 Testy przechodzą: `npm run test`
+- [x] 3.3 Linting przechodzi: `npm run lint`
+- [x] 3.4 Build/typecheck przechodzi: `npm run build`
 
 #### Ręczne
 

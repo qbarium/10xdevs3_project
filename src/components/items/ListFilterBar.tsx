@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 
-import OperationalSubFilter from "@/components/items/OperationalSubFilter";
 import SearchBox from "@/components/items/SearchBox";
 import SortControl from "@/components/items/SortControl";
 import TypeFilter from "@/components/items/TypeFilter";
@@ -17,7 +16,7 @@ interface Props {
   onRetry: () => void;
   /** Slot na akcje swoiste dla widoku (np. „Wyczyść kosz" w Koszu). */
   children?: ReactNode;
-  /** Slot PRZED filtrem typu w pierwszym rzędzie — przełącznik widoku strony „Wpisy" (EntriesViewSelect). */
+  /** Slot PRZED filtrem typu w pierwszym rzędzie — kontrolka osi stanu strony „Wpisy" (StateFilterSelect). */
   leading?: ReactNode;
   /**
    * Tryb sesji (S-13 F4): kontrolki filtrów UKRYTE (tryb nie oferuje filtrowania; wariant wyszarzony
@@ -50,11 +49,12 @@ function ErrorBanner({ error, onRetry }: { error: string | null; onRetry: () => 
   );
 }
 
-// Wspólny pasek filtrów dodatkowych (S-09 Faza 5): typ + sort + szukaj (+ podfiltr stanu w „Aktywne").
+// Wspólny pasek filtrów dodatkowych (S-09 Faza 5): typ + sort + szukaj. Oś stanu strony „Wpisy" (Aktywne/
+// Zakończone/Anulowane/Kosz + podfiltr operacyjny na Aktywne) obsługuje jedna kontrolka `StateFilterSelect`
+// w slocie `leading` — pigułki podfiltra usunięte (konsolidacja osi stanu do jednej rozwijanej listy).
 // Wszystkie kontrolki KONTROLOWANE przez `criteria`; każda zmiana idzie przez jeden `onChange` (rodzic czyści
-// zaznaczenie i re-fetchuje). Podfiltr operacyjny renderowany wyłącznie dla `view==="active"` (jedyny widok
-// z >1 stanem). Bez wskaźnika ładowania (dane małe/lokalne — migający tekst szkodził; swap listy jest płynny);
-// zostaje baner błędu z „Ponów" zsynchronizowany ze stanem hooka.
+// zaznaczenie i re-fetchuje). Bez wskaźnika ładowania (dane małe/lokalne — migający tekst szkodził; swap
+// listy jest płynny); zostaje baner błędu z „Ponów" zsynchronizowany ze stanem hooka.
 export default function ListFilterBar({
   criteria,
   onChange,
@@ -83,7 +83,7 @@ export default function ListFilterBar({
 
   return (
     <div className="flex flex-col gap-2">
-      {/* Rząd kategorii: przełącznik widoku (strona „Wpisy") + pigułki filtra typu + podfiltr stanu (Aktywne). */}
+      {/* Rząd kategorii: kontrolka osi stanu (StateFilterSelect w slocie leading) + pigułki filtra typu. */}
       <div className="flex flex-wrap items-center gap-2">
         {leading}
         <TypeFilter
@@ -92,14 +92,6 @@ export default function ListFilterBar({
             onChange({ ...criteria, type });
           }}
         />
-        {criteria.view === "active" && (
-          <OperationalSubFilter
-            value={criteria.opstatus}
-            onChange={(opstatus) => {
-              onChange({ ...criteria, opstatus });
-            }}
-          />
-        )}
       </div>
 
       {/* Rząd sort + szukaj + akcje widoku + wskaźnik ładowania. */}
