@@ -7,7 +7,7 @@ import { useItemMutation } from "@/components/hooks/useItemMutation";
 import AddItemDialog from "@/components/items/AddItemDialog";
 import { defaultCreateType, nextFilterAfterCreate } from "@/components/items/create-form";
 import EditItemDialog from "@/components/items/EditItemDialog";
-import EntriesViewSelect from "@/components/items/EntriesViewSelect";
+import StateFilterSelect from "@/components/items/StateFilterSelect";
 import ItemCard, { ITEM_CHECKBOX_CLASS } from "@/components/items/ItemCard";
 import ListFilterBar from "@/components/items/ListFilterBar";
 import { matchesView, reconcileAfterChange, type AcceptedView } from "@/components/items/operational-view";
@@ -304,8 +304,10 @@ export default function AcceptedItemsView({
     <div className="flex flex-col gap-3">
       <Toaster />
 
-      {/* Pasek filtrów ZAWSZE widoczny: od 2026-07-02 niesie przełącznik widoku strony „Wpisy"
-          (EntriesViewSelect zastąpił zakładki) — nawigacja nie może znikać przy pustym widoku. */}
+      {/* Pasek filtrów ZAWSZE widoczny: niesie jedną kontrolkę osi stanu strony „Wpisy" (StateFilterSelect —
+          6 pozycji cyklu życia; zastąpił parę [lista widoku + pigułki podfiltra]) — nawigacja nie może znikać
+          przy pustym widoku. Pozycja aktywna na `active` = kliencki podfiltr `opstatus` (parytet dawnych
+          pigułek: reset strony + czyszczenie zaznaczenia); pozostałe pozycje = pełna nawigacja na stronę widoku. */}
       <ListFilterBar
         criteria={criteria}
         onChange={(next) => {
@@ -316,7 +318,16 @@ export default function AcceptedItemsView({
         }}
         error={error}
         onRetry={retry}
-        leading={<EntriesViewSelect view={view} type={criteria.type} />}
+        leading={
+          <StateFilterSelect
+            view={view}
+            type={criteria.type}
+            opstatus={criteria.opstatus}
+            onSelectActiveSubfilter={(opstatus) => {
+              applyCriteria(resetToFirstPage({ ...criteria, opstatus }));
+            }}
+          />
+        }
       >
         {addButton}
       </ListFilterBar>

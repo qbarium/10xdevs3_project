@@ -3,7 +3,7 @@ import { toast } from "sonner";
 
 import { useItemList } from "@/components/hooks/useItemList";
 import { useItemMutation } from "@/components/hooks/useItemMutation";
-import EntriesViewSelect from "@/components/items/EntriesViewSelect";
+import StateFilterSelect from "@/components/items/StateFilterSelect";
 import ItemCard, { ITEM_CHECKBOX_CLASS } from "@/components/items/ItemCard";
 import ListFilterBar from "@/components/items/ListFilterBar";
 import {
@@ -194,8 +194,10 @@ export default function TrashItemsView({ initialItems, initialCriteria, initialT
     <div className="flex flex-col gap-3">
       <Toaster />
 
-      {/* Pasek filtrów ZAWSZE widoczny: od 2026-07-02 niesie przełącznik widoku strony „Wpisy"
-          (EntriesViewSelect zastąpił zakładki) — nawigacja nie może znikać przy pustym koszu. */}
+      {/* Pasek filtrów ZAWSZE widoczny: niesie jedną kontrolkę osi stanu strony „Wpisy" (StateFilterSelect —
+          6 pozycji cyklu życia; zastąpił parę [lista widoku + pigułki podfiltra]) — nawigacja nie może znikać
+          przy pustym koszu. W Koszu pozycje aktywne rozwiązują się do pełnej nawigacji, więc bez `opstatus`
+          i bez klienckiego podfiltra. */}
       <ListFilterBar
         criteria={criteria}
         onChange={(next) => {
@@ -206,7 +208,7 @@ export default function TrashItemsView({ initialItems, initialCriteria, initialT
         }}
         error={error}
         onRetry={retry}
-        leading={<EntriesViewSelect view="trash" type={criteria.type} />}
+        leading={<StateFilterSelect view="trash" type={criteria.type} opstatus={undefined} />}
       >
         <Button
           size="sm"
