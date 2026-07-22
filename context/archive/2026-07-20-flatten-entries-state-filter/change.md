@@ -1,9 +1,10 @@
 ---
 change_id: flatten-entries-state-filter
 title: Konsolidacja filtra stanu Wpisów — jedna kontrolka zamiast rozwijanej listy + pigułek
-status: impl_reviewed
+status: archived
 created: 2026-07-20
-updated: 2026-07-21
+updated: 2026-07-22
+archived_at: 2026-07-22T05:29:32Z
 ---
 
 ## Notes
