@@ -122,6 +122,9 @@ node (wzorzec `operational-view.ts` / `type-filter.ts`).
   jest w URL tylko przy nawigacji na active; `type` niesiony gdy różny od `all`).
 - `stateSelectValue(view: MainView, opstatus: OperationalStatus | undefined): string` — zaznaczona
   pozycja: dla `active` wg `opstatus`, dla pozostałych wg `view`.
+- `stateSelectLabel(value: string): string` — etykieta zaznaczonej pozycji do jawnego renderu w
+  triggerze (SSR bez mignięcia, wzorzec `SessionFilterBar`). *(Aneks 2026-07-22 z `/10x-impl-review`:
+  dodane w implementacji Fazy 2 dla triggera; kontrakt Fazy 1 obejmuje więc 3 funkcje, nie 2.)*
 
 Kontrakt typu wyniku (od niego zależy Faza 2):
 
