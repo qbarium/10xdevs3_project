@@ -294,13 +294,13 @@ Brak migracji danych. Atrapa mock dotyka wyłącznie środowiska testowego (`CLA
 
 #### Automatyczne
 
-- [ ] 3.1 Test przechodzi: `npx playwright test e2e/happy-path-smoke.spec.ts`
-- [ ] 3.2 Cały zestaw E2E zielony dwukrotnie: `npm run e2e` ×2
+- [x] 3.1 Test przechodzi: `npx playwright test e2e/happy-path-smoke.spec.ts`
+- [x] 3.2 Cały zestaw E2E zielony dwukrotnie: `npm run e2e` ×2 (3 passed 44s / 46s) — dodano skrypt `e2e`
+- [x] 3.3 Przegląd pięciu antywzorców wykonany (role-locators, wait-for-state, unikalny tytuł+cleanup, brak waitForTimeout)
 
 #### Ręczne
 
-- [ ] 3.3 Przegląd pięciu antywzorców wykonany
-- [ ] 3.4 Celowe psucie przejścia na „Zrobione"/`done` → czerwony, rewert → zielony
+- [x] 3.4 Celowe psucie (predykat done: done→cancelled) → czerwony na asercji „Zakończone"; rewert → zielony
 
 ### Faza 4: Aktualizacja planu testów i porządki
 
