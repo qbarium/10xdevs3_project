@@ -64,9 +64,24 @@ function assertNoStore(store: boolean): false {
   return false;
 }
 
+/**
+ * Atrapa (model "mock") to wyłącznie szew E2E — deterministyczna, bez wywołania AI. W produkcyjnym
+ * buildzie odmawiamy fail-closed: ustawienie CLASSIFIER_MODEL=mock cicho degradowałoby klasyfikację
+ * (każda linia wsadu → item) zamiast realnego modelu. Symetria do assertNoStore/assertSafeBaseUrl —
+ * wartość łamiąca inwariant wywraca config, nie przechodzi po cichu. W dev/E2E (astro dev) mock przechodzi.
+ */
+function assertClassifierModel(model: string): string {
+  if (import.meta.env.PROD && model.toLowerCase() === "mock") {
+    throw new AiConfigError(
+      "CLASSIFIER_MODEL=mock jest niedozwolony w produkcji (atrapa E2E, nie realny klasyfikator).",
+    );
+  }
+  return model;
+}
+
 /** Parametry warstwy LLM odczytane z env (z domyślnymi z envField); pola wrażliwe walidowane fail-closed. */
 export const aiConfig = {
-  model: CLASSIFIER_MODEL,
+  model: assertClassifierModel(CLASSIFIER_MODEL),
   baseUrl: assertSafeBaseUrl(OPENAI_BASE_URL),
   temperature: OPENAI_TEMPERATURE,
   maxTokens: OPENAI_MAX_TOKENS,

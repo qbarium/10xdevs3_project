@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Gałąź mock (CLASSIFIER_MODEL=mock) — atrapa E2E w classifier.ts (kind:"mock"). Deterministyczna,
 // bez sieci ani klucza. Ten plik pinuje jej kontrakt; dotąd gałąź mock nie miała pokrycia.
@@ -15,6 +15,10 @@ import { classify } from "@/lib/ai/classifier";
 
 const fetchMock = vi.fn();
 vi.stubGlobal("fetch", fetchMock);
+
+beforeEach(() => {
+  fetchMock.mockReset();
+});
 
 function run(text: string) {
   return classify(text, {

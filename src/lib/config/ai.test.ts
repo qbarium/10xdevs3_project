@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 afterEach(() => {
   vi.resetModules();
   vi.doUnmock("astro:env/server");
+  vi.unstubAllEnvs();
 });
 
 function mockEnv(overrides: Record<string, unknown>): void {
@@ -46,5 +47,17 @@ describe("aiConfig — walidacja fail-closed pól wrażliwych (F2)", () => {
   it("odrzuca OPENAI_STORE=true (inwariant prywatności wsadu)", async () => {
     mockEnv({ OPENAI_STORE: true });
     await expect(import("@/lib/config/ai")).rejects.toThrow(/store/i);
+  });
+
+  it("odrzuca CLASSIFIER_MODEL=mock w produkcji (atrapa E2E, nie realny klasyfikator)", async () => {
+    vi.stubEnv("PROD", true);
+    mockEnv({ CLASSIFIER_MODEL: "mock" });
+    await expect(import("@/lib/config/ai")).rejects.toThrow(/produkcji/i);
+  });
+
+  it("dopuszcza CLASSIFIER_MODEL=mock poza produkcją (szew E2E działa w dev/test)", async () => {
+    mockEnv({ CLASSIFIER_MODEL: "mock" });
+    const mod = await import("@/lib/config/ai");
+    expect(mod.aiConfig.model).toBe("mock");
   });
 });
