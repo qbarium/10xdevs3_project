@@ -282,13 +282,13 @@ Brak migracji danych. Atrapa mock dotyka wyłącznie środowiska testowego (`CLA
 
 #### Automatyczne
 
-- [ ] 2.1 Test przechodzi: `npx playwright test e2e/item-survives-reload.spec.ts`
-- [ ] 2.2 Przechodzi dwukrotnie pod rząd (izolacja)
+- [x] 2.1 Test przechodzi: `npx playwright test e2e/item-survives-reload.spec.ts`
+- [x] 2.2 Przechodzi dwukrotnie pod rząd (izolacja) — `--repeat-each=2` zielone
 
 #### Ręczne
 
-- [ ] 2.3 Przegląd pięciu antywzorców wykonany
-- [ ] 2.4 Celowe psucie → czerwony, rewert → zielony
+- [x] 2.3 Przegląd pięciu antywzorców wykonany (role-locators, wait-for-state, unikalny tytuł+cleanup, brak waitForTimeout)
+- [x] 2.4 Celowe psucie (predykat active: accepted→rejected) → czerwony; rewert → zielony
 
 ### Faza 3: Test R-E2 — pełna ścieżka do „Zakończone"
 
