@@ -10,9 +10,9 @@ test.describe("R-E1: item przetrwa odświeżenie strony", () => {
   test.afterEach(async ({ request, baseURL }) => {
     // Sprzątanie best-effort do kosza (izolację i tak daje unikalny tytuł; to higiena).
     // Jawny Origin — endpoint mutujący jest za bramką CSRF (middleware.ts).
-    if (!created.length) return;
+    if (!created.length || !baseURL) return;
     await request
-      .post("/api/items/bulk", { data: { ids: created.splice(0), action: "trash" }, headers: { Origin: baseURL! } })
+      .post("/api/items/bulk", { data: { ids: created.splice(0), action: "trash" }, headers: { Origin: baseURL } })
       .catch(() => undefined);
   });
 

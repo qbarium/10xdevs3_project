@@ -7,9 +7,9 @@ test.describe("R-E2: pełna ścieżka do widoku Zakończone", () => {
   const created: string[] = [];
 
   test.afterEach(async ({ request, baseURL }) => {
-    if (!created.length) return;
+    if (!created.length || !baseURL) return;
     await request
-      .post("/api/items/bulk", { data: { ids: created.splice(0), action: "trash" }, headers: { Origin: baseURL! } })
+      .post("/api/items/bulk", { data: { ids: created.splice(0), action: "trash" }, headers: { Origin: baseURL } })
       .catch(() => undefined);
   });
 
