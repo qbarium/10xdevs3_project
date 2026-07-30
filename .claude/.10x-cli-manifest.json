@@ -2,8 +2,8 @@
   "package": "@przeprogramowani/10x-cli",
   "version": "1.10.0",
   "manifestVersion": 3,
-  "lastApplied": "2026-07-12T15:26:25.567Z",
-  "lessonId": "m3l5",
+  "lastApplied": "2026-07-22T20:46:00.919Z",
+  "lessonId": "m0l0",
   "course": "10xdevs3",
   "tool": "claude-code",
   "files": {
@@ -249,7 +249,8 @@
       "m1l5-2-constrain-approach.md",
       "m1l5-3-extend-prerequisites.md",
       "m1l5-4-store-plan.md",
-      "m3l2-ad-hoc-testing.md"
+      "m3l2-ad-hoc-testing.md",
+      "mvp-check.md"
     ],
     "configs": [],
     "promptHashes": {
@@ -258,7 +259,8 @@
       "m1l5-2-constrain-approach.md": "79b0d476b630cebb0655878e8a02cd188a64c88174ef9079c76621cb5fc443ba",
       "m1l5-3-extend-prerequisites.md": "90eaf318eade9962d118b67707cc8426c70567a9951105c4a1964623858ab8a7",
       "m1l5-4-store-plan.md": "0bbba9c83a20cb04b720ffd67fdcbb8b3ff3968eb2bee66d1aa6775b178e730f",
-      "m3l2-ad-hoc-testing.md": "6a4509b6b90d3ea9229d19dbec77aea0c6812d0d706144006f9465e195f5387f"
+      "m3l2-ad-hoc-testing.md": "6a4509b6b90d3ea9229d19dbec77aea0c6812d0d706144006f9465e195f5387f",
+      "mvp-check.md": "a72d3e3c67f1f6445042a5c9a459e33dc44825bc440fe86a1c3dcd48007e8f56"
     }
   },
   "lessons": {
@@ -1604,6 +1606,15 @@
         "m1l5-3-extend-prerequisites.md",
         "m1l5-4-store-plan.md",
         "m3l2-ad-hoc-testing.md"
+      ],
+      "configs": []
+    },
+    "m0l0": {
+      "appliedAt": "2026-07-22T20:46:00.917Z",
+      "skills": {},
+      "prompts": [
+        "skill-explainer.md",
+        "mvp-check.md"
       ],
       "configs": []
     }
