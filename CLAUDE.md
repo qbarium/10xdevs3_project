@@ -56,6 +56,9 @@ Reguły operacyjne:
 - `npm run lint` — ESLint with type-checked rules
 - `npm run lint:fix` — auto-fix lint issues
 - `npm run format` — Prettier (includes prettier-plugin-astro + prettier-plugin-tailwindcss)
+- `npm test` — unit tests (Vitest, `vitest.config.ts`; excludes `*.integration.test.ts` and `e2e/`)
+- `npm run test:integration` — integration tests (Vitest, `vitest.integration.config.ts`; needs local Supabase)
+- `npm run e2e` — E2E tests (Playwright, `e2e/`; **local only, not in CI** — `webServer` starts dev with `CLASSIFIER_MODEL=mock`, auth via saved `storageState`; see `context/foundation/test-plan.md` §6.3)
 
 Local quality gates (two layers): a **per-edit** agent hook `.claude/hooks/lint.sh` (wired as `PostToolUse: Write|Edit` in `.claude/settings.json`) lints just the edited file and blocks with `exit 2` on error, so the agent sees the report. **Pre-commit** (husky) runs `lint-staged` (`eslint --fix` on `*.{ts,tsx,astro}` + `prettier --write` on `*.{json,css,md}`) then `tsc --noEmit`. Don't bypass with `--no-verify`.
 
