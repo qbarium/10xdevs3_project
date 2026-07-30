@@ -1,9 +1,9 @@
 {
   "package": "@przeprogramowani/10x-cli",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "manifestVersion": 3,
-  "lastApplied": "2026-07-22T20:46:00.919Z",
-  "lessonId": "m0l0",
+  "lastApplied": "2026-07-30T16:48:54.788Z",
+  "lessonId": "m3l4",
   "course": "10xdevs3",
   "tool": "claude-code",
   "files": {
@@ -144,7 +144,7 @@
           "references/change-md.md"
         ],
         "contentHashes": {
-          "SKILL.md": "0551d3f83b31dfc5b3832165ac7eebae384364bd59436cf886520bacc6260fdb",
+          "SKILL.md": "50a94ec0d217b2d6f4a00d79423042d978abc2113647d207321457dcb820e1cf",
           "references/change-md.md": "c3f2678136edaee584f555cdbe80de207dee467e840f3d66554dd90092e7fc52"
         }
       },
@@ -179,7 +179,7 @@
           "SKILL.md"
         ],
         "contentHashes": {
-          "SKILL.md": "a45ca2b0f7d8106afc134005d6fff7319ac73068cc2315cc35e7211162f0e32f"
+          "SKILL.md": "e711694cf74cc6ddf911378b929f6137fa70c647e61b559e86cb6bf5851d8b8c"
         }
       },
       "10x-impl-review": {
@@ -187,7 +187,7 @@
           "SKILL.md"
         ],
         "contentHashes": {
-          "SKILL.md": "0e1076bdc3e36fac9f8fa74d622cf6708e383df1cbbd546ef30da68dfda7e4c4"
+          "SKILL.md": "af7965def1da07822a2afa2f0623c69cc2272251ca9f0cd410c21e4d46be57be"
         }
       },
       "10x-frame": {
@@ -221,7 +221,7 @@
           "SKILL.md"
         ],
         "contentHashes": {
-          "SKILL.md": "1b78fa3dc43a437e39167d4c07e7ee15821d1c1722c7e908e6400ecaf022e0bb"
+          "SKILL.md": "671461a6112ea80cbf734183726ad7b30c53bc2a01c81d8c69d201b13f799b83"
         }
       },
       "10x-e2e": {
@@ -239,7 +239,7 @@
           "references/e2e-prompt-template.md": "7d934d3b6f0e3f36e7abdf0ab7ff4a23b645d12cb80603e3a962ce7d6babb95b",
           "references/e2e-quality-rules.md": "d161cf3659ae5321b7f597987664e4017aecc7e15f5caa7a15a1eaf73bf4162b",
           "references/seed-test-pattern.md": "90fa8778a557d0c88320e839c6a8879735b3390b68ed89b3487258f2562b2f80",
-          "SKILL.md": "80e87cc6a0a3d89af870a5470760b1955a66469dcc5509f71ed075867bfe9372"
+          "SKILL.md": "fa28f8202d0123f5aa5ada0bbc3c8d89794f60fe0a148048d383fd1248f27e8f"
         }
       }
     },
@@ -1302,7 +1302,7 @@
       "configs": []
     },
     "m3l4": {
-      "appliedAt": "2026-07-12T15:26:21.007Z",
+      "appliedAt": "2026-07-30T16:48:54.777Z",
       "skills": {
         "10x-init": {
           "files": [

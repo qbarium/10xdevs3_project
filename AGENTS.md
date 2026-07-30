@@ -39,6 +39,9 @@ GitHub Issues + the private Projects v2 board "TaskerLight" (`https://github.com
 - `npm run build` — production SSR build via `@astrojs/cloudflare`.
 - `npm run lint` / `lint:fix` — ESLint with type-checked rules.
 - `npm run format` — Prettier (includes `prettier-plugin-astro` + `prettier-plugin-tailwindcss`).
+- `npm test` — unit tests (Vitest; excludes `*.integration.test.ts` and `e2e/`).
+- `npm run test:integration` — integration tests (Vitest; needs local Supabase).
+- `npm run e2e` — E2E tests (Playwright, `e2e/`; **local only, not in CI** — dev runs with `CLASSIFIER_MODEL=mock`, auth via saved `storageState`; cookbook in `test-plan.md` §6.3).
 - `npx supabase start` — local Supabase stack (requires Docker).
 - `npx wrangler deploy` — Cloudflare Workers deploy.
 
@@ -51,7 +54,8 @@ GitHub Issues + the private Projects v2 board "TaskerLight" (`https://github.com
 - `src/lib/supabase.ts` — SSR Supabase client. `src/middleware.ts` — auth resolution; routes in `PROTECTED_ROUTES` require sign-in.
 - `src/types.ts` — shared types (entities, DTOs).
 - `supabase/migrations/` — schema migrations.
-- `context/foundation/` — PRD, tech-stack, lessons (consumed by `/10x-*` skills).
+- `e2e/` — Playwright E2E specs (`seed.spec.ts` + risk tests); `tests/integration/` — Vitest integration (`*.integration.test.ts`); unit tests sit next to code as `*.test.ts`.
+- `context/foundation/` — PRD, tech-stack, lessons, `test-plan.md` (consumed by `/10x-*` skills).
 
 ## Conventions
 
