@@ -85,13 +85,14 @@ Każdy wiersz to osobna faza, która dostaje własny folder zmiany (przez
 wartości w kolumnie Status to słowa kluczowe odczytywane przez program — nie
 tłumacz ich ani nie zmieniaj.
 
-| #   | Nazwa fazy                                 | Cel (jedna linia)                                                        | Ryzyka                          | Typy testów        | Status      | Change folder                             |
-| --- | ------------------------------------------ | ------------------------------------------------------------------------ | ------------------------------- | ------------------ | ----------- | ----------------------------------------- |
-| 1   | Inwarianty bezpieczeństwa/prywatności      | Klucz nigdy w logach; wsad nie wychodzi poza allowlistę hostów           | #1, #4                          | unit               | complete    | testing-security-privacy-invariants       |
-| 2   | Izolacja per-user (IDOR)                   | A nie sięga po zasób B — odczyt i mutacja                                | #2                              | integration        | complete    | testing-per-user-isolation                |
-| 3   | Kontrakt klasyfikatora + stan sesji        | Naruszenie kontraktu i degradacja obsłużone czysto; 0-itemów ≠ błąd      | #6, #3 (część deterministyczna) | unit               | complete    | testing-classifier-contract-session-state |
-| 4   | Regresja cyklu życia itemu                 | Model dwóch wymiarów stanu trzyma przy refaktorze                        | #5                              | unit + integration | complete    | testing-item-lifecycle-regression                                         |
-| 5   | Podłączenie bramek + obserwacja obciążenia | Testy jako wymagana bramka CI; realne zachowanie dużego wsadu na Workers | #3 (część runtime)              | gates + obserwacja | complete       | testing-ci-gates-load-observation         |
+| #   | Nazwa fazy                                 | Cel (jedna linia)                                                            | Ryzyka                          | Typy testów        | Status   | Change folder                             |
+| --- | ------------------------------------------ | ---------------------------------------------------------------------------- | ------------------------------- | ------------------ | -------- | ----------------------------------------- |
+| 1   | Inwarianty bezpieczeństwa/prywatności      | Klucz nigdy w logach; wsad nie wychodzi poza allowlistę hostów               | #1, #4                          | unit               | complete | testing-security-privacy-invariants       |
+| 2   | Izolacja per-user (IDOR)                   | A nie sięga po zasób B — odczyt i mutacja                                    | #2                              | integration        | complete | testing-per-user-isolation                |
+| 3   | Kontrakt klasyfikatora + stan sesji        | Naruszenie kontraktu i degradacja obsłużone czysto; 0-itemów ≠ błąd          | #6, #3 (część deterministyczna) | unit               | complete | testing-classifier-contract-session-state |
+| 4   | Regresja cyklu życia itemu                 | Model dwóch wymiarów stanu trzyma przy refaktorze                            | #5                              | unit + integration | complete | testing-item-lifecycle-regression         |
+| 5   | Podłączenie bramek + obserwacja obciążenia | Testy jako wymagana bramka CI; realne zachowanie dużego wsadu na Workers     | #3 (część runtime)              | gates + obserwacja | complete | testing-ci-gates-load-observation         |
+| 6   | Warstwa E2E — pełna ścieżka user-facing    | Wpis przetrwa reload; pełna ścieżka login→klasyfikacja→akceptacja→„Zrobione" | R-E1, R-E2 (browser-level)      | e2e (Playwright)   | complete | testing-e2e-user-flows                    |
 
 **Co znaczą statusy** (słowa kluczowe programu — nie zmieniaj):
 
@@ -110,19 +111,19 @@ Czym testujemy w tym projekcie. Narzędzia oparte na AI (jeśli są) mają datę
 sprawdzenia (`checked:`). Wszystko poniżej wynika z plików konfiguracyjnych
 projektu i z narzędzi realnie dostępnych w tej sesji.
 
-| Warstwa                 | Narzędzie                                   | Wersja | Uwagi                                                                                                                                                                        |
-| ----------------------- | ------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| unit + integration      | Vitest                                      | 4.1.8  | Dwa configi: jednostkowy (`vitest.config.ts`, env node, wyklucza `*.integration.test.ts`) + integracyjny (`vitest.integration.config.ts`, wymaga lokalnego Supabase dla RLS) |
-| mockowanie API          | brak dedykowanej biblioteki (MSW nieobecny) | —      | Mock na granicy HTTP (fetch klasyfikatora) — wzorzec do potwierdzenia w §3 Faza 3                                                                                            |
-| e2e                     | brak                                        | —      | Brak zestawu e2e; poza bieżącym wdrożeniem (rozważ przy `--refresh`, jeśli pojawi się ryzyko wymagające pełnego kształtu wdrożonego)                                         |
-| dostępność (a11y)       | brak                                        | —      | Poza zakresem (UI wyłączone w §7)                                                                                                                                            |
-| (opcjonalna) AI-natywna | brak — świadomie pominięta (§7)             | n/a    | Playwright MCP niedostępny w sesji; klasyfikacja jest BYOK, więc eval mierzyłby cudzy model, nie nasz kod; checked: 2026-07-06                                               |
+| Warstwa                 | Narzędzie                                   | Wersja | Uwagi                                                                                                                                                                                                                                            |
+| ----------------------- | ------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| unit + integration      | Vitest                                      | 4.1.8  | Dwa configi: jednostkowy (`vitest.config.ts`, env node, wyklucza `*.integration.test.ts`) + integracyjny (`vitest.integration.config.ts`, wymaga lokalnego Supabase dla RLS)                                                                     |
+| mockowanie API          | brak dedykowanej biblioteki (MSW nieobecny) | —      | Mock na granicy HTTP (fetch klasyfikatora) — wzorzec do potwierdzenia w §3 Faza 3                                                                                                                                                                |
+| e2e                     | Playwright                                  | 1.62   | Zestaw w `e2e/` (`playwright.config.ts`, `npm run e2e`); auth przez zapisany `storageState`; klasyfikator AI mockowany szwem `CLASSIFIER_MODEL=mock` (`src/lib/ai/classifier.ts`). Lokalnie; wpięcie do CI = follow-up (§7). checked: 2026-07-30 |
+| dostępność (a11y)       | brak                                        | —      | Poza zakresem (UI wyłączone w §7)                                                                                                                                                                                                                |
+| (opcjonalna) AI-natywna | brak — świadomie pominięta (§7)             | n/a    | Playwright MCP niedostępny w sesji; klasyfikacja jest BYOK, więc eval mierzyłby cudzy model, nie nasz kod; checked: 2026-07-06                                                                                                                   |
 
 **Skąd te informacje (ta sesja):**
 
 - Docs: brak (Context7 / framework docs MCP niedostępny) — oparto na lokalnych manifestach; checked: 2026-07-06
 - Search: `WebSearch` (host-owy) dostępny — nieużyty (stos w pełni ugruntowany lokalnie); checked: 2026-07-06
-- Runtime/browser: Playwright MCP niedostępny; istnieje `playwright-skill` (skill hosta) — nieużyty w tym wdrożeniu; checked: 2026-07-06
+- Runtime/browser: Playwright CLI + `@playwright/test` (runner) użyte do warstwy E2E (§3 Faza 6); MCP niepotrzebny — CLI/runner + DOM-snapshot wystarczają; checked: 2026-07-30
 - Provider/platform: brak MCP; `gh` CLI dostępny przez Bash — istotny dla §3 Faza 5 (bramka CI); checked: 2026-07-06
 
 ## 5. Bramki jakości
@@ -165,7 +166,11 @@ odpowiednia faza zostanie zrobiona; wcześniej stoi w nim „TBD — patrz §3 F
 
 ### 6.3 Dodanie testu e2e
 
-- TBD — w tym wdrożeniu nie ma fazy e2e; rozważ przy `--refresh`.
+- **Lokalizacja**: `e2e/<scenariusz>.spec.ts`, jeden test na plik. Uruchomienie: `npm run e2e` (lub `npx playwright test e2e/<plik>`).
+- **Auth**: sesja z zapisanego `storageState` (`playwright/.auth/user.json`, gitignored) — bez logowania przez UI. Odśwież plik przez `playwright-cli state-save`, gdy token wygaśnie.
+- **Klasyfikator AI**: mockowany szwem w kodzie, nie przez sieć — `webServer` startuje dev z `CLASSIFIER_MODEL=mock` (`playwright.config.ts`), atrapa w `src/lib/ai/classifier.ts` (gałąź `kind:"mock"`) zwraca deterministyczne itemy z wsadu. Przekierowanie `baseUrl` jest zablokowane allowlistą hostów (`config/ai.ts`), więc szew w kodzie to jedyna droga.
+- **Test do naśladowania**: `e2e/item-survives-reload.spec.ts` (R-E1, przetrwanie po reload) i `e2e/happy-path-smoke.spec.ts` (R-E2, pełna ścieżka); wzorzec smoke fundamentu: `e2e/seed.spec.ts`.
+- **Pułapki (wyspy React w Astro)**: `fill()` NIE wyzwala kontrolowanego `onChange` — używaj `pressSequentially`; pierwszy klik może paść przed hydratacją — ponawiaj akcję aż do skutku (`toPass` + asercja na STANIE, np. wpis znika z listy). Selektory po roli (`getByRole`); kotwica wpisu = `getByRole('heading',{level:3,name})` lub `article[data-item-id]`. Nigdy `waitForTimeout`. Izolacja: unikalny tytuł (`E2E-<ts>-<rnd>`) + sprzątanie do kosza w `afterEach` (jawny `Origin` — bramka CSRF).
 
 ### 6.4 Dodanie testu dla nowego endpointu API
 
@@ -212,14 +217,15 @@ Trzymaj się tego, dopóki nie zmieni się powód, dla którego coś tu trafiło
 - **Audio jako wejście** — miłe, ale poza zakresem MVP; nie testujemy czegoś, czego nie ma. Wróć do tego, jeśli audio wejdzie do zakresu (PRD OQ2). (Źródło: PRD Non-Goals.)
 - **Obrona przed „prompt injection"** — świadomie poza zakresem produktu; to ryzyko po stronie klucza użytkownika (BYOK). (Źródło: PRD Non-Goals.)
 - **Ocena jakości samej AI** (czy dobrze klasyfikuje) — model podłącza użytkownik, nie kontrolujemy jego trafności; ryzyko #6 dotyczy tego, jak _obsługujemy_ jego odpowiedź, a nie jak dobra ona jest. (Źródło: synteza Fazy 3, koszt × sygnał.)
-- **Testy „od kliknięcia do wyniku" (e2e) oraz warstwy HTTP dla izolacji per-user** — świadomie poza zakresem. Kontrola własności żyje w parze funkcja serwisowa + reguły dostępu bazy (RLS), więc test na warstwie serwisu daje pełny sygnał taniej; zestawu e2e nie ma (§4), a symulacja żądania HTTP (middleware, ciasteczka sesji dwóch użytkowników) byłaby krucha. Wróć do tego, jeśli pojawi się błąd własności ujawniany dopiero na w pełni złożonej aplikacji. (Źródło: badania Fazy 2, Open Question 1; §4.)
+- **Warstwa HTTP dla izolacji per-user (IDOR) oraz E2E w CI** — świadomie poza zakresem. Kontrola własności żyje w parze funkcja serwisowa + reguły dostępu bazy (RLS), więc test na warstwie serwisu daje pełny sygnał taniej; symulacja żądania HTTP dwóch użytkowników byłaby krucha. E2E user-flow **wszedł** do zakresu (§3 Faza 6: R-E1/R-E2), ale wyłącznie lokalnie — wpięcie do CI wymaga dedykowanego konta testowego + logowania w globalnym setupie (`storageState` niesie prawdziwy token, gitignored); to osobny, cięższy krok, świadomie odłożony jako follow-up. (Źródło: badania Fazy 2 OQ1; zmiana `testing-e2e-user-flows`.)
+- **Regresja pikseli / wizualna w E2E** — do regresji wizualnej służą narzędzia deterministyczne (`toMatchSnapshot`, Argos, Lost Pixel), nie model wizyjny; testy E2E asertują funkcję przez DOM-snapshot (obecność wpisu), nie wygląd. (Źródło: lekcja M3L4; zmiana `testing-e2e-user-flows`.)
 - **Utwardzenie mutacji jawnym sprawdzeniem właściciela** (redundantny filtr `user_id` w kodzie mutacji obok RLS) — poza zakresem tej fazy. Mutacje (kosz i inne) polegają dziś wyłącznie na RLS; dołożenie filtra to obrona w głąb, ale **zmiana produktu**, nie test. Fazę 2 pilnuje istniejące zachowanie testem, a utwardzenie zostaje kandydatem na osobną zmianę. (Źródło: badania Fazy 2, Open Question 2; spójne z Fazą 1 „przypnij granicę, nie utwardzaj".)
 - **Sesja z nieudanym uploadem pliku (`code: "storage"`) — trwale nie-do-ponowienia** — skoro pliku nie da się wczytać, ponowienie znów rzuca `SessionInputStorageError` i sesja znów kończy `failed/storage`, jeszcze przed reopenem i klasyfikacją. To świadomy, znany tryb awarii, nie regresja do naprawy; zachowanie jest przypięte testem (Faza 3, `retry.test.ts`), ale utwardzenie (odzyskiwalność uploadu / ponowny upload pliku) to osobna zmiana produktu, poza tą fazą. (Źródło: badania Fazy 3, Open Question 1.)
 
 ## 8. Rejestr świeżości
 
 - Strategia (§1–§5) ostatnio przeglądana: 2026-07-06
-- Wersje stosu ostatnio zweryfikowane: 2026-07-06
+- Wersje stosu ostatnio zweryfikowane: 2026-07-30 (dodano Playwright 1.62 — warstwa E2E, §3 Faza 6)
 - Referencje narzędzi AI-natywnych ostatnio zweryfikowane: 2026-07-06
 
 Odśwież plan (`/10x-test-plan --refresh`), gdy:

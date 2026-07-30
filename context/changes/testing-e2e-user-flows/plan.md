@@ -306,10 +306,10 @@ Brak migracji danych. Atrapa mock dotyka wyłącznie środowiska testowego (`CLA
 
 #### Automatyczne
 
-- [ ] 4.1 Celowany lint/format zmienionych plików przechodzi
-- [ ] 4.2 Zestaw jednostkowy + integracyjny nadal zielony: `npm test`
+- [x] 4.1 Celowany format zmienionych plików (prettier test-plan.md) + lint configu przechodzi
+- [x] 4.2 Zestaw jednostkowy nadal zielony: `npm test` — 566
 
 #### Ręczne
 
-- [ ] 4.3 §3/§4/§6.3/§7 planu testów spójne z dostarczonym
-- [ ] 4.4 Komentarz w `vitest.integration.config.ts` zgodny z zachowaniem CI
+- [x] 4.3 §3 (faza 6), §4 (Playwright), §6.3 (wzorzec e2e), §7 (negative space) spójne z dostarczonym
+- [x] 4.4 Komentarz w `vitest.integration.config.ts` zgodny z zachowaniem CI
