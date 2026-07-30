@@ -1,10 +1,10 @@
 ---
 change_id: testing-e2e-user-flows
 title: Warstwa E2E — pełna ścieżka user-facing (Playwright)
-status: impl_reviewed
+status: archived
 created: 2026-07-30
 updated: 2026-07-30
-archived_at: null
+archived_at: 2026-07-30T18:33:54Z
 ---
 
 ## Notes
