@@ -7,7 +7,8 @@ import { fileURLToPath } from "node:url";
 export default defineConfig({
   test: {
     environment: "node",
-    exclude: [...configDefaults.exclude, "**/*.integration.test.ts"],
+    // e2e/** to testy Playwright (własny runner, `npm run e2e`) — Vitest ich nie zbiera.
+    exclude: [...configDefaults.exclude, "**/*.integration.test.ts", "e2e/**"],
   },
   resolve: {
     alias: {

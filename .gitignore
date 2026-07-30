@@ -36,3 +36,12 @@ pnpm-debug.log*
 
 # local-only docs (session handoff, personal notes — never pushed)
 docs/local/
+
+# playwright — zapisana sesja (token uwierzytelnienia) + pliki robocze CLI; nigdy do repo
+playwright/.auth/
+.playwright-cli/
+
+# playwright — artefakty test runnera (raporty, wyniki, cache)
+test-results/
+playwright-report/
+playwright/.cache/

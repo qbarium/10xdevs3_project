@@ -9,7 +9,7 @@ import { classificationResultSchema } from "@/lib/ai/schema";
 import { aiConfig } from "@/lib/config/ai";
 import { logger } from "@/lib/services/logger";
 import { hashUserId } from "@/lib/services/user-hash";
-import { ClassifierAuthError, ClassifierContractError, ClassifierProviderError, UnsupportedModelError } from "@/types";
+import { ClassifierAuthError, ClassifierContractError, ClassifierProviderError } from "@/types";
 import type { ClassifiedItem } from "@/types";
 
 export interface ClassifyOptions {
@@ -41,8 +41,16 @@ export async function classify(rawText: string, opts: ClassifyOptions): Promise<
   logger.info("classify: resolver", { kind, model: aiConfig.model });
 
   if (kind === "mock") {
-    // Szew pod E2E (wytyczne §3) — ciało atrapy powstanie przy wejściu testów E2E.
-    throw new UnsupportedModelError("Tryb mock nie ma jeszcze ciała atrapy (szew E2E).");
+    // Atrapa E2E (deterministyczna, bez sieci ani klucza): każda niepusta linia wsadu → item typu
+    // `task`, tytuł = przycięta linia. Testy E2E kontrolują tytuł przez unikalny wsad (izolacja +
+    // kotwica asercji). Gałąź martwa w prod (prod: gpt-4o-mini → kind:"chat"); włącznik CLASSIFIER_MODEL=mock.
+    const mockItems: ClassifiedItem[] = rawText
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .map((line) => ({ type: "task", title: line.slice(0, 200), description: "" }));
+    logger.info("classify: mock", { itemCount: mockItems.length });
+    return mockItems;
   }
   if (kind === "responses") {
     buildResponsesRequest(); // rzuca UnsupportedModelError (model rozumujący poza MVP)
