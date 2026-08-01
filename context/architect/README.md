@@ -12,7 +12,8 @@ To ćwiczenie mapowania i refaktoryzacji **obcego legacy**, a nie praca nad proj
   - `artifact-1-territory.md` — historia gita: aktywne obszary, kwartały, współzmiany
   - `artifact-2-structure.md` — graf zależności: Ca/Ce/instability, cykle plikowe
   - `artifact-3-contributors.md` — kontekst kontrybutorów: kto zna który obszar
-- `l3-research/` — L3: Analiza feature → `research.md` *(planowane)*
+- **`l3-research/` — L3: Analiza feature (Deep Focus)** ✅
+  - `research.md` — przepływ zapisu kształtu w tldraw: ② feature overview + ③ technical debt, zweryfikowany ast-grep
 - `l4-plan/` — L4: Refaktoryzacja → `plan.md` *(planowane)*
 - `l5-domain/` — L5: Legacy z DDD → notatki domenowe *(planowane)*
 
