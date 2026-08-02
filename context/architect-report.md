@@ -9,9 +9,9 @@ sources:
   - context/architect/l3-research/research.md     # L3 (tldraw)
   - context/architect/l4-plan/research.md         # L4 element ④ (tldraw)
   - context/architect/l4-plan/plan.md             # L4 plan (tldraw)
-  - context/domain/01-domain-distillation.md      # L5 (TaskerLight)
-  - context/domain/02-invariant-aggregate-refactor.md
-  - context/domain/03-anti-corruption-layer.md
+  - context/architect/l5-domain/01-domain-distillation.md      # L5 (TaskerLight; oryginały w context/domain/)
+  - context/architect/l5-domain/02-invariant-aggregate-refactor.md
+  - context/architect/l5-domain/03-anti-corruption-layer.md
 ---
 
 # Raport architektoniczny — moduł 4 (10xArchitect)
