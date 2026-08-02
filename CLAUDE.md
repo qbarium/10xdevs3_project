@@ -99,43 +99,48 @@ GitHub Actions workflow (`.github/workflows/ci.yml`) runs lint + build on every 
 
 <!-- BEGIN @przeprogramowani/10x-cli -->
 
----
-name: 10xDevs AI Toolkit - Module 3, Lesson 4 (E2E Tests)
-description: End-to-end testing with AI
-license: CC BY-NC-ND 4.0
-metadata:
-  tags: AI, E2E, testing, Playwright
-  version: 1.0.0
-  module: 3
-  lesson: 4
----
+## 10xDevs AI Toolkit - Moduł 2, Lekcja 5
 
-## 10xDevs AI Toolkit - Moduł 3, Lekcja 4 (Testy E2E)
+Skaluj cykl pojedynczych zmian do pracy równoległej za pomocą **worktrees, delegowania ukierunkowanego na cel i orkiestracji wielu sesji**:
 
-**Do testów E2E użyj umiejętności `/10x-e2e`.** Jest to jedyne źródło prawdy
-dla przepływu pracy — ryzyko → test początkowy + zasady → generowanie → przegląd pod kątem pięciu
-antywzorców → ponowne zapytanie → weryfikacja. `references/` umiejętności zawierają pełne
-zasady, antywzorce, wzorzec początkowy i szablon promptu.
+```
+worktree per change -> /goal or claude -p -> PR -> review -> merge
+```
 
-Kilka twardych zasad, które obowiązują jeszcze przed wywołaniem umiejętności:
+Lekcja koncentruje się na bezpiecznej przepustowości: izolowanych kontekstach, wyborze odpowiedniego trybu wykonania i ograniczeniu równoległości do zdolności przeglądu.
 
-- **Lokalizatory:** Najpierw `getByRole` / `getByLabel` / `getByText`; `getByTestId`
-  tylko wtedy, gdy atrybuty dostępności są niejednoznaczne. Nigdy selektory CSS, XPath
-  ani struktura DOM.
-- **Nigdy `page.waitForTimeout()`.** Czekaj na stan: `toBeVisible()`,
-  `waitForURL()`, `waitForResponse()`.
-- **Niezależność testów + czyszczenie.** Każdy test działa samodzielnie — własna konfiguracja,
-  akcja, asercja i czyszczenie; unikalne identyfikatory (sufiks znacznika czasu), aby równoległe uruchomienia
-  i ponowne uruchomienia nie kolidowały.
+### Router zadań - Od czego zacząć
 
-Dwie granice, które należy rozróżnić:
+| Umiejętność | Kiedy jej używać |
+| --- | --- |
+| **Izolacja kodu** | |
+| `git worktree add` | Potrzebujesz oddzielnego katalogu roboczego dla równoległej zmiany. Jedna zmiana na worktree, jeden świeży kontekst agenta na worktree. |
+| **Złożone zmiany** | |
+| `/10x-implement <change-id> phase <n>` | Zmiana ma wiele faz, wymaga ręcznych bramek lub korzysta z interaktywnego podejmowania decyzji podczas wykonania. |
+| **Proste zmiany** | |
+| `/goal` | Masz jasne, ograniczone zadanie i chcesz delegowania ukierunkowanego na cel. Agent pracuje autonomicznie w kierunku określonego celu z warunkiem zatrzymania. |
+| `claude -p` | Chcesz bezgłowego wykonania dla dobrze zdefiniowanego zadania. Pętla Ralpha Wigguma (uruchom, sprawdź, spróbuj ponownie) to uniwersalny autonomiczny wzorzec. |
+| **Orkiestracja wielu sesji** | |
+| Superset / Conductor / Antigravity / VS Code Agent View | Uruchamiasz wiele sesji agentów równolegle i potrzebujesz widoczności, koordynacji lub zarządzania sesjami między nimi. |
 
-- **DOM (migawka) jest domyślny.** Wizja (`--caps=vision`) jest uzupełnieniem dla
-  ryzyk wizualnych (układ, z-index, animacja); dla regresji pikseli preferuj
-  narzędzia deterministyczne (`toMatchSnapshot`, Argos, Lost Pixel). Wybór/koszt modelu VLM
-  to temat debugowania (Lekcja 5), a nie testowania.
-- **Healer pomaga w selektorach, szkodzi w logice.** Zmieniony selektor → healer
-  odnajduje go ponownie (trasa przez przegląd PR). Zmienione zachowanie biznesowe → healer
-  maskuje błąd; ten przypadek nieudanego testu do naprawy to Lekcja 5.
+### Zasady pracy równoległej
+
+- Jedna zmiana na worktree lub izolowany obszar roboczy. Jeden świeży kontekst agenta na zmianę.
+- Wybierz interaktywne `/10x-implement` dla złożonych zmian, `/goal` lub `claude -p` dla prostych.
+- Równoległość jest ograniczona przez zdolność przeglądu. Więcej agentów bez przeglądu oznacza więcej nieprzejrzanego kodu, a nie wyższą przepustowość.
+- Ból jakości wynikający z szybszej wysyłki jest celowy — łączy się z bramkami testowymi Modułu 3.
+
+### Granice lekcji
+
+- Nie ucz ponownie interaktywnego `/10x-implement` ani `/10x-impl-review`; to są Lekcje 2 i 3.
+- Nie wprowadzaj tutaj strategii testowania. Ból jakości jest motywacją dla Modułu 3.
+- Worktrees to mechanizm izolacji, a nie temat pełnego samouczka git.
+
+### Ścieżki używane w tej lekcji
+
+- `context/changes/<change-id>/` - aktywny folder zmian
+- `context/changes/<change-id>/plan.md` - dane wejściowe implementacji dla dowolnego trybu wykonania
+
+Umiejętności nie mogą zapisywać do `context/archive/`. Zarchiwizowane zmiany są niezmienne; jeśli rozwiązana ścieżka docelowa zaczyna się od `context/archive/`, przerwij z komunikatem: "Ta zmiana jest zarchiwizowana. Zamiast tego otwórz nową zmianę za pomocą `/10x-new`."
 
 <!-- END @przeprogramowani/10x-cli -->

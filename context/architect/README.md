@@ -14,7 +14,9 @@ To ćwiczenie mapowania i refaktoryzacji **obcego legacy**, a nie praca nad proj
   - `artifact-3-contributors.md` — kontekst kontrybutorów: kto zna który obszar
 - **`l3-research/` — L3: Analiza feature (Deep Focus)** ✅
   - `research.md` — przepływ zapisu kształtu w tldraw: ② feature overview + ③ technical debt, zweryfikowany ast-grep
-- `l4-plan/` — L4: Refaktoryzacja → `plan.md` *(planowane)*
+- **`l4-plan/` — L4: Refaktoryzacja (plan bezpiecznej zmiany)** ✅
+  - `research.md` — element ④ „Refactor opportunities": ranking szans refaktoru zapisu kształtu, zweryfikowany ast-grep
+  - `plan.md` — plan jednej bezpiecznej zmiany (guard props↔migracja + charakteryzacja cichego upsertu), po świeżym przeglądzie
 - `l5-domain/` — L5: Legacy z DDD → notatki domenowe *(planowane)*
 
 ## Uwaga dla agentów AI
