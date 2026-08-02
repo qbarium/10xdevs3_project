@@ -2,8 +2,8 @@
   "package": "@przeprogramowani/10x-cli",
   "version": "1.11.0",
   "manifestVersion": 3,
-  "lastApplied": "2026-08-01T21:15:00.549Z",
-  "lessonId": "m4l4",
+  "lastApplied": "2026-08-02T15:25:05.070Z",
+  "lessonId": "m4l5",
   "course": "10xdevs3",
   "tool": "claude-code",
   "files": {
@@ -259,7 +259,10 @@
       "m4l3-2-ast-grep-verification.md",
       "m4l4-1-new-change-intention.md",
       "m4l4-2-refactor-opportunities-research.md",
-      "m4l4-3-ranking-ast-grep-verification.md"
+      "m4l4-3-ranking-ast-grep-verification.md",
+      "m4l5-1-domain-distillation.md",
+      "m4l5-2-invariant-aggregate-refactor.md",
+      "m4l5-3-anti-corruption-layer.md"
     ],
     "configs": [],
     "promptHashes": {
@@ -278,7 +281,10 @@
       "m4l3-2-ast-grep-verification.md": "2b19eb0fc09bafb3174a879e33d6307366b097a6ffc14ae188418a8efff86a9f",
       "m4l4-1-new-change-intention.md": "82c6505bebaf3a5878815ece80a63115a40e38621e91094eaee4b83f1ee31cee",
       "m4l4-2-refactor-opportunities-research.md": "066bd953308a2ad6aa86fa8b3020df129a80ffd30d4bccb8aafe7aba1c65d457",
-      "m4l4-3-ranking-ast-grep-verification.md": "b316f9059ab6690af73465941862f2b52cfe19c4c064910d607950a8baeb75d5"
+      "m4l4-3-ranking-ast-grep-verification.md": "b316f9059ab6690af73465941862f2b52cfe19c4c064910d607950a8baeb75d5",
+      "m4l5-1-domain-distillation.md": "f4928093d19603013ddbfc0d25f5ebfcf03bbc0b25e38375a75e49b31d4d45b6",
+      "m4l5-2-invariant-aggregate-refactor.md": "dc2b262fee2c4bb625202c873d840391af35a52416d47afc8d319a66d7fcbba8",
+      "m4l5-3-anti-corruption-layer.md": "60a5d1e7687f6919c4231f1da7c81f031737bbd42597fe1f300f980111753e0d"
     }
   },
   "lessons": {
@@ -1933,6 +1939,16 @@
         "m4l4-1-new-change-intention.md",
         "m4l4-2-refactor-opportunities-research.md",
         "m4l4-3-ranking-ast-grep-verification.md"
+      ],
+      "configs": []
+    },
+    "m4l5": {
+      "appliedAt": "2026-08-02T15:25:05.067Z",
+      "skills": {},
+      "prompts": [
+        "m4l5-1-domain-distillation.md",
+        "m4l5-2-invariant-aggregate-refactor.md",
+        "m4l5-3-anti-corruption-layer.md"
       ],
       "configs": []
     }
