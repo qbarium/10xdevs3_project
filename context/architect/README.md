@@ -2,8 +2,7 @@
 
 Artefakty kursu **10xDevs 3.0, moduł 4** (odznaka **10xArchitect**). 
 
-**Analizowane repozytorium:** [`tldraw`](https://github.com/tldraw/tldraw) — open-source whiteboard SDK (TypeScript, monorepo). Sklonowane poza projektem.osobno; 
-To ćwiczenie mapowania i refaktoryzacji **obcego legacy**, a nie praca nad projektem 10xdevs3.
+**Analizowane repozytoria:** L2–L4 na [`tldraw`](https://github.com/tldraw/tldraw) — open-source whiteboard SDK (TypeScript, monorepo), sklonowanym poza projektem: ćwiczenie mapowania i refaktoryzacji **obcego legacy**. **L5 (DDD) wykonano na własnym projekcie TaskerLight/10xdevs3** — modelowanie domeny działa najlepiej na znanym kodzie (kurs dopuszcza różne repo per lekcja).
 
 ## Zawartość
 
@@ -17,7 +16,12 @@ To ćwiczenie mapowania i refaktoryzacji **obcego legacy**, a nie praca nad proj
 - **`l4-plan/` — L4: Refaktoryzacja (plan bezpiecznej zmiany)** ✅
   - `research.md` — element ④ „Refactor opportunities": ranking szans refaktoru zapisu kształtu, zweryfikowany ast-grep
   - `plan.md` — plan jednej bezpiecznej zmiany (guard props↔migracja + charakteryzacja cichego upsertu), po świeżym przeglądzie
-- `l5-domain/` — L5: Legacy z DDD → notatki domenowe *(planowane)*
+- **`l5-domain/` — L5: Legacy z DDD (na TaskerLight)** ✅
+  - `01-domain-distillation.md` — słownik domeny (ubiquitous language) + rozjazdy model-vs-kod + ustalenia kanonu nazw („wpis"; stan „done" → „Zakończ")
+  - `02-invariant-aggregate-refactor.md` — agregat-strażnik bramy akceptacji (niezmiennik #1)
+  - `03-anti-corruption-layer.md` — warstwa antykorupcyjna: izolacja Supabase za portami repozytoriów
+  - *(oryginały żyją w `context/domain/`; tu kopia jako dowód ścieżki architekta)*
+- **Raport zbiorczy** → [`context/architect-report.md`](../architect-report.md) — dwustronicowa synteza L2–L5 do formularza odznaki **10xArchitect**.
 
 ## Uwaga dla agentów AI
 
