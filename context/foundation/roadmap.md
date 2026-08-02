@@ -45,6 +45,7 @@ TaskerLight przyjmuje surowy, nieuporządkowany wsad głosowo-tekstowy i rozdzie
 | S-12  | dup-react-ssr-dev-fix    | (naprawa, dev-only) wyeliminować błąd podwójnego React-a na `/import-sessions` w `npm run dev` | — | — (dług techniczny; lessons.md) | done |
 | S-13  | session-entries-mode     | otworzyć wpisy danej sesji jako pełną listę („Pokaż wpisy") zamiast master-detail; lista sesji jako karty + paginacja wpisów | S-10, S-11 | FR-027 / FR-008 (zastępuje master-detail S-10) | done |
 | S-14  | csrf-hardening           | (utwardzenie) endpointy mutujące odporne na CSRF — aplikacyjny origin-check + jawny SameSite | — | NFR Bezpieczeństwo (obrona w głąb) | done |
+| S-15  | ui-redesign              | (redesign) nowa szata „techniczna" (jasny+ciemny) + trwała powłoka (sidebar+topbar); wszystkie widoki | — | — (prezentacyjne; reguluje `ui-design-system.md`) | in-progress |
 
 ## Strumienie
 
@@ -261,6 +262,20 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Ryzyko:** Badanie wykazało, że powierzchnia jest już chroniona niejawnie (domyślny `checkOrigin: true` Astro + `SameSite=Lax` Supabase + preflight CORS) — zmiana czyni ochronę jawną, testowaną i odporną na cichą regresję, dokładając warstwę aplikacyjną dla klasy JSON. Wariant tokenowy świadomie odrzucony jako redundantny (brak wspólnego wrappera `fetch`). Plan: 2 fazy (`plan.md` + `plan-brief.md`, 2026-07-02).
 - **Status:** done
 
+### S-15: Nowa szata graficzna (wariant techniczny) + powłoka nawigacyjna
+
+- **Wynik:** użytkownik dostaje spójny, przeprojektowany interfejs w wariancie „technicznym" (font IBM Plex Sans, ostre małe zaokrąglenia, gęste wiersze, kolorowy grzbień + chip per typ) w dwóch motywach (jasny + ciemny, z przełącznikiem), z trwałą powłoką: stały sidebar (Skrzynka / Do akceptacji / Wpisy / Sesje importu) + topbar. Wszystkie widoki przeniesione na nowy język wizualny; widoki spoza makiety (profil/BYOK, tryb „Pokaż wpisy", dialogi, modal klasyfikacji, auth, landing) wywnioskowane z języka makiety.
+- **Change ID:** ui-redesign
+- **Odnośniki PRD:** — (zmiana prezentacyjna; zachowanie nienaruszone. Warstwę wizualną reguluje `context/foundation/ui-design-system.md`; źródło prawdy wizualnej: `context/foundation/ui-mockup/taskerlight-list.html`.)
+- **Wymagania wstępne:** — (na istniejącej powierzchni UI: S-05/S-08/S-13 i wcześniejsze, wszystkie done)
+- **Równolegle z:** —
+- **Blokady:** —
+- **Niewiadome:** —
+- **Decyzje (uzgodnione 2026-08-03):** (1) **multi-page** zostaje — powłokę odtwarzamy w Astro, aktywny stan z adresu strony, bez SPA; (2) **wariant „techniczny" + dark mode** (pozostałe 5 presetów i przełącznik stylu poza zakresem); (3) **bez metadanych przyszłości** (priorytet/termin/tagi) i **bez „pewności %"** w „Do akceptacji"; (4) **wszystkie widoki**, brakujące w makiecie wnioskowane z istniejących; (5) opis wyglądu żyje w `ui-design-system.md` (foundation), nie w PRD — bo zachowanie się nie zmienia.
+- **Nośnik pracy:** cała zmiana na gałęzi `feature/ui-redesign`, fazy sekwencyjnie, **jeden PR mergowany na końcu** (bez merge per faza). Plan fazowy powstanie w `context/changes/ui-redesign/plan.md` (`/10x-plan`).
+- **Ryzyko:** przekrojowa zmiana (powłoka + tokeny + kilkanaście–kilkadziesiąt komponentów z zaszytymi kolorami `white/…`). Największe ryzyko: rozjazd z uchwytami testów (role/nazwy/`data-item-id`) — plan musi jawnie je zachować (test-plan: E2E asertuje funkcję przez DOM, nie wygląd).
+- **Status:** in-progress
+
 ## Przekazanie backlogu
 
 | ID mapy drogowej | Change ID                  | Sugerowany tytuł problemu                                  | Gotowe do `/10x-plan` | Uwagi                                              |
@@ -280,6 +295,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 | S-12             | dup-react-ssr-dev-fix      | Naprawa błędu podwójnego React-a (tylko dev) na `/import-sessions` | no          | Po S-11; dług techniczny, dev-only                  |
 | S-13             | session-entries-mode       | Tryb „Pokaż wpisy" + filtr sesji na liście wpisów (zastępuje master-detail) | yes         | Zaimplementowane (5 faz + poprawki po testach ręcznych 2026-07-02); czeka na `/10x-impl-review` |
 | S-14             | csrf-hardening             | Utwardzenie anty-CSRF mutujących endpointów (origin-check + jawny SameSite) | yes         | Zaimplementowane (2 fazy, zmergowane edd5bde 2026-07-03); czeka na `/10x-impl-review` |
+| S-15             | ui-redesign                | Nowa szata „techniczna" + powłoka nawigacyjna                              | yes         | Na `feature/ui-redesign`; następny krok `/10x-research ui-redesign`               |
 
 ## Otwarte pytania dotyczące mapy drogowej
 
