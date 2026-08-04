@@ -481,15 +481,15 @@ Domknięcie: resztkowe zaszyte kolory, usunięcie martwych założeń „tylko c
 
 #### Automatyczne
 
-- [x] 1.1 Lint przechodzi (`npm run lint`)
-- [x] 1.2 Build przechodzi (`npm run build`)
-- [x] 1.3 Testy jednostkowe przechodzą (`npm test`)
+- [x] 1.1 Lint przechodzi (`npm run lint`) — f133379
+- [x] 1.2 Build przechodzi (`npm run build`) — f133379
+- [x] 1.3 Testy jednostkowe przechodzą (`npm test`) — f133379
 
 #### Ręczne
 
-- [ ] 1.4 Przełącznik zmienia motyw; body i prymitywy shadcn reagują
-- [ ] 1.5 Odświeżenie w motywie ciemnym nie miga (no-flash z cookie)
-- [ ] 1.6 Polskie diakrytyki w IBM Plex Sans (nie fallback)
+- [x] 1.4 Przełącznik zmienia motyw; body i prymitywy shadcn reagują
+- [x] 1.5 Odświeżenie w motywie ciemnym nie miga (no-flash z cookie)
+- [x] 1.6 Polskie diakrytyki w IBM Plex Sans (nie fallback)
 - [ ] 1.7 Toaster zgodny z aktywnym motywem
 
 ### Faza 2: Powłoka nawigacyjna
