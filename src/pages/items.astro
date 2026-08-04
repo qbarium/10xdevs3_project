@@ -1,8 +1,7 @@
 ---
 import { z } from "zod";
 
-import Layout from "@/layouts/Layout.astro";
-import Topbar from "@/components/Topbar.astro";
+import AppLayout from "@/layouts/AppLayout.astro";
 import PendingItemsView from "@/components/items/PendingItemsView.tsx";
 import SessionBanner from "@/components/items/SessionBanner.astro";
 import SessionEntriesView from "@/components/items/SessionEntriesView.tsx";
@@ -86,27 +85,20 @@ if (user && supabase && criteria.page > 1 && total === 0 && (!sessionMode || ses
 // „Do akceptacji" (dawniej „Elementy do akceptacji") — osobna pozycja menu górnego; pozostałe widoki
 // wpisów żyją na stronie „Wpisy" z przełącznikiem-listą (StateFilterSelect, decyzja 2026-07-02).
 const pageTitle = sessionMode ? "Wpisy sesji importu" : "Do akceptacji";
+const pageSubtitle = sessionMode ? undefined : "Wpisy czekające na Twoją decyzję";
 ---
 
-<Layout title={pageTitle}>
-  <div class="bg-cosmic min-h-screen p-4">
-    <div class="mx-auto max-w-6xl">
-      <Topbar />
-      <main class="mt-8 flex flex-col gap-6">
-        <h1 class="bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-2xl font-bold text-transparent">
-          {pageTitle}
-        </h1>
-        {sessionMode && <SessionBanner meta={sessionMeta} />}
-        {
-          sessionMode ? (
-            sessionMeta && (
-              <SessionEntriesView client:load initialItems={items} initialCriteria={criteria} initialTotal={total} />
-            )
-          ) : (
-            <PendingItemsView client:load initialItems={items} initialCriteria={criteria} initialTotal={total} />
-          )
-        }
-      </main>
-    </div>
+<AppLayout title={pageTitle} subtitle={pageSubtitle}>
+  <div class="flex flex-col gap-6">
+    {sessionMode && <SessionBanner meta={sessionMeta} />}
+    {
+      sessionMode ? (
+        sessionMeta && (
+          <SessionEntriesView client:load initialItems={items} initialCriteria={criteria} initialTotal={total} />
+        )
+      ) : (
+        <PendingItemsView client:load initialItems={items} initialCriteria={criteria} initialTotal={total} />
+      )
+    }
   </div>
-</Layout>
+</AppLayout>

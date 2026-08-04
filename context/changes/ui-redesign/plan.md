@@ -496,10 +496,10 @@ Domknięcie: resztkowe zaszyte kolory, usunięcie martwych założeń „tylko c
 
 #### Automatyczne
 
-- [ ] 2.1 Lint przechodzi (`npm run lint`)
-- [ ] 2.2 Build przechodzi (`npm run build`)
-- [ ] 2.3 Zimny start dev bez `optimized dependencies changed. reloading`
-- [ ] 2.4 Testy jednostkowe przechodzą (`npm test`)
+- [x] 2.1 Lint przechodzi (`npm run lint`)
+- [x] 2.2 Build przechodzi (`npm run build`)
+- [x] 2.3 Zimny start dev bez `optimized dependencies changed. reloading`
+- [x] 2.4 Testy jednostkowe przechodzą (`npm test`)
 
 #### Ręczne
 

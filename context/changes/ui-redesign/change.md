@@ -20,3 +20,9 @@ Kotwice (przeżywają `/clear`):
 - Wycinek roadmapy: **S-15** (`context/foundation/roadmap.md`) — pełne decyzje w bloku „Decyzje (uzgodnione 2026-08-03)"
 - Board: Issue #177 (kolumna In Progress)
 - Nośnik pracy: gałąź `feature/ui-redesign`, jeden PR na końcu (bez merge per faza)
+
+## Weryfikacja (ustalenie użytkownika, 2026-08-04)
+
+- **E2E / weryfikację funkcjonalną każdej fazy robi agent SAM przez Playwright CLI** — nie odsyła listy kroków użytkownikowi do ręcznego klikania.
+- **Testy ręczne** (wizualny przegląd w obu motywach, wszystkie widoki) — **dopiero na KOŃCU całej zmiany**, jednym przejściem (nie per faza). Do tego czasu wiersze „Ręczne" w `## Postęp` pozostają nieodhaczone.
+- **Commity faz i przejścia między fazami — agent decyduje SAM, bez pytania** (2026-08-04). Bez bramki „zatwierdź wiadomość commita" i bez pytań „następna faza / wyczyść / przegląd". `git push` / PR / merge nadal wymagają jawnej komendy użytkownika (ścieżka prod).
