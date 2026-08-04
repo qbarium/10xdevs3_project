@@ -490,7 +490,7 @@ Domknięcie: resztkowe zaszyte kolory, usunięcie martwych założeń „tylko c
 - [x] 1.4 Przełącznik zmienia motyw; body i prymitywy shadcn reagują
 - [x] 1.5 Odświeżenie w motywie ciemnym nie miga (no-flash z cookie)
 - [x] 1.6 Polskie diakrytyki w IBM Plex Sans (nie fallback)
-- [ ] 1.7 Toaster zgodny z aktywnym motywem
+- [x] 1.7 Toaster zgodny z aktywnym motywem
 
 ### Faza 2: Powłoka nawigacyjna
 

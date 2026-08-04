@@ -1,8 +1,9 @@
 // Trwała preferencja motywu (jasny/ciemny) w COOKIE — wzorzec jak `components/lists/page-size-pref.ts`.
 // Cookie (path=/, rok, SameSite=Lax) widzi też SERWER: `Layout.astro` renderuje `<html>` z właściwą klasą
 // `.dark` i `color-scheme` od pierwszego bajtu → brak mignięcia „jasne→ciemne" przy odświeżeniu. Wyspa
-// `ThemeToggle` flipuje klasę na `document.documentElement` i zapisuje cookie. Wszystko best-effort w
-// try/catch — bezpieczne pod SSR (brak `document`) i przy zablokowanym storage.
+// `ThemeToggle` flipuje klasę na `document.documentElement` i zapisuje cookie. Zapis cookie
+// (`writeThemePref`) jest best-effort w try/catch (może rzucić przy zablokowanym storage); `applyTheme`
+// i wyspa `ThemeToggle` są z założenia client-only (wołane tylko z interakcji, nigdy w SSR), stąd bez guardu.
 
 export type Theme = "light" | "dark";
 
@@ -29,7 +30,8 @@ export function writeThemePref(theme: Theme): void {
   }
 }
 
-/** Klient: nałóż motyw na `<html>` — klasa `.dark` + natywne `color-scheme` (spójne z renderem SSR). */
+/** Klient (tylko!): nałóż motyw na `<html>` — klasa `.dark` + natywne `color-scheme` (spójne z SSR).
+ *  Bez guardu — wołane wyłącznie z interakcji klienta (onClick), nigdy w SSR/renderze. */
 export function applyTheme(theme: Theme): void {
   const root = document.documentElement;
   root.classList.toggle("dark", theme === "dark");

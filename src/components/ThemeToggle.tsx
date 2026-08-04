@@ -11,8 +11,8 @@ import { applyTheme, writeThemePref, type Theme } from "@/lib/theme";
  * źródła. Ikona (słońce/księżyc) sterowana wariantem `dark:` jest poprawna od pierwszej klatki, niezależnie
  * od hydracji. Zależności (react, lucide-react, button) są już w `ssr.optimizeDeps.include` → brak dup-React.
  */
-export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>("light");
+export function ThemeToggle({ initialTheme = "light" }: { initialTheme?: Theme }) {
+  const [theme, setTheme] = useState<Theme>(initialTheme);
 
   useEffect(() => {
     const read = () => {
