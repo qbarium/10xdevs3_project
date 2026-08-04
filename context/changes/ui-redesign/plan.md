@@ -538,10 +538,10 @@ Domknięcie: resztkowe zaszyte kolory, usunięcie martwych założeń „tylko c
 
 #### Automatyczne
 
-- [x] 4.1 Lint przechodzi (`npm run lint`)
-- [x] 4.2 Build przechodzi (`npm run build`)
-- [x] 4.3 Testy jednostkowe przechodzą (`npm test`)
-- [x] 4.4 E2E przechodzi (`npm run e2e`)
+- [x] 4.1 Lint przechodzi (`npm run lint`) — 24e0a85
+- [x] 4.2 Build przechodzi (`npm run build`) — 24e0a85
+- [x] 4.3 Testy jednostkowe przechodzą (`npm test`) — 24e0a85
+- [x] 4.4 E2E przechodzi (`npm run e2e`) — 24e0a85
 
 #### Ręczne
 
