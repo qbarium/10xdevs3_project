@@ -241,6 +241,8 @@ Powierzchnia akceptacji: pasek zbiorczy, wiersz triage z checkboxem i akcjami. B
 
 **Kontrakt**: Bulk zachowuje **generyczną** etykietę „Zrobione" (zamrożona przez `labels.ts`/`AcceptedItemsView`); pojedyncze akcje: „Edytuj", „Odrzuć", „Zatwierdź". Reconcile: item po akceptacji znika z „Do akceptacji". **Nie renderować `conf`/„pewność %".** Kolory statusów zaznaczenia z tokenów.
 
+**Zrealizowano (aneks 2026-08-05).** Rdzeń powierzchni triage powstał już w Fazie 3 przez **współdzielony `ItemCard`** (stan `pending`: checkbox + chip + tytuł + opis + akcje Zatwierdź/Odrzuć/Edytuj, **bez `conf`/„pewność %"**, bez ID sesji) oraz obronny rekolor kontenera paska zbiorczego w `PendingItemsView` (Zaznacz wszystkie + zbiorcze Zatwierdź/Odrzuć — na tokenach). Reconcile (item znika po decyzji) siedzi w `execute()` `PendingItemsView` i jest nietknięty. **Net-new Fazy 4** to jedyny brakujący element makiety `.triage-row.sel`: **podświetlenie zaznaczonego wiersza** (`bg-accent` + `border-muted-foreground/25`, oba motywy) dodane we współdzielonym `ItemCard` — realizacja „Kolory statusów zaznaczenia z tokenów". Ponieważ `ItemCard` jest współdzielony, podświetlenie obejmuje też akcje zbiorcze widoków accepted (Faza 3) — spójne, prezentacyjne, zero zmian zachowania. Uchwyty testów (`<h3>`, `<article data-item-id>`, „Zatwierdź", `aria-label`) nietknięte; E2E (`item-survives-reload`, `happy-path-smoke`, `seed`) zielone na zimnym starcie.
+
 ### Kryteria sukcesu
 
 #### Weryfikacja automatyczna
@@ -536,10 +538,10 @@ Domknięcie: resztkowe zaszyte kolory, usunięcie martwych założeń „tylko c
 
 #### Automatyczne
 
-- [ ] 4.1 Lint przechodzi (`npm run lint`)
-- [ ] 4.2 Build przechodzi (`npm run build`)
-- [ ] 4.3 Testy jednostkowe przechodzą (`npm test`)
-- [ ] 4.4 E2E przechodzi (`npm run e2e`)
+- [x] 4.1 Lint przechodzi (`npm run lint`)
+- [x] 4.2 Build przechodzi (`npm run build`)
+- [x] 4.3 Testy jednostkowe przechodzą (`npm test`)
+- [x] 4.4 E2E przechodzi (`npm run e2e`)
 
 #### Ręczne
 

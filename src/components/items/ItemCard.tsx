@@ -138,6 +138,9 @@ export default function ItemCard({
       className={cn(
         "bg-card border-border flex items-stretch overflow-hidden rounded-[4px] border transition-colors",
         "hover:border-muted-foreground/25 focus:ring-ring focus:ring-2 focus:outline-none focus:ring-inset",
+        // Zaznaczony wiersz (triage „Do akceptacji" + akcje zbiorcze widoków accepted) — subtelne wypełnienie
+        // i mocniejsze obramowanie z tokenów (makieta `.triage-row.sel`: bg `--hover`, border `--border-2`).
+        selected && "bg-accent border-muted-foreground/25",
         inFlight && "pointer-events-none opacity-50",
       )}
     >
