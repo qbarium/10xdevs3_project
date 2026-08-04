@@ -1,6 +1,8 @@
-// Czysta logika filtra stanu strony „Wpisy" (konsolidacja osi stanu do JEDNEJ rozwijanej listy). Wydzielona
-// z komponentu prezentacyjnego, by była testowalna w node (bez DOM) — wzorzec `operational-view.ts` /
-// `type-filter.ts`. Komponent `StateFilterSelect` (Faza 2) tylko woła te funkcje i wykonuje ich werdykt.
+// Czysta logika osi stanu strony „Wpisy". Wydzielona z komponentu prezentacyjnego, by była testowalna w node
+// (bez DOM) — wzorzec `operational-view.ts` / `type-filter.ts`. Po Fazie 3 `StateFilterSelect` renderuje oś jako
+// ZAKŁADKI zakresu (`<a href>` z `navigateHref`) + przyciski podfiltra rodziny „active" (kliencki re-fetch) —
+// nie jako `Select`. Historyczne `resolveStateSelection`/`stateSelectLabel` (wariant `Select`) są już nieużywane
+// w produkcji — do usunięcia w Fazie 8 „Sprzątanie" (przegląd F3).
 //
 // Model 6 pozycji w kolejności cyklu życia (zgodnej z `BULK_TARGETS`): „Wszystko aktywne / Nowe / W toku"
 // (rodzina „active" — ten sam widok `active`, różny `opstatus`) + „Zakończone / Anulowane / Kosz" (rodzina

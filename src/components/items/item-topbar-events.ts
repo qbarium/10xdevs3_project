@@ -23,9 +23,25 @@ export interface ItemActionDetail {
   action: ItemPrimaryAction;
 }
 
-/** Rozgłasza zmianę frazy wyszukiwania. `source` rozróżnia nadawcę, by uniknąć pętli echo. */
+// Bufor ostatniej frazy na `window` (wyspy nie współdzielą modułów). Domyka wyścig hydracji: gdy topbar
+// rozgłosi frazę, zanim mostek wyspy listy zarejestruje listener (lżejsza wyspa topbara montuje się
+// pierwsza), zdarzenie przepada. Mostek odczytuje ten bufor przy montażu i dogania zgubioną frazę.
+interface ItemSearchWindow {
+  __tlItemSearchLatest?: ItemSearchDetail;
+}
+
+/** Rozgłasza zmianę frazy wyszukiwania. `source` rozróżnia nadawcę, by uniknąć pętli echo. Zapisuje też
+ *  ostatnią frazę do bufora na `window` (patrz `readLatestItemSearch`). */
 export function dispatchItemSearch(q: string, source: SearchSource): void {
-  window.dispatchEvent(new CustomEvent<ItemSearchDetail>(ITEM_SEARCH_EVENT, { detail: { q, source } }));
+  const detail: ItemSearchDetail = { q, source };
+  (window as unknown as ItemSearchWindow).__tlItemSearchLatest = detail;
+  window.dispatchEvent(new CustomEvent<ItemSearchDetail>(ITEM_SEARCH_EVENT, { detail }));
+}
+
+/** Ostatnia rozgłoszona fraza (lub null) — mostek listy używa jej przy montażu, by dogonić zdarzenie
+ *  zgubione w oknie hydracji (topbar rozgłosił, zanim listener mostka wstał). */
+export function readLatestItemSearch(): ItemSearchDetail | null {
+  return (window as unknown as ItemSearchWindow).__tlItemSearchLatest ?? null;
 }
 
 /** Rozgłasza żądanie akcji głównej z topbara — wyspa widoku otwiera dialog/potwierdzenie. */

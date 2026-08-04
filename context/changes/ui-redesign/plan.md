@@ -194,6 +194,8 @@ Migracja największej i najbardziej wrażliwej powierzchni. **Tu żyją kontrakt
 
 **Kontrakt**: Cztery zakładki zakresu (Aktywne/Zakończone/Anulowane/Kosz) renderowane jako `<a href>` z aktywnością z adresu, biorąc URL z gałęzi „navigate" `state-filter.ts` (wyeksportuj `navigateHref` **albo** czytaj `resolveStateSelection(...).href`). **Uwaga — model jest heterogeniczny:** podfiltr rodziny „active" (active/new/in_progress; gałąź `{kind:"subfilter"}`, `state-filter.ts:82-84`) to **kliencki re-fetch bez nawigacji**, więc zostaje jako dotychczasowa kontrolka kliencka — czyste `<a href>` na tych pozycjach zerwałoby podfiltr (reset strony + czyszczenie zaznaczenia). Konwersja jest prezentacyjna **dla 4 zakładek zakresu**, ale **zachowuje** rozgałęzienie navigate↔subfilter (nie „zero zmian w logice"). Etykiety zakresów niezmienione (zamrożone przez `state-filter.test.ts`). Kontrolki-pigułki przechodzą z wzorca `bg-white/5…` na tokeny (`bg-surface`/`text-muted-foreground`/`border-border`).
 
+**Zrealizowano — dopowiedzenie zakresu (aneks 2026-08-05, commit 7457085 + przegląd Fazy 3).** Przeniesienie szukajki do topbara wymusiło mechanizm koordynacji między osobnymi wyspami powłoki (Faza 2): moduł zdarzeń okna `item-topbar-events.ts` + mostek `useItemTopbarBridge.ts` + wyspy `TopbarItemSearch.tsx` i `TopbarItemAction.tsx`. `TopbarItemAction` (akcja główna „Dodaj wpis"/„Wyczyść kosz") wykracza poza dosłowne §2 (mowa była tylko o szukajce), ale wpina się w zaprojektowany w §2 Fazy 2 „slot akcji głównej" — zachowanie (dialog/potwierdzenie w wyspie listy, debounce, czyszczenie zaznaczenia) nietknięte. Przegląd Fazy 3 dołożył reconcyliację wyścigu hydracji w mostku (replay ostatniej frazy z bufora `window` — F1 raportu). Token `bg-surface` z §2 nie istnieje w `global.css` — użyto realnych `bg-muted`/`bg-background` (intencja „zejście z `bg-white/5…` na tokeny" spełniona). Dwa obronne przecieki migracji tokenów poza dosłowny zakres Fazy 3: rekolor kontenera paska zbiorczego w `PendingItemsView` (pełny restyle triage nadal w Fazie 4) oraz stan pusty `SessionEntriesView.tsx:139` (plik Fazy 6) — wyłącznie kolory na tokeny, by nie zostawiać niemal niewidocznych elementów na tokenowej powłoce.
+
 #### 3. Dialogi Dodaj / Edytuj
 
 **Plik**: `src/components/items/AddItemDialog.tsx`, `src/components/items/EditItemDialog.tsx`
@@ -407,7 +409,7 @@ Domknięcie: resztkowe zaszyte kolory, usunięcie martwych założeń „tylko c
 
 **Cel**: Wyzerować resztki i usunąć `bg-cosmic`, gdy nic już go nie referuje.
 
-**Kontrakt**: Usunąć `@utility bg-cosmic` dopiero po potwierdzeniu (grep) zera referencji. Usunąć `Topbar.astro` — po Fazach 2 (8 stron → `AppLayout`) i 7 (landing odpięty) nikt go nie woła; **potwierdź grepem `Topbar` zero trafień** przed usunięciem. Pozostałe straye z `research.md` §1 → tokeny.
+**Kontrakt**: Usunąć `@utility bg-cosmic` dopiero po potwierdzeniu (grep) zera referencji. Usunąć `Topbar.astro` — po Fazach 2 (8 stron → `AppLayout`) i 7 (landing odpięty) nikt go nie woła; **potwierdź grepem `Topbar` zero trafień** przed usunięciem. Pozostałe straye z `research.md` §1 → tokeny. **Martwy kod z Fazy 3 (przegląd F3):** `resolveStateSelection` i `stateSelectLabel` (+ typ `StateSelection`) w `state-filter.ts` są po konwersji `StateFilterSelect` na zakładki osierocone (woła je już wyłącznie `state-filter.test.ts`) — usunąć funkcje, typ oraz odpowiadające im przypadki w `state-filter.test.ts` (tu legalnie, poza zamrożeniem zakresu Fazy 3).
 
 #### 2. Grep i pełna weryfikacja
 
@@ -517,10 +519,10 @@ Domknięcie: resztkowe zaszyte kolory, usunięcie martwych założeń „tylko c
 
 #### Automatyczne
 
-- [x] 3.1 Lint przechodzi (`npm run lint`)
-- [x] 3.2 Build przechodzi (`npm run build`)
-- [x] 3.3 Testy jednostkowe przechodzą (`npm test`, w tym `labels`/`state-filter`)
-- [x] 3.4 E2E przechodzi na zimnym starcie (`npm run e2e`)
+- [x] 3.1 Lint przechodzi (`npm run lint`) — 7457085
+- [x] 3.2 Build przechodzi (`npm run build`) — 7457085
+- [x] 3.3 Testy jednostkowe przechodzą (`npm test`, w tym `labels`/`state-filter`) — 7457085
+- [x] 3.4 E2E przechodzi na zimnym starcie (`npm run e2e`) — 7457085
 
 #### Ręczne
 

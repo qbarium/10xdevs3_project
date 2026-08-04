@@ -8,6 +8,7 @@ import { useEffect, useRef } from "react";
 import {
   ITEM_ACTION_EVENT,
   ITEM_SEARCH_EVENT,
+  readLatestItemSearch,
   type ItemActionDetail,
   type ItemPrimaryAction,
   type ItemSearchDetail,
@@ -42,6 +43,14 @@ export function useItemTopbarBridge(handlers: Handlers): void {
     }
     window.addEventListener(ITEM_SEARCH_EVENT, onSearch);
     window.addEventListener(ITEM_ACTION_EVENT, onAction);
+    // Reconcyliacja wyścigu hydracji: jeśli topbar rozgłosił frazę, ZANIM ten listener się zarejestrował
+    // (lżejsza wyspa topbara montuje się pierwsza), zdarzenie przepadło — dogoń ostatnią frazę z bufora.
+    // Bufor pusty na świeżym wejściu (URL zasiewa obie wyspy; topbar nie rozgłasza na starcie), więc replay
+    // odpala się TYLKO po realnie zgubionym zdarzeniu; echo „list" (Wyczyść filtry) jest tu ignorowane.
+    const latest = readLatestItemSearch();
+    if (latest?.source === "topbar") {
+      handlersRef.current.onSearch(latest.q);
+    }
     return () => {
       window.removeEventListener(ITEM_SEARCH_EVENT, onSearch);
       window.removeEventListener(ITEM_ACTION_EVENT, onAction);

@@ -64,6 +64,10 @@
   --other-line: #8a93a2;
   --done-fg: #157a45;
   --prog-fg: #1f5fd0;
+  /* Scrim overlayu dialogów/modali — celowo ten sam ciemny welon w obu motywach (parytet z domyślką shadcn
+     bg-black/50; token, by nie zostawiać zaszytego koloru). Nie nadpisujemy w .dark: przyciemnienie ma być
+     identyczne w jasnym i ciemnym. */
+  --overlay: oklch(0 0 0 / 0.5);
 }
 
 .dark {
@@ -130,6 +134,7 @@
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
+  --color-overlay: var(--overlay);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
