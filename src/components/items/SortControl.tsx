@@ -18,7 +18,7 @@ const SORT_FIELDS: { value: SortField; label: string }[] = [
 // Kontrolka sortowania (S-09 Faza 5): single-select pole + przełącznik kierunku. KONTROLOWANA — rodzic
 // trzyma `{ sort, dir }` w `ListCriteria`, kontrolka nie ma własnego stanu trwałego. Pole to shadcn `Select`
 // (istniejący `radix-ui`, bez nowej zależności); kierunek to toggle z etykietą tekstową (strzałka Unicode +
-// `aria-label` — niezależne od nazw ikon `lucide-react`). Wizualnie spójna z `TypeFilter` (pigułki cosmic).
+// `aria-label` — niezależne od nazw ikon `lucide-react`). Szata „techniczna" (S-15 Faza 3): tokeny, ostre rogi.
 export default function SortControl({ value, onChange }: Props) {
   return (
     <div className="flex items-center gap-2" role="group" aria-label="Sortowanie">
@@ -28,11 +28,7 @@ export default function SortControl({ value, onChange }: Props) {
           onChange({ sort: next as SortField, dir: value.dir });
         }}
       >
-        <SelectTrigger
-          size="sm"
-          aria-label="Pole sortowania"
-          className="w-[168px] rounded-full border-white/10 bg-white/5 text-white/80 hover:bg-white/10"
-        >
+        <SelectTrigger size="sm" aria-label="Pole sortowania" className="w-[176px] rounded-[5px]">
           {/* Etykieta jawnie jako dziecko: Radix wyprowadza tekst wybranej opcji z elementów portalu,
               których SSR nie renderuje — pusty trigger „wskakiwałby" po hydracji (mignięcie). */}
           <SelectValue>{SORT_FIELDS.find((field) => field.value === value.sort)?.label}</SelectValue>
@@ -55,7 +51,7 @@ export default function SortControl({ value, onChange }: Props) {
         onClick={() => {
           onChange({ sort: value.sort, dir: value.dir === "asc" ? "desc" : "asc" });
         }}
-        className={cn("rounded-full border-white/10 bg-white/5 text-white/80 hover:bg-white/10")}
+        className={cn("rounded-[5px] font-mono")}
       >
         {value.dir === "asc" ? "↑ rosnąco" : "↓ malejąco"}
       </Button>

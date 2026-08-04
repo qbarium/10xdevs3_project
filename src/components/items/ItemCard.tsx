@@ -3,26 +3,74 @@
 // zaznaczanie, zestaw akcji (handlery opcjonalne). Akcja renderuje się TYLKO gdy podano handler ORAZ stan
 // wpisu na nią pozwala (czysta funkcja `isActionAllowed` z `item-card.ts`). Układ akcji wynika ze STANU
 // (nie z powierzchni): `pending` → kolumna Zatwierdź/Odrzuć/Edytuj po prawej (jak dotychczasowy widok
-// akceptacji); `accepted` i kosz → akcje-duchy w wierszu badge'ów (jak dotychczasowe Aktywne/Kosz).
+// akceptacji); `accepted` i kosz → akcje-duchy w wierszu tytułu (jak dotychczasowe Aktywne/Kosz).
 // `data-item-id` + `tabIndex={-1}` zawsze — uchwyt focusu świeżego wpisu (S-07) niewidoczny bez fokusu.
+//
+// Szata „techniczna" (S-15 Faza 3): grzbień per typ, chip typu przez prymityw `Badge`, gęsty wiersz,
+// meta (badge stanu + daty utworzenia/modyfikacji monospace). Kolory wyłącznie z tokenów (oba motywy) —
+// zero zaszytych bieli/fioletów. Nienaruszalne uchwyty testów: `<article data-item-id>`, tytuł `<h3>`,
+// checkbox `aria-label="Zaznacz: {title}"`, przycisk „Zatwierdź".
 
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import type { ReactNode } from "react";
+
 import { isActionAllowed } from "@/components/items/item-card";
 import OperationalStatusBadge from "@/components/items/OperationalStatusBadge";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { acceptanceOriginLabel, acceptanceStatusLabel, itemTypeLabel } from "@/lib/labels";
 import { cn } from "@/lib/utils";
-import type { Item } from "@/types";
+import type { Item, ItemType } from "@/types";
 
-/** Checkbox wyraźnie widoczny na ciemnym tle „cosmic" — współdzielony z nagłówkami „Zaznacz wszystkie" widoków. */
-export const ITEM_CHECKBOX_CLASS =
-  "size-5 border-white/40 data-[state=checked]:border-purple-400 data-[state=checked]:bg-purple-500 data-[state=checked]:text-white data-[state=indeterminate]:border-purple-400 data-[state=indeterminate]:bg-purple-500 data-[state=indeterminate]:text-white";
+/** Rozmiar checkboxa listy dopasowany do gęstego wiersza; kolory (zaznaczenie = `--primary`) z domyślnego
+    prymitywu shadcn (tokeny, oba motywy) — bez nadpisań. Współdzielony z nagłówkami „Zaznacz wszystkie". */
+export const ITEM_CHECKBOX_CLASS = "size-[18px]";
 
-const GHOST_ACTION = "text-white/60 hover:bg-white/10 hover:text-white";
+/** Grzbień per typ — kolory linii z tokenów Fazy 1 (`--*-line`, oba motywy). */
+const SPINE_CLASS: Record<ItemType, string> = {
+  task: "bg-task-line",
+  note: "bg-note-line",
+  idea: "bg-idea-line",
+  decision: "bg-decision-line",
+  other: "bg-other-line",
+};
+
+// Krótka data PL (dzień + skrót miesiąca) liczona deterministycznie w UTC — identyczna na SSR (workerd)
+// i kliencie, więc bez rozjazdu hydracji i niezależna od danych ICU w środowisku.
+const PL_MONTHS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"];
+function shortDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return `${d.getUTCDate()} ${PL_MONTHS[d.getUTCMonth()]}`;
+}
+
+/** Przycisk-duch akcji inline (Edytuj / Do kosza / Podgląd / Przywróć) — token ghost, wyciszony w spoczynku. */
+function GhostAction({
+  children,
+  onClick,
+  disabled,
+}: {
+  children: ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      className="text-muted-foreground hover:text-foreground"
+      disabled={disabled}
+      onClick={onClick}
+    >
+      {children}
+    </Button>
+  );
+}
 
 interface Props {
   item: Item;
-  /** Które badge'e (poza zawsze obecnym badge typu) renderować — decyzja powierzchni. */
+  /** Które badge'e (poza zawsze obecnym chipem typu) renderować — decyzja powierzchni. */
   badges: { acceptance?: boolean; operational?: boolean; origin?: boolean };
   /** Zaznaczanie (akcje zbiorcze widoków głównych). Tryb sesji nie podaje — checkbox znika. */
   selectable?: boolean;
@@ -66,106 +114,118 @@ export default function ItemCard({
 
   // Kolumna akcji po prawej — wyłącznie stan `pending` (Zatwierdź/Odrzuć/Edytuj, jak dotychczasowy widok).
   const pendingActions = canAccept || canReject || (status === "pending" && canEdit);
-  // Akcje-duchy w wierszu badge'ów — stany `accepted` (Edytuj/Do kosza) i koszowe (Podgląd/Przywróć).
+  // Akcje-duchy w wierszu tytułu — stany `accepted` (Edytuj/Do kosza) i koszowe (Podgląd/Przywróć).
   const inlineActions = (status !== "pending" && canEdit) || canTrash || canPreview || canRestore;
+
+  const op = item.operational_status;
+  const created = shortDate(item.created_at);
+  const modified = shortDate(item.updated_at);
+  // Ukryj „zm." gdy pokrywa się z datą utworzenia (świeży wpis / edycja tego samego dnia) — uniknięcie szumu.
+  const showModified = modified !== "" && modified !== created;
+
+  // Ton tytułu wg stanu operacyjnego: „zrealizowane" przygaszony, „anulowane" przekreślony (wzorzec makiety).
+  const titleTone =
+    op === "done"
+      ? "text-muted-foreground"
+      : op === "cancelled"
+        ? "text-muted-foreground line-through"
+        : "text-foreground";
 
   return (
     <article
       data-item-id={item.id}
       tabIndex={-1}
       className={cn(
-        "flex gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl transition-opacity focus:ring-2 focus:ring-purple-400/60 focus:outline-none",
+        "bg-card border-border flex items-stretch overflow-hidden rounded-[4px] border transition-colors",
+        "hover:border-muted-foreground/25 focus:ring-ring focus:ring-2 focus:outline-none focus:ring-inset",
         inFlight && "pointer-events-none opacity-50",
       )}
     >
+      {/* Grzbień per typ */}
+      <div className={cn("w-[3px] shrink-0", SPINE_CLASS[item.type])} aria-hidden="true" />
+
       {selectable && (
-        <Checkbox
-          checked={selected}
-          onCheckedChange={onToggleSelect}
-          aria-label={`Zaznacz: ${item.title}`}
-          className={cn("mt-1", ITEM_CHECKBOX_CLASS)}
-        />
+        <div className="flex items-center pl-3.5">
+          <Checkbox
+            checked={selected}
+            onCheckedChange={onToggleSelect}
+            aria-label={`Zaznacz: ${item.title}`}
+            className={ITEM_CHECKBOX_CLASS}
+          />
+        </div>
       )}
 
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-block rounded-full border border-purple-300/30 bg-purple-400/10 px-2 py-0.5 text-xs font-medium text-purple-100">
-            {itemTypeLabel(item.type)}
-          </span>
-          {badges.acceptance && (
-            <span className="inline-block rounded-full border border-white/15 bg-white/5 px-2 py-0.5 text-xs font-medium text-white/70">
-              {acceptanceStatusLabel(status)}
-            </span>
-          )}
-          {badges.operational && item.operational_status && <OperationalStatusBadge item={item} />}
-          {badges.origin && (status === "rejected" || status === "deleted") && (
-            <span className="inline-block rounded-full border border-white/15 bg-white/5 px-2 py-0.5 text-xs font-medium text-white/70">
-              {acceptanceOriginLabel(status)}
-            </span>
-          )}
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5 px-3.5 py-2.5">
+        <div className="flex items-center gap-2.5">
+          <Badge variant={item.type}>{itemTypeLabel(item.type)}</Badge>
+          <h3 className={cn("min-w-0 flex-1 truncate text-[14.5px] font-semibold", titleTone)}>{item.title}</h3>
 
           {inlineActions && (
-            <div className="ml-auto flex gap-2">
+            <div className="flex shrink-0 items-center gap-1">
               {status !== "pending" && canEdit && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={GHOST_ACTION}
+                <GhostAction
                   onClick={() => {
                     onEdit(item);
                   }}
                 >
                   Edytuj
-                </Button>
+                </GhostAction>
               )}
               {canTrash && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={GHOST_ACTION}
+                <GhostAction
                   disabled={actionsDisabled}
                   onClick={() => {
                     onTrash(item);
                   }}
                 >
                   Do kosza
-                </Button>
+                </GhostAction>
               )}
               {canPreview && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={GHOST_ACTION}
+                <GhostAction
                   onClick={() => {
                     onPreview(item);
                   }}
                 >
                   Podgląd
-                </Button>
+                </GhostAction>
               )}
               {canRestore && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={GHOST_ACTION}
+                <GhostAction
                   disabled={actionsDisabled}
                   onClick={() => {
                     onRestore(item);
                   }}
                 >
                   Przywróć
-                </Button>
+                </GhostAction>
               )}
             </div>
           )}
         </div>
 
-        <h3 className="mt-2 font-semibold text-white/90">{item.title}</h3>
-        {item.description && <p className="mt-1 line-clamp-2 text-sm text-white/70">{item.description}</p>}
+        {item.description && <p className="text-muted-foreground line-clamp-2 text-[13px]">{item.description}</p>}
+
+        <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-[11px]">
+          {badges.operational && op && <OperationalStatusBadge item={item} />}
+          {badges.acceptance && <Badge variant="outline">{acceptanceStatusLabel(status)}</Badge>}
+          {badges.origin && (status === "rejected" || status === "deleted") && (
+            <Badge variant="outline">{acceptanceOriginLabel(status)}</Badge>
+          )}
+          <span className="font-mono">utw. {created}</span>
+          {showModified && (
+            <>
+              <span className="opacity-50" aria-hidden="true">
+                ·
+              </span>
+              <span className="font-mono">zm. {modified}</span>
+            </>
+          )}
+        </div>
       </div>
 
       {pendingActions && (
-        <div className="flex shrink-0 items-start gap-1">
+        <div className="flex shrink-0 items-center gap-1 pr-3">
           {canAccept && (
             <Button
               variant="default"
@@ -191,16 +251,13 @@ export default function ItemCard({
             </Button>
           )}
           {status === "pending" && canEdit && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className={GHOST_ACTION}
+            <GhostAction
               onClick={() => {
                 onEdit(item);
               }}
             >
               Edytuj
-            </Button>
+            </GhostAction>
           )}
         </div>
       )}

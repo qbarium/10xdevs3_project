@@ -5,6 +5,7 @@
 // items.astro). Interaktywność (badge-menu + bulk) dochodzi w Fazie 4 — tu read-only z badge per-typ.
 import AppLayout from "@/layouts/AppLayout.astro";
 import AcceptedItemsView from "@/components/items/AcceptedItemsView.tsx";
+import TopbarItemSearch from "@/components/items/TopbarItemSearch.tsx";
 import { ITEMS_LIST_PAGE_SIZE_KEY, withPageSizePref } from "@/components/lists/page-size-pref";
 import { createClient } from "@/lib/supabase";
 import { listItems } from "@/lib/services/items";
@@ -39,6 +40,7 @@ if (user && supabase) {
 ---
 
 <AppLayout title="Wpisy" subtitle="Wpisy z zamkniętą realizacją">
+  <TopbarItemSearch slot="search" client:load initialQuery={criteria.q} />
   <AcceptedItemsView
     client:load
     initialItems={items}

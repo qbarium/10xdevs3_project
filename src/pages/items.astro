@@ -5,6 +5,7 @@ import AppLayout from "@/layouts/AppLayout.astro";
 import PendingItemsView from "@/components/items/PendingItemsView.tsx";
 import SessionBanner from "@/components/items/SessionBanner.astro";
 import SessionEntriesView from "@/components/items/SessionEntriesView.tsx";
+import TopbarItemSearch from "@/components/items/TopbarItemSearch.tsx";
 import { ITEMS_LIST_PAGE_SIZE_KEY, withPageSizePref } from "@/components/lists/page-size-pref";
 import { createClient } from "@/lib/supabase";
 import { getSessionMeta } from "@/lib/services/import-session";
@@ -89,6 +90,8 @@ const pageSubtitle = sessionMode ? undefined : "Wpisy czekające na Twoją decyz
 ---
 
 <AppLayout title={pageTitle} subtitle={pageSubtitle}>
+  {/* Szukajka w topbarze — tylko poza trybem sesji (tryb sesji nie oferuje filtrowania). */}
+  {!sessionMode && <TopbarItemSearch slot="search" client:load initialQuery={criteria.q} />}
   <div class="flex flex-col gap-6">
     {sessionMode && <SessionBanner meta={sessionMeta} />}
     {

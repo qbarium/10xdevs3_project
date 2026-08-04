@@ -1,3 +1,5 @@
+import { Search, X } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -8,14 +10,18 @@ interface Props {
   className?: string;
 }
 
-// Pole wyszukiwania (S-09 Faza 5). KONTROLOWANE bezpośrednio przez `value` (= `criteria.q`): rodzic
-// aktualizuje je SYNCHRONICZNIE w `setCriteria`, a debounce SIECIOWY (~300 ms) realizuje hook `useItemList`
-// (nie to pole). Świadomie bez osobnego `useState` — bezpośrednie wiązanie jest tak samo płynne, a przy tym
-// odporne na „Wyczyść filtry" i back/forward (oba zmieniają `criteria.q`, pole natychmiast to odbija);
-// mirror w stanie lokalnym wymagałby efektu synchronizującego (anti-pattern). Przycisk ✕ czyści frazę.
+// Pole wyszukiwania (S-09 Faza 5; S-15 Faza 3 → topbar powłoki). KONTROLOWANE bezpośrednio przez `value`
+// (= `criteria.q`): topbar aktualizuje je SYNCHRONICZNIE, a debounce SIECIOWY (~300 ms) realizuje hook
+// `useItemList` w wyspie listy (nie to pole). Świadomie bez osobnego `useState` — bezpośrednie wiązanie jest
+// tak samo płynne, a przy tym odporne na „Wyczyść filtry" i back/forward (oba zmieniają `value`, pole
+// natychmiast to odbija). Ikona lupy + przycisk ✕ czyści frazę. Kolory z tokenów (oba motywy).
 export default function SearchBox({ value, onChange, className }: Props) {
   return (
-    <div className={cn("relative min-w-0 flex-1 basis-56", className)}>
+    <div className={cn("relative", className)}>
+      <Search
+        className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2"
+        aria-hidden="true"
+      />
       <Input
         type="search"
         value={value}
@@ -24,7 +30,7 @@ export default function SearchBox({ value, onChange, className }: Props) {
         onChange={(event) => {
           onChange(event.target.value);
         }}
-        className="rounded-full border-white/10 bg-white/5 pr-9 text-white/90 placeholder:text-white/40"
+        className="h-9 rounded-[5px] pr-8 pl-8"
       />
       {value !== "" && (
         <Button
@@ -35,9 +41,9 @@ export default function SearchBox({ value, onChange, className }: Props) {
           onClick={() => {
             onChange("");
           }}
-          className="absolute top-1/2 right-1 size-7 -translate-y-1/2 rounded-full p-0 text-white/60 hover:bg-white/10 hover:text-white"
+          className="text-muted-foreground hover:text-foreground absolute top-1/2 right-1 size-7 -translate-y-1/2 rounded-[4px] p-0"
         >
-          ✕
+          <X className="size-4" />
         </Button>
       )}
     </div>

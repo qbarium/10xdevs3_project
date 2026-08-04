@@ -14,7 +14,7 @@ interface Props {
 
 export default function PageSizeSelect({ value, onChange, sizes, ariaLabel }: Props) {
   return (
-    <label className="flex items-center gap-1.5 text-sm whitespace-nowrap text-white/60">
+    <label className="text-muted-foreground flex items-center gap-1.5 text-sm whitespace-nowrap">
       Na stronę
       <Select
         value={String(value)}
@@ -22,11 +22,7 @@ export default function PageSizeSelect({ value, onChange, sizes, ariaLabel }: Pr
           onChange(Number(next));
         }}
       >
-        <SelectTrigger
-          size="sm"
-          aria-label={ariaLabel}
-          className="w-[76px] rounded-full border-white/10 bg-white/5 text-white/80 hover:bg-white/10"
-        >
+        <SelectTrigger size="sm" aria-label={ariaLabel} className="w-[76px] rounded-[5px]">
           {/* Wartość jawnie jako dziecko: Radix wyprowadza tekst wybranej opcji z elementów portalu,
               których SSR nie renderuje — pusty trigger „wskakiwałby" po hydracji (mignięcie). */}
           <SelectValue>{value}</SelectValue>

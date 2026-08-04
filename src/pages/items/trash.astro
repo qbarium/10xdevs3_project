@@ -5,6 +5,8 @@
 // (klient z cookies usera → RLS izoluje); przejściowy błąd → pusta lista (łagodna degradacja).
 import AppLayout from "@/layouts/AppLayout.astro";
 import TrashItemsView from "@/components/items/TrashItemsView.tsx";
+import TopbarItemAction from "@/components/items/TopbarItemAction.tsx";
+import TopbarItemSearch from "@/components/items/TopbarItemSearch.tsx";
 import { ITEMS_LIST_PAGE_SIZE_KEY, withPageSizePref } from "@/components/lists/page-size-pref";
 import { createClient } from "@/lib/supabase";
 import { listItems } from "@/lib/services/items";
@@ -39,5 +41,7 @@ if (user && supabase) {
 ---
 
 <AppLayout title="Wpisy" subtitle="Kosz — wpisy do przywrócenia lub skasowania">
+  <TopbarItemSearch slot="search" client:load initialQuery={criteria.q} />
+  <TopbarItemAction slot="actions" client:load action="empty-trash" />
   <TrashItemsView client:load initialItems={items} initialCriteria={criteria} initialTotal={total} />
 </AppLayout>

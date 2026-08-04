@@ -1,6 +1,3 @@
-import type { ReactNode } from "react";
-
-import SearchBox from "@/components/items/SearchBox";
 import SortControl from "@/components/items/SortControl";
 import TypeFilter from "@/components/items/TypeFilter";
 import { Button } from "@/components/ui/button";
@@ -8,73 +5,50 @@ import type { ListCriteria } from "@/lib/services/list-criteria";
 
 interface Props {
   criteria: ListCriteria;
-  /** Każda zmiana kryterium z paska. Rodzic (wyspa) czyści zaznaczenie i woła `setCriteria` (re-fetch). */
+  /** Każda zmiana kryterium z toolbara. Rodzic (wyspa) czyści zaznaczenie i woła `setCriteria` (re-fetch). */
   onChange: (next: ListCriteria) => void;
   /** Komunikat błędu fetcha z hooka lub `null`. Lista zostaje (hook ją zachowuje); baner tylko informuje. */
   error: string | null;
   /** Ponów ostatnie pobranie wg bieżących kryteriów (re-fetch tych samych `criteria`). */
   onRetry: () => void;
-  /** Slot na akcje swoiste dla widoku (np. „Wyczyść kosz" w Koszu). */
-  children?: ReactNode;
-  /** Slot PRZED filtrem typu w pierwszym rzędzie — kontrolka osi stanu strony „Wpisy" (StateFilterSelect). */
-  leading?: ReactNode;
   /**
-   * Tryb sesji (S-13 F4): kontrolki filtrów UKRYTE (tryb nie oferuje filtrowania; wariant wyszarzony
-   * zajmował pół ekranu — decyzja użytkownika po testach manualnych 2026-07-02). Zostaje wyłącznie
-   * odnośnik „Wyczyść filtry" wykonujący PEŁNĄ nawigację na `/items` (wyjście z trybu wymaga ponownego
-   * renderu serwerowego — zakładki wracają do życia) oraz baner błędu z „Ponów" (fetch trybu też może polec).
+   * Tryb sesji (S-13 F4): toolbar UKRYTY (tryb nie oferuje filtrowania). Zostaje wyłącznie odnośnik
+   * „Wyczyść filtry" wykonujący PEŁNĄ nawigację na `/items` (wyjście z trybu wymaga renderu serwerowego)
+   * oraz baner błędu z „Ponów" (fetch trybu też może polec).
    */
   disabled?: boolean;
 }
 
-/** Baner błędu fetcha z akcją „Ponów" — wspólny dla obu wariantów paska (pełnego i trybu sesji). */
+/** Baner błędu fetcha z akcją „Ponów" — wspólny dla obu wariantów toolbara (pełnego i trybu sesji). */
 function ErrorBanner({ error, onRetry }: { error: string | null; onRetry: () => void }) {
   if (!error) return null;
   return (
     <div
       role="alert"
-      className="flex items-center gap-3 rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-100"
+      className="border-destructive/40 bg-destructive/10 text-destructive flex items-center gap-3 rounded-[5px] border px-3 py-2 text-sm"
     >
       <span className="flex-1">{error}</span>
-      <Button
-        type="button"
-        size="sm"
-        variant="outline"
-        onClick={onRetry}
-        className="border-red-300/40 bg-red-400/10 text-red-50 hover:bg-red-400/20"
-      >
+      <Button type="button" size="sm" variant="outline" onClick={onRetry}>
         Ponów
       </Button>
     </div>
   );
 }
 
-// Wspólny pasek filtrów dodatkowych (S-09 Faza 5): typ + sort + szukaj. Oś stanu strony „Wpisy" (Aktywne/
-// Zakończone/Anulowane/Kosz + podfiltr operacyjny na Aktywne) obsługuje jedna kontrolka `StateFilterSelect`
-// w slocie `leading` — pigułki podfiltra usunięte (konsolidacja osi stanu do jednej rozwijanej listy).
-// Wszystkie kontrolki KONTROLOWANE przez `criteria`; każda zmiana idzie przez jeden `onChange` (rodzic czyści
-// zaznaczenie i re-fetchuje). Bez wskaźnika ładowania (dane małe/lokalne — migający tekst szkodził; swap
-// listy jest płynny); zostaje baner błędu z „Ponów" zsynchronizowany ze stanem hooka.
-export default function ListFilterBar({
-  criteria,
-  onChange,
-  error,
-  onRetry,
-  children,
-  leading,
-  disabled = false,
-}: Props) {
+// Toolbar filtrów dodatkowych (S-09 Faza 5; S-15 Faza 3): segmentowy filtr typu (po lewej) + sort (po prawej).
+// Oś stanu strony „Wpisy" (zakładki zakresu + podfiltr „active") obsługuje osobny `StateFilterSelect` nad
+// toolbarem; szukajka i akcja główna żyją w topbarze powłoki. Kontrolki KONTROLOWANE przez `criteria`; każda
+// zmiana idzie przez jeden `onChange` (rodzic czyści zaznaczenie i re-fetchuje). Bez wskaźnika ładowania (dane
+// małe/lokalne; swap listy jest płynny) — zostaje baner błędu z „Ponów" zsynchronizowany ze stanem hooka.
+export default function ListFilterBar({ criteria, onChange, error, onRetry, disabled = false }: Props) {
   // Tryb sesji: bez kontrolek — tylko wyjście z trybu + baner błędu.
   if (disabled) {
     return (
       <div className="flex flex-col gap-2">
         <div>
-          <a
-            href="/items"
-            className="inline-block rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white"
-          >
-            Wyczyść filtry
-          </a>
+          <Button asChild size="sm" variant="outline">
+            <a href="/items">Wyczyść filtry</a>
+          </Button>
         </div>
         <ErrorBanner error={error} onRetry={onRetry} />
       </div>
@@ -83,32 +57,21 @@ export default function ListFilterBar({
 
   return (
     <div className="flex flex-col gap-2">
-      {/* Rząd kategorii: kontrolka osi stanu (StateFilterSelect w slocie leading) + pigułki filtra typu. */}
-      <div className="flex flex-wrap items-center gap-2">
-        {leading}
+      <div className="flex flex-wrap items-center gap-3">
         <TypeFilter
           value={criteria.type}
           onChange={(type) => {
             onChange({ ...criteria, type });
           }}
         />
-      </div>
-
-      {/* Rząd sort + szukaj + akcje widoku + wskaźnik ładowania. */}
-      <div className="flex flex-wrap items-center gap-2">
-        <SortControl
-          value={{ sort: criteria.sort, dir: criteria.dir }}
-          onChange={({ sort, dir }) => {
-            onChange({ ...criteria, sort, dir });
-          }}
-        />
-        <SearchBox
-          value={criteria.q}
-          onChange={(q) => {
-            onChange({ ...criteria, q });
-          }}
-        />
-        {children && <div className="ml-auto flex items-center gap-2">{children}</div>}
+        <div className="ml-auto">
+          <SortControl
+            value={{ sort: criteria.sort, dir: criteria.dir }}
+            onChange={({ sort, dir }) => {
+              onChange({ ...criteria, sort, dir });
+            }}
+          />
+        </div>
       </div>
 
       <ErrorBanner error={error} onRetry={onRetry} />

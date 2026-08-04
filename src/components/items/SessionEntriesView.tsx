@@ -139,7 +139,7 @@ export default function SessionEntriesView({ initialItems, initialCriteria, init
       {items.length === 0 ? (
         <div
           role="status"
-          className="rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70"
+          className="border-border bg-card text-muted-foreground rounded-[5px] border px-4 py-6 text-center text-sm"
         >
           Ta sesja nie ma elementów.
         </div>

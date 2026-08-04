@@ -63,7 +63,7 @@ export type StateSelection =
  * WYŁĄCZNIE pola różne od domyślnych (czysty, krótki URL), a reguła „opstatus tylko dla active" jest
  * dziedziczona z serializatora (dla widoków innych niż active `opstatus` jest pomijane), nie duplikowana tutaj.
  */
-function navigateHref(view: MainView, type: TypeFilterValue, opstatus: OperationalStatus | undefined): string {
+export function navigateHref(view: MainView, type: TypeFilterValue, opstatus: OperationalStatus | undefined): string {
   const qs = criteriaToQuery({ ...defaultCriteria(view), type, opstatus });
   return qs ? `/items/${view}?${qs}` : `/items/${view}`;
 }

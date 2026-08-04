@@ -1,12 +1,13 @@
-import { Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { useItemList } from "@/components/hooks/useItemList";
 import { useItemMutation } from "@/components/hooks/useItemMutation";
+import { useItemTopbarBridge } from "@/components/hooks/useItemTopbarBridge";
 import AddItemDialog from "@/components/items/AddItemDialog";
 import { defaultCreateType, nextFilterAfterCreate } from "@/components/items/create-form";
 import EditItemDialog from "@/components/items/EditItemDialog";
+import { dispatchItemSearch } from "@/components/items/item-topbar-events";
 import StateFilterSelect from "@/components/items/StateFilterSelect";
 import ItemCard, { ITEM_CHECKBOX_CLASS } from "@/components/items/ItemCard";
 import ListFilterBar from "@/components/items/ListFilterBar";
@@ -285,58 +286,52 @@ export default function AcceptedItemsView({
     }
   }, [items]);
 
-  // Kompaktowa akcja „Dodaj item" (S-07; plus zamiast całego wiersza — decyzja użytkownika 2026-07-02)
-  // w slocie akcji paska filtrów (wiersz wyszukiwania, po prawej).
-  const addButton = canAdd ? (
-    <Button
-      size="sm"
-      aria-label="Dodaj item"
-      title="Dodaj item"
-      onClick={() => {
-        setAddOpen(true);
-      }}
-    >
-      <Plus className="size-4" />
-    </Button>
-  ) : null;
+  // Mostek do topbara powłoki (S-15 Faza 3): fraza z topbara stosowana przez `applyCriteria` (debounce hooka +
+  // czyszczenie zaznaczenia — parytet dawnego SearchBox); akcja „Dodaj wpis" z topbara otwiera dialog (S-07,
+  // tylko widok Aktywne — `canAdd`).
+  useItemTopbarBridge({
+    onSearch: (q) => {
+      applyCriteria(resetToFirstPage({ ...criteria, q }));
+    },
+    onPrimaryAction: canAdd
+      ? (action) => {
+          if (action === "add") setAddOpen(true);
+        }
+      : undefined,
+  });
 
   return (
     <div className="flex flex-col gap-3">
       <Toaster />
 
-      {/* Pasek filtrów ZAWSZE widoczny: niesie jedną kontrolkę osi stanu strony „Wpisy" (StateFilterSelect —
-          6 pozycji cyklu życia; zastąpił parę [lista widoku + pigułki podfiltra]) — nawigacja nie może znikać
-          przy pustym widoku. Pozycja aktywna na `active` = kliencki podfiltr `opstatus` (parytet dawnych
-          pigułek: reset strony + czyszczenie zaznaczenia); pozostałe pozycje = pełna nawigacja na stronę widoku. */}
+      {/* Oś stanu strony „Wpisy" (S-15 Faza 3): zakładki zakresu (pełna nawigacja) + podfiltr „active"
+          (kliencki re-fetch — parytet dawnych pigułek: reset strony + czyszczenie zaznaczenia). Nawigacja
+          nie znika przy pustym widoku. Toolbar (filtr typu + sort) niżej; szukajka i „Dodaj wpis" w topbarze. */}
+      <StateFilterSelect
+        view={view}
+        type={criteria.type}
+        opstatus={criteria.opstatus}
+        onSelectActiveSubfilter={(opstatus) => {
+          applyCriteria(resetToFirstPage({ ...criteria, opstatus }));
+        }}
+      />
+
       <ListFilterBar
         criteria={criteria}
         onChange={(next) => {
-          // Zmiana filtra/sortu/frazy → strona 1 (zakres wyników się zmienia; strona N mogłaby nie istnieć —
-          // offset za końcem to błąd PGRST103). Wzorzec dziennika (S-11). Reset nie psuje debounce frazy:
-          // isSearchOnlyChange ignoruje `page`.
+          // Zmiana filtra/sortu → strona 1 (zakres wyników się zmienia; strona N mogłaby nie istnieć —
+          // offset za końcem to błąd PGRST103).
           applyCriteria(resetToFirstPage(next));
         }}
         error={error}
         onRetry={retry}
-        leading={
-          <StateFilterSelect
-            view={view}
-            type={criteria.type}
-            opstatus={criteria.opstatus}
-            onSelectActiveSubfilter={(opstatus) => {
-              applyCriteria(resetToFirstPage({ ...criteria, opstatus }));
-            }}
-          />
-        }
-      >
-        {addButton}
-      </ListFilterBar>
+      />
 
       {items.length === 0 ? (
         filtersActive ? (
           <div
             role="status"
-            className="flex flex-col items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70"
+            className="border-border bg-card text-muted-foreground flex flex-col items-center gap-3 rounded-[5px] border px-4 py-6 text-center text-sm"
           >
             <span>Brak elementów dla wybranych filtrów.</span>
             <Button
@@ -344,9 +339,10 @@ export default function AcceptedItemsView({
               variant="outline"
               onClick={() => {
                 // Czyść filtry/sort (i wróć na stronę 1), ale ZACHOWAJ rozmiar strony — preferencja widoku.
+                // Zsynchronizuj też input szukajki w topbarze (fraza wyzerowana).
                 applyCriteria({ ...defaultCriteria(view), size: criteria.size });
+                dispatchItemSearch("", "list");
               }}
-              className="border-white/15 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white"
             >
               Wyczyść filtry
             </Button>
@@ -354,15 +350,15 @@ export default function AcceptedItemsView({
         ) : (
           <div
             role="status"
-            className="rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70"
+            className="border-border bg-card text-muted-foreground rounded-[5px] border px-4 py-6 text-center text-sm"
           >
             {EMPTY_LABEL[view]}
           </div>
         )
       ) : (
         <>
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-            <label className="flex items-center gap-2 text-sm text-white/80">
+          <div className="border-border bg-muted flex flex-wrap items-center gap-3 rounded-[5px] border px-4 py-3">
+            <label className="text-foreground flex items-center gap-2 text-sm">
               <Checkbox
                 checked={allSelected ? true : selectedCount > 0 ? "indeterminate" : false}
                 onCheckedChange={toggleAll}
@@ -371,7 +367,7 @@ export default function AcceptedItemsView({
               />
               Zaznacz wszystkie
             </label>
-            <span className="text-sm text-white/50">
+            <span className="text-muted-foreground text-sm">
               {selectedCount > 0 ? `Zaznaczono: ${selectedCount}` : `${items.length} ${elementNoun(items.length)}`}
             </span>
             <div className="ml-auto flex flex-wrap gap-2">
