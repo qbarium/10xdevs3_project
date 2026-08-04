@@ -28,5 +28,8 @@ export const NAV_MATCHERS: readonly NavMatcher[] = [
 
 /** Id aktywnej pozycji dla adresu, albo `null` (np. landing/auth — poza powłoką). */
 export function activeNavId(pathname: string): string | null {
-  return NAV_MATCHERS.find((m) => isNavActive(pathname, m.match))?.id ?? null;
+  // Normalizacja: obetnij końcowy „/" (poza korzeniem) — `/items/` ma podświetlać „Do akceptacji",
+  // nie grupę „Wpisy" (Astro `trailingSlash:"ignore"` serwuje tę samą stronę pod obiema formami).
+  const p = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
+  return NAV_MATCHERS.find((m) => isNavActive(p, m.match))?.id ?? null;
 }

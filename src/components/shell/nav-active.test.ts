@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { activeNavId, isNavActive } from "./nav-active";
+import { activeNavId, isNavActive } from "@/components/shell/nav-active";
 
 describe("activeNavId — aktywny stan powłoki wg adresu", () => {
   it("Do akceptacji (/items) jest DOKŁADNE — nie łapie podtras", () => {
@@ -18,6 +18,11 @@ describe("activeNavId — aktywny stan powłoki wg adresu", () => {
     expect(activeNavId("/ingest")).toBe("ingest");
     expect(activeNavId("/import-sessions")).toBe("sessions");
     expect(activeNavId("/profile")).toBe("settings");
+  });
+
+  it("trailing slash normalizowany: /items/ = pending, /ingest/ = ingest", () => {
+    expect(activeNavId("/items/")).toBe("pending");
+    expect(activeNavId("/ingest/")).toBe("ingest");
   });
 
   it("adresy poza powłoką → null", () => {

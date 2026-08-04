@@ -127,6 +127,8 @@ Zbudowanie trwałej powłoki na bloku shadcn `sidebar` i wpięcie jej w 8 chroni
 
 **Kontrakt**: `npx shadcn add sidebar` (audyt zależności **przed** instalacją zgodnie z safe-ops). Do `ssr.optimizeDeps.include` dopisać nowe podpakiety radix (Sheet/Tooltip/Separator) **lub** przekierować importy bloku na `radix-ui`. `useIsMobile` przenieść do `src/components/hooks/` (konwencja repo) i poprawić import. Weryfikacja zimnym startem bez `--force`.
 
+**Zrealizowano inaczej (aneks 2026-08-04, commit 17d2e83).** Blok 1 nie został wykonany. Zamiast React-owego bloku shadcn `sidebar` powstała powłoka czysto Astro (`shell/AppSidebar.astro` + `Icon.astro` inline-SVG, `nav-active.ts`), bez nowych zależności. Ryzyko dup-React z instalacji bloku znika u źródła (brak nowej wyspy / podpakietu radix) → `astro.config.mjs`, prymitywy sheet/tooltip/separator/skeleton i przeniesienie `useIsMobile` są bezprzedmiotowe. Kryterium 2.3 spełnione trywialnie (brak nowej powierzchni do re-optymalizacji).
+
 #### 2. Powłoka aplikacji
 
 **Plik**: nowy `src/layouts/AppLayout.astro`, nowa wyspa sidebara `src/components/AppSidebar.tsx`, topbar (Astro lub wyspa)
@@ -134,6 +136,8 @@ Zbudowanie trwałej powłoki na bloku shadcn `sidebar` i wpięcie jej w 8 chroni
 **Cel**: Złożyć sidebar + topbar + `<slot/>` w jeden layout owijający strony chronione, z podświetleniem aktywnej pozycji.
 
 **Kontrakt**: Sidebar odwzorowuje architekturę informacji z `ui-design-system.md` §„Powłoka": marka; CTA „Skrzynka wejściowa" (→`/ingest`); grupa **Przepływ** → „Do akceptacji" (→`/items`, z licznikiem); grupa **Biblioteka** → „Wpisy" (→`/items/active`), „Sesje importu" (→`/import-sessions`), „Dziennik" (**disabled**, tag „wkrótce" — nie trasa); stopka → „Ustawienia" (→`/profile`) + konto ze statusem klucza + wylogowanie. Topbar: tytuł+podtytuł strony (per widok), slot szukajki, slot akcji głównej, przełącznik motywu. Aktywny stan liczony z `Astro.url.pathname`: **dokładny** dla `/items`, **prefiks** `/items/` dla grupy „Wpisy". Stan zwinięcia sidebara w cookie (domyślny mechanizm bloku). **Źródło danych dynamicznych powłoki:** tożsamość konta z `Astro.locals.user` (gwarantowana przez middleware — renderuje się bezpiecznie); licznik „Do akceptacji" z lekkiego zapytania zliczającego (`count`, `head:true`, `acceptance_status='pending'`), a status klucza z odczytu hintu BYOK — oba wykonywane **raz na render `AppLayout`** (klient Supabase z cookies usera, RLS per-user). To świadome, celowane odstępstwo od „bez nowych zapytań" — udokumentowane w Uwagach o wydajności.
+
+**Redukcja zakresu (aneks 2026-08-04).** Sterowane, utrwalane w cookie zwijanie sidebara oraz mobilny off-canvas drawer NIE powstały — powłoka Astro-only daje automatyczną szynę ikon 64 px przy ≤920 px (bez przełącznika i persistencji). Świadomie zaakceptowane jako wystarczające dla MVP; ew. utwardzenie (cookie-collapse / drawer) odrzucone jako UX-nicety poza rdzeniem.
 
 #### 3. Wpięcie w strony + prymityw badge
 
@@ -496,10 +500,10 @@ Domknięcie: resztkowe zaszyte kolory, usunięcie martwych założeń „tylko c
 
 #### Automatyczne
 
-- [x] 2.1 Lint przechodzi (`npm run lint`)
-- [x] 2.2 Build przechodzi (`npm run build`)
-- [x] 2.3 Zimny start dev bez `optimized dependencies changed. reloading`
-- [x] 2.4 Testy jednostkowe przechodzą (`npm test`)
+- [x] 2.1 Lint przechodzi (`npm run lint`) — 17d2e83
+- [x] 2.2 Build przechodzi (`npm run build`) — 17d2e83
+- [x] 2.3 Zimny start dev bez `optimized dependencies changed. reloading` — 17d2e83
+- [x] 2.4 Testy jednostkowe przechodzą (`npm test`) — 17d2e83
 
 #### Ręczne
 
