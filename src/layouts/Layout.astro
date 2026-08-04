@@ -2,19 +2,20 @@
 import "../styles/global.css";
 import Banner from "@/components/Banner.astro";
 import { missingConfigs } from "@/lib/config-status";
+import { parseTheme, THEME_COOKIE } from "@/lib/theme";
 
 interface Props {
   title?: string;
 }
 
 const { title = "10x Astro Starter" } = Astro.props;
+// Motyw czytany serwerowo z cookie → `<html>` dostaje klasę `.dark` + `color-scheme` od pierwszego
+// bajtu (no-flash). Wyspa `ThemeToggle` flipuje klasę i zapisuje cookie po stronie klienta.
+const theme = parseTheme(Astro.cookies.get(THEME_COOKIE)?.value);
 ---
 
 <!doctype html>
-<!-- color-scheme: dark INLINE na <html> — aplikacja jest ciemna, więc natywne kontrolki (popup
-     <select>, scrollbary, pola) mają renderować się ciemno. Inline, bo scoped <style> Astro nie
-     trafia pewnie na <html> (brak atrybutu cid), a motyw CSS w :root jest jasny. -->
-<html lang="en" style="color-scheme: dark">
+<html lang="en" class:list={{ dark: theme === "dark" }} style={`color-scheme: ${theme}`}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />

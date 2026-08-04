@@ -86,7 +86,7 @@ Mapowanie sidebara na trasy: Skrzynka → `/ingest`; Do akceptacji → `/items`;
 
 ## Wzorce komponentów
 
-- **Wiersz wpisu:** kolorowy grzbień per typ + chip typu (WERSALIKI) + tytuł + opis + meta (badge stanu operacyjnego, źródło sesji, data) + akcje. „Zrealizowane" — przygaszony tytuł; „anulowane" — przekreślony.
+- **Wiersz wpisu:** kolorowy grzbień per typ + chip typu (WERSALIKI) + tytuł + opis + meta (badge stanu operacyjnego, źródło sesji, data) + akcje. „Zrealizowane" — przygaszony tytuł; „anulowane" — przekreślony. _(Wyjątek redesignu S-15: „źródło sesji" na wierszu wycięte — powiązanie z sesją żyje w trybie „Pokaż wpisy"; „data" = utworzenia + ostatniej modyfikacji.)_
 - **Wiersz „Do akceptacji":** checkbox + chip + tytuł + opis + źródło; akcje Edytuj / Odrzuć / Zatwierdź; pasek „Zaznacz wszystkie" + zbiorcze Zatwierdź / Odrzuć. **Bez „pewności %".**
 - **Karta sesji importu:** status (grzbień + badge) + źródło + data + liczba wpisów; akcje „Ponów" (dla niepowodzenia) / „Pokaż wpisy"; paginacja (na stronę + skok do strony).
 - **Skrzynka:** pole tekstowe + licznik znaków + strefa upuszczania `.txt`/`.md` + „Klasyfikuj"; overlay klasyfikacji (spinner → sukces → „Przejdź do akceptacji").

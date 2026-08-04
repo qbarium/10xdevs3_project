@@ -1,4 +1,6 @@
 ---
+import { ThemeToggle } from "@/components/ThemeToggle";
+
 const { user } = Astro.locals;
 ---
 
@@ -30,18 +32,20 @@ const { user } = Astro.locals;
               Wyloguj się
             </button>
           </form>
+          <ThemeToggle client:load />
         </div>
       </>
     ) : (
       <>
         <span class="text-blue-100/70">Niezalogowany</span>
-        <div class="flex gap-3">
+        <div class="flex items-center gap-3">
           <a href="/auth/signin" class="text-purple-300 transition-colors hover:text-purple-100 hover:underline">
             Zaloguj się
           </a>
           <a href="/auth/signup" class="text-purple-300 transition-colors hover:text-purple-100 hover:underline">
             Zarejestruj się
           </a>
+          <ThemeToggle client:load />
         </div>
       </>
     )
