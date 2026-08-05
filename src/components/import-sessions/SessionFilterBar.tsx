@@ -21,8 +21,9 @@ const SORT_OPTIONS: { value: SessionSort; label: string }[] = [
 
 const STATUS_VALUES: ImportSessionStatus[] = ["processing", "completed_with_items", "completed_no_items", "failed"];
 
-// Wspólne klasy triggera — pigułka cosmic spójna z `SortControl` (białe półprzezroczyste tło, hover jaśniejszy).
-const TRIGGER = "w-[168px] rounded-full border-white/10 bg-white/5 text-white/80 hover:bg-white/10";
+// Wspólne klasy triggera — szerokość + ostry róg; kolory z prymitywu shadcn `Select` (tokeny, oba motywy),
+// spójne z `SortControl`.
+const TRIGGER = "w-[168px] rounded-[5px]";
 
 export default function SessionFilterBar({ criteria, onChange }: Props) {
   return (

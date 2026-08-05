@@ -59,22 +59,18 @@ export default function ImportSessionsView({
               setCriteria(resetToFirstPage(next));
             }}
           />
-          {loading && <Loader2 className="size-4 animate-spin text-white/50" aria-label="Aktualizowanie listy" />}
+          {loading && (
+            <Loader2 className="text-muted-foreground size-4 animate-spin" aria-label="Aktualizowanie listy" />
+          )}
         </div>
 
         {error && (
           <div
             role="alert"
-            className="flex items-center gap-3 rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-100"
+            className="border-destructive/40 bg-destructive/10 text-destructive flex items-center gap-3 rounded-[5px] border px-3 py-2 text-sm"
           >
             <span className="flex-1">{error}</span>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={retry}
-              className="border-red-300/40 bg-red-400/10 text-red-50 hover:bg-red-400/20"
-            >
+            <Button type="button" size="sm" variant="outline" onClick={retry}>
               Ponów
             </Button>
           </div>
