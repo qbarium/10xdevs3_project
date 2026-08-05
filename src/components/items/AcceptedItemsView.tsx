@@ -1,3 +1,4 @@
+import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -28,6 +29,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Toaster } from "@/components/ui/sonner";
 import { operationalStatusLabel } from "@/lib/labels";
 import { defaultCriteria, hasActiveFilters, ITEM_PAGE_SIZES } from "@/lib/services/list-criteria";
@@ -342,20 +349,28 @@ export default function AcceptedItemsView({
               {selectedCount > 0 ? `Zaznaczono: ${selectedCount}` : `${items.length} ${elementNoun(items.length)}`}
             </span>
             <div className="ml-auto flex flex-wrap gap-2">
-              {BULK_TARGETS.map((target) => (
-                <Button
-                  key={target}
-                  size="sm"
-                  variant="outline"
-                  disabled={selectedCount === 0 || pending}
-                  onClick={() => {
-                    requestBulk(target);
-                  }}
-                >
-                  {operationalStatusLabel(target)}
-                </Button>
-              ))}
-              {/* „Do kosza" (S-06) — ten sam outline co 4 przyciski stanu. */}
+              {/* „Zmień stan" — jedna akcja z menu (zamiast rzędu pigułek mylących się z filtrem): jednoznacznie
+                  zmienia stan ZAZNACZONYCH wpisów, nie filtruje listy. „Do kosza" osobno (wyjście z akceptacji). */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" variant="outline" disabled={selectedCount === 0 || pending}>
+                    Zmień stan
+                    <ChevronDown className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {BULK_TARGETS.map((target) => (
+                    <DropdownMenuItem
+                      key={target}
+                      onSelect={() => {
+                        requestBulk(target);
+                      }}
+                    >
+                      {operationalStatusLabel(target)}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Button size="sm" variant="outline" disabled={selectedCount === 0 || pending} onClick={requestTrash}>
                 Do kosza
               </Button>

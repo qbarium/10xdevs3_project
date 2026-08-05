@@ -45,12 +45,12 @@ test.describe("R-E2: pełna ścieżka do widoku Zakończone", () => {
     const id = await activeCard.getAttribute("data-item-id");
     if (id) created.push(id);
 
-    // Zaznacz wpis i oznacz „Zrobione" (akcja zbiorcza; jeden wpis → bez dialogu potwierdzenia).
-    // Ponawiaj (zaznacz + klik), aż wpis zniknie z „Wpisy" (przeszedł do „Zakończone") — czekanie na STAN.
-    const doneBtn = page.getByRole("button", { name: "Zrobione" });
+    // Zaznacz wpis i oznacz „Zrobione" przez menu „Zmień stan" (akcja zbiorcza; jeden wpis → bez dialogu).
+    // Ponawiaj (zaznacz + otwórz menu + klik), aż wpis zniknie z „Wpisy" (przeszedł do „Zakończone").
     await expect(async () => {
       await activeCard.getByRole("checkbox", { name: `Zaznacz: ${title}` }).check();
-      await doneBtn.click();
+      await page.getByRole("button", { name: "Zmień stan" }).click();
+      await page.getByRole("menuitem", { name: "Zrobione" }).click();
       await expect(activeCard).toBeHidden({ timeout: 2_000 });
     }).toPass({ timeout: 15_000 });
 
