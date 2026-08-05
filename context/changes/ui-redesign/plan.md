@@ -604,6 +604,6 @@ Domknięcie: resztkowe zaszyte kolory, usunięcie martwych założeń „tylko c
 
 #### Ręczne
 
-- [ ] 8.6 Każdy widok przejrzany w obu motywach — zgodny z makietą
-- [ ] 8.7 Brak „wyspy starego stylu"; `bg-cosmic` usunięty
-- [ ] 8.8 Przełącznik motywu działa wszędzie bez mignięcia
+- [x] 8.6 Każdy widok przejrzany w obu motywach — zgodny z makietą
+- [x] 8.7 Brak „wyspy starego stylu"; `bg-cosmic` usunięty
+- [x] 8.8 Przełącznik motywu działa wszędzie bez mignięcia
