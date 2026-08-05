@@ -58,7 +58,7 @@ function RedirectCountdown() {
       clearInterval(id);
     };
   }, []);
-  return <DialogDescription>Przenosimy Cię do walidacji za {countdown} s…</DialogDescription>;
+  return <DialogDescription>Przenosimy Cię do akceptacji za {countdown} s…</DialogDescription>;
 }
 
 export function ClassificationModal({ state, itemCount, errorCode, onRetry, onClose }: Props) {
@@ -108,7 +108,7 @@ export function ClassificationModal({ state, itemCount, errorCode, onRetry, onCl
             </DialogHeader>
             <DialogFooter>
               <Button type="button" onClick={goToItems}>
-                Przejdź do walidacji teraz
+                Przejdź do akceptacji teraz
               </Button>
             </DialogFooter>
           </>

@@ -64,6 +64,9 @@
   --other-line: #8a93a2;
   --done-fg: #157a45;
   --prog-fg: #1f5fd0;
+  /* Ton ostrzegawczy (bursztyn) — poza ui-design-system.md; wprowadzony w triage przeglądu F5 (F2)
+     dla stanów „limit" (np. licznik znaków przy maksimum). Odcień spójny z rodziną „idea". */
+  --warning-fg: #966a0c;
   /* Scrim overlayu dialogów/modali — celowo ten sam ciemny welon w obu motywach (parytet z domyślką shadcn
      bg-black/50; token, by nie zostawiać zaszytego koloru). Nie nadpisujemy w .dark: przyciemnienie ma być
      identyczne w jasnym i ciemnym. */
@@ -121,6 +124,7 @@
   --other-line: #69707e;
   --done-fg: #6fc58e;
   --prog-fg: #7fb0ee;
+  --warning-fg: #e0b45e;
 }
 
 @theme inline {
@@ -178,6 +182,7 @@
   --color-other-line: var(--other-line);
   --color-done-fg: var(--done-fg);
   --color-prog-fg: var(--prog-fg);
+  --color-warning-fg: var(--warning-fg);
 }
 
 @theme {

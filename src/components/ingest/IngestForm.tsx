@@ -94,7 +94,7 @@ export default function IngestForm({ initialKeyStatus }: Props) {
             className="field-sizing-fixed h-[clamp(6rem,22vh,14rem)] resize-none overflow-y-auto font-mono text-sm"
           />
           <div className="flex flex-col">
-            <span className={cn("text-xs", atLimit ? "text-destructive" : "text-muted-foreground")}>
+            <span className={cn("text-xs", atLimit ? "text-warning-fg" : "text-muted-foreground")}>
               {text.length.toLocaleString("pl-PL")} / {INPUT_MAX_CHARS.toLocaleString("pl-PL")} znaków
             </span>
             {text.length > 0 && tooShort && (
