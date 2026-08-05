@@ -575,9 +575,9 @@ Domknięcie: resztkowe zaszyte kolory, usunięcie martwych założeń „tylko c
 
 #### Ręczne
 
-- [x] 6.4 Lista sesji (statusy, akcje, pager) zgodna z makietą w obu motywach
-- [x] 6.5 „Pokaż wpisy" wchodzi w tryb sesji; powrót działa
-- [x] 6.6 „Ponów" tylko dla sesji z niepowodzeniem
+- [ ] 6.4 Lista sesji (statusy, akcje, pager) zgodna z makietą w obu motywach
+- [ ] 6.5 „Pokaż wpisy" wchodzi w tryb sesji; powrót działa
+- [ ] 6.6 „Ponów" tylko dla sesji z niepowodzeniem
 
 ### Faza 7: Landing + auth (pełny restyle)
 
