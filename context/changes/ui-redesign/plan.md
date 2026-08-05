@@ -569,9 +569,9 @@ Domknięcie: resztkowe zaszyte kolory, usunięcie martwych założeń „tylko c
 
 #### Automatyczne
 
-- [x] 6.1 Lint przechodzi (`npm run lint`)
-- [x] 6.2 Build przechodzi (`npm run build`)
-- [x] 6.3 Testy jednostkowe przechodzą (`npm test`)
+- [x] 6.1 Lint przechodzi (`npm run lint`) — aaf3d57
+- [x] 6.2 Build przechodzi (`npm run build`) — aaf3d57
+- [x] 6.3 Testy jednostkowe przechodzą (`npm test`) — aaf3d57
 
 #### Ręczne
 
