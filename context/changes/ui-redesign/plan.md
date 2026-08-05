@@ -656,13 +656,13 @@ Scalić podfiltr operacyjny „STAN" (Nowe / W toku) w główny rząd zakładek 
 
 #### Automatyczne
 
-- [x] 9.1 Lint przechodzi (`npm run lint`)
-- [x] 9.2 Build przechodzi (`npm run build`)
-- [x] 9.3 Testy jednostkowe przechodzą (`npm test`)
-- [x] 9.4 E2E przechodzi na zimnym starcie (`npm run e2e`)
+- [x] 9.1 Lint przechodzi (`npm run lint`) — 4060d5f
+- [x] 9.2 Build przechodzi (`npm run build`) — 4060d5f
+- [x] 9.3 Testy jednostkowe przechodzą (`npm test`) — 4060d5f
+- [x] 9.4 E2E przechodzi na zimnym starcie (`npm run e2e`) — 4060d5f
 
 #### Ręczne
 
-- [ ] 9.5 Rząd Aktywne|Nowe|W toku|Zakończone|Anulowane|Kosz; brak paska „STAN"
-- [ ] 9.6 Podświetlana dokładnie jedna pozycja (Aktywne ≠ Nowe/W toku)
-- [ ] 9.7 Nowe/W toku nawigują i zawężają; reszta bez zmian; oba motywy
+- [x] 9.5 Rząd Aktywne|Nowe|W toku|Zakończone|Anulowane|Kosz; brak paska „STAN"
+- [x] 9.6 Podświetlana dokładnie jedna pozycja (Aktywne ≠ Nowe/W toku)
+- [x] 9.7 Nowe/W toku nawigują i zawężają; reszta bez zmian; oba motywy
