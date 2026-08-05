@@ -1,7 +1,7 @@
 ---
 change_id: ui-redesign
 title: Nowa szata graficzna (wariant techniczny) + powłoka nawigacyjna
-status: implementing
+status: implemented
 created: 2026-08-03
 updated: 2026-08-05
 archived_at: null
