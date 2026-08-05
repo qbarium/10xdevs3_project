@@ -41,7 +41,7 @@ if (user && supabase) {
 }
 ---
 
-<AppLayout title="Wpisy" subtitle="Jednolita lista zaakceptowanych wpisów">
+<AppLayout title="Wpisy" subtitle="Jednolita lista zaakceptowanych wpisów" fill>
   <TopbarItemSearch slot="search" client:load initialQuery={criteria.q} />
   <TopbarItemAction slot="actions" client:load action="add" />
   <AcceptedItemsView

@@ -301,62 +301,33 @@ export default function AcceptedItemsView({
   });
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex min-h-0 flex-1 flex-col">
       <Toaster />
 
-      {/* Oś stanu strony „Wpisy" (S-15 Faza 3): zakładki zakresu (pełna nawigacja) + podfiltr „active"
-          (kliencki re-fetch — parytet dawnych pigułek: reset strony + czyszczenie zaznaczenia). Nawigacja
-          nie znika przy pustym widoku. Toolbar (filtr typu + sort) niżej; szukajka i „Dodaj wpis" w topbarze. */}
-      <StateFilterSelect
-        view={view}
-        type={criteria.type}
-        opstatus={criteria.opstatus}
-        onSelectActiveSubfilter={(opstatus) => {
-          applyCriteria(resetToFirstPage({ ...criteria, opstatus }));
-        }}
-      />
+      {/* NIERUCHOMY pasek (S-15 follow-up): oś stanu (zakładki + podfiltr „active"), filtr typu/sort oraz
+          pasek zbiorczy — poza obszarem przewijania; przewija się WYŁĄCZNIE lista (własny scroll box niżej). */}
+      <div className="flex shrink-0 flex-col gap-3 px-6 pt-6 pb-3">
+        <StateFilterSelect
+          view={view}
+          type={criteria.type}
+          opstatus={criteria.opstatus}
+          onSelectActiveSubfilter={(opstatus) => {
+            applyCriteria(resetToFirstPage({ ...criteria, opstatus }));
+          }}
+        />
 
-      <ListFilterBar
-        criteria={criteria}
-        onChange={(next) => {
-          // Zmiana filtra/sortu → strona 1 (zakres wyników się zmienia; strona N mogłaby nie istnieć —
-          // offset za końcem to błąd PGRST103).
-          applyCriteria(resetToFirstPage(next));
-        }}
-        error={error}
-        onRetry={retry}
-      />
+        <ListFilterBar
+          criteria={criteria}
+          onChange={(next) => {
+            // Zmiana filtra/sortu → strona 1 (zakres wyników się zmienia; strona N mogłaby nie istnieć —
+            // offset za końcem to błąd PGRST103).
+            applyCriteria(resetToFirstPage(next));
+          }}
+          error={error}
+          onRetry={retry}
+        />
 
-      {items.length === 0 ? (
-        filtersActive ? (
-          <div
-            role="status"
-            className="border-border bg-card text-muted-foreground flex flex-col items-center gap-3 rounded-[5px] border px-4 py-6 text-center text-sm"
-          >
-            <span>Brak elementów dla wybranych filtrów.</span>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                // Czyść filtry/sort (i wróć na stronę 1), ale ZACHOWAJ rozmiar strony — preferencja widoku.
-                // Zsynchronizuj też input szukajki w topbarze (fraza wyzerowana).
-                applyCriteria({ ...defaultCriteria(view), size: criteria.size });
-                dispatchItemSearch("", "list");
-              }}
-            >
-              Wyczyść filtry
-            </Button>
-          </div>
-        ) : (
-          <div
-            role="status"
-            className="border-border bg-card text-muted-foreground rounded-[5px] border px-4 py-6 text-center text-sm"
-          >
-            {EMPTY_LABEL[view]}
-          </div>
-        )
-      ) : (
-        <>
+        {items.length > 0 && (
           <div className="border-border bg-muted flex flex-wrap items-center gap-3 rounded-[5px] border px-4 py-3">
             <label className="text-foreground flex items-center gap-2 text-sm">
               <Checkbox
@@ -384,40 +355,74 @@ export default function AcceptedItemsView({
                   {operationalStatusLabel(target)}
                 </Button>
               ))}
-              {/* „Do kosza" (S-06) — ten sam outline co 4 przyciski stanu (czytelny też w disabled);
-                  odróżnia go etykieta i pozycja. Czerwień zarezerwowana dla „Wyczyść kosz" (trwałe). */}
+              {/* „Do kosza" (S-06) — ten sam outline co 4 przyciski stanu. */}
               <Button size="sm" variant="outline" disabled={selectedCount === 0 || pending} onClick={requestTrash}>
                 Do kosza
               </Button>
             </div>
           </div>
+        )}
+      </div>
 
-          {items.map((item) => (
-            <ItemCard
-              key={item.id}
-              item={item}
-              badges={{ operational: true }}
-              selectable
-              selected={selected.has(item.id)}
-              onToggleSelect={() => {
-                toggleItem(item.id);
-              }}
-              inFlight={inFlightIds.has(item.id)}
-              actionsDisabled={pending}
-              onEdit={setEditing}
-              onTrash={(it) => {
-                // Per-item „Do kosza" (S-06) — akcja bezpośrednia na jednym itemie, bez dialogu.
-                void execute({ kind: "trash", ids: [it.id] });
-              }}
-            />
-          ))}
-        </>
-      )}
+      {/* Lista — JEDYNY obszar przewijania (scroll ograniczony do listy; treść przycięta do jej ramki). */}
+      <div className="min-h-0 flex-1 overflow-y-auto px-6">
+        {items.length === 0 ? (
+          filtersActive ? (
+            <div
+              role="status"
+              className="border-border bg-card text-muted-foreground flex flex-col items-center gap-3 rounded-[5px] border px-4 py-6 text-center text-sm"
+            >
+              <span>Brak elementów dla wybranych filtrów.</span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  // Czyść filtry/sort (i wróć na stronę 1), ale ZACHOWAJ rozmiar strony — preferencja widoku.
+                  // Zsynchronizuj też input szukajki w topbarze (fraza wyzerowana).
+                  applyCriteria({ ...defaultCriteria(view), size: criteria.size });
+                  dispatchItemSearch("", "list");
+                }}
+              >
+                Wyczyść filtry
+              </Button>
+            </div>
+          ) : (
+            <div
+              role="status"
+              className="border-border bg-card text-muted-foreground rounded-[5px] border px-4 py-6 text-center text-sm"
+            >
+              {EMPTY_LABEL[view]}
+            </div>
+          )
+        ) : (
+          <div className="flex flex-col gap-3">
+            {items.map((item) => (
+              <ItemCard
+                key={item.id}
+                item={item}
+                badges={{ operational: true }}
+                selectable
+                selected={selected.has(item.id)}
+                onToggleSelect={() => {
+                  toggleItem(item.id);
+                }}
+                inFlight={inFlightIds.has(item.id)}
+                actionsDisabled={pending}
+                onEdit={setEditing}
+                onTrash={(it) => {
+                  // Per-item „Do kosza" (S-06) — akcja bezpośrednia na jednym itemie, bez dialogu.
+                  void execute({ kind: "trash", ids: [it.id] });
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Kontrolki stron (S-13 F2, parytet z dziennikiem): rozmiar strony (trwała preferencja + reset do 1)
           i nawigacja stron (zachowuje filtry z wyświetlanej listy). Zmiana czyści zaznaczenie (applyCriteria —
           invariant „selected ⊆ widoczne"). Pagination sama znika przy jednej stronie. */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 px-6 pt-3 pb-6">
         <PageSizeSelect
           value={criteria.size}
           sizes={ITEM_PAGE_SIZES}

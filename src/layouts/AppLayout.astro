@@ -13,8 +13,12 @@ import { getKeyStatus } from "@/lib/services/profile-key";
 interface Props {
   title: string;
   subtitle?: string;
+  /** Gdy true: panel treści jest sztywnym kontenerem (bez własnego scrolla i paddingu) — przewijanie oraz
+      padding bierze na siebie widok (np. lista z własnym scroll boxem: nieruchomy pasek + przewijana lista).
+      Domyślnie panel przewija się w całości z paddingiem — dla prostych stron (ingest/profil). */
+  fill?: boolean;
 }
-const { title, subtitle } = Astro.props;
+const { title, subtitle, fill = false } = Astro.props;
 const { user } = Astro.locals;
 const theme = parseTheme(Astro.cookies.get(THEME_COOKIE)?.value);
 const pathname = Astro.url.pathname;
@@ -54,7 +58,7 @@ if (user && supabase) {
       keyConfigured={keyConfigured}
       userEmail={user?.email ?? null}
     />
-    <div class="flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden">
+    <div class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
       <header
         class="bg-background border-sidebar-border sticky top-0 z-10 flex items-center gap-3.5 border-b px-6 py-4"
       >
@@ -67,7 +71,7 @@ if (user && supabase) {
         <slot name="actions" />
         <ThemeToggle client:load initialTheme={theme} />
       </header>
-      <main class="min-h-0 flex-1 overflow-y-auto px-6 py-6">
+      <main class:list={["min-h-0 flex-1", fill ? "flex flex-col overflow-hidden" : "overflow-y-auto px-6 py-6"]}>
         <slot />
       </main>
     </div>

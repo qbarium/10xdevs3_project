@@ -89,11 +89,17 @@ const pageTitle = sessionMode ? "Wpisy sesji importu" : "Do akceptacji";
 const pageSubtitle = sessionMode ? undefined : "Wpisy czekające na Twoją decyzję";
 ---
 
-<AppLayout title={pageTitle} subtitle={pageSubtitle}>
+<AppLayout title={pageTitle} subtitle={pageSubtitle} fill>
   {/* Szukajka w topbarze — tylko poza trybem sesji (tryb sesji nie oferuje filtrowania). */}
   {!sessionMode && <TopbarItemSearch slot="search" client:load initialQuery={criteria.q} />}
-  <div class="flex flex-col gap-6">
-    {sessionMode && <SessionBanner meta={sessionMeta} />}
+  <div class="flex min-h-0 flex-1 flex-col gap-6">
+    {
+      sessionMode && (
+        <div class="shrink-0 px-6 pt-6">
+          <SessionBanner meta={sessionMeta} />
+        </div>
+      )
+    }
     {
       sessionMode ? (
         sessionMeta && (
