@@ -8,7 +8,7 @@ import Icon from "@/components/shell/Icon.astro";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { parseTheme, THEME_COOKIE } from "@/lib/theme";
 
-// Motyw rozwiązany serwerowo (jak w AppLayout/Topbar) → wyspa przełącznika dostaje poprawny stan
+// Motyw rozwiązany serwerowo (jak w AppLayout) → wyspa przełącznika dostaje poprawny stan
 // początkowy propem, bez odwróconego aria-label do czasu hydracji.
 const theme = parseTheme(Astro.cookies.get(THEME_COOKIE)?.value);
 

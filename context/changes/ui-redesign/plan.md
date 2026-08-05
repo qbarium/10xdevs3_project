@@ -596,11 +596,11 @@ Domknięcie: resztkowe zaszyte kolory, usunięcie martwych założeń „tylko c
 
 #### Automatyczne
 
-- [ ] 8.1 Lint przechodzi (`npm run lint`)
-- [ ] 8.2 Build przechodzi (`npm run build`)
-- [ ] 8.3 Testy jednostkowe przechodzą (`npm test`)
-- [ ] 8.4 E2E przechodzi na zimnym starcie bez `--force` (`npm run e2e`)
-- [ ] 8.5 Grep za zaszytymi kolorami zwraca zero (lub udokumentowane wyjątki)
+- [x] 8.1 Lint przechodzi (`npm run lint`)
+- [x] 8.2 Build przechodzi (`npm run build`)
+- [x] 8.3 Testy jednostkowe przechodzą (`npm test`)
+- [x] 8.4 E2E przechodzi na zimnym starcie bez `--force` (`npm run e2e`)
+- [x] 8.5 Grep za zaszytymi kolorami zwraca zero (lub udokumentowane wyjątki)
 
 #### Ręczne
 

@@ -1,8 +1,8 @@
 // Czysta logika osi stanu strony „Wpisy". Wydzielona z komponentu prezentacyjnego, by była testowalna w node
 // (bez DOM) — wzorzec `operational-view.ts` / `type-filter.ts`. Po Fazie 3 `StateFilterSelect` renderuje oś jako
 // ZAKŁADKI zakresu (`<a href>` z `navigateHref`) + przyciski podfiltra rodziny „active" (kliencki re-fetch) —
-// nie jako `Select`. Historyczne `resolveStateSelection`/`stateSelectLabel` (wariant `Select`) są już nieużywane
-// w produkcji — do usunięcia w Fazie 8 „Sprzątanie" (przegląd F3).
+// nie jako `Select`. Wariant `Select` (`resolveStateSelection`/`stateSelectLabel`/`StateSelection`) usunięty
+// jako martwy kod w Fazie 8 „Sprzątanie" (przegląd F3).
 //
 // Model 6 pozycji w kolejności cyklu życia (zgodnej z `BULK_TARGETS`): „Wszystko aktywne / Nowe / W toku"
 // (rodzina „active" — ten sam widok `active`, różny `opstatus`) + „Zakończone / Anulowane / Kosz" (rodzina
@@ -51,15 +51,6 @@ export const STATE_FILTER_OPTIONS: readonly StateFilterOption[] = [
 ];
 
 /**
- * Werdykt wyboru pozycji: albo kliencki podfiltr (re-fetch bez zmiany strony — TYLKO gdy `ctx.view === "active"`
- * i wybrano pozycję z rodziny „active"), albo pełna nawigacja na stronę widoku (`href`). Rozłączny — Faza 2
- * rozgałęzia się po `kind`.
- */
-export type StateSelection =
-  | { kind: "subfilter"; opstatus: OperationalStatus | undefined } // tylko gdy ctx.view === "active"
-  | { kind: "navigate"; href: string }; //                          pozostałe przypadki
-
-/**
  * Buduje adres nawigacji na stronę `view`, niosąc aktywny filtr rodzaju (`type`) oraz — dla nawigacji na
  * `active` — `opstatus`. Reużywa `criteriaToQuery` na domyślnych kryteriach widoku: dzięki temu emitowane są
  * WYŁĄCZNIE pola różne od domyślnych (czysty, krótki URL), a reguła „opstatus tylko dla active" jest
@@ -68,23 +59,6 @@ export type StateSelection =
 export function navigateHref(view: MainView, type: TypeFilterValue, opstatus: OperationalStatus | undefined): string {
   const qs = criteriaToQuery({ ...defaultCriteria(view), type, opstatus });
   return qs ? `/items/${view}?${qs}` : `/items/${view}`;
-}
-
-/**
- * Mapuje wybraną wartość `Select` na akcję w kontekście bieżącej strony (`ctx.view`) i filtra rodzaju
- * (`ctx.type`). Gałąź klienckiego podfiltra zachodzi WYŁĄCZNIE, gdy pozycja należy do rodziny „active" ORAZ
- * jesteśmy już na `active` — wtedy zawężamy `opstatus` bez przeładowania. Każda inna kombinacja (pozycja „nav"
- * z dowolnej strony ORAZ pozycja „active" z innej strony) to pełna nawigacja. Nieznana wartość (nieosiągalna —
- * `Select` emituje tylko nasze `value`) → bezpieczna nawigacja na bieżący widok.
- */
-export function resolveStateSelection(value: string, ctx: { view: MainView; type: TypeFilterValue }): StateSelection {
-  const option = STATE_FILTER_OPTIONS.find((o) => o.value === value) ?? null;
-  const targetView = option?.view ?? ctx.view;
-  const opstatus = option?.opstatus;
-  if (targetView === "active" && ctx.view === "active") {
-    return { kind: "subfilter", opstatus };
-  }
-  return { kind: "navigate", href: navigateHref(targetView, ctx.type, opstatus) };
 }
 
 /**
@@ -98,9 +72,4 @@ export function stateSelectValue(view: MainView, opstatus: OperationalStatus | u
     return "active";
   }
   return view;
-}
-
-/** Etykieta zaznaczonej pozycji (do jawnego renderu w triggerze — SSR bez mignięcia). */
-export function stateSelectLabel(value: string): string | undefined {
-  return STATE_FILTER_OPTIONS.find((o) => o.value === value)?.label;
 }
