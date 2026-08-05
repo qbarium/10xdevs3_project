@@ -1,8 +1,11 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import Icon from "@/components/shell/Icon.astro";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { parseTheme, THEME_COOKIE } from "@/lib/theme";
 
 const isAutoConfirmed = import.meta.env.DEV;
+const theme = parseTheme(Astro.cookies.get(THEME_COOKIE)?.value);
 
 const content = isAutoConfirmed
   ? {
@@ -20,7 +23,10 @@ const content = isAutoConfirmed
 ---
 
 <Layout title={content.heading}>
-  <div class="bg-background text-foreground flex min-h-screen items-center justify-center p-4">
+  <div class="bg-background text-foreground relative flex min-h-screen items-center justify-center p-4">
+    <div class="absolute top-4 right-4">
+      <ThemeToggle client:load initialTheme={theme} />
+    </div>
     <div class="w-full max-w-sm">
       <a href="/" class="mb-5 flex items-center justify-center gap-2.5" aria-label="TaskerLight — strona główna">
         <span

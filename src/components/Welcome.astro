@@ -5,6 +5,12 @@
 // — używa `Layout`, nie `AppLayout`, i ma własny, minimalny pasek nawigacji (marka + Zaloguj/Zarejestruj).
 // Chipy typów odwzorowują język makiety (te same tokeny per typ co reszta aplikacji).
 import Icon from "@/components/shell/Icon.astro";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { parseTheme, THEME_COOKIE } from "@/lib/theme";
+
+// Motyw rozwiązany serwerowo (jak w AppLayout/Topbar) → wyspa przełącznika dostaje poprawny stan
+// początkowy propem, bez odwróconego aria-label do czasu hydracji.
+const theme = parseTheme(Astro.cookies.get(THEME_COOKIE)?.value);
 
 // Typy wpisów jako wizualny motyw produktu — te same nazwy (labels.ts) i tokeny per typ co lista wpisów.
 const TYPE_CHIPS = [
@@ -44,6 +50,7 @@ const outlineBtn =
       >
         Zarejestruj się
       </a>
+      <ThemeToggle client:load initialTheme={theme} />
     </nav>
   </header>
 
