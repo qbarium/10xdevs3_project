@@ -6,12 +6,22 @@ import { parseTheme, THEME_COOKIE } from "@/lib/theme";
 
 interface Props {
   title?: string;
+  /** Strony z powłoką pełnoekranową (AppLayout): opakuj baner + treść we wspólną kolumnę `h-screen` z
+      wewnętrznym scrollem, by treść brała wysokość PO ewentualnym banerze (F1). Landing/auth: false →
+      naturalny flow (wrapper znika przez `display:contents`). */
+  fullHeight?: boolean;
 }
 
-const { title = "10x Astro Starter" } = Astro.props;
+const { title = "10x Astro Starter", fullHeight = false } = Astro.props;
 // Motyw czytany serwerowo z cookie → `<html>` dostaje klasę `.dark` + `color-scheme` od pierwszego
 // bajtu (no-flash). Wyspa `ThemeToggle` flipuje klasę i zapisuje cookie po stronie klienta.
 const theme = parseTheme(Astro.cookies.get(THEME_COOKIE)?.value);
+
+// Szew testowy (E2E, F1): w trybie dev, gdy test ustawi ciasteczko `e2e_config_banner=1`, wymuś pasek
+// konfiguracji, by zweryfikować układ powłoki z banerem NAD nią (baner jest inaczej nieosiągalny u
+// zalogowanego użytkownika: jedyny realny to brak Supabase → redirect na signin). `import.meta.env.DEV`
+// zdejmuje ten kod z builda produkcyjnego (martwy w prod).
+const forceConfigBanner = import.meta.env.DEV && Astro.cookies.get("e2e_config_banner")?.value === "1";
 ---
 
 <!doctype html>
@@ -23,23 +33,32 @@ const theme = parseTheme(Astro.cookies.get(THEME_COOKIE)?.value);
     <title>{title}</title>
   </head>
   <body>
-    {
-      missingConfigs.map((cfg) => (
-        <Banner variant="error">
-          <strong>Uwaga:</strong> {cfg.message}
-          {cfg.docsUrl && (
-            <>
-              {" "}
-              <a href={cfg.docsUrl} target="_blank" rel="noopener noreferrer">
-                {cfg.docsLabel ?? "Dokumentacja"}
-              </a>
-              .
-            </>
-          )}
-        </Banner>
-      ))
-    }
-    <slot />
+    <div class:list={fullHeight ? "flex h-screen flex-col overflow-hidden" : "contents"}>
+      {
+        missingConfigs.map((cfg) => (
+          <Banner variant="error">
+            <strong>Uwaga:</strong> {cfg.message}
+            {cfg.docsUrl && (
+              <>
+                {" "}
+                <a href={cfg.docsUrl} target="_blank" rel="noopener noreferrer">
+                  {cfg.docsLabel ?? "Dokumentacja"}
+                </a>
+                .
+              </>
+            )}
+          </Banner>
+        ))
+      }
+      {
+        forceConfigBanner && (
+          <Banner variant="warning">
+            <strong>Uwaga (test E2E):</strong> Wymuszony pasek konfiguracji.
+          </Banner>
+        )
+      }
+      <slot />
+    </div>
   </body>
 </html>
 

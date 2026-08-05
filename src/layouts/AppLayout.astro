@@ -50,8 +50,8 @@ if (user && supabase) {
 }
 ---
 
-<Layout title={title}>
-  <div class="flex h-screen overflow-hidden">
+<Layout title={title} fullHeight>
+  <div class="flex min-h-0 flex-1 overflow-hidden">
     <AppSidebar
       pathname={pathname}
       pendingCount={pendingCount}
