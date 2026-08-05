@@ -21,8 +21,9 @@ Kotwice (przeżywają `/clear`):
 - Board: Issue #177 (kolumna In Progress)
 - Nośnik pracy: gałąź `feature/ui-redesign`, jeden PR na końcu (bez merge per faza)
 
-## Weryfikacja (ustalenie użytkownika, 2026-08-04)
+## Weryfikacja (ustalenia użytkownika, 2026-08-04; aktualizacja 2026-08-05)
 
 - **E2E / weryfikację funkcjonalną każdej fazy robi agent SAM przez Playwright CLI** — nie odsyła listy kroków użytkownikowi do ręcznego klikania.
-- **Testy ręczne** (wizualny przegląd w obu motywach, wszystkie widoki) — **dopiero na KOŃCU całej zmiany**, jednym przejściem (nie per faza). Do tego czasu wiersze „Ręczne" w `## Postęp` pozostają nieodhaczone.
+- **Weryfikację wizualną każdej fazy też robi agent — przez Playwright** (aktualizacja 2026-08-05; zastępuje wcześniejsze „przegląd wizualny dopiero na końcu, wiersze nieodhaczone"). Po zaimplementowaniu fazy agent uruchamia Playwright, robi zrzuty dotkniętych widoków w OBU motywach, sprawdza brak pozostałości starego stylu (`bg-cosmic`/starfield/gradienty) i czytelność stanów — i na tej podstawie **odhacza wiersze „Ręczne" tej fazy** w `## Postęp` (osobny commit `chore(...): odhaczenie testów wizualnych Fazy N (Playwright)`).
+- **Całościowe testy manualne** (człowiek, pełne przejście wszystkich widoków w obu motywach) — **niezależnie, po zakończeniu całego slice**. To dodatkowa warstwa pewności, nie warunek odhaczenia wierszy fazy.
 - **Commity faz i przejścia między fazami — agent decyduje SAM, bez pytania** (2026-08-04). Bez bramki „zatwierdź wiadomość commita" i bez pytań „następna faza / wyczyść / przegląd". `git push` / PR / merge nadal wymagają jawnej komendy użytkownika (ścieżka prod).
