@@ -1,22 +1,29 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import SignInForm from "@/components/auth/SignInForm";
+import Icon from "@/components/shell/Icon.astro";
 
 const error = Astro.url.searchParams.get("error");
 ---
 
 <Layout title="Logowanie">
-  <div class="bg-cosmic flex min-h-screen items-center justify-center p-4">
-    <div class="w-full max-w-sm rounded-2xl border border-white/10 bg-white/10 p-8 text-white backdrop-blur-xl">
-      <h1
-        class="mb-6 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-center text-2xl font-bold text-transparent"
-      >
-        Logowanie
-      </h1>
-      <SignInForm serverError={error} client:load />
-      <p class="mt-4 text-center text-sm text-blue-100/60">
-        Nie masz konta? <a href="/auth/signup" class="text-purple-300 hover:underline">Zarejestruj się</a>
-      </p>
+  <div class="bg-background text-foreground flex min-h-screen items-center justify-center p-4">
+    <div class="w-full max-w-sm">
+      <a href="/" class="mb-5 flex items-center justify-center gap-2.5" aria-label="TaskerLight — strona główna">
+        <span
+          class="bg-primary text-primary-foreground flex size-[26px] shrink-0 items-center justify-center rounded-[4px]"
+        >
+          <Icon icon="layers" size={15} />
+        </span>
+        <span class="text-[15px] font-semibold tracking-tight">TaskerLight</span>
+      </a>
+      <div class="bg-card text-card-foreground rounded-xl border p-8 shadow-sm">
+        <h1 class="mb-6 text-center text-2xl font-semibold tracking-tight">Logowanie</h1>
+        <SignInForm serverError={error} client:load />
+        <p class="text-muted-foreground mt-4 text-center text-sm">
+          Nie masz konta? <a href="/auth/signup" class="text-foreground font-medium hover:underline">Zarejestruj się</a>
+        </p>
+      </div>
     </div>
   </div>
 </Layout>

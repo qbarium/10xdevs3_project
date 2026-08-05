@@ -1,61 +1,74 @@
 ---
 // Strona startowa TaskerLight (dla niezalogowanych — zalogowany jest przekierowywany do Skrzynki
-// wejściowej w index.astro). Hero z nazwą produktu i sloganem opartym na wizji z PRD („decyzja
-// «co to jest» przesuwa się z momentu zapisu do momentu przeglądu") + akcje logowania/rejestracji.
-// Kosmiczne tło (orbs + gwiazdy) odziedziczone po starterze; kafle marketingowe startera usunięte.
-import Topbar from "@/components/Topbar.astro";
+// wejściowej w index.astro). Wariant „techniczny": tokeny motywu (jasny/ciemny), typografia IBM Plex,
+// bez „cosmic"/starfield/gradientów odziedziczonych po starterze. Landing jest POZA powłoką (bez sidebara)
+// — używa `Layout`, nie `AppLayout`, i ma własny, minimalny pasek nawigacji (marka + Zaloguj/Zarejestruj).
+// Chipy typów odwzorowują język makiety (te same tokeny per typ co reszta aplikacji).
+import Icon from "@/components/shell/Icon.astro";
+
+// Typy wpisów jako wizualny motyw produktu — te same nazwy (labels.ts) i tokeny per typ co lista wpisów.
+const TYPE_CHIPS = [
+  { label: "Zadanie", cls: "bg-task-bg text-task-fg" },
+  { label: "Notatka", cls: "bg-note-bg text-note-fg" },
+  { label: "Pomysł", cls: "bg-idea-bg text-idea-fg" },
+  { label: "Decyzja", cls: "bg-decision-bg text-decision-fg" },
+  { label: "Inne", cls: "bg-other-bg text-other-fg" },
+];
+
+const primaryBtn =
+  "inline-flex items-center justify-center rounded-[6px] bg-primary px-6 py-3 text-base font-medium text-primary-foreground transition-opacity hover:opacity-90";
+const outlineBtn =
+  "border-border text-foreground hover:bg-accent hover:text-accent-foreground inline-flex items-center justify-center rounded-[6px] border px-6 py-3 text-base font-medium transition-colors";
 ---
 
-<div class="bg-cosmic relative min-h-screen w-full overflow-hidden">
-  <!-- Cosmic orbs -->
-  <div
-    class="pointer-events-none absolute top-1/4 -left-24 h-[350px] w-[350px] rounded-full bg-purple-500/20 blur-[120px]"
-  >
-  </div>
-  <div
-    class="pointer-events-none absolute top-2/3 -right-16 h-[250px] w-[250px] rounded-full bg-blue-500/15 blur-[100px]"
-  >
-  </div>
-  <div
-    class="pointer-events-none absolute top-0 left-1/2 h-[300px] w-[300px] -translate-x-1/2 rounded-full bg-indigo-400/10 blur-[140px]"
-  >
-  </div>
-
-  <!-- Star field -->
-  <div
-    class="pointer-events-none absolute inset-0"
-    style="background-image: radial-gradient(circle, rgba(255,255,255,0.15) 1px, transparent 1px), radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px), radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px); background-size: 200px 200px, 150px 150px, 100px 100px; background-position: 0 0, 40px 60px, 80px 30px;"
-  >
-  </div>
-
-  <div class="relative z-10 p-4 sm:p-8">
-    <Topbar />
-
-    <!-- Hero -->
-    <div class="mx-auto flex max-w-4xl flex-col items-center justify-center px-4 py-24 text-center sm:py-32 lg:py-40">
-      <h1
-        class="mb-6 bg-gradient-to-r from-blue-200 via-purple-200 to-pink-200 bg-clip-text text-5xl leading-tight font-bold text-transparent sm:text-6xl lg:text-7xl"
+<div class="bg-background text-foreground flex min-h-screen flex-col">
+  <header class="border-border flex items-center justify-between border-b px-6 py-4">
+    <a href="/" class="flex items-center gap-2.5" aria-label="TaskerLight — strona główna">
+      <span
+        class="bg-primary text-primary-foreground flex size-[26px] shrink-0 items-center justify-center rounded-[4px]"
       >
-        TaskerLight
-      </h1>
-      <p class="mb-10 max-w-2xl text-lg text-blue-100/70 sm:text-xl">
-        Wrzucasz surowy strumień myśli — odbierasz uporządkowane wpisy: zadania, notatki, pomysły i decyzje.
-        Klasyfikacją zajmuje się AI, decyzja zawsze należy do Ciebie.
-      </p>
-      <div class="flex flex-col gap-4 sm:flex-row">
-        <a
-          href="/auth/signin"
-          class="inline-flex items-center justify-center rounded-lg bg-purple-600 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-purple-500"
-        >
-          Zaloguj się
-        </a>
-        <a
-          href="/auth/signup"
-          class="inline-flex items-center justify-center rounded-lg border border-white/20 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-white/10"
-        >
-          Zarejestruj się
-        </a>
-      </div>
+        <Icon icon="layers" size={15} />
+      </span>
+      <span class="text-[15px] font-semibold tracking-tight">TaskerLight</span>
+    </a>
+    <nav class="flex items-center gap-2">
+      <a
+        href="/auth/signin"
+        class="text-muted-foreground hover:text-foreground rounded-[5px] px-3 py-2 text-sm font-medium transition-colors"
+      >
+        Zaloguj się
+      </a>
+      <a
+        href="/auth/signup"
+        class="border-border text-foreground hover:bg-accent hover:text-accent-foreground rounded-[5px] border px-3.5 py-2 text-sm font-medium transition-colors"
+      >
+        Zarejestruj się
+      </a>
+    </nav>
+  </header>
+
+  <main class="flex flex-1 flex-col items-center justify-center px-4 py-20 text-center sm:py-28">
+    <div class="mb-7 flex flex-wrap items-center justify-center gap-1.5">
+      {
+        TYPE_CHIPS.map((t) => (
+          <span class:list={`${t.cls} rounded-[3px] px-2 py-0.5 text-[10px] font-semibold tracking-[0.06em] uppercase`}>
+            {t.label}
+          </span>
+        ))
+      }
     </div>
-  </div>
+
+    <h1 class="text-foreground mb-5 max-w-3xl text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
+      TaskerLight
+    </h1>
+    <p class="text-muted-foreground mb-9 max-w-2xl text-lg leading-relaxed">
+      Wrzucasz surowy strumień myśli — odbierasz uporządkowane wpisy: zadania, notatki, pomysły i decyzje. Klasyfikacją
+      zajmuje się AI, decyzja zawsze należy do Ciebie.
+    </p>
+
+    <div class="flex flex-col gap-3 sm:flex-row">
+      <a href="/auth/signin" class:list={primaryBtn}>Zaloguj się</a>
+      <a href="/auth/signup" class:list={outlineBtn}>Zarejestruj się</a>
+    </div>
+  </main>
 </div>

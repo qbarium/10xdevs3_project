@@ -1,5 +1,6 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import Icon from "@/components/shell/Icon.astro";
 
 const isAutoConfirmed = import.meta.env.DEV;
 
@@ -19,18 +20,24 @@ const content = isAutoConfirmed
 ---
 
 <Layout title={content.heading}>
-  <div class="bg-cosmic flex min-h-screen items-center justify-center p-4">
-    <div
-      class="w-full max-w-sm rounded-2xl border border-white/10 bg-white/10 p-8 text-center text-white backdrop-blur-xl"
-    >
-      <div class="mb-4 text-5xl">{content.emoji}</div>
-      <h1 class="mb-3 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-2xl font-bold text-transparent">
-        {content.heading}
-      </h1>
-      <p class="mb-6 text-blue-100/80">{content.description}</p>
-      <a href="/auth/signin" class="text-sm text-purple-300 hover:underline">
-        {content.linkText}
+  <div class="bg-background text-foreground flex min-h-screen items-center justify-center p-4">
+    <div class="w-full max-w-sm">
+      <a href="/" class="mb-5 flex items-center justify-center gap-2.5" aria-label="TaskerLight — strona główna">
+        <span
+          class="bg-primary text-primary-foreground flex size-[26px] shrink-0 items-center justify-center rounded-[4px]"
+        >
+          <Icon icon="layers" size={15} />
+        </span>
+        <span class="text-[15px] font-semibold tracking-tight">TaskerLight</span>
       </a>
+      <div class="bg-card text-card-foreground rounded-xl border p-8 text-center shadow-sm">
+        <div class="mb-4 text-5xl">{content.emoji}</div>
+        <h1 class="mb-3 text-2xl font-semibold tracking-tight">{content.heading}</h1>
+        <p class="text-muted-foreground mb-6">{content.description}</p>
+        <a href="/auth/signin" class="text-foreground text-sm font-medium hover:underline">
+          {content.linkText}
+        </a>
+      </div>
     </div>
   </div>
 </Layout>
