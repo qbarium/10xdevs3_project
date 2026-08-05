@@ -1,9 +1,10 @@
 ---
 // Karta powitalna BYOK (US-06; zastępuje MissingKeyBanner — decyzja użytkownika 2026-07-02): PIERWSZY
 // ekran każdego świeżego użytkownika (rejestracja → /ingest bez klucza), więc zamiast ostrzegawczego
-// paska — wyśrodkowana, zachęcająca karta w motywie cosmic: co to jest BYOK, jak chronimy klucz
-// (szyfrowanie F-01), jaki model obsługujemy (żywa wartość z konfiguracji, nie hardcode) i dwie akcje.
-// Render warunkowy należy do strony wołającej (Skrzynka wejściowa pokazuje kartę tylko gdy `!configured`).
+// paska — wyśrodkowana, zachęcająca karta (tokeny motywu, oba warianty; rodzeństwo prymitywu Card ze
+// Skrzynki): co to jest BYOK, jak chronimy klucz (szyfrowanie F-01), jaki model obsługujemy (żywa
+// wartość z konfiguracji, nie hardcode) i dwie akcje. Render warunkowy należy do strony wołającej
+// (Skrzynka wejściowa pokazuje kartę tylko gdy `!configured`).
 
 interface Props {
   keysUrl: string;
@@ -18,10 +19,8 @@ const { keysUrl, providerName, model } = Astro.props;
 <!-- Zwarte odstępy (p-6, gap-3, leading-snug): karta + nagłówek strony mieszczą się na laptopie
      bez pionowego scrolla (ta sama zasada co formularz wsadu — decyzja użytkownika 2026-07-02). -->
 <section class="mx-auto w-full max-w-2xl">
-  <div class="rounded-2xl border border-white/10 bg-white/5 p-6 text-center backdrop-blur-xl sm:p-8">
-    <div
-      class="mx-auto mb-4 flex size-12 items-center justify-center rounded-full border border-purple-300/30 bg-purple-400/15"
-    >
+  <div class="bg-card text-card-foreground rounded-xl border p-6 text-center shadow-sm sm:p-8">
+    <div class="bg-muted border-border mx-auto mb-4 flex size-12 items-center justify-center rounded-full border">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="24"
@@ -32,7 +31,7 @@ const { keysUrl, providerName, model } = Astro.props;
         stroke-width="2"
         stroke-linecap="round"
         stroke-linejoin="round"
-        class="text-purple-200"
+        class="text-foreground"
       >
         <path
           d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"
@@ -41,10 +40,8 @@ const { keysUrl, providerName, model } = Astro.props;
       </svg>
     </div>
 
-    <h2 class="mb-2 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-xl font-bold text-transparent">
-      Zacznij od własnego klucza API
-    </h2>
-    <p class="mx-auto mb-5 max-w-lg text-sm leading-snug text-blue-100/70">
+    <h2 class="text-foreground mb-2 text-xl font-bold">Zacznij od własnego klucza API</h2>
+    <p class="text-muted-foreground mx-auto mb-5 max-w-lg text-sm leading-snug">
       TaskerLight działa w modelu BYOK (<span class="italic">bring your own key</span>): klasyfikację Twoich myśli
       wykonuje model AI uruchamiany na Twoim własnym kluczu {providerName} — bez pośredników i bez abonamentu.
     </p>
@@ -61,15 +58,15 @@ const { keysUrl, providerName, model } = Astro.props;
           stroke-width="2"
           stroke-linecap="round"
           stroke-linejoin="round"
-          class="mt-0.5 shrink-0 text-emerald-300/80"
+          class="text-note-fg mt-0.5 shrink-0"
         >
           <path
             d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
           ></path>
           <path d="m9 12 2 2 4-4"></path>
         </svg>
-        <p class="text-sm leading-snug text-blue-100/70">
-          <span class="font-medium text-white/90">Klucz jest nie do wyciągnięcia.</span>
+        <p class="text-muted-foreground text-sm leading-snug">
+          <span class="text-foreground font-medium">Klucz jest nie do wyciągnięcia.</span>
           Natychmiast po zapisaniu szyfrujemy go mocnym szyfrowaniem (AES-256-GCM) i przechowujemy wyłącznie zaszyfrowaną
           kopertę — nie da się go podejrzeć ani wyświetlić ponownie.
         </p>
@@ -85,7 +82,7 @@ const { keysUrl, providerName, model } = Astro.props;
           stroke-width="2"
           stroke-linecap="round"
           stroke-linejoin="round"
-          class="mt-0.5 shrink-0 text-emerald-300/80"
+          class="text-note-fg mt-0.5 shrink-0"
         >
           <path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"
           ></path>
@@ -93,8 +90,8 @@ const { keysUrl, providerName, model } = Astro.props;
           <path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"></path>
           <path d="m2 2 20 20"></path>
         </svg>
-        <p class="text-sm leading-snug text-blue-100/70">
-          <span class="font-medium text-white/90">Nigdy nie trafia do logów.</span>
+        <p class="text-muted-foreground text-sm leading-snug">
+          <span class="text-foreground font-medium">Nigdy nie trafia do logów.</span>
           Komunikaty błędów, dziennik zdarzeń ani telemetria nie zawierają nawet fragmentu klucza.
         </p>
       </li>
@@ -109,7 +106,7 @@ const { keysUrl, providerName, model } = Astro.props;
           stroke-width="2"
           stroke-linecap="round"
           stroke-linejoin="round"
-          class="mt-0.5 shrink-0 text-purple-300/80"
+          class="text-muted-foreground mt-0.5 shrink-0"
         >
           <rect width="16" height="16" x="4" y="4" rx="2"></rect>
           <rect width="6" height="6" x="9" y="9" rx="1"></rect>
@@ -122,10 +119,10 @@ const { keysUrl, providerName, model } = Astro.props;
           <path d="M9 2v2"></path>
           <path d="M9 20v2"></path>
         </svg>
-        <p class="text-sm leading-snug text-blue-100/70">
-          <span class="font-medium text-white/90">Obsługujemy modele {providerName}.</span>
+        <p class="text-muted-foreground text-sm leading-snug">
+          <span class="text-foreground font-medium">Obsługujemy modele {providerName}.</span>
           Aktualnie skonfigurowany model klasyfikacji:
-          <code class="rounded bg-white/10 px-1.5 py-0.5 text-xs text-purple-100">{model}</code>.
+          <code class="bg-muted text-foreground rounded px-1.5 py-0.5 font-mono text-xs">{model}</code>.
         </p>
       </li>
     </ul>
@@ -135,18 +132,18 @@ const { keysUrl, providerName, model } = Astro.props;
         href={keysUrl}
         target="_blank"
         rel="noopener noreferrer"
-        class="inline-flex items-center justify-center rounded-lg border border-white/20 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10"
+        class="border-border text-foreground hover:bg-accent hover:text-accent-foreground inline-flex items-center justify-center rounded-md border px-5 py-2 text-sm font-medium transition-colors"
       >
         1. Wygeneruj klucz w {providerName} ↗
       </a>
       <a
         href="/profile"
-        class="inline-flex items-center justify-center rounded-lg bg-purple-600 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-500"
+        class="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center rounded-md px-5 py-2 text-sm font-medium transition-colors"
       >
         2. Zapisz klucz w profilu
       </a>
     </div>
-    <p class="mt-4 text-xs text-blue-100/50">
+    <p class="text-muted-foreground mt-4 text-xs">
       Po zapisaniu klucza wróć tutaj — wkleisz pierwszy wsad i zobaczysz, jak zamienia się w uporządkowane wpisy.
     </p>
   </div>

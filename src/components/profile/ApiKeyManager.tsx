@@ -57,7 +57,7 @@ export default function ApiKeyManager({ initialStatus }: Props) {
             <div className="bg-muted/40 flex flex-col gap-1 rounded-lg border px-4 py-3">
               <span className="text-muted-foreground text-xs">Skonfigurowany klucz</span>
               <span className="flex items-center gap-2 font-mono text-sm">
-                <ShieldCheck className="size-4 text-emerald-600" />
+                <ShieldCheck className="text-note-fg size-4" />
                 {status.hint ?? "•••"}
               </span>
               {status.updatedAt && (

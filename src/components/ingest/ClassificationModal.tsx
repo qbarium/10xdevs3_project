@@ -93,7 +93,7 @@ export function ClassificationModal({ state, itemCount, errorCode, onRetry, onCl
               </DialogDescription>
             </DialogHeader>
             <div className="flex justify-center py-4">
-              <Loader2 className="size-8 animate-spin text-purple-400" />
+              <Loader2 className="text-foreground size-8 animate-spin" />
             </div>
           </>
         )}

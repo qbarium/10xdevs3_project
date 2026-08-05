@@ -94,11 +94,11 @@ export default function IngestForm({ initialKeyStatus }: Props) {
             className="field-sizing-fixed h-[clamp(6rem,22vh,14rem)] resize-none overflow-y-auto font-mono text-sm"
           />
           <div className="flex flex-col">
-            <span className={cn("text-xs", atLimit ? "text-amber-400" : "text-muted-foreground")}>
+            <span className={cn("text-xs", atLimit ? "text-destructive" : "text-muted-foreground")}>
               {text.length.toLocaleString("pl-PL")} / {INPUT_MAX_CHARS.toLocaleString("pl-PL")} znaków
             </span>
             {text.length > 0 && tooShort && (
-              <span className="text-xs text-amber-400">Wpisz co najmniej {MIN_INPUT_CHARS} znaków</span>
+              <span className="text-destructive text-xs">Wpisz co najmniej {MIN_INPUT_CHARS} znaków</span>
             )}
           </div>
 
