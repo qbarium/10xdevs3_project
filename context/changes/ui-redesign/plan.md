@@ -139,6 +139,8 @@ Zbudowanie trwałej powłoki na bloku shadcn `sidebar` i wpięcie jej w 8 chroni
 
 **Redukcja zakresu (aneks 2026-08-04).** Sterowane, utrwalane w cookie zwijanie sidebara oraz mobilny off-canvas drawer NIE powstały — powłoka Astro-only daje automatyczną szynę ikon 64 px przy ≤920 px (bez przełącznika i persistencji). Świadomie zaakceptowane jako wystarczające dla MVP; ew. utwardzenie (cookie-collapse / drawer) odrzucone jako UX-nicety poza rdzeniem.
 
+**Aneks (2026-08-06, follow-up `4b0405e` — odnotowane w przeglądzie Fazy 9).** Pozycja „Dziennik" (disabled, tag „wkrótce") została później **usunięta** z sidebara jako martwy placeholder — bez trasy i bez odpowiadającej funkcji w PRD/roadmapie. Kryterium ręczne 2.7 pozostaje odhaczone (element istniał i działał w Fazie 2); usunięcie to świadomy follow-up, nie regresja zakresu.
+
 #### 3. Wpięcie w strony + prymityw badge
 
 **Plik**: `src/pages/{ingest,profile,import-sessions,items}.astro`, `src/pages/items/{active,done,cancelled,trash}.astro`, nowy `src/components/ui/badge.tsx`
