@@ -511,11 +511,11 @@ Domknięcie: resztkowe zaszyte kolory, usunięcie martwych założeń „tylko c
 
 #### Ręczne
 
-- [ ] 2.5 Sidebar + topbar na wszystkich 8 stronach; nawigacja działa
-- [ ] 2.6 Aktywny stan: `/items` vs `/items/active` rozróżnione
-- [ ] 2.7 „Dziennik" nieaktywny z tagiem „wkrótce"
-- [ ] 2.8 Zwijanie na wąskim ekranie; konto + wylogowanie działają
-- [ ] 2.9 Przełącznik motywu działa z topbara
+- [x] 2.5 Sidebar + topbar na wszystkich 8 stronach; nawigacja działa
+- [x] 2.6 Aktywny stan: `/items` vs `/items/active` rozróżnione
+- [x] 2.7 „Dziennik" nieaktywny z tagiem „wkrótce"
+- [x] 2.8 Zwijanie na wąskim ekranie; konto + wylogowanie działają
+- [x] 2.9 Przełącznik motywu działa z topbara
 
 ### Faza 3: Wpisy — lista, zakładki, karta (+ dialogi)
 
@@ -528,11 +528,11 @@ Domknięcie: resztkowe zaszyte kolory, usunięcie martwych założeń „tylko c
 
 #### Ręczne
 
-- [ ] 3.5 Lista Wpisów zgodna z makietą w obu motywach
-- [ ] 3.6 Zakładki zakresu nawigują i podświetlają aktywny
-- [ ] 3.7 Filtr typu, sortowanie, szukajka, paginacja działają
-- [ ] 3.8 Item po akceptacji/„Zrobione" znika z listy (reconcile)
-- [ ] 3.9 Wiersz: data utworzenia + modyfikacji (monospace), brak ID sesji, badge stanu na wpisach accepted ze stanem operacyjnym (po S-04 — nie tylko zadania)
+- [x] 3.5 Lista Wpisów zgodna z makietą w obu motywach
+- [x] 3.6 Zakładki zakresu nawigują i podświetlają aktywny
+- [x] 3.7 Filtr typu, sortowanie, szukajka, paginacja działają
+- [x] 3.8 Item po akceptacji/„Zrobione" znika z listy (reconcile)
+- [x] 3.9 Wiersz: data utworzenia + modyfikacji (monospace), brak ID sesji, badge stanu na wpisach accepted ze stanem operacyjnym (po S-04 — nie tylko zadania)
 
 ### Faza 4: Do akceptacji (triage)
 
@@ -545,10 +545,10 @@ Domknięcie: resztkowe zaszyte kolory, usunięcie martwych założeń „tylko c
 
 #### Ręczne
 
-- [ ] 4.5 Widok „Do akceptacji" zgodny z makietą w obu motywach
-- [ ] 4.6 Zaznaczanie i akcje (pojedyncze + zbiorcze) działają
-- [ ] 4.7 Brak „pewności %" nigdzie w widoku
-- [ ] 4.8 Item po Zatwierdź/Odrzuć znika z listy
+- [x] 4.5 Widok „Do akceptacji" zgodny z makietą w obu motywach
+- [x] 4.6 Zaznaczanie i akcje (pojedyncze + zbiorcze) działają
+- [x] 4.7 Brak „pewności %" nigdzie w widoku
+- [x] 4.8 Item po Zatwierdź/Odrzuć znika z listy
 
 ### Faza 5: Skrzynka + klasyfikacja + Profil/BYOK
 
@@ -561,9 +561,9 @@ Domknięcie: resztkowe zaszyte kolory, usunięcie martwych założeń „tylko c
 
 #### Ręczne
 
-- [ ] 5.5 Skrzynka, modal (4 stany) i Profil zgodne z makietą w obu motywach
-- [ ] 5.6 Klasyfikacja kończy się przejściem do „Do akceptacji"
-- [ ] 5.7 Brama BYOK i zapis klucza działają
+- [x] 5.5 Skrzynka, modal (4 stany) i Profil zgodne z makietą w obu motywach
+- [x] 5.6 Klasyfikacja kończy się przejściem do „Do akceptacji"
+- [x] 5.7 Brama BYOK i zapis klucza działają
 
 ### Faza 6: Sesje importu + tryb „Pokaż wpisy"
 
@@ -575,9 +575,9 @@ Domknięcie: resztkowe zaszyte kolory, usunięcie martwych założeń „tylko c
 
 #### Ręczne
 
-- [ ] 6.4 Lista sesji (statusy, akcje, pager) zgodna z makietą w obu motywach
-- [ ] 6.5 „Pokaż wpisy" wchodzi w tryb sesji; powrót działa
-- [ ] 6.6 „Ponów" tylko dla sesji z niepowodzeniem
+- [x] 6.4 Lista sesji (statusy, akcje, pager) zgodna z makietą w obu motywach
+- [x] 6.5 „Pokaż wpisy" wchodzi w tryb sesji; powrót działa
+- [x] 6.6 „Ponów" tylko dla sesji z niepowodzeniem
 
 ### Faza 7: Landing + auth (pełny restyle)
 
