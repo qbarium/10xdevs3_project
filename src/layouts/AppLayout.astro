@@ -47,14 +47,14 @@ if (user && supabase) {
 ---
 
 <Layout title={title}>
-  <div class="flex min-h-screen">
+  <div class="flex h-screen overflow-hidden">
     <AppSidebar
       pathname={pathname}
       pendingCount={pendingCount}
       keyConfigured={keyConfigured}
       userEmail={user?.email ?? null}
     />
-    <div class="flex min-w-0 flex-1 flex-col">
+    <div class="flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden">
       <header
         class="bg-background border-sidebar-border sticky top-0 z-10 flex items-center gap-3.5 border-b px-6 py-4"
       >
@@ -67,7 +67,7 @@ if (user && supabase) {
         <slot name="actions" />
         <ThemeToggle client:load initialTheme={theme} />
       </header>
-      <main class="flex-1 px-6 py-6">
+      <main class="min-h-0 flex-1 overflow-y-auto px-6 py-6">
         <slot />
       </main>
     </div>
