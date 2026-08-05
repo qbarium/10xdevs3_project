@@ -441,6 +441,50 @@ Domknięcie: resztkowe zaszyte kolory, usunięcie martwych założeń „tylko c
 
 ---
 
+## Faza 9: Konsolidacja osi stanu — płaski rząd zakładek (bez paska „STAN")
+
+### Przegląd
+
+Scalić podfiltr operacyjny „STAN" (Nowe / W toku) w główny rząd zakładek zakresu, tuż po „Aktywne", i **usunąć osobny pasek „STAN"**. Wszystkie pozycje działają jednolicie — jako **pełna nawigacja** (`<a href>`), tak jak dziś Zakończone/Anulowane/Kosz (koniec z klienckim re-fetchem podfiltra). Docelowy rząd: **Aktywne | Nowe | W toku | Zakończone | Anulowane | Kosz** (kolejność wg cyklu życia). Zmiana czysto prezentacyjna — trasy, model kryteriów i parsowanie `opstatus` bez zmian (strona `active` już czyta `?opstatus`). Decyzja użytkownika: pełne przeładowanie dla jednolitości; podświetlana dokładnie jedna, wybrana pozycja.
+
+### Wymagane zmiany
+
+#### 1. Rząd zakładek zakresu jako płaska oś stanu
+
+**Plik**: `src/components/items/StateFilterSelect.tsx`, `src/components/items/state-filter.ts` (reużycie modelu)
+
+**Cel**: Zamiast „4 zakładki + osobny pasek STAN" — jeden rząd 6 pozycji-linków; usunąć pasek podfiltra.
+
+**Kontrakt**: 6 pozycji z `STATE_FILTER_OPTIONS` renderowanych jako `<a href>` przez `navigateHref(view, type, opstatus)` — Nowe/W toku wskazują `/items/active?opstatus=new|in_progress`. Pozycja „Wszystko aktywne" wyświetlana na zakładce jako **„Aktywne"** (etykieta prezentacyjna; model i `state-filter.test.ts` bez zmian). Podświetlenie **wyłączne**, liczone z pary (widok + `opstatus`): „Aktywne" aktywne tylko gdy `view==="active"` i **brak** `opstatus`; „Nowe"/„W toku" wg `opstatus`; pozostałe wg `view`.
+
+#### 2. Usunięcie osieroconego podfiltra klienckiego
+
+**Plik**: `src/components/items/StateFilterSelect.tsx`, `src/components/items/AcceptedItemsView.tsx`
+
+**Cel**: Po przejściu na nawigację kliencki podfiltr (`onSelectActiveSubfilter`, `ACTIVE_SUBFILTERS`, gałąź re-fetch bez przeładowania) jest martwy — usunąć.
+
+**Kontrakt**: Usunąć prop `onSelectActiveSubfilter` ze `StateFilterSelect` i jego przekazanie/handler w `AcceptedItemsView`. Zachowanie serwerowe (zmiana `opstatus` przez adres URL) bez zmian. `TrashItemsView` bez zmian (nie przekazywał podfiltra).
+
+### Kryteria sukcesu
+
+#### Weryfikacja automatyczna
+
+- Lint przechodzi: `npm run lint`
+- Build przechodzi: `npm run build`
+- Testy jednostkowe przechodzą: `npm test` (w tym `state-filter.test` bez modyfikacji)
+- E2E przechodzi na zimnym starcie: `npm run e2e`
+
+#### Weryfikacja ręczna
+
+- Rząd zakładek: Aktywne | Nowe | W toku | Zakończone | Anulowane | Kosz; brak osobnego paska „STAN".
+- Podświetlana dokładnie jedna pozycja; „Aktywne" nie świeci razem z Nowe/W toku.
+- Nowe/W toku nawigują na `/items/active?opstatus=…` i zawężają listę; Zakończone/Anulowane/Kosz jak dotąd.
+- Zgodność w obu motywach.
+
+**Uwaga implementacyjna**: Zmiana prezentacyjna; trasy i model kryteriów bez zmian. Po edycji `.tsx` uruchom `npm run lint`. Osobny commit (jak dotychczasowe follow-upy), rewersowalny.
+
+---
+
 ## Strategia testowania
 
 ### Testy jednostkowe
@@ -607,3 +651,18 @@ Domknięcie: resztkowe zaszyte kolory, usunięcie martwych założeń „tylko c
 - [x] 8.6 Każdy widok przejrzany w obu motywach — zgodny z makietą
 - [x] 8.7 Brak „wyspy starego stylu"; `bg-cosmic` usunięty
 - [x] 8.8 Przełącznik motywu działa wszędzie bez mignięcia
+
+### Faza 9: Konsolidacja osi stanu (płaski rząd zakładek)
+
+#### Automatyczne
+
+- [ ] 9.1 Lint przechodzi (`npm run lint`)
+- [ ] 9.2 Build przechodzi (`npm run build`)
+- [ ] 9.3 Testy jednostkowe przechodzą (`npm test`)
+- [ ] 9.4 E2E przechodzi na zimnym starcie (`npm run e2e`)
+
+#### Ręczne
+
+- [ ] 9.5 Rząd Aktywne|Nowe|W toku|Zakończone|Anulowane|Kosz; brak paska „STAN"
+- [ ] 9.6 Podświetlana dokładnie jedna pozycja (Aktywne ≠ Nowe/W toku)
+- [ ] 9.7 Nowe/W toku nawigują i zawężają; reszta bez zmian; oba motywy
