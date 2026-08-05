@@ -589,8 +589,8 @@ Domknięcie: resztkowe zaszyte kolory, usunięcie martwych założeń „tylko c
 
 #### Ręczne
 
-- [ ] 7.4 Landing i auth zgodne z językiem makiety w obu motywach; brak „cosmic"/starfield
-- [ ] 7.5 Logowanie, rejestracja, potwierdzenie e-mail działają; stany błędu czytelne
+- [x] 7.4 Landing i auth zgodne z językiem makiety w obu motywach; brak „cosmic"/starfield
+- [x] 7.5 Logowanie, rejestracja, potwierdzenie e-mail działają; stany błędu czytelne
 
 ### Faza 8: Sprzątanie + weryfikacja końcowa
 
