@@ -36,7 +36,7 @@ function ErrorBanner({ error, onRetry }: { error: string | null; onRetry: () => 
 }
 
 // Toolbar filtrów dodatkowych (S-09 Faza 5; S-15 Faza 3): segmentowy filtr typu (po lewej) + sort (po prawej).
-// Oś stanu strony „Wpisy" (zakładki zakresu + podfiltr „active") obsługuje osobny `StateFilterSelect` nad
+// Oś stanu strony „Wpisy" (płaski rząd zakładek stanu) obsługuje osobny `StateFilterSelect` nad
 // toolbarem; szukajka i akcja główna żyją w topbarze powłoki. Kontrolki KONTROLOWANE przez `criteria`; każda
 // zmiana idzie przez jeden `onChange` (rodzic czyści zaznaczenie i re-fetchuje). Bez wskaźnika ładowania (dane
 // małe/lokalne; swap listy jest płynny) — zostaje baner błędu z „Ponów" zsynchronizowany ze stanem hooka.

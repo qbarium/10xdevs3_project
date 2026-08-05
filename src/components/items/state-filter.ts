@@ -1,15 +1,15 @@
 // Czysta logika osi stanu strony „Wpisy". Wydzielona z komponentu prezentacyjnego, by była testowalna w node
-// (bez DOM) — wzorzec `operational-view.ts` / `type-filter.ts`. Po Fazie 3 `StateFilterSelect` renderuje oś jako
-// ZAKŁADKI zakresu (`<a href>` z `navigateHref`) + przyciski podfiltra rodziny „active" (kliencki re-fetch) —
-// nie jako `Select`. Wariant `Select` (`resolveStateSelection`/`stateSelectLabel`/`StateSelection`) usunięty
-// jako martwy kod w Fazie 8 „Sprzątanie" (przegląd F3).
+// (bez DOM) — wzorzec `operational-view.ts` / `type-filter.ts`. Po Fazie 9 `StateFilterSelect` renderuje oś jako
+// JEDEN płaski rząd 6 zakładek-linków (`<a href>` z `navigateHref`) — bez klienckiego podfiltra. (Wariant
+// `Select` — `resolveStateSelection`/`stateSelectLabel`/`StateSelection` — usunięty jako martwy kod w Fazie 8;
+// kliencki podfiltr rodziny „active" — w Fazie 9.)
 //
 // Model 6 pozycji w kolejności cyklu życia (zgodnej z `BULK_TARGETS`): „Wszystko aktywne / Nowe / W toku"
-// (rodzina „active" — ten sam widok `active`, różny `opstatus`) + „Zakończone / Anulowane / Kosz" (rodzina
-// „nav" — osobne widoki-ścieżki). Konwencja bazy (patrz `list-criteria`): „który zbiór
-// oglądam" = ŚCIEŻKA strony (nawigacja), „jak go zawężam" = parametr URL (kliencki re-fetch). Stąd
-// heterogeniczny wybór: pozycja aktywna gdy JUŻ jesteśmy na `active` = kliencki podfiltr (`opstatus`);
-// każda inna kombinacja = pełna nawigacja na stronę widoku.
+// (rodzina „active" — ten sam widok `active`, różny `opstatus`) + „Zakończone / Anulowane / Kosz" (osobne
+// widoki-ścieżki). Konwencja bazy (patrz `list-criteria`): „który zbiór oglądam" = ŚCIEŻKA strony, „jak go
+// zawężam" = parametr URL. Po konsolidacji Fazy 9 KAŻDA pozycja to pełna nawigacja: „Nowe"/„W toku" wskazują
+// `/items/active?opstatus=…` (nie kliencki re-fetch), więc oś jest jednorodna, a podświetlenie liczy się
+// z pary (widok + `opstatus`) przez `stateSelectValue`.
 
 import type { TypeFilterValue } from "@/components/items/type-filter";
 import { operationalStatusLabel } from "@/lib/labels";

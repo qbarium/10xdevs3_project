@@ -656,10 +656,10 @@ Scalić podfiltr operacyjny „STAN" (Nowe / W toku) w główny rząd zakładek 
 
 #### Automatyczne
 
-- [ ] 9.1 Lint przechodzi (`npm run lint`)
-- [ ] 9.2 Build przechodzi (`npm run build`)
-- [ ] 9.3 Testy jednostkowe przechodzą (`npm test`)
-- [ ] 9.4 E2E przechodzi na zimnym starcie (`npm run e2e`)
+- [x] 9.1 Lint przechodzi (`npm run lint`)
+- [x] 9.2 Build przechodzi (`npm run build`)
+- [x] 9.3 Testy jednostkowe przechodzą (`npm test`)
+- [x] 9.4 E2E przechodzi na zimnym starcie (`npm run e2e`)
 
 #### Ręczne
 

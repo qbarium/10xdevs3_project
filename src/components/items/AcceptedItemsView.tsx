@@ -314,14 +314,7 @@ export default function AcceptedItemsView({
       {/* NIERUCHOMY pasek (S-15 follow-up): oś stanu (zakładki + podfiltr „active"), filtr typu/sort oraz
           pasek zbiorczy — poza obszarem przewijania; przewija się WYŁĄCZNIE lista (własny scroll box niżej). */}
       <div className="flex shrink-0 flex-col gap-3 px-6 pt-6 pb-3">
-        <StateFilterSelect
-          view={view}
-          type={criteria.type}
-          opstatus={criteria.opstatus}
-          onSelectActiveSubfilter={(opstatus) => {
-            applyCriteria(resetToFirstPage({ ...criteria, opstatus }));
-          }}
-        />
+        <StateFilterSelect view={view} type={criteria.type} opstatus={criteria.opstatus} />
 
         <ListFilterBar
           criteria={criteria}
