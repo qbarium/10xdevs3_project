@@ -97,15 +97,6 @@ const label = "flex-1 truncate max-[920px]:hidden";
       <Icon icon="history" size={17} class="shrink-0" />
       <span class:list={[label]}>Sesje importu</span>
     </a>
-    <span class:list={[navLayout, "text-sidebar-foreground/40 cursor-default"]} aria-disabled="true">
-      <Icon icon="book" size={17} class="shrink-0" />
-      <span class:list={[label]}>Dziennik</span>
-      <span
-        class="border-sidebar-border text-sidebar-foreground/50 rounded-[5px] border px-1.5 py-0.5 text-[9.5px] font-semibold tracking-wide uppercase max-[920px]:hidden"
-      >
-        wkrótce
-      </span>
-    </span>
   </div>
 
   <div class="border-sidebar-border mt-auto flex flex-col gap-0.5 border-t pt-2">
@@ -119,7 +110,7 @@ const label = "flex-1 truncate max-[920px]:hidden";
       <span class:list={[label]}>Ustawienia</span>
     </a>
     <form method="POST" action="/api/auth/signout">
-      <button type="submit" class:list={[navLayout, navIdle, "w-full"]} aria-label="Wyloguj się">
+      <button type="submit" class:list={[navLayout, navIdle, "w-full text-left"]} aria-label="Wyloguj się">
         <Icon icon="log-out" size={17} class="shrink-0" />
         <span class:list={[label]}>Wyloguj się</span>
       </button>
