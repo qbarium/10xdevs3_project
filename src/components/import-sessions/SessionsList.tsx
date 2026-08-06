@@ -24,13 +24,13 @@ export function SessionsList({
     return hasActiveFilters ? (
       <div
         role="status"
-        className="flex flex-col items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70"
+        className="border-border bg-card text-muted-foreground flex flex-col items-center gap-3 rounded-[5px] border px-4 py-6 text-center text-sm"
       >
         Brak sesji dla wybranych filtrów.
         <button
           type="button"
           onClick={onClearFilters}
-          className="rounded-lg border border-purple-300/30 bg-purple-400/10 px-3 py-1.5 text-sm font-medium text-purple-100 transition-colors hover:bg-purple-400/20"
+          className="border-border text-foreground hover:bg-accent hover:text-accent-foreground rounded-[5px] border px-3 py-1.5 text-sm font-medium transition-colors"
         >
           Wyczyść filtry
         </button>
@@ -38,7 +38,7 @@ export function SessionsList({
     ) : (
       <div
         role="status"
-        className="rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70"
+        className="border-border bg-card text-muted-foreground rounded-[5px] border px-4 py-6 text-center text-sm"
       >
         Brak sesji importu. Zaimportuj wsad, aby zobaczyć je tutaj.
       </div>

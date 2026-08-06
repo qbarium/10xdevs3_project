@@ -3,6 +3,8 @@ import { toast } from "sonner";
 
 import { useItemList } from "@/components/hooks/useItemList";
 import { useItemMutation } from "@/components/hooks/useItemMutation";
+import { useItemTopbarBridge } from "@/components/hooks/useItemTopbarBridge";
+import { dispatchItemSearch } from "@/components/items/item-topbar-events";
 import StateFilterSelect from "@/components/items/StateFilterSelect";
 import ItemCard, { ITEM_CHECKBOX_CLASS } from "@/components/items/ItemCard";
 import ListFilterBar from "@/components/items/ListFilterBar";
@@ -83,6 +85,17 @@ export default function TrashItemsView({ initialItems, initialCriteria, initialT
   // Synchroniczny zamek re-entry (jak AcceptedItemsView): stan aktualizuje się po re-renderze, ref od razu.
   const inFlightRef = useRef(false);
   const { restoreFromTrash, emptyTrash, pending } = useItemMutation();
+
+  // Mostek do topbara powłoki (S-15 Faza 3): fraza z topbara przez `applyCriteria` (debounce hooka +
+  // czyszczenie zaznaczenia); „Wyczyść kosz" z topbara otwiera potwierdzenie (destrukcyjny twardy DELETE).
+  useItemTopbarBridge({
+    onSearch: (q) => {
+      applyCriteria(resetToFirstPage({ ...criteria, q }));
+    },
+    onPrimaryAction: (action) => {
+      if (action === "empty-trash") setConfirmEmpty(true);
+    },
+  });
 
   // Lista renderowana = `items` z hooka (już zawężone serwerowo wg `criteria`). Zaznaczanie i licznik operują
   // na tej liście; invariant „selected ⊆ widoczne" utrzymuje czyszczenie selekcji przy zmianie filtra.
@@ -191,68 +204,29 @@ export default function TrashItemsView({ initialItems, initialCriteria, initialT
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex min-h-0 flex-1 flex-col">
       <Toaster />
 
-      {/* Pasek filtrów ZAWSZE widoczny: niesie jedną kontrolkę osi stanu strony „Wpisy" (StateFilterSelect —
-          6 pozycji cyklu życia; zastąpił parę [lista widoku + pigułki podfiltra]) — nawigacja nie może znikać
-          przy pustym koszu. W Koszu pozycje aktywne rozwiązują się do pełnej nawigacji, więc bez `opstatus`
-          i bez klienckiego podfiltra. */}
-      <ListFilterBar
-        criteria={criteria}
-        onChange={(next) => {
-          // Zmiana filtra/sortu/frazy → strona 1 (zakres wyników się zmienia; strona N mogłaby nie istnieć —
-          // offset za końcem to błąd PGRST103). Wzorzec dziennika (S-11). Reset nie psuje debounce frazy:
-          // isSearchOnlyChange ignoruje `page`.
-          applyCriteria(resetToFirstPage(next));
-        }}
-        error={error}
-        onRetry={retry}
-        leading={<StateFilterSelect view="trash" type={criteria.type} opstatus={undefined} />}
-      >
-        <Button
-          size="sm"
-          variant="destructive"
-          disabled={pending}
-          onClick={() => {
-            setConfirmEmpty(true);
-          }}
-        >
-          Wyczyść kosz
-        </Button>
-      </ListFilterBar>
+      {/* NIERUCHOMY pasek (S-15 follow-up): zakładki zakresu, pasek filtrów oraz pasek zbiorczy — poza
+          obszarem przewijania; przewija się WYŁĄCZNIE lista (własny scroll box niżej). */}
+      <div className="flex shrink-0 flex-col gap-3 px-6 pt-6 pb-3">
+        {/* Zakładki zakresu (S-15 Faza 3): Kosz aktywny; pełna nawigacja na inne widoki (niosą filtr typu).
+            Bez podfiltra „active" (to nie widok Aktywne). Szukajka i „Wyczyść kosz" żyją w topbarze powłoki. */}
+        <StateFilterSelect view="trash" type={criteria.type} opstatus={undefined} />
 
-      {items.length === 0 ? (
-        filtersActive ? (
-          <div
-            role="status"
-            className="flex flex-col items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70"
-          >
-            <span>Brak elementów dla wybranych filtrów.</span>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                // Czyść filtry/sort (i wróć na stronę 1), ale ZACHOWAJ rozmiar strony — preferencja widoku.
-                applyCriteria({ ...defaultCriteria("trash"), size: criteria.size });
-              }}
-              className="border-white/15 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white"
-            >
-              Wyczyść filtry
-            </Button>
-          </div>
-        ) : (
-          <div
-            role="status"
-            className="rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70"
-          >
-            Kosz jest pusty.
-          </div>
-        )
-      ) : (
-        <>
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-            <label className="flex items-center gap-2 text-sm text-white/80">
+        <ListFilterBar
+          criteria={criteria}
+          onChange={(next) => {
+            // Zmiana filtra/sortu → strona 1 (offset za końcem to błąd PGRST103).
+            applyCriteria(resetToFirstPage(next));
+          }}
+          error={error}
+          onRetry={retry}
+        />
+
+        {items.length > 0 && (
+          <div className="border-border bg-muted flex flex-wrap items-center gap-3 rounded-[5px] border px-4 py-3">
+            <label className="text-foreground flex items-center gap-2 text-sm">
               <Checkbox
                 checked={allSelected ? true : selectedCount > 0 ? "indeterminate" : false}
                 onCheckedChange={toggleAll}
@@ -261,7 +235,7 @@ export default function TrashItemsView({ initialItems, initialCriteria, initialT
               />
               Zaznacz wszystkie
             </label>
-            <span className="text-sm text-white/50">
+            <span className="text-muted-foreground text-sm">
               {selectedCount > 0 ? `Zaznaczono: ${selectedCount}` : `${items.length} ${elementNoun(items.length)}`}
             </span>
             <div className="ml-auto flex flex-wrap gap-2">
@@ -270,31 +244,66 @@ export default function TrashItemsView({ initialItems, initialCriteria, initialT
               </Button>
             </div>
           </div>
+        )}
+      </div>
 
-          {items.map((item) => (
-            <ItemCard
-              key={item.id}
-              item={item}
-              badges={{ origin: true }}
-              selectable
-              selected={selected.has(item.id)}
-              onToggleSelect={() => {
-                toggleItem(item.id);
-              }}
-              inFlight={inFlightIds.has(item.id)}
-              actionsDisabled={pending}
-              onRestore={(it) => {
-                void executeRestore([it.id]);
-              }}
-            />
-          ))}
-        </>
-      )}
+      {/* Lista — JEDYNY obszar przewijania (scroll ograniczony do listy; treść przycięta do jej ramki). */}
+      <div className="min-h-0 flex-1 overflow-y-auto px-6">
+        {items.length === 0 ? (
+          filtersActive ? (
+            <div
+              role="status"
+              className="border-border bg-card text-muted-foreground flex flex-col items-center gap-3 rounded-[5px] border px-4 py-6 text-center text-sm"
+            >
+              <span>Brak elementów dla wybranych filtrów.</span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  // Czyść filtry/sort (i wróć na stronę 1), ale ZACHOWAJ rozmiar strony — preferencja widoku.
+                  // Zsynchronizuj też input szukajki w topbarze (fraza wyzerowana).
+                  applyCriteria({ ...defaultCriteria("trash"), size: criteria.size });
+                  dispatchItemSearch("", "list");
+                }}
+              >
+                Wyczyść filtry
+              </Button>
+            </div>
+          ) : (
+            <div
+              role="status"
+              className="border-border bg-card text-muted-foreground rounded-[5px] border px-4 py-6 text-center text-sm"
+            >
+              Kosz jest pusty.
+            </div>
+          )
+        ) : (
+          <div className="flex flex-col gap-3">
+            {items.map((item) => (
+              <ItemCard
+                key={item.id}
+                item={item}
+                badges={{ origin: true }}
+                selectable
+                selected={selected.has(item.id)}
+                onToggleSelect={() => {
+                  toggleItem(item.id);
+                }}
+                inFlight={inFlightIds.has(item.id)}
+                actionsDisabled={pending}
+                onRestore={(it) => {
+                  void executeRestore([it.id]);
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Kontrolki stron (S-13 F2, parytet z dziennikiem): rozmiar strony (trwała preferencja + reset do 1)
           i nawigacja stron (zachowuje filtry z wyświetlanej listy). Zmiana czyści zaznaczenie (applyCriteria —
           invariant „selected ⊆ widoczne"). Pagination sama znika przy jednej stronie. */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 px-6 pt-3 pb-6">
         <PageSizeSelect
           value={criteria.size}
           sizes={ITEM_PAGE_SIZES}

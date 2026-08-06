@@ -6,37 +6,25 @@ interface Props {
 }
 
 const { variant = "info" } = Astro.props;
+
+// Warianty na semantycznych tokenach (świadome motywu, zero zaszytego hex — Faza 8):
+//   info    → rodzina niebieska „task" (jedyna niebieska rodzina tokenów; sygnał „informacja"),
+//   warning → token ostrzegawczy `--warning-fg` (bursztyn),
+//   error   → `--destructive` (czerwień shadcn).
+// Tło jako półprzezroczysty odcień koloru wariantu, by czytelnie leżeć na tle w obu motywach.
+const VARIANT_CLASSES: Record<Variant, string> = {
+  info: "border-task-line bg-task-bg text-task-fg",
+  warning: "border-warning-fg/60 bg-warning-fg/10 text-warning-fg",
+  error: "border-destructive/60 bg-destructive/10 text-destructive",
+};
 ---
 
-<div class:list={["banner", `banner--${variant}`]} role={variant === "error" ? "alert" : "status"}>
+<div
+  class:list={[
+    "border-b px-4 py-3 text-center text-sm [&_a]:font-semibold [&_a]:text-current [&_a]:underline",
+    VARIANT_CLASSES[variant],
+  ]}
+  role={variant === "error" ? "alert" : "status"}
+>
   <slot />
 </div>
-
-<style>
-  .banner {
-    padding: 0.75rem 1rem;
-    font-size: 0.875rem;
-    text-align: center;
-    border-bottom: 1px solid;
-  }
-  .banner :global(a) {
-    color: inherit;
-    text-decoration: underline;
-    font-weight: 600;
-  }
-  .banner--info {
-    background: #dbeafe;
-    color: #1e3a8a;
-    border-color: #3b82f6;
-  }
-  .banner--warning {
-    background: #fef3c7;
-    color: #78350f;
-    border-color: #f59e0b;
-  }
-  .banner--error {
-    background: #fee2e2;
-    color: #7f1d1d;
-    border-color: #dc2626;
-  }
-</style>

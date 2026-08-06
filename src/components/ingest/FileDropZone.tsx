@@ -89,7 +89,7 @@ export function FileDropZone({ selectedFile, onFile, disabled = false }: Props) 
     return (
       <div className="border-input bg-muted/30 flex items-center justify-between gap-3 rounded-md border px-3 py-2">
         <div className="flex min-w-0 items-center gap-2">
-          <FileText className="size-4 shrink-0 text-purple-400" />
+          <FileText className="text-muted-foreground size-4 shrink-0" />
           <span className="truncate text-sm" title={selectedFile.name}>
             {selectedFile.name}
           </span>
@@ -120,7 +120,7 @@ export function FileDropZone({ selectedFile, onFile, disabled = false }: Props) 
           // Jeden WIERSZ (ikona + tekst + przycisk, flex-wrap na wąskich ekranach) zamiast pionowej kolumny
           // — formularz wsadu mieści się na laptopie bez przewijania (decyzja użytkownika 2026-07-02).
           "flex flex-wrap items-center justify-center gap-3 rounded-md border border-dashed px-4 py-3 text-center transition-colors",
-          dragActive ? "border-purple-400 bg-purple-400/5" : "border-input",
+          dragActive ? "border-ring bg-accent" : "border-input",
           disabled && "pointer-events-none opacity-50",
         )}
       >

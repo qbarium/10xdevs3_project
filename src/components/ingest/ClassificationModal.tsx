@@ -58,7 +58,7 @@ function RedirectCountdown() {
       clearInterval(id);
     };
   }, []);
-  return <DialogDescription>Przenosimy Cię do walidacji za {countdown} s…</DialogDescription>;
+  return <DialogDescription>Przenosimy Cię do akceptacji za {countdown} s…</DialogDescription>;
 }
 
 export function ClassificationModal({ state, itemCount, errorCode, onRetry, onClose }: Props) {
@@ -93,7 +93,7 @@ export function ClassificationModal({ state, itemCount, errorCode, onRetry, onCl
               </DialogDescription>
             </DialogHeader>
             <div className="flex justify-center py-4">
-              <Loader2 className="size-8 animate-spin text-purple-400" />
+              <Loader2 className="text-foreground size-8 animate-spin" />
             </div>
           </>
         )}
@@ -108,7 +108,7 @@ export function ClassificationModal({ state, itemCount, errorCode, onRetry, onCl
             </DialogHeader>
             <DialogFooter>
               <Button type="button" onClick={goToItems}>
-                Przejdź do walidacji teraz
+                Przejdź do akceptacji teraz
               </Button>
             </DialogFooter>
           </>

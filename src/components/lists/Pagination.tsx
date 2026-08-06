@@ -18,7 +18,7 @@ interface Props {
   ariaLabel: string;
 }
 
-const NAV_BUTTON = "rounded-full border-white/10 bg-white/5 text-white/80 hover:bg-white/10";
+const NAV_BUTTON = "rounded-[5px]";
 
 export default function Pagination({ page, pageCount, onPage, ariaLabel }: Props) {
   if (pageCount <= 1) return null;
@@ -50,7 +50,10 @@ export default function Pagination({ page, pageCount, onPage, ariaLabel }: Props
   }
 
   return (
-    <nav className="flex flex-wrap items-center justify-center gap-2 text-sm text-white/70" aria-label={ariaLabel}>
+    <nav
+      className="text-muted-foreground flex flex-wrap items-center justify-center gap-2 text-sm"
+      aria-label={ariaLabel}
+    >
       <Button
         type="button"
         size="sm"
@@ -93,9 +96,9 @@ export default function Pagination({ page, pageCount, onPage, ariaLabel }: Props
           onBlur={(event) => {
             commit(event.currentTarget);
           }}
-          className="w-14 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-center text-white/90 tabular-nums focus:border-purple-300/50 focus:outline-none"
+          className="border-border bg-background text-foreground focus-visible:border-ring focus-visible:ring-ring/50 w-14 rounded-[5px] border px-2 py-1 text-center font-mono tabular-nums outline-none focus-visible:ring-[3px]"
         />
-        z <span className="tabular-nums">{pageCount}</span>
+        z <span className="font-mono tabular-nums">{pageCount}</span>
       </span>
 
       <Button

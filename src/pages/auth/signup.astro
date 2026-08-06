@@ -1,22 +1,35 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import SignUpForm from "@/components/auth/SignUpForm";
+import Icon from "@/components/shell/Icon.astro";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { parseTheme, THEME_COOKIE } from "@/lib/theme";
 
 const error = Astro.url.searchParams.get("error");
+const theme = parseTheme(Astro.cookies.get(THEME_COOKIE)?.value);
 ---
 
 <Layout title="Rejestracja">
-  <div class="bg-cosmic flex min-h-screen items-center justify-center p-4">
-    <div class="w-full max-w-sm rounded-2xl border border-white/10 bg-white/10 p-8 text-white backdrop-blur-xl">
-      <h1
-        class="mb-6 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-center text-2xl font-bold text-transparent"
-      >
-        Rejestracja
-      </h1>
-      <SignUpForm serverError={error} client:load />
-      <p class="mt-4 text-center text-sm text-blue-100/60">
-        Masz już konto? <a href="/auth/signin" class="text-purple-300 hover:underline">Zaloguj się</a>
-      </p>
+  <div class="bg-background text-foreground relative flex min-h-screen items-center justify-center p-4">
+    <div class="absolute top-4 right-4">
+      <ThemeToggle client:load initialTheme={theme} />
+    </div>
+    <div class="w-full max-w-sm">
+      <a href="/" class="mb-5 flex items-center justify-center gap-2.5" aria-label="TaskerLight — strona główna">
+        <span
+          class="bg-primary text-primary-foreground flex size-[26px] shrink-0 items-center justify-center rounded-[4px]"
+        >
+          <Icon icon="layers" size={15} />
+        </span>
+        <span class="text-[15px] font-semibold tracking-tight">TaskerLight</span>
+      </a>
+      <div class="bg-card text-card-foreground rounded-xl border p-8 shadow-sm">
+        <h1 class="mb-6 text-center text-2xl font-semibold tracking-tight">Rejestracja</h1>
+        <SignUpForm serverError={error} client:load />
+        <p class="text-muted-foreground mt-4 text-center text-sm">
+          Masz już konto? <a href="/auth/signin" class="text-foreground font-medium hover:underline">Zaloguj się</a>
+        </p>
+      </div>
     </div>
   </div>
 </Layout>

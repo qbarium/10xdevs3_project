@@ -121,71 +121,79 @@ export default function SessionEntriesView({ initialItems, initialCriteria, init
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex min-h-0 flex-1 flex-col">
       <Toaster />
 
-      {/* Pasek filtrów wyszarzony — kontrolki nieaktywne, „Wyczyść filtry" wychodzi na /items (pełna
-          nawigacja). onChange formalnie podpięty, ale kontrolki w disabled go nie wyemitują. */}
-      <ListFilterBar
-        criteria={criteria}
-        onChange={(next) => {
-          setCriteria(resetToFirstPage(next));
-        }}
-        error={error}
-        onRetry={retry}
-        disabled
-      />
+      {/* NIERUCHOMY pasek filtrów (wyszarzony) — poza obszarem przewijania; przewija się WYŁĄCZNIE lista.
+          onChange formalnie podpięty, ale kontrolki w disabled go nie wyemitują. „Wyczyść filtry" wychodzi
+          na /items (pełna nawigacja). */}
+      <div className="flex shrink-0 flex-col gap-3 px-6 pt-6 pb-3">
+        <ListFilterBar
+          criteria={criteria}
+          onChange={(next) => {
+            setCriteria(resetToFirstPage(next));
+          }}
+          error={error}
+          onRetry={retry}
+          disabled
+        />
+      </div>
 
-      {items.length === 0 ? (
-        <div
-          role="status"
-          className="rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70"
-        >
-          Ta sesja nie ma elementów.
-        </div>
-      ) : (
-        items.map((item) => (
-          <ItemCard
-            key={item.id}
-            item={item}
-            badges={{ acceptance: true, operational: true }}
-            inFlight={inFlightIds.has(item.id)}
-            onEdit={openEdit}
-            onAccept={(it) => {
-              void runRowAction(
-                it,
-                () => acceptItems([it.id]),
-                "Zaakceptowano element.",
-                "Nie udało się zaakceptować. Spróbuj ponownie.",
-              );
-            }}
-            onReject={(it) => {
-              void runRowAction(
-                it,
-                () => rejectItems([it.id]),
-                "Odrzucono element.",
-                "Nie udało się odrzucić. Spróbuj ponownie.",
-              );
-            }}
-            onTrash={(it) => {
-              void handleTrash(it);
-            }}
-            onRestore={(it) => {
-              void runRowAction(
-                it,
-                () => restoreFromTrashItems([it.id]),
-                "Przywrócono element.",
-                "Nie udało się przywrócić. Spróbuj ponownie.",
-              );
-            }}
-            onPreview={openPreview}
-          />
-        ))
-      )}
+      {/* Lista — JEDYNY obszar przewijania (scroll ograniczony do listy; treść przycięta do jej ramki). */}
+      <div className="min-h-0 flex-1 overflow-y-auto px-6">
+        {items.length === 0 ? (
+          <div
+            role="status"
+            className="border-border bg-card text-muted-foreground rounded-[5px] border px-4 py-6 text-center text-sm"
+          >
+            Ta sesja nie ma elementów.
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {items.map((item) => (
+              <ItemCard
+                key={item.id}
+                item={item}
+                badges={{ acceptance: true, operational: true }}
+                inFlight={inFlightIds.has(item.id)}
+                onEdit={openEdit}
+                onAccept={(it) => {
+                  void runRowAction(
+                    it,
+                    () => acceptItems([it.id]),
+                    "Zaakceptowano element.",
+                    "Nie udało się zaakceptować. Spróbuj ponownie.",
+                  );
+                }}
+                onReject={(it) => {
+                  void runRowAction(
+                    it,
+                    () => rejectItems([it.id]),
+                    "Odrzucono element.",
+                    "Nie udało się odrzucić. Spróbuj ponownie.",
+                  );
+                }}
+                onTrash={(it) => {
+                  void handleTrash(it);
+                }}
+                onRestore={(it) => {
+                  void runRowAction(
+                    it,
+                    () => restoreFromTrashItems([it.id]),
+                    "Przywrócono element.",
+                    "Nie udało się przywrócić. Spróbuj ponownie.",
+                  );
+                }}
+                onPreview={openPreview}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Kontrolki stron — parytet z listą wpisów (wspólny klucz preferencji rozmiaru). Zmiana strony
           zachowuje kryteria wyświetlanej listy (settledCriteria); rozmiar resetuje na stronę 1. */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 px-6 pt-3 pb-6">
         <PageSizeSelect
           value={criteria.size}
           sizes={ITEM_PAGE_SIZES}

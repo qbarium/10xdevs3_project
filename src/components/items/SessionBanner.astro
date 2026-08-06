@@ -5,7 +5,7 @@
 // strona nie renderuje wtedy listy. Statyczny .astro — treść liczona serwerowo, zero interaktywności.
 
 import { importSessionStatusLabel } from "@/lib/labels";
-import { STATUS_BADGE } from "@/components/import-sessions/SessionCard";
+import { SESSION_STATUS_STYLE } from "@/components/import-sessions/SessionCard";
 import type { SessionRowData } from "@/components/import-sessions/SessionCard";
 
 interface Props {
@@ -15,28 +15,30 @@ interface Props {
 
 const { meta } = Astro.props;
 
+// Odnośnik wyjścia w charakterze outline-button (tokeny, oba motywy).
 const EXIT_LINK =
-  "rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white";
+  "rounded-[5px] border border-border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground";
 ---
 
 {
   meta ? (
     <section
       aria-label="Kontekst sesji importu"
-      class="flex flex-wrap items-center gap-3 rounded-xl border border-purple-300/25 bg-purple-400/10 px-4 py-3 backdrop-blur-xl"
+      class="border-border bg-muted/40 flex flex-wrap items-center gap-3 rounded-[5px] border px-4 py-3"
     >
       <div class="min-w-0 flex-1">
-        <p class="text-sm text-white/90">
-          Wpisy dla sesji importu — <span class="font-medium text-purple-100">{meta.preview}</span>
-          <span class="whitespace-nowrap text-white/60">, {meta.dateLabel}</span>
+        <p class="text-foreground text-sm">
+          Wpisy dla sesji importu — <span class="font-medium">{meta.preview}</span>
+          <span class="text-muted-foreground whitespace-nowrap">, {meta.dateLabel}</span>
         </p>
       </div>
       <span
         class:list={[
-          "rounded-full border px-2 py-0.5 text-xs font-medium whitespace-nowrap",
-          STATUS_BADGE[meta.status],
+          "inline-flex items-center gap-1.5 rounded-[5px] border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap",
+          SESSION_STATUS_STYLE[meta.status].badge,
         ]}
       >
+        <span class:list={["size-1.5 rounded-full", SESSION_STATUS_STYLE[meta.status].dot]} aria-hidden="true" />
         {importSessionStatusLabel(meta.status)}
       </span>
       <a href="/import-sessions" data-session-log-return class:list={EXIT_LINK}>
@@ -44,11 +46,8 @@ const EXIT_LINK =
       </a>
     </section>
   ) : (
-    <section
-      role="alert"
-      class="flex flex-col gap-3 rounded-xl border border-amber-300/30 bg-amber-400/10 px-4 py-4 backdrop-blur-xl"
-    >
-      <p class="text-sm text-amber-100">Sesja niedostępna — odnośnik jest nieprawidłowy albo sesja nie istnieje.</p>
+    <section role="alert" class="border-border bg-muted/40 flex flex-col gap-3 rounded-[5px] border px-4 py-4">
+      <p class="text-warning-fg text-sm">Sesja niedostępna — odnośnik jest nieprawidłowy albo sesja nie istnieje.</p>
       <div class="flex flex-wrap gap-2">
         <a href="/import-sessions" data-session-log-return class:list={EXIT_LINK}>
           Wróć do dziennika

@@ -14,6 +14,7 @@ import { Loader2 } from "lucide-react";
 import { useSessionRetry } from "@/components/hooks/useSessionRetry";
 import { rememberSessionLogReturn } from "@/components/import-sessions/session-log-return";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ingestErrorMessage } from "@/lib/ingest-errors";
 import { entryNoun, importSessionStatusLabel } from "@/lib/labels";
@@ -34,13 +35,39 @@ export interface SessionRowData {
   errorCode: string | null;
 }
 
-/** Kolor badge'a statusu (tailwind) — wizualne rozróżnienie stanów przebiegu; współdzielone z SessionBanner. */
-export const STATUS_BADGE: Record<ImportSessionStatus, string> = {
-  processing: "border-amber-300/30 bg-amber-400/10 text-amber-100",
-  completed_with_items: "border-emerald-300/30 bg-emerald-400/10 text-emerald-100",
-  completed_no_items: "border-white/15 bg-white/10 text-white/70",
-  failed: "border-red-300/30 bg-red-400/10 text-red-100",
+/**
+ * Styl statusu sesji (S-15 Faza 6) — grzbień karty + badge z kropką, wyłącznie z tokenów (oba motywy),
+ * wg makiety (`.session-row[data-sess]`/`.sess-status`). Współdzielone z SessionBanner.
+ * Mapowanie realnych statusów na język makiety: processing→„running" (niebieski `task-line`),
+ * completed_with_items→„done" (zielony `note-line`), completed_no_items→„empty" (szary `other-line`),
+ * failed→„failed" (`destructive`). `spine` = kolor grzbienia; `dot` = kropka w badge; `badge` = obramowanie+tekst.
+ */
+export const SESSION_STATUS_STYLE: Record<ImportSessionStatus, { spine: string; dot: string; badge: string }> = {
+  processing: { spine: "bg-task-line", dot: "bg-muted-foreground", badge: "border-border text-muted-foreground" },
+  completed_with_items: { spine: "bg-note-line", dot: "bg-note-line", badge: "border-note-line/40 text-note-fg" },
+  completed_no_items: {
+    spine: "bg-other-line",
+    dot: "bg-muted-foreground",
+    badge: "border-border text-muted-foreground",
+  },
+  failed: { spine: "bg-destructive", dot: "bg-destructive", badge: "border-destructive/40 text-destructive" },
 };
+
+/** Badge statusu sesji — obramowana pigułka z kropką (wg makiety `.sess-status`). Współdzielony wygląd z banerem. */
+export function SessionStatusBadge({ status }: { status: ImportSessionStatus }) {
+  const style = SESSION_STATUS_STYLE[status];
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-[5px] border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap",
+        style.badge,
+      )}
+    >
+      <span className={cn("size-1.5 rounded-full", style.dot)} aria-hidden="true" />
+      {importSessionStatusLabel(status)}
+    </span>
+  );
+}
 
 interface Props {
   row: SessionRowData;
@@ -79,78 +106,76 @@ export function SessionCard({ row }: Props) {
   const entriesLinkActive = status === "completed_with_items" && liveItemCount > 0;
 
   return (
-    // Odstępy jak w karcie wpisu (px-4 py-3): karty dziennika i listy wpisów mają tę samą wysokość
-    // — jednolity wygląd aplikacji (decyzja użytkownika 2026-07-02).
-    <li className="flex flex-col gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl">
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-center text-xs font-medium text-white/70">
-          {row.isFile ? "Plik" : "Tekst"}
-        </span>
-        <time className="text-sm whitespace-nowrap text-white/90">{row.dateLabel}</time>
-        <span className="text-xs whitespace-nowrap text-white/60">{countText}</span>
-        <span
-          className={cn(
-            "ml-auto rounded-full border px-2 py-0.5 text-xs font-medium whitespace-nowrap",
-            STATUS_BADGE[status],
-          )}
-        >
-          {importSessionStatusLabel(status)}
-        </span>
-      </div>
+    // Grzbień statusu po lewej + treść (px-4 py-3): karty dziennika i listy wpisów mają tę samą wysokość
+    // — jednolity wygląd aplikacji (decyzja użytkownika 2026-07-02). Kolory wyłącznie z tokenów (oba motywy).
+    <li className="bg-card border-border hover:border-muted-foreground/25 flex items-stretch overflow-hidden rounded-[5px] border transition-colors">
+      {/* Grzbień per status (wg makiety `.session-row[data-sess] .spine`). */}
+      <div className={cn("w-[3px] shrink-0", SESSION_STATUS_STYLE[status].spine)} aria-hidden="true" />
 
-      {/* Źródło (nazwa pliku albo skrót paste — gotowe pole `preview`) i „Pokaż wpisy" w JEDNYM wierszu
-          (po prawej, zawsze obecne — aktywne albo wyszarzone): każda karta ma RÓWNĄ wysokość. Klik
-          zapamiętuje query dziennika, by „Wróć do dziennika" w trybie prowadziło na tę samą stronę/filtr. */}
-      <div className="flex items-center gap-3">
-        <p className="min-w-0 flex-1 truncate text-sm text-white/80">{row.preview}</p>
-        {entriesLinkActive ? (
-          <a
-            href={`/items?session=${row.id}`}
-            onClick={rememberSessionLogReturn}
-            className="shrink-0 rounded-full border border-purple-300/30 bg-purple-400/10 px-3 py-1.5 text-sm font-medium text-purple-100 transition hover:bg-purple-400/20"
-          >
-            Pokaż wpisy
-          </a>
-        ) : (
-          <span
-            aria-disabled="true"
-            className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-medium text-white/30"
-          >
-            Pokaż wpisy
+      <div className="flex min-w-0 flex-1 flex-col gap-2 px-4 py-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <Badge variant="outline">{row.isFile ? "Plik" : "Tekst"}</Badge>
+          <time className="text-muted-foreground font-mono text-[12px] whitespace-nowrap">{row.dateLabel}</time>
+          <span className="text-muted-foreground font-mono text-[11px] whitespace-nowrap">{countText}</span>
+          <span className="ml-auto">
+            <SessionStatusBadge status={status} />
           </span>
+        </div>
+
+        {/* Źródło (nazwa pliku albo skrót paste — gotowe pole `preview`) i „Pokaż wpisy" w JEDNYM wierszu
+            (po prawej, zawsze obecne — aktywne albo wyszarzone): każda karta ma RÓWNĄ wysokość. Klik
+            zapamiętuje query dziennika, by „Wróć do dziennika" w trybie prowadziło na tę samą stronę/filtr. */}
+        <div className="flex items-center gap-3">
+          <p className="text-muted-foreground min-w-0 flex-1 truncate text-sm">{row.preview}</p>
+          {entriesLinkActive ? (
+            <a
+              href={`/items?session=${row.id}`}
+              onClick={rememberSessionLogReturn}
+              className="border-border text-foreground hover:bg-accent hover:text-accent-foreground shrink-0 rounded-[5px] border px-3 py-1.5 text-sm font-medium transition-colors"
+            >
+              Pokaż wpisy
+            </a>
+          ) : (
+            <span
+              aria-disabled="true"
+              className="border-border text-muted-foreground/50 shrink-0 rounded-[5px] border px-3 py-1.5 text-sm font-medium"
+            >
+              Pokaż wpisy
+            </span>
+          )}
+        </div>
+
+        {/* Tylko `failed`: komunikat + „Ponów" (po sukcesie karta w miejscu pokaże nowy status i „Pokaż wpisy"). */}
+        {status === "failed" && (
+          <div className="flex flex-col gap-2 text-sm">
+            <p className="text-destructive">{ingestErrorMessage(errorCode)}</p>
+            {state === "error" && (
+              <Alert variant="destructive">
+                <AlertDescription>{error ?? ingestErrorMessage(result?.code ?? null)}</AlertDescription>
+              </Alert>
+            )}
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={isRetrying}
+              onClick={() => {
+                void retry(row.id);
+              }}
+              className="w-fit"
+            >
+              {isRetrying ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Ponawianie…
+                </>
+              ) : (
+                "Ponów"
+              )}
+            </Button>
+          </div>
         )}
       </div>
-
-      {/* Tylko `failed`: komunikat + „Ponów" (po sukcesie karta w miejscu pokaże nowy status i „Pokaż wpisy"). */}
-      {status === "failed" && (
-        <div className="flex flex-col gap-2 text-sm">
-          <p className="text-red-200/90">{ingestErrorMessage(errorCode)}</p>
-          {state === "error" && (
-            <Alert variant="destructive">
-              <AlertDescription>{error ?? ingestErrorMessage(result?.code ?? null)}</AlertDescription>
-            </Alert>
-          )}
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            disabled={isRetrying}
-            onClick={() => {
-              void retry(row.id);
-            }}
-            className="w-fit"
-          >
-            {isRetrying ? (
-              <>
-                <Loader2 className="size-4 animate-spin" />
-                Ponawianie…
-              </>
-            ) : (
-              "Ponów"
-            )}
-          </Button>
-        </div>
-      )}
     </li>
   );
 }

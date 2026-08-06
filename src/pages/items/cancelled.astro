@@ -3,9 +3,9 @@
 // SSR, chroniony middleware (PROTECTED_ROUTES obejmuje prefiks /items). Dane serwerowo (klient
 // z cookies usera → RLS izoluje); przejściowy błąd → pusta lista (łagodna degradacja, wzorzec
 // items.astro). Interaktywność (badge-menu + bulk) dochodzi w Fazie 4 — tu read-only z badge per-typ.
-import Layout from "@/layouts/Layout.astro";
-import Topbar from "@/components/Topbar.astro";
+import AppLayout from "@/layouts/AppLayout.astro";
 import AcceptedItemsView from "@/components/items/AcceptedItemsView.tsx";
+import TopbarItemSearch from "@/components/items/TopbarItemSearch.tsx";
 import { ITEMS_LIST_PAGE_SIZE_KEY, withPageSizePref } from "@/components/lists/page-size-pref";
 import { createClient } from "@/lib/supabase";
 import { listItems } from "@/lib/services/items";
@@ -39,23 +39,14 @@ if (user && supabase) {
 }
 ---
 
-<Layout title="Wpisy">
-  <div class="bg-cosmic min-h-screen p-4">
-    <div class="mx-auto max-w-6xl">
-      <Topbar />
-      <main class="mt-8 flex flex-col gap-6">
-        <h1 class="bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-2xl font-bold text-transparent">
-          Wpisy
-        </h1>
-        <AcceptedItemsView
-          client:load
-          initialItems={items}
-          view="cancelled"
-          initialCriteria={criteria}
-          initialTotal={total}
-          canAdd={false}
-        />
-      </main>
-    </div>
-  </div>
-</Layout>
+<AppLayout title="Wpisy" subtitle="Wpisy wycofane z realizacji" fill>
+  <TopbarItemSearch slot="search" client:load initialQuery={criteria.q} />
+  <AcceptedItemsView
+    client:load
+    initialItems={items}
+    view="cancelled"
+    initialCriteria={criteria}
+    initialTotal={total}
+    canAdd={false}
+  />
+</AppLayout>

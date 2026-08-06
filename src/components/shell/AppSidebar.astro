@@ -1,0 +1,135 @@
+---
+// Trwała powłoka nawigacyjna — statyczny sidebar (Astro, bez wyspy). Odwzorowuje architekturę informacji
+// z ui-design-system.md „Powłoka" i układ makiety: marka, CTA „Skrzynka wejściowa", grupy Przepływ /
+// Biblioteka, stopka z Ustawieniami, wylogowaniem i kontem (status klucza). Aktywny stan liczony
+// serwerowo z adresu (`activeNavId`, pokryte testem). Na wąskim ekranie (≤920 px) zwija się do ikon.
+import Icon from "@/components/shell/Icon.astro";
+import { activeNavId } from "@/components/shell/nav-active";
+
+interface Props {
+  pathname: string;
+  pendingCount: number;
+  keyConfigured: boolean;
+  userEmail: string | null;
+}
+const { pathname, pendingCount, keyConfigured, userEmail } = Astro.props;
+const active = activeNavId(pathname);
+
+const emailTrimmed = userEmail?.trim() ?? "";
+const initials = emailTrimmed ? emailTrimmed.slice(0, 2).toUpperCase() : "?";
+const accountName = emailTrimmed ? emailTrimmed.split("@")[0] : "Konto";
+
+const navLayout =
+  "flex items-center gap-2.5 rounded-[4px] px-2 py-[7px] text-[13.5px] font-medium transition-colors max-[920px]:justify-center";
+const navIdle = "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground";
+const navOn = "bg-sidebar-accent text-sidebar-accent-foreground";
+const label = "flex-1 truncate max-[920px]:hidden";
+---
+
+<aside
+  class="border-sidebar-border bg-sidebar text-sidebar-foreground flex h-full w-[252px] shrink-0 flex-col gap-1.5 overflow-y-auto border-r px-3.5 py-[18px] max-[920px]:w-16 max-[920px]:px-2.5"
+>
+  <div class="flex items-center gap-2.5 px-1.5 pt-1 pb-3.5">
+    <div class="bg-primary text-primary-foreground flex size-[26px] shrink-0 items-center justify-center rounded-[4px]">
+      <Icon icon="layers" size={15} />
+    </div>
+    <span class="text-[15px] font-semibold tracking-tight max-[920px]:hidden">TaskerLight</span>
+  </div>
+
+  <a
+    href="/ingest"
+    aria-label="Skrzynka wejściowa"
+    aria-current={active === "ingest" ? "page" : undefined}
+    class:list={[
+      "bg-primary text-primary-foreground mb-1.5 flex items-center gap-2.5 rounded-[5px] px-3 py-2.5 text-[13.5px] font-medium transition-opacity hover:opacity-90 max-[920px]:justify-center",
+      active === "ingest" && "ring-primary ring-offset-sidebar ring-2 ring-offset-2",
+    ]}
+  >
+    <Icon icon="tray" size={16} />
+    <span class="max-[920px]:hidden">Skrzynka wejściowa</span>
+  </a>
+
+  <div class="mt-2.5">
+    <div
+      class="text-sidebar-foreground/50 px-2 pt-1.5 pb-1 text-[10.5px] font-medium tracking-[0.09em] uppercase max-[920px]:hidden"
+    >
+      Przepływ
+    </div>
+    <a
+      href="/items"
+      aria-label="Do akceptacji"
+      class:list={[navLayout, active === "pending" ? navOn : navIdle]}
+      aria-current={active === "pending" ? "page" : undefined}
+    >
+      <Icon icon="inbox" size={17} class="shrink-0" />
+      <span class:list={[label]}>Do akceptacji</span>
+      {
+        pendingCount > 0 && (
+          <span class="bg-primary text-primary-foreground inline-flex min-w-[20px] items-center justify-center rounded-[4px] px-1.5 py-0.5 font-mono text-[11px] font-bold max-[920px]:hidden">
+            {pendingCount}
+          </span>
+        )
+      }
+    </a>
+  </div>
+
+  <div class="mt-2.5">
+    <div
+      class="text-sidebar-foreground/50 px-2 pt-1.5 pb-1 text-[10.5px] font-medium tracking-[0.09em] uppercase max-[920px]:hidden"
+    >
+      Biblioteka
+    </div>
+    <a
+      href="/items/active"
+      aria-label="Wpisy"
+      class:list={[navLayout, active === "entries" ? navOn : navIdle]}
+      aria-current={active === "entries" ? "page" : undefined}
+    >
+      <Icon icon="layers" size={17} class="shrink-0" />
+      <span class:list={[label]}>Wpisy</span>
+    </a>
+    <a
+      href="/import-sessions"
+      aria-label="Sesje importu"
+      class:list={[navLayout, active === "sessions" ? navOn : navIdle]}
+      aria-current={active === "sessions" ? "page" : undefined}
+    >
+      <Icon icon="history" size={17} class="shrink-0" />
+      <span class:list={[label]}>Sesje importu</span>
+    </a>
+  </div>
+
+  <div class="border-sidebar-border mt-auto flex flex-col gap-0.5 border-t pt-2">
+    <a
+      href="/profile"
+      aria-label="Ustawienia"
+      class:list={[navLayout, active === "settings" ? navOn : navIdle]}
+      aria-current={active === "settings" ? "page" : undefined}
+    >
+      <Icon icon="settings" size={17} class="shrink-0" />
+      <span class:list={[label]}>Ustawienia</span>
+    </a>
+    <form method="POST" action="/api/auth/signout">
+      <button type="submit" class:list={[navLayout, navIdle, "w-full text-left"]} aria-label="Wyloguj się">
+        <Icon icon="log-out" size={17} class="shrink-0" />
+        <span class:list={[label]}>Wyloguj się</span>
+      </button>
+    </form>
+    <div class="mt-1 flex items-center gap-2.5 rounded-[4px] px-2 py-1.5 max-[920px]:justify-center">
+      <div
+        class="bg-decision-bg text-decision-fg flex size-[26px] shrink-0 items-center justify-center rounded-full text-[12px] font-semibold"
+      >
+        {initials}
+      </div>
+      <div class="min-w-0 leading-tight max-[920px]:hidden">
+        <div class="text-sidebar-foreground truncate text-[13px] font-semibold" title={userEmail ?? undefined}>
+          {accountName}
+        </div>
+        <div class="text-sidebar-foreground/70 flex items-center gap-1.5 text-[11px]">
+          <span class:list={["size-1.5 shrink-0 rounded-full", keyConfigured ? "bg-note-line" : "bg-idea-line"]}></span>
+          {keyConfigured ? "klucz aktywny" : "brak klucza"}
+        </div>
+      </div>
+    </div>
+  </div>
+</aside>

@@ -1,3 +1,12 @@
+/* Fonty self-hosted (IBM Plex Sans + Mono) przez Fontsource — pliki zbiorcze per grubość mają @font-face
+   per subset z unicode-range (latin + latin-ext → polskie diakrytyki) i font-display: swap. Bez CDN. */
+@import "@fontsource/ibm-plex-sans/400.css";
+@import "@fontsource/ibm-plex-sans/500.css";
+@import "@fontsource/ibm-plex-sans/600.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+@import "@fontsource/ibm-plex-mono/700.css";
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -20,6 +29,7 @@
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
@@ -36,6 +46,32 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Kolory per typ (grzbień + chip) + stan operacyjny — dosłownie z ui-design-system.md „Kolory per typ". */
+  --task-fg: #1f5fd0;
+  --task-bg: #eaf1fd;
+  --task-line: #3b7ce0;
+  --note-fg: #157a45;
+  --note-bg: #e6f6ec;
+  --note-line: #1f9b58;
+  --idea-fg: #966a0c;
+  --idea-bg: #fbf1d9;
+  --idea-line: #c99211;
+  --decision-fg: #5b37b5;
+  --decision-bg: #f1ebfb;
+  --decision-line: #7b53d6;
+  --other-fg: #515b6b;
+  --other-bg: #eef1f5;
+  --other-line: #8a93a2;
+  --done-fg: #157a45;
+  --prog-fg: #1f5fd0;
+  /* Ton ostrzegawczy (bursztyn) — poza ui-design-system.md; wprowadzony w triage przeglądu F5 (F2)
+     dla stanów „limit" (np. licznik znaków przy maksimum). Odcień spójny z rodziną „idea". */
+  --warning-fg: #966a0c;
+  /* Scrim overlayu dialogów/modali — celowo ten sam ciemny welon w obu motywach (parytet z domyślką shadcn
+     bg-black/50; token, by nie zostawiać zaszytego koloru). Nie nadpisujemy w .dark: przyciemnienie ma być
+     identyczne w jasnym i ciemnym. */
+  --overlay: oklch(0 0 0 / 0.5);
 }
 
 .dark {
@@ -54,6 +90,7 @@
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
@@ -70,6 +107,26 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* Kolory per typ (grzbień + chip) + stan operacyjny — wariant ciemny wg ui-design-system.md. */
+  --task-fg: #7fb0ee;
+  --task-bg: rgba(59, 124, 224, 0.18);
+  --task-line: #5c97e0;
+  --note-fg: #6fc58e;
+  --note-bg: rgba(31, 155, 88, 0.18);
+  --note-line: #46b06f;
+  --idea-fg: #e0b45e;
+  --idea-bg: rgba(201, 146, 17, 0.2);
+  --idea-line: #cfa24a;
+  --decision-fg: #b49aec;
+  --decision-bg: rgba(123, 83, 214, 0.22);
+  --decision-line: #9c82dc;
+  --other-fg: #9aa2b0;
+  --other-bg: rgba(138, 147, 162, 0.16);
+  --other-line: #69707e;
+  --done-fg: #6fc58e;
+  --prog-fg: #7fb0ee;
+  --warning-fg: #e0b45e;
 }
 
 @theme inline {
@@ -83,6 +140,7 @@
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
+  --color-overlay: var(--overlay);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
@@ -92,6 +150,7 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -108,10 +167,30 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-task-fg: var(--task-fg);
+  --color-task-bg: var(--task-bg);
+  --color-task-line: var(--task-line);
+  --color-note-fg: var(--note-fg);
+  --color-note-bg: var(--note-bg);
+  --color-note-line: var(--note-line);
+  --color-idea-fg: var(--idea-fg);
+  --color-idea-bg: var(--idea-bg);
+  --color-idea-line: var(--idea-line);
+  --color-decision-fg: var(--decision-fg);
+  --color-decision-bg: var(--decision-bg);
+  --color-decision-line: var(--decision-line);
+  --color-other-fg: var(--other-fg);
+  --color-other-bg: var(--other-bg);
+  --color-other-line: var(--other-line);
+  --color-done-fg: var(--done-fg);
+  --color-prog-fg: var(--prog-fg);
+  --color-warning-fg: var(--warning-fg);
 }
 
-@utility bg-cosmic {
-  background-image: linear-gradient(to bottom, #0a0e1a, #0f1529, #0a0e1a);
+@theme {
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", "Cascadia Code", Menlo, monospace;
 }
 
 @layer base {
@@ -124,6 +203,6 @@
     scrollbar-gutter: stable;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
   }
 }

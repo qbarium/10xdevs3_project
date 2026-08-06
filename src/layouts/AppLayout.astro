@@ -1,0 +1,79 @@
+---
+// Trwała powłoka stron chronionych: sidebar + topbar + treść. Owija `Layout` (który daje `<html>`,
+// motyw no-flash z cookie i baner konfiguracji), więc cała logika motywu z Fazy 1 jest reużyta.
+// Aktywny stan liczony z `Astro.url.pathname`. Migracja TREŚCI widoków (kolory wewnątrz wysp) należy
+// do Faz 3–7 — tu tylko powłoka + wpięcie.
+import Layout from "@/layouts/Layout.astro";
+import AppSidebar from "@/components/shell/AppSidebar.astro";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { parseTheme, THEME_COOKIE } from "@/lib/theme";
+import { createClient } from "@/lib/supabase";
+import { getKeyStatus } from "@/lib/services/profile-key";
+
+interface Props {
+  title: string;
+  subtitle?: string;
+  /** Gdy true: panel treści jest sztywnym kontenerem (bez własnego scrolla i paddingu) — przewijanie oraz
+      padding bierze na siebie widok (np. lista z własnym scroll boxem: nieruchomy pasek + przewijana lista).
+      Domyślnie panel przewija się w całości z paddingiem — dla prostych stron (ingest/profil). */
+  fill?: boolean;
+}
+const { title, subtitle, fill = false } = Astro.props;
+const { user } = Astro.locals;
+const theme = parseTheme(Astro.cookies.get(THEME_COOKIE)?.value);
+const pathname = Astro.url.pathname;
+
+// Dane dynamiczne powłoki liczone RAZ na render (klient z cookies usera → RLS per-user): licznik
+// „Do akceptacji" (lekki count `head:true`) + status klucza BYOK (stopka konta). To świadome,
+// celowane odstępstwo od „bez nowych zapytań" — udokumentowane w planie (Uwagi o wydajności).
+// Przejściowy błąd odczytu → wartość neutralna (0 / brak klucza); powłoka renderuje się niezależnie.
+let pendingCount = 0;
+let keyConfigured = false;
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+if (user && supabase) {
+  try {
+    const { count } = await supabase
+      .from("items")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("acceptance_status", "pending");
+    pendingCount = count ?? 0;
+  } catch {
+    pendingCount = 0;
+  }
+  try {
+    const status = await getKeyStatus(supabase, user.id);
+    keyConfigured = status.configured;
+  } catch {
+    keyConfigured = false;
+  }
+}
+---
+
+<Layout title={title} fullHeight>
+  <div class="flex min-h-0 flex-1 overflow-hidden">
+    <AppSidebar
+      pathname={pathname}
+      pendingCount={pendingCount}
+      keyConfigured={keyConfigured}
+      userEmail={user?.email ?? null}
+    />
+    <div class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      <header
+        class="bg-background border-sidebar-border sticky top-0 z-10 flex items-center gap-3.5 border-b px-6 py-4"
+      >
+        <div class="min-w-0">
+          <h1 class="text-foreground truncate text-[19px] font-semibold tracking-tight">{title}</h1>
+          {subtitle && <p class="text-muted-foreground mt-0.5 truncate text-[12.5px]">{subtitle}</p>}
+        </div>
+        <div class="flex-1"></div>
+        <slot name="search" />
+        <slot name="actions" />
+        <ThemeToggle client:load initialTheme={theme} />
+      </header>
+      <main class:list={["min-h-0 flex-1", fill ? "flex flex-col overflow-hidden" : "overflow-y-auto px-6 py-6"]}>
+        <slot />
+      </main>
+    </div>
+  </div>
+</Layout>

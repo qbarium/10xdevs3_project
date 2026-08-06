@@ -2,19 +2,30 @@
 import "../styles/global.css";
 import Banner from "@/components/Banner.astro";
 import { missingConfigs } from "@/lib/config-status";
+import { parseTheme, THEME_COOKIE } from "@/lib/theme";
 
 interface Props {
   title?: string;
+  /** Strony z powłoką pełnoekranową (AppLayout): opakuj baner + treść we wspólną kolumnę `h-screen` z
+      wewnętrznym scrollem, by treść brała wysokość PO ewentualnym banerze (F1). Landing/auth: false →
+      naturalny flow (wrapper znika przez `display:contents`). */
+  fullHeight?: boolean;
 }
 
-const { title = "10x Astro Starter" } = Astro.props;
+const { title = "10x Astro Starter", fullHeight = false } = Astro.props;
+// Motyw czytany serwerowo z cookie → `<html>` dostaje klasę `.dark` + `color-scheme` od pierwszego
+// bajtu (no-flash). Wyspa `ThemeToggle` flipuje klasę i zapisuje cookie po stronie klienta.
+const theme = parseTheme(Astro.cookies.get(THEME_COOKIE)?.value);
+
+// Szew testowy (E2E, F1): w trybie dev, gdy test ustawi ciasteczko `e2e_config_banner=1`, wymuś pasek
+// konfiguracji, by zweryfikować układ powłoki z banerem NAD nią (baner jest inaczej nieosiągalny u
+// zalogowanego użytkownika: jedyny realny to brak Supabase → redirect na signin). `import.meta.env.DEV`
+// zdejmuje ten kod z builda produkcyjnego (martwy w prod).
+const forceConfigBanner = import.meta.env.DEV && Astro.cookies.get("e2e_config_banner")?.value === "1";
 ---
 
 <!doctype html>
-<!-- color-scheme: dark INLINE na <html> — aplikacja jest ciemna, więc natywne kontrolki (popup
-     <select>, scrollbary, pola) mają renderować się ciemno. Inline, bo scoped <style> Astro nie
-     trafia pewnie na <html> (brak atrybutu cid), a motyw CSS w :root jest jasny. -->
-<html lang="en" style="color-scheme: dark">
+<html lang="en" class:list={{ dark: theme === "dark" }} style={`color-scheme: ${theme}`}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
@@ -22,23 +33,32 @@ const { title = "10x Astro Starter" } = Astro.props;
     <title>{title}</title>
   </head>
   <body>
-    {
-      missingConfigs.map((cfg) => (
-        <Banner variant="error">
-          <strong>Uwaga:</strong> {cfg.message}
-          {cfg.docsUrl && (
-            <>
-              {" "}
-              <a href={cfg.docsUrl} target="_blank" rel="noopener noreferrer">
-                {cfg.docsLabel ?? "Dokumentacja"}
-              </a>
-              .
-            </>
-          )}
-        </Banner>
-      ))
-    }
-    <slot />
+    <div class:list={fullHeight ? "flex h-screen flex-col overflow-hidden" : "contents"}>
+      {
+        missingConfigs.map((cfg) => (
+          <Banner variant="error">
+            <strong>Uwaga:</strong> {cfg.message}
+            {cfg.docsUrl && (
+              <>
+                {" "}
+                <a href={cfg.docsUrl} target="_blank" rel="noopener noreferrer">
+                  {cfg.docsLabel ?? "Dokumentacja"}
+                </a>
+                .
+              </>
+            )}
+          </Banner>
+        ))
+      }
+      {
+        forceConfigBanner && (
+          <Banner variant="warning">
+            <strong>Uwaga (test E2E):</strong> Wymuszony pasek konfiguracji.
+          </Banner>
+        )
+      }
+      <slot />
+    </div>
   </body>
 </html>
 

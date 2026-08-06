@@ -3,7 +3,9 @@ import { toast } from "sonner";
 
 import { useItemList } from "@/components/hooks/useItemList";
 import { useItemMutation } from "@/components/hooks/useItemMutation";
+import { useItemTopbarBridge } from "@/components/hooks/useItemTopbarBridge";
 import EditItemDialog from "@/components/items/EditItemDialog";
+import { dispatchItemSearch } from "@/components/items/item-topbar-events";
 import ItemCard, { ITEM_CHECKBOX_CLASS } from "@/components/items/ItemCard";
 import ListFilterBar from "@/components/items/ListFilterBar";
 import {
@@ -80,6 +82,14 @@ export default function PendingItemsView({ initialItems, initialCriteria, initia
   // po re-renderze; ref zmienia się natychmiast, więc blokuje drugie wejście w tym samym tknięciu.
   const inFlightRef = useRef(false);
   const { bulkAccept, bulkReject, pending } = useItemMutation();
+
+  // Mostek do topbara powłoki (S-15 Faza 3): fraza z topbara stosowana przez `applyCriteria` (debounce hooka +
+  // czyszczenie zaznaczenia — parytet dawnego SearchBox). „Do akceptacji" nie ma akcji głównej w topbarze.
+  useItemTopbarBridge({
+    onSearch: (q) => {
+      applyCriteria(resetToFirstPage({ ...criteria, q }));
+    },
+  });
 
   const allSelected = isAllSelected(selected.size, items.length);
   const selectedCount = selected.size;
@@ -185,56 +195,31 @@ export default function PendingItemsView({ initialItems, initialCriteria, initia
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex min-h-0 flex-1 flex-col">
       <Toaster />
 
-      {/* Pasek filtrów widoczny, gdy jest co filtrować ALBO gdy jakikolwiek filtr jest aktywny — w drugim
-          przypadku lista może być pusta (zawężona), a kontrolki MUSZĄ zostać dostępne (powrót do domyślnych). */}
-      {(items.length > 0 || filtersActive) && (
-        <ListFilterBar
-          criteria={criteria}
-          onChange={(next) => {
-            // Zmiana filtra/sortu/frazy → strona 1 (zakres wyników się zmienia; strona N mogłaby nie istnieć —
-            // offset za końcem to błąd PGRST103). Wzorzec dziennika (S-11). Reset nie psuje debounce frazy:
-            // isSearchOnlyChange ignoruje `page`.
-            applyCriteria(resetToFirstPage(next));
-          }}
-          error={error}
-          onRetry={retry}
-        />
-      )}
+      {/* NIERUCHOMY pasek (S-15 follow-up): pasek filtrów oraz pasek zbiorczy — poza obszarem przewijania;
+          przewija się WYŁĄCZNIE lista (własny scroll box niżej). */}
+      <div className="flex shrink-0 flex-col gap-3 px-6 pt-6 pb-3">
+        {/* Pasek filtrów widoczny, gdy jest co filtrować ALBO gdy jakikolwiek filtr jest aktywny — w drugim
+            przypadku lista może być pusta (zawężona), a kontrolki MUSZĄ zostać dostępne (powrót do domyślnych). */}
+        {(items.length > 0 || filtersActive) && (
+          <ListFilterBar
+            criteria={criteria}
+            onChange={(next) => {
+              // Zmiana filtra/sortu/frazy → strona 1 (zakres wyników się zmienia; strona N mogłaby nie istnieć —
+              // offset za końcem to błąd PGRST103). Wzorzec dziennika (S-11). Reset nie psuje debounce frazy:
+              // isSearchOnlyChange ignoruje `page`.
+              applyCriteria(resetToFirstPage(next));
+            }}
+            error={error}
+            onRetry={retry}
+          />
+        )}
 
-      {items.length === 0 ? (
-        filtersActive ? (
-          <div
-            role="status"
-            className="flex flex-col items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70"
-          >
-            <span>Brak elementów dla wybranych filtrów.</span>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                // Czyść filtry/sort (i wróć na stronę 1), ale ZACHOWAJ rozmiar strony — preferencja widoku.
-                applyCriteria({ ...defaultCriteria("pending"), size: criteria.size });
-              }}
-              className="border-white/15 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white"
-            >
-              Wyczyść filtry
-            </Button>
-          </div>
-        ) : (
-          <div
-            role="status"
-            className="rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70"
-          >
-            Brak elementów do akceptacji.
-          </div>
-        )
-      ) : (
-        <>
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-            <label className="flex items-center gap-2 text-sm text-white/80">
+        {items.length > 0 && (
+          <div className="border-border bg-muted flex flex-wrap items-center gap-3 rounded-[5px] border px-4 py-3">
+            <label className="text-foreground flex items-center gap-2 text-sm">
               <Checkbox
                 checked={allSelected ? true : selectedCount > 0 ? "indeterminate" : false}
                 onCheckedChange={toggleAll}
@@ -243,7 +228,7 @@ export default function PendingItemsView({ initialItems, initialCriteria, initia
               />
               Zaznacz wszystkie
             </label>
-            <span className="text-sm text-white/50">
+            <span className="text-muted-foreground text-sm">
               {selectedCount > 0 ? `Zaznaczono: ${selectedCount}` : `${items.length} ${elementNoun(items.length)}`}
             </span>
             <div className="ml-auto flex gap-2">
@@ -269,35 +254,70 @@ export default function PendingItemsView({ initialItems, initialCriteria, initia
               </Button>
             </div>
           </div>
+        )}
+      </div>
 
-          {items.map((item) => (
-            <ItemCard
-              key={item.id}
-              item={item}
-              badges={{}}
-              selectable
-              selected={selected.has(item.id)}
-              onToggleSelect={() => {
-                toggleItem(item.id);
-              }}
-              inFlight={inFlightIds.has(item.id)}
-              actionsDisabled={pending}
-              onEdit={setEditing}
-              onAccept={(it) => {
-                void execute("accept", [it.id]);
-              }}
-              onReject={(it) => {
-                void execute("reject", [it.id]);
-              }}
-            />
-          ))}
-        </>
-      )}
+      {/* Lista — JEDYNY obszar przewijania (scroll ograniczony do listy; treść przycięta do jej ramki). */}
+      <div className="min-h-0 flex-1 overflow-y-auto px-6">
+        {items.length === 0 ? (
+          filtersActive ? (
+            <div
+              role="status"
+              className="border-border bg-card text-muted-foreground flex flex-col items-center gap-3 rounded-[5px] border px-4 py-6 text-center text-sm"
+            >
+              <span>Brak elementów dla wybranych filtrów.</span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  // Czyść filtry/sort (i wróć na stronę 1), ale ZACHOWAJ rozmiar strony — preferencja widoku.
+                  // Zsynchronizuj też input szukajki w topbarze (fraza wyzerowana).
+                  applyCriteria({ ...defaultCriteria("pending"), size: criteria.size });
+                  dispatchItemSearch("", "list");
+                }}
+              >
+                Wyczyść filtry
+              </Button>
+            </div>
+          ) : (
+            <div
+              role="status"
+              className="border-border bg-card text-muted-foreground rounded-[5px] border px-4 py-6 text-center text-sm"
+            >
+              Brak elementów do akceptacji.
+            </div>
+          )
+        ) : (
+          <div className="flex flex-col gap-3">
+            {items.map((item) => (
+              <ItemCard
+                key={item.id}
+                item={item}
+                badges={{}}
+                selectable
+                selected={selected.has(item.id)}
+                onToggleSelect={() => {
+                  toggleItem(item.id);
+                }}
+                inFlight={inFlightIds.has(item.id)}
+                actionsDisabled={pending}
+                onEdit={setEditing}
+                onAccept={(it) => {
+                  void execute("accept", [it.id]);
+                }}
+                onReject={(it) => {
+                  void execute("reject", [it.id]);
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Kontrolki stron (S-13 F2, parytet z dziennikiem): rozmiar strony (trwała preferencja + reset do 1)
           i nawigacja stron (zachowuje filtry z wyświetlanej listy). Zmiana czyści zaznaczenie (applyCriteria —
           invariant „selected ⊆ widoczne"). Pagination sama znika przy jednej stronie. */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 px-6 pt-3 pb-6">
         <PageSizeSelect
           value={criteria.size}
           sizes={ITEM_PAGE_SIZES}
