@@ -282,9 +282,9 @@ Brak. Zero zmian schematu, danych ani polityk RLS.
 
 #### Automatyczne
 
-- [x] 2.1 Testy jednostkowe przechodzą: `npm test` (state-filter + testy trasy/zachowania Kosza)
-- [x] 2.2 Sprawdzanie typów / build przechodzi: `npm run build`
-- [x] 2.3 Linting przechodzi: `npm run lint`
+- [x] 2.1 Testy jednostkowe przechodzą: `npm test` (state-filter + testy trasy/zachowania Kosza) — c1eb138
+- [x] 2.2 Sprawdzanie typów / build przechodzi: `npm run build` — c1eb138
+- [x] 2.3 Linting przechodzi: `npm run lint` — c1eb138
 
 #### Ręczne
 
@@ -297,7 +297,7 @@ Brak. Zero zmian schematu, danych ani polityk RLS.
 
 #### Automatyczne
 
-- [ ] 3.1 Format markdown przechodzi (celowany): `npx prettier --check context/foundation/ui-design-system.md`
+- [x] 3.1 Format markdown przechodzi (celowany): `npx prettier --check context/foundation/ui-design-system.md`
 
 #### Ręczne
 

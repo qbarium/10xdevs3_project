@@ -45,30 +45,30 @@ Realizacja: Tailwind 4 (`@theme`) + zmienne CSS w `src/styles/global.css`; motyw
 
 ### Paleta bazowa
 
-| rola                     | jasny     | ciemny                 |
-| ------------------------ | --------- | ---------------------- |
-| tło (`bg`)               | `#FFFFFF` | `#0E1014`              |
-| powierzchnia (`surface`) | `#FFFFFF` | `#16191F`              |
-| powierzchnia-2           | `#FAFBFC` | `#121419`              |
-| tekst                    | `#14161B` | `#ECEEF2`              |
-| tekst-2                  | `#565E6E` | `#9AA2B0`              |
-| tekst-3                  | `#8A93A2` | `#69707E`              |
-| obramowanie              | `#E8EBEF` | `rgba(255,255,255,.09)`|
-| obramowanie-2            | `#D6DBE2` | `rgba(255,255,255,.16)`|
-| hover                    | `#F4F6F8` | `rgba(255,255,255,.05)`|
-| active                   | `#ECEFF3` | `rgba(255,255,255,.09)`|
-| akcent                   | `#14161B` | `#ECEEF2`              |
-| akcent-tekst             | `#FFFFFF` | `#16191F`              |
+| rola                     | jasny     | ciemny                  |
+| ------------------------ | --------- | ----------------------- |
+| tło (`bg`)               | `#FFFFFF` | `#0E1014`               |
+| powierzchnia (`surface`) | `#FFFFFF` | `#16191F`               |
+| powierzchnia-2           | `#FAFBFC` | `#121419`               |
+| tekst                    | `#14161B` | `#ECEEF2`               |
+| tekst-2                  | `#565E6E` | `#9AA2B0`               |
+| tekst-3                  | `#8A93A2` | `#69707E`               |
+| obramowanie              | `#E8EBEF` | `rgba(255,255,255,.09)` |
+| obramowanie-2            | `#D6DBE2` | `rgba(255,255,255,.16)` |
+| hover                    | `#F4F6F8` | `rgba(255,255,255,.05)` |
+| active                   | `#ECEFF3` | `rgba(255,255,255,.09)` |
+| akcent                   | `#14161B` | `#ECEEF2`               |
+| akcent-tekst             | `#FFFFFF` | `#16191F`               |
 
 ### Kolory per typ (grzbień + chip)
 
-| typ      | jasny (tekst / tło / linia)          | ciemny (tekst / tło / linia)                    |
-| -------- | ------------------------------------ | ----------------------------------------------- |
-| task     | `#1F5FD0` / `#EAF1FD` / `#3B7CE0`     | `#7FB0EE` / `rgba(59,124,224,.18)` / `#5C97E0`   |
-| note     | `#157A45` / `#E6F6EC` / `#1F9B58`     | `#6FC58E` / `rgba(31,155,88,.18)` / `#46B06F`    |
-| idea     | `#966A0C` / `#FBF1D9` / `#C99211`     | `#E0B45E` / `rgba(201,146,17,.20)` / `#CFA24A`   |
-| decision | `#5B37B5` / `#F1EBFB` / `#7B53D6`     | `#B49AEC` / `rgba(123,83,214,.22)` / `#9C82DC`   |
-| other    | `#515B6B` / `#EEF1F5` / `#8A93A2`     | `#9AA2B0` / `rgba(138,147,162,.16)` / `#69707E`  |
+| typ      | jasny (tekst / tło / linia)       | ciemny (tekst / tło / linia)                    |
+| -------- | --------------------------------- | ----------------------------------------------- |
+| task     | `#1F5FD0` / `#EAF1FD` / `#3B7CE0` | `#7FB0EE` / `rgba(59,124,224,.18)` / `#5C97E0`  |
+| note     | `#157A45` / `#E6F6EC` / `#1F9B58` | `#6FC58E` / `rgba(31,155,88,.18)` / `#46B06F`   |
+| idea     | `#966A0C` / `#FBF1D9` / `#C99211` | `#E0B45E` / `rgba(201,146,17,.20)` / `#CFA24A`  |
+| decision | `#5B37B5` / `#F1EBFB` / `#7B53D6` | `#B49AEC` / `rgba(123,83,214,.22)` / `#9C82DC`  |
+| other    | `#515B6B` / `#EEF1F5` / `#8A93A2` | `#9AA2B0` / `rgba(138,147,162,.16)` / `#69707E` |
 
 Stan operacyjny: „zrealizowane" — zielony (`#157A45` / ciemny `#6FC58E`); „w realizacji" — niebieski (`#1F5FD0` / `#7FB0EE`).
 
@@ -76,13 +76,13 @@ Stan operacyjny: „zrealizowane" — zielony (`#157A45` / ciemny `#6FC58E`); �
 
 Trwała powłoka owija wszystkie chronione strony. Dziś **nie istnieje**: `Layout.astro` to baner + treść, a nawigacja to ręcznie wstawiany `Topbar.astro`. To największa strukturalna zmiana redesignu.
 
-- **Sidebar** (stały, zwężany do ikon na wąskich ekranach): marka; przycisk główny „Skrzynka wejściowa"; grupa **Przepływ** → „Do akceptacji" (z licznikiem); grupa **Biblioteka** → „Wpisy", „Sesje importu", „Dziennik" (nieaktywny, „wkrótce"); stopka → „Ustawienia" + konto ze statusem klucza.
+- **Sidebar** (stały, zwężany do ikon na wąskich ekranach): marka; przycisk główny „Skrzynka wejściowa"; grupa **Przepływ** → „Do akceptacji" (z licznikiem); grupa **Biblioteka** → „Wpisy", „Kosz" (ikona-wskaźnik pusty/niepusty), „Sesje importu"; stopka → „Ustawienia" + konto ze statusem klucza.
 - **Topbar:** tytuł + podtytuł strony, szukajka, akcja główna (np. „Dodaj wpis"), **przełącznik motywu (jasny/ciemny)**.
-- **Zakładki zakresu:** Aktywne / Zakończone / Anulowane / Kosz — z licznikami.
+- **Zakładki zakresu:** Wszystko aktywne / Nowe / W toku / Zakończone / Anulowane.
 - **Toolbar:** segmentowy filtr typu (Wszystkie / Zadania / Notatki / Pomysły / Decyzje / Inne) + „Sortuj".
 - **Multi-page:** aktywny stan liczony z `Astro.url.pathname`; przełączanie widoków = nawigacja pod adresami, nie stan React.
 
-Mapowanie sidebara na trasy: Skrzynka → `/ingest`; Do akceptacji → `/items`; Wpisy → `/items/active` (+ zakładki zakresu do `/items/done|cancelled|trash`); Sesje → `/import-sessions`; Ustawienia/konto → `/profile`.
+Mapowanie sidebara na trasy: Skrzynka → `/ingest`; Do akceptacji → `/items`; Wpisy → `/items/active` (+ zakładki zakresu do `/items/done|cancelled`); Kosz → `/items/trash`; Sesje → `/import-sessions`; Ustawienia/konto → `/profile`.
 
 ## Wzorce komponentów
 
