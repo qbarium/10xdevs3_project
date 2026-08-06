@@ -46,7 +46,7 @@ TaskerLight przyjmuje surowy, nieuporządkowany wsad głosowo-tekstowy i rozdzie
 | S-13  | session-entries-mode     | otworzyć wpisy danej sesji jako pełną listę („Pokaż wpisy") zamiast master-detail; lista sesji jako karty + paginacja wpisów | S-10, S-11 | FR-027 / FR-008 (zastępuje master-detail S-10) | done |
 | S-14  | csrf-hardening           | (utwardzenie) endpointy mutujące odporne na CSRF — aplikacyjny origin-check + jawny SameSite | — | NFR Bezpieczeństwo (obrona w głąb) | done |
 | S-15  | ui-redesign              | (redesign) nowa szata „techniczna" (jasny+ciemny) + trwała powłoka (sidebar+topbar); wszystkie widoki | — | — (prezentacyjne; reguluje `ui-design-system.md`) | done |
-| S-16  | trash-sidebar-relocation | (reorg. IA) otworzyć „Kosz" jako osobne miejsce w panelu bocznym (nie zakładkę pod „Wpisami"); oś „Wpisów" tylko cykl życia (pochodzenie na badge, bez filtra) | S-06, S-15 | — (prezentacyjne; US-05/FR-013/FR-016 bez zmian zachowania) | proposed |
+| S-16  | trash-sidebar-relocation | (reorg. IA) otworzyć „Kosz" jako osobne miejsce w panelu bocznym (nie zakładkę pod „Wpisami"); oś „Wpisów" tylko cykl życia (pochodzenie na badge, bez filtra) | S-06, S-15 | — (prezentacyjne; US-05/FR-013/FR-016 bez zmian zachowania) | in-review |
 
 ## Strumienie
 
@@ -289,7 +289,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Decyzje (uzgodnione 2026-08-06):** (1) **Opcja A** — Kosz jako pojedyncze, poprzeczne miejsce w sidebarze; **odrzucona opcja B** (dwa osobne kosze) jako rozbijająca jeden byt DB, fragmentująca „Wyczyść kosz" i dublująca widoki. (2) **Bez filtra pochodzenia** (uszczegółowione 2026-08-06 po badaniu): rozróżnienie `rejected`/`deleted` niesie **badge na karcie** (jak dziś, zgodnie ze scope-downem S-06) — S-16 nie dodaje kontrolki zawężającej. Wcześniejszy wariant „filtr pochodzenia w widoku" **wycofany** (badge wystarcza; brak regresu — filtra i tak dziś nie ma). (3) Zmiana **czysto prezentacyjna / IA** — model danych (`acceptance_status`, restore `deleted→accepted` / `rejected→pending`, twardy „Wyczyść kosz") **bez zmian**.
 - **Nośnik pracy:** osobna gałąź + PR (po zmerge S-15). Plan fazowy w `context/changes/trash-sidebar-relocation/plan.md` (`/10x-plan`).
 - **Ryzyko:** wyjęcie „Kosza" z osi stanu rusza `state-filter.ts` i jego **zamrożony test** `state-filter.test.ts` (trasa `trash` + etykieta „Kosz") oraz `nav-active.ts` + jego zamrożony test (`/items/trash` świeci dziś jako „Wpisy") — legalne zmiany kontraktu, do zrobienia świadomie z testami. Reszta to czysta nawigacja (sidebar) + wpis w grupie „Biblioteka".
-- **Status:** proposed
+- **Status:** in-review
 
 ## Przekazanie backlogu
 
@@ -311,7 +311,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 | S-13             | session-entries-mode       | Tryb „Pokaż wpisy" + filtr sesji na liście wpisów (zastępuje master-detail) | yes         | Zaimplementowane (5 faz + poprawki po testach ręcznych 2026-07-02); czeka na `/10x-impl-review` |
 | S-14             | csrf-hardening             | Utwardzenie anty-CSRF mutujących endpointów (origin-check + jawny SameSite) | yes         | Zaimplementowane (2 fazy, zmergowane edd5bde 2026-07-03); czeka na `/10x-impl-review` |
 | S-15             | ui-redesign                | Nowa szata „techniczna" + powłoka nawigacyjna                              | yes         | Na `feature/ui-redesign`; następny krok `/10x-research ui-redesign`               |
-| S-16             | trash-sidebar-relocation   | Kosz jako osobne miejsce w panelu bocznym                                 | yes         | Shaped 2026-08-06 (opcja A, bez filtra pochodzenia); research gotowy 2026-08-06. Następny krok `/10x-plan trash-sidebar-relocation` |
+| S-16             | trash-sidebar-relocation   | Kosz jako osobne miejsce w panelu bocznym                                 | yes         | Zaimplementowane 2026-08-06 (3 fazy: ed4d9a1/c1eb138/22d64e8; automatyczne bramki zielone). Czeka na `/10x-impl-review`; weryfikacja ręczna po stronie użytkownika. Następny krok `/10x-impl-review trash-sidebar-relocation` |
 
 ## Otwarte pytania dotyczące mapy drogowej
 
