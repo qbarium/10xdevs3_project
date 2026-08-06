@@ -272,11 +272,11 @@ Brak. Zero zmian schematu, danych ani polityk RLS.
 
 #### Ręczne
 
-- [ ] 1.4 „Kosz" widoczny w „Bibliotece", kolejność Wpisy → Kosz → Sesje importu
-- [ ] 1.5 `/items/trash` podświetla „Kosz", nie „Wpisy"
-- [ ] 1.6 Ikona: wariant „pełny" gdy kosz niepusty, „pusty" gdy pusty (oba stany)
-- [ ] 1.7 Po opróżnieniu i nawigacji ikona zmienia się na „pusty"
-- [ ] 1.8 Zwężony sidebar (≤920 px) — ikona Kosza czytelna
+- [x] 1.4 „Kosz" widoczny w „Bibliotece", kolejność Wpisy → Kosz → Sesje importu
+- [x] 1.5 `/items/trash` podświetla „Kosz", nie „Wpisy"
+- [x] 1.6 Ikona: wariant „pełny" gdy kosz niepusty, „pusty" gdy pusty (oba stany)
+- [x] 1.7 Po opróżnieniu i nawigacji ikona zmienia się na „pusty"
+- [x] 1.8 Zwężony sidebar (≤920 px) — ikona Kosza czytelna
 
 ### Faza 2: Wyjęcie Kosza z osi stanu
 
@@ -288,10 +288,10 @@ Brak. Zero zmian schematu, danych ani polityk RLS.
 
 #### Ręczne
 
-- [ ] 2.4 Oś Wpisów to 5 zakładek bez „Kosza"
-- [ ] 2.5 `/items/trash` bez osi; filtr typu, lista, przywracanie, „Wyczyść kosz" działają
-- [ ] 2.6 Kosz osiągalny z sidebara; trasa renderuje się poprawnie
-- [ ] 2.7 Restore i „Wyczyść kosz" bez zmian zachowania
+- [x] 2.4 Oś Wpisów to 5 zakładek bez „Kosza"
+- [x] 2.5 `/items/trash` bez osi; filtr typu, lista, przywracanie, „Wyczyść kosz" działają
+- [x] 2.6 Kosz osiągalny z sidebara; trasa renderuje się poprawnie
+- [x] 2.7 Restore i „Wyczyść kosz" bez zmian zachowania
 
 ### Faza 3: Aktualizacja dokumentu IA
 
@@ -301,4 +301,4 @@ Brak. Zero zmian schematu, danych ani polityk RLS.
 
 #### Ręczne
 
-- [ ] 3.2 Opis powłoki zgodny z nową IA (Kosz w „Bibliotece" ze wskaźnikiem; brak „Kosza" na osi zakresu)
+- [x] 3.2 Opis powłoki zgodny z nową IA (Kosz w „Bibliotece" ze wskaźnikiem; brak „Kosza" na osi zakresu)
