@@ -1,5 +1,5 @@
-// Oś stanu strony „Wpisy" w szacie „technicznej" (S-15 Faza 9): JEDEN płaski rząd 6 zakładek-linków.
-// Po konsolidacji (Faza 9) model jest JEDNORODNY: każda z 6 pozycji `STATE_FILTER_OPTIONS` to pełna
+// Oś stanu strony „Wpisy" w szacie „technicznej" (S-15 Faza 9): JEDEN płaski rząd 5 zakładek-linków.
+// Po konsolidacji (Faza 9) model jest JEDNORODNY: każda z 5 pozycji `STATE_FILTER_OPTIONS` to pełna
 // NAWIGACJA `<a href>` na stronę widoku (świeży render SSR), z adresem z `navigateHref` (niesie aktywny
 // filtr rodzaju `?type=`). Dotyczy to także rodziny „active": „Nowe"/„W toku" wskazują teraz
 // `/items/active?opstatus=new|in_progress` — dawny kliencki podfiltr (re-fetch bez przeładowania) zniknął.

@@ -5,7 +5,6 @@ import { useItemList } from "@/components/hooks/useItemList";
 import { useItemMutation } from "@/components/hooks/useItemMutation";
 import { useItemTopbarBridge } from "@/components/hooks/useItemTopbarBridge";
 import { dispatchItemSearch } from "@/components/items/item-topbar-events";
-import StateFilterSelect from "@/components/items/StateFilterSelect";
 import ItemCard, { ITEM_CHECKBOX_CLASS } from "@/components/items/ItemCard";
 import ListFilterBar from "@/components/items/ListFilterBar";
 import {
@@ -207,13 +206,10 @@ export default function TrashItemsView({ initialItems, initialCriteria, initialT
     <div className="flex min-h-0 flex-1 flex-col">
       <Toaster />
 
-      {/* NIERUCHOMY pasek (S-15 follow-up): zakładki zakresu, pasek filtrów oraz pasek zbiorczy — poza
-          obszarem przewijania; przewija się WYŁĄCZNIE lista (własny scroll box niżej). */}
+      {/* NIERUCHOMY pasek (S-15 follow-up; oś zakresu zdjęta w S-16): pasek filtrów oraz pasek zbiorczy —
+          poza obszarem przewijania; przewija się WYŁĄCZNIE lista (własny scroll box niżej). Kosz jest teraz
+          osobnym miejscem w sidebarze, więc jego strona nie renderuje już osi stanu. */}
       <div className="flex shrink-0 flex-col gap-3 px-6 pt-6 pb-3">
-        {/* Zakładki zakresu (S-15 Faza 3): Kosz aktywny; pełna nawigacja na inne widoki (niosą filtr typu).
-            Bez podfiltra „active" (to nie widok Aktywne). Szukajka i „Wyczyść kosz" żyją w topbarze powłoki. */}
-        <StateFilterSelect view="trash" type={criteria.type} opstatus={undefined} />
-
         <ListFilterBar
           criteria={criteria}
           onChange={(next) => {

@@ -3,14 +3,13 @@ import { describe, expect, it } from "vitest";
 import { STATE_FILTER_OPTIONS, stateSelectValue } from "@/components/items/state-filter";
 
 describe("STATE_FILTER_OPTIONS", () => {
-  it("to 6 pozycji w kolejności cyklu życia z rozłącznymi wartościami", () => {
+  it("to 5 pozycji w kolejności cyklu życia z rozłącznymi wartościami", () => {
     expect(STATE_FILTER_OPTIONS.map((o) => o.value)).toEqual([
       "active",
       "active:new",
       "active:in_progress",
       "done",
       "cancelled",
-      "trash",
     ]);
   });
 
@@ -21,7 +20,6 @@ describe("STATE_FILTER_OPTIONS", () => {
       "W toku",
       "Zakończone",
       "Anulowane",
-      "Kosz",
     ]);
   });
 
@@ -34,7 +32,6 @@ describe("STATE_FILTER_OPTIONS", () => {
     expect(STATE_FILTER_OPTIONS.filter((o) => o.view !== "active").map((o) => o.view)).toEqual([
       "done",
       "cancelled",
-      "trash",
     ]);
   });
 });
@@ -49,12 +46,10 @@ describe("stateSelectValue", () => {
   it("pozostałe widoki wg samego view", () => {
     expect(stateSelectValue("done", undefined)).toBe("done");
     expect(stateSelectValue("cancelled", undefined)).toBe("cancelled");
-    expect(stateSelectValue("trash", undefined)).toBe("trash");
   });
 
   it("opstatus ignorowany dla widoków innych niż active (obronnie)", () => {
     expect(stateSelectValue("done", "new")).toBe("done");
-    expect(stateSelectValue("trash", "in_progress")).toBe("trash");
   });
 
   it("round-trip: każda wartość z modelu wraca przez stateSelectValue(view, opstatus)", () => {

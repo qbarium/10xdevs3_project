@@ -266,9 +266,9 @@ Brak. Zero zmian schematu, danych ani polityk RLS.
 
 #### Automatyczne
 
-- [x] 1.1 Testy jednostkowe przechodzą: `npm test`
-- [x] 1.2 Sprawdzanie typów / build przechodzi: `npm run build`
-- [x] 1.3 Linting przechodzi (po edycji `.astro`): `npm run lint`
+- [x] 1.1 Testy jednostkowe przechodzą: `npm test` — ed4d9a1
+- [x] 1.2 Sprawdzanie typów / build przechodzi: `npm run build` — ed4d9a1
+- [x] 1.3 Linting przechodzi (po edycji `.astro`): `npm run lint` — ed4d9a1
 
 #### Ręczne
 
@@ -282,9 +282,9 @@ Brak. Zero zmian schematu, danych ani polityk RLS.
 
 #### Automatyczne
 
-- [ ] 2.1 Testy jednostkowe przechodzą: `npm test` (state-filter + testy trasy/zachowania Kosza)
-- [ ] 2.2 Sprawdzanie typów / build przechodzi: `npm run build`
-- [ ] 2.3 Linting przechodzi: `npm run lint`
+- [x] 2.1 Testy jednostkowe przechodzą: `npm test` (state-filter + testy trasy/zachowania Kosza)
+- [x] 2.2 Sprawdzanie typów / build przechodzi: `npm run build`
+- [x] 2.3 Linting przechodzi: `npm run lint`
 
 #### Ręczne
 
