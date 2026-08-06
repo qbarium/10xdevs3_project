@@ -29,10 +29,7 @@ describe("STATE_FILTER_OPTIONS", () => {
       "new",
       "in_progress",
     ]);
-    expect(STATE_FILTER_OPTIONS.filter((o) => o.view !== "active").map((o) => o.view)).toEqual([
-      "done",
-      "cancelled",
-    ]);
+    expect(STATE_FILTER_OPTIONS.filter((o) => o.view !== "active").map((o) => o.view)).toEqual(["done", "cancelled"]);
   });
 });
 
