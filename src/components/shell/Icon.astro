@@ -4,7 +4,7 @@
 // kolor dziedziczy po rodzicu (pozycja nav), więc aktywny stan steruje też ikoną. Renderowane jako
 // realne elementy <path> (bez `set:html`); typ `icon` zawęża dozwolone ikony. Prop nazwany `icon`
 // (nie `name`), by nie kolidować z zdeprecjonowanym globalnym `name` w wyrażeniach szablonu.
-type IconName = "layers" | "tray" | "inbox" | "history" | "book" | "settings" | "log-out";
+type IconName = "layers" | "tray" | "inbox" | "history" | "book" | "settings" | "log-out" | "trash" | "trash-full";
 
 interface Props {
   icon: IconName;
@@ -83,6 +83,26 @@ const { icon, size = 18, strokeWidth = 1.7, class: className } = Astro.props;
         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
         <path d="m16 17 5-5-5-5" />
         <path d="M21 12H9" />
+      </Fragment>
+    )
+  }
+  {
+    icon === "trash" && (
+      <Fragment>
+        <path d="M3 6h18" />
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      </Fragment>
+    )
+  }
+  {
+    icon === "trash-full" && (
+      <Fragment>
+        <path d="M3 6h18" />
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+        <path d="M10 11v6" />
+        <path d="M14 11v6" />
       </Fragment>
     )
   }

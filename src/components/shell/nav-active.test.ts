@@ -7,11 +7,14 @@ describe("activeNavId — aktywny stan powłoki wg adresu", () => {
     expect(activeNavId("/items")).toBe("pending");
   });
 
-  it("grupa Wpisy łapie wszystkie zakresy /items/* (prefiks), a nie samego /items", () => {
+  it("grupa Wpisy łapie zakresy cyklu życia /items/* (prefiks), a nie samego /items", () => {
     expect(activeNavId("/items/active")).toBe("entries");
     expect(activeNavId("/items/done")).toBe("entries");
     expect(activeNavId("/items/cancelled")).toBe("entries");
-    expect(activeNavId("/items/trash")).toBe("entries");
+  });
+
+  it("Kosz (/items/trash) jest DOKŁADNE — wyjęty z grupy Wpisy, świeci jako „trash”", () => {
+    expect(activeNavId("/items/trash")).toBe("trash");
   });
 
   it("Skrzynka / Sesje / Ustawienia mapują na swoje id", () => {

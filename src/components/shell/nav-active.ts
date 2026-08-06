@@ -1,7 +1,8 @@
 // Aktywny stan pozycji powłoki liczony z `Astro.url.pathname` (multi-page SSR — brak stanu React).
 // Pułapka: naiwny `startsWith` myli „Do akceptacji" (/items, DOKŁADNE) z grupą „Wpisy"
-// (/items/active|done|cancelled|trash — PREFIKS /items/). Dlatego dopasowanie jest jawne per pozycja,
-// a kolejność w `NAV_MATCHERS` czyni wykluczenie widocznym. Pokryte `nav-active.test.ts`.
+// (/items/active|done|cancelled — PREFIKS /items/). „Kosz" (/items/trash, DOKŁADNE) też wpadłby w ten
+// prefiks, więc jego matcher stoi PRZED „entries". Dopasowanie jest jawne per pozycja, a kolejność
+// w `NAV_MATCHERS` czyni wykluczenia widocznymi. Pokryte `nav-active.test.ts`.
 
 export type NavMatch = { type: "exact"; path: string } | { type: "prefix"; path: string };
 
@@ -16,11 +17,12 @@ export interface NavMatcher {
   match: NavMatch;
 }
 
-// Kolejność = priorytet (pierwsze pasujące wygrywa). „pending" (exact /items) PRZED „entries"
-// (prefix /items/) — i tak się wykluczają, ale kolejność czyni to jawnym.
+// Kolejność = priorytet (pierwsze pasujące wygrywa). „pending" (exact /items) oraz „trash"
+// (exact /items/trash) MUSZĄ stać PRZED „entries" (prefix /items/) — inaczej prefiks złapie je pierwszy.
 export const NAV_MATCHERS: readonly NavMatcher[] = [
   { id: "ingest", match: { type: "exact", path: "/ingest" } },
   { id: "pending", match: { type: "exact", path: "/items" } },
+  { id: "trash", match: { type: "exact", path: "/items/trash" } },
   { id: "entries", match: { type: "prefix", path: "/items/" } },
   { id: "sessions", match: { type: "prefix", path: "/import-sessions" } },
   { id: "settings", match: { type: "prefix", path: "/profile" } },
