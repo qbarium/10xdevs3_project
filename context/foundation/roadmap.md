@@ -3,7 +3,7 @@ project: TaskerLight
 version: 1
 status: draft
 created: 2026-06-05
-updated: 2026-07-20
+updated: 2026-08-06
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -45,7 +45,7 @@ TaskerLight przyjmuje surowy, nieuporządkowany wsad głosowo-tekstowy i rozdzie
 | S-12  | dup-react-ssr-dev-fix    | (naprawa, dev-only) wyeliminować błąd podwójnego React-a na `/import-sessions` w `npm run dev` | — | — (dług techniczny; lessons.md) | done |
 | S-13  | session-entries-mode     | otworzyć wpisy danej sesji jako pełną listę („Pokaż wpisy") zamiast master-detail; lista sesji jako karty + paginacja wpisów | S-10, S-11 | FR-027 / FR-008 (zastępuje master-detail S-10) | done |
 | S-14  | csrf-hardening           | (utwardzenie) endpointy mutujące odporne na CSRF — aplikacyjny origin-check + jawny SameSite | — | NFR Bezpieczeństwo (obrona w głąb) | done |
-| S-15  | ui-redesign              | (redesign) nowa szata „techniczna" (jasny+ciemny) + trwała powłoka (sidebar+topbar); wszystkie widoki | — | — (prezentacyjne; reguluje `ui-design-system.md`) | in-progress |
+| S-15  | ui-redesign              | (redesign) nowa szata „techniczna" (jasny+ciemny) + trwała powłoka (sidebar+topbar); wszystkie widoki | — | — (prezentacyjne; reguluje `ui-design-system.md`) | done |
 | S-16  | trash-sidebar-relocation | (reorg. IA) otworzyć „Kosz" jako osobne miejsce w panelu bocznym (nie zakładkę pod „Wpisami"), z filtrem pochodzenia (odrzucone/usunięte); oś „Wpisów" tylko cykl życia | S-06, S-15 | — (prezentacyjne; US-05/FR-013/FR-016 bez zmian zachowania) | proposed |
 
 ## Strumienie
@@ -275,7 +275,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Decyzje (uzgodnione 2026-08-03):** (1) **multi-page** zostaje — powłokę odtwarzamy w Astro, aktywny stan z adresu strony, bez SPA; (2) **wariant „techniczny" + dark mode** (pozostałe 5 presetów i przełącznik stylu poza zakresem); (3) **bez metadanych przyszłości** (priorytet/termin/tagi) i **bez „pewności %"** w „Do akceptacji"; (4) **wszystkie widoki**, brakujące w makiecie wnioskowane z istniejących; (5) opis wyglądu żyje w `ui-design-system.md` (foundation), nie w PRD — bo zachowanie się nie zmienia.
 - **Nośnik pracy:** cała zmiana na gałęzi `feature/ui-redesign`, fazy sekwencyjnie, **jeden PR mergowany na końcu** (bez merge per faza). Plan fazowy powstanie w `context/changes/ui-redesign/plan.md` (`/10x-plan`).
 - **Ryzyko:** przekrojowa zmiana (powłoka + tokeny + kilkanaście–kilkadziesiąt komponentów z zaszytymi kolorami `white/…`). Największe ryzyko: rozjazd z uchwytami testów (role/nazwy/`data-item-id`) — plan musi jawnie je zachować (test-plan: E2E asertuje funkcję przez DOM, nie wygląd).
-- **Status:** in-progress
+- **Status:** done
 
 ### S-16: Kosz jako osobne miejsce w panelu bocznym (+ filtr pochodzenia)
 
@@ -348,6 +348,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **S-11: użytkownik filtruje i sortuje dziennik sesji importu (`/import-sessions`) reaktywnie — zmiana kontrolki natychmiast zawęża listę bez przycisku „Zastosuj", kryteria w adresie strony (refresh / „wstecz-dalej" / odnośnik je zachowują); dropdowny sort/status spójne wizualnie (custom `Select`, nie natywne `<select>`); pusty wynik z filtrem pokazuje „Wyczyść filtry"; doszła paginacja stronowa (indeks + serwis + endpoint) oraz — poza planem — rozmiar strony z zapamiętywaniem i skok do strony.** — Zarchiwizowano 2026-07-01 → `context/archive/2026-06-28-session-log-filter-ux/`. Lekcja: wspólne kryterium przekazuj przez WSZYSTKIE warstwy (SSR + endpoint) — częściowe wpięcie `size` dało rozjazd hydratacji (F1, impl-review).
 - **S-12: (naprawa, dług techniczny) strona `/import-sessions` przestaje wywalać render serwerowy („Invalid hook call / more than one copy of React") w `npm run dev`; build produkcyjny i tak był wolny od błędu, więc to poprawa doświadczenia deweloperskiego, nie wydania.** — Zarchiwizowano 2026-07-01 → `context/archive/2026-07-01-dup-react-ssr-dev-fix/`. Lekcja: przypnij CAŁĄ populację późno-odkrywanych depów w `ssr.optimizeDeps.include` (nie jeden), weryfikuj dwutorowo z pokryciem dialog/API (lessons.md).
 - **S-13: użytkownik w dzienniku sesji (lista kart: status, źródło, data, liczba wpisów) klika „Pokaż wpisy" na sesji i trafia na pełną listę wpisów w trybie kontekstowym sesji (adres `?session=<id>`): baner „Wpisy dla sesji importu — <źródło>, <data>" z akcją powrotu, normalne filtry/wyszukiwanie ukryte, widoczne WSZYSTKIE elementy sesji (wszystkie stany akceptacji), z zachowanymi akcjami (edycja/akceptacja/odrzucenie reużyte z list głównych). Sesje `niepowodzenie` mają „Ponów" zamiast „Pokaż wpisy". Master-detail (prawy panel) znika — lista sesji staje się pełnoszerokimi kartami.** — Zarchiwizowano 2026-07-02 → `context/archive/2026-07-01-session-entries-mode/`. Lekcja: nie używaj top-level `return` we frontmatterze `.astro` — crash lint no-misused-promises (lessons.md).
+- **S-15: użytkownik dostaje spójny, przeprojektowany interfejs w wariancie „technicznym" (font IBM Plex Sans, ostre małe zaokrąglenia, gęste wiersze, kolorowy grzbień + chip per typ) w dwóch motywach (jasny + ciemny, z przełącznikiem), z trwałą powłoką: stały sidebar (Skrzynka / Do akceptacji / Wpisy / Sesje importu) + topbar. Wszystkie widoki przeniesione na nowy język wizualny; widoki spoza makiety (profil/BYOK, tryb „Pokaż wpisy", dialogi, modal klasyfikacji, auth, landing) wywnioskowane z języka makiety.** — Zarchiwizowano 2026-08-06 → `context/archive/2026-08-03-ui-redesign/`. Lekcja: F1 (przegląd Fazy 9) — powłoka nie może brać sztywnych 100vh nad banerem w flow; opakowanie w kolumnę h-screen + regresyjny E2E z szwem dev.
 
 ## Zrobione
 
