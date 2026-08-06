@@ -24,29 +24,45 @@ const theme = parseTheme(Astro.cookies.get(THEME_COOKIE)?.value);
 const pathname = Astro.url.pathname;
 
 // Dane dynamiczne powłoki liczone RAZ na render (klient z cookies usera → RLS per-user): licznik
-// „Do akceptacji" (lekki count `head:true`) + status klucza BYOK (stopka konta). To świadome,
-// celowane odstępstwo od „bez nowych zapytań" — udokumentowane w planie (Uwagi o wydajności).
-// Przejściowy błąd odczytu → wartość neutralna (0 / brak klucza); powłoka renderuje się niezależnie.
+// „Do akceptacji" + wskaźnik niepustego Kosza (oba lekkie count `head:true`) + status klucza BYOK
+// (stopka konta). To świadome, celowane odstępstwo od „bez nowych zapytań" — udokumentowane w planie
+// (Uwagi o wydajności). Trzy odczyty równolegle przez `Promise.all`, każdy z WŁASNYM fallbackiem:
+// przejściowy błąd jednego nie może wywalić pozostałych, degraduje do wartości neutralnej.
 let pendingCount = 0;
+let trashHasItems = false;
 let keyConfigured = false;
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 if (user && supabase) {
-  try {
-    const { count } = await supabase
+  // Fallback PER odczyt dwuargumentowym `then(onfulfilled, onrejected)` (builder Supabase jest typowany
+  // jako PromiseLike — bez `.catch`): `Promise.all` odrzuciłby całość przy pierwszym rejectcie, więc
+  // każdy odczyt sam łapie błąd i schodzi do wartości neutralnej (0 / pusto / brak klucza).
+  const [pending, trashNonEmpty, configured] = await Promise.all([
+    supabase
       .from("items")
       .select("id", { count: "exact", head: true })
       .eq("user_id", user.id)
-      .eq("acceptance_status", "pending");
-    pendingCount = count ?? 0;
-  } catch {
-    pendingCount = 0;
-  }
-  try {
-    const status = await getKeyStatus(supabase, user.id);
-    keyConfigured = status.configured;
-  } catch {
-    keyConfigured = false;
-  }
+      .eq("acceptance_status", "pending")
+      .then(
+        ({ count }) => count ?? 0,
+        () => 0,
+      ),
+    supabase
+      .from("items")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .in("acceptance_status", ["rejected", "deleted"])
+      .then(
+        ({ count }) => (count ?? 0) > 0,
+        () => false,
+      ),
+    getKeyStatus(supabase, user.id).then(
+      (s) => s.configured,
+      () => false,
+    ),
+  ]);
+  pendingCount = pending;
+  trashHasItems = trashNonEmpty;
+  keyConfigured = configured;
 }
 ---
 
@@ -55,6 +71,7 @@ if (user && supabase) {
     <AppSidebar
       pathname={pathname}
       pendingCount={pendingCount}
+      trashHasItems={trashHasItems}
       keyConfigured={keyConfigured}
       userEmail={user?.email ?? null}
     />

@@ -1,12 +1,13 @@
 // Czysta logika osi stanu strony „Wpisy". Wydzielona z komponentu prezentacyjnego, by była testowalna w node
 // (bez DOM) — wzorzec `operational-view.ts` / `type-filter.ts`. Po Fazie 9 `StateFilterSelect` renderuje oś jako
-// JEDEN płaski rząd 6 zakładek-linków (`<a href>` z `navigateHref`) — bez klienckiego podfiltra. (Wariant
+// JEDEN płaski rząd 5 zakładek-linków (`<a href>` z `navigateHref`) — bez klienckiego podfiltra. (Wariant
 // `Select` — `resolveStateSelection`/`stateSelectLabel`/`StateSelection` — usunięty jako martwy kod w Fazie 8;
 // kliencki podfiltr rodziny „active" — w Fazie 9.)
 //
-// Model 6 pozycji w kolejności cyklu życia (zgodnej z `BULK_TARGETS`): „Wszystko aktywne / Nowe / W toku"
-// (rodzina „active" — ten sam widok `active`, różny `opstatus`) + „Zakończone / Anulowane / Kosz" (osobne
-// widoki-ścieżki). Konwencja bazy (patrz `list-criteria`): „który zbiór oglądam" = ŚCIEŻKA strony, „jak go
+// Model 5 pozycji w kolejności cyklu życia (zgodnej z `BULK_TARGETS`): „Wszystko aktywne / Nowe / W toku"
+// (rodzina „active" — ten sam widok `active`, różny `opstatus`) + „Zakończone / Anulowane" (osobne
+// widoki-ścieżki). Kosz NIE jest już pozycją osi (S-16) — to osobne miejsce w sidebarze („Biblioteka",
+// wskaźnik pusty/niepusty); trasa `/items/trash` i widok `trash` z MainView zostają nietknięte. Konwencja bazy (patrz `list-criteria`): „który zbiór oglądam" = ŚCIEŻKA strony, „jak go
 // zawężam" = parametr URL. Po konsolidacji Fazy 9 KAŻDA pozycja to pełna nawigacja: „Nowe"/„W toku" wskazują
 // `/items/active?opstatus=…` (nie kliencki re-fetch), więc oś jest jednorodna, a podświetlenie liczy się
 // z pary (widok + `opstatus`) przez `stateSelectValue`.
@@ -30,11 +31,12 @@ export interface StateFilterOption {
 }
 
 /**
- * Sześć pozycji filtra stanu w kolejności cyklu życia (`BULK_TARGETS`: new → in_progress → done → cancelled),
- * poprzedzone workiem „Wszystko aktywne" i zwieńczone Koszem. Rodzina „active" (pierwsze trzy) dzieli widok
- * `active` i różni się `opstatus`, więc potrzebuje ROZŁĄCZNYCH wartości (`active` / `active:new` /
- * `active:in_progress`). Etykiety stanów operacyjnych z kanonicznego `operationalStatusLabel` (spójne z badge'ami
- * listy i przyciskami bulk); „Wszystko aktywne" oraz etykiety widoków to literały (zgodne z dawnym `ENTRY_VIEWS`).
+ * Pięć pozycji filtra stanu w kolejności cyklu życia (`BULK_TARGETS`: new → in_progress → done → cancelled),
+ * poprzedzonych workiem „Wszystko aktywne". Rodzina „active" (pierwsze trzy) dzieli widok `active` i różni się
+ * `opstatus`, więc potrzebuje ROZŁĄCZNYCH wartości (`active` / `active:new` / `active:in_progress`). Etykiety
+ * stanów operacyjnych z kanonicznego `operationalStatusLabel` (spójne z badge'ami listy i przyciskami bulk);
+ * „Wszystko aktywne" oraz etykiety widoków to literały (zgodne z dawnym `ENTRY_VIEWS`). Kosz wyszedł z osi
+ * (S-16) do sidebara — patrz nagłówek pliku.
  */
 export const STATE_FILTER_OPTIONS: readonly StateFilterOption[] = [
   { value: "active", label: "Wszystko aktywne", view: "active", opstatus: undefined },
@@ -47,7 +49,6 @@ export const STATE_FILTER_OPTIONS: readonly StateFilterOption[] = [
   },
   { value: "done", label: "Zakończone", view: "done", opstatus: undefined },
   { value: "cancelled", label: "Anulowane", view: "cancelled", opstatus: undefined },
-  { value: "trash", label: "Kosz", view: "trash", opstatus: undefined },
 ];
 
 /**

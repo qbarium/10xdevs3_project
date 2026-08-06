@@ -9,10 +9,11 @@ import { activeNavId } from "@/components/shell/nav-active";
 interface Props {
   pathname: string;
   pendingCount: number;
+  trashHasItems: boolean;
   keyConfigured: boolean;
   userEmail: string | null;
 }
-const { pathname, pendingCount, keyConfigured, userEmail } = Astro.props;
+const { pathname, pendingCount, trashHasItems, keyConfigured, userEmail } = Astro.props;
 const active = activeNavId(pathname);
 
 const emailTrimmed = userEmail?.trim() ?? "";
@@ -87,6 +88,15 @@ const label = "flex-1 truncate max-[920px]:hidden";
     >
       <Icon icon="layers" size={17} class="shrink-0" />
       <span class:list={[label]}>Wpisy</span>
+    </a>
+    <a
+      href="/items/trash"
+      aria-label="Kosz"
+      class:list={[navLayout, active === "trash" ? navOn : navIdle]}
+      aria-current={active === "trash" ? "page" : undefined}
+    >
+      <Icon icon={trashHasItems ? "trash-full" : "trash"} size={17} class="shrink-0" />
+      <span class:list={[label]}>Kosz</span>
     </a>
     <a
       href="/import-sessions"
