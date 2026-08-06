@@ -258,6 +258,10 @@ Brak. Zero zmian schematu, danych ani polityk RLS.
 - Zachowanie Kosza (bez zmian): `src/lib/services/items-mutation.ts:170-191` (restore), `:200-209` (empty)
 - Lekcja: brak top-level `return` we `.astro`; `npm run lint` po edycji `.astro` (`context/foundation/lessons.md`)
 
+## Aneks — odkryty zakres (post-implementacja)
+
+- **H1/podtytuł strony Kosza** (`src/pages/items/trash.astro`, commit 285d73d): nagłówek zmieniony z `title="Wpisy"` / `subtitle="Kosz — …"` na `title="Kosz"` / `subtitle="Wpisy do przywrócenia lub skasowania"`. Prezentacyjne dopełnienie nowej IA — Kosz jako osobne miejsce ma własny H1 „Kosz" zamiast dziedziczyć „Wpisy". Zmiana czysto tekstowa (propsy topbara), bez wpływu na trasę / dane / zachowanie; zweryfikowana E2E (H1 == „Kosz" w obu stanach). Uzupełnia granicę „Czego NIE robimy → `trash.astro` nietknięte", która obejmowała wyłącznie zachowanie, nie warstwę prezentacji.
+
 ## Postęp
 
 > Konwencja: `- [ ]` oczekujące, `- [x]` wykonane. Dołącz ` — <commit sha>` po zakończeniu kroku. Nie zmieniaj nazw tytułów kroków. Zobacz `references/progress-format.md`.
