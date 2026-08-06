@@ -1,7 +1,7 @@
 ---
 change_id: trash-sidebar-relocation
 title: Kosz jako osobne miejsce w panelu bocznym
-status: implementing
+status: implemented
 created: 2026-08-06
 updated: 2026-08-06
 archived_at: null

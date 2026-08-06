@@ -297,7 +297,7 @@ Brak. Zero zmian schematu, danych ani polityk RLS.
 
 #### Automatyczne
 
-- [x] 3.1 Format markdown przechodzi (celowany): `npx prettier --check context/foundation/ui-design-system.md`
+- [x] 3.1 Format markdown przechodzi (celowany): `npx prettier --check context/foundation/ui-design-system.md` — 22d64e8
 
 #### Ręczne
 
