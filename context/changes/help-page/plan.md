@@ -277,34 +277,34 @@ Brak — żadnych zmian w danych ani schemacie.
 
 #### Automatyczne
 
-- [x] 1.1 Lint przechodzi: `npm run lint`
-- [x] 1.2 Sprawdzanie typów przechodzi: `tsc --noEmit`
-- [x] 1.3 Test nav-active przechodzi (z nową asercją `/help`): `npm test`
-- [x] 1.4 Produkcyjny build przechodzi: `npm run build`
+- [x] 1.1 Lint przechodzi: `npm run lint` — ef1bab9
+- [x] 1.2 Sprawdzanie typów przechodzi: `tsc --noEmit` — ef1bab9
+- [x] 1.3 Test nav-active przechodzi (z nową asercją `/help`): `npm test` — ef1bab9
+- [x] 1.4 Produkcyjny build przechodzi: `npm run build` — ef1bab9
 
 #### Ręczne
 
-- [x] 1.5 „Pomoc" widoczna w stopce sidebara obok „Ustawień", z ikoną
-- [x] 1.6 Klik „Pomoc" → `/help`, pozycja podświetlona (`aria-current="page"`)
-- [x] 1.7 Niezalogowany na `/help` → redirect na `/auth/signin`
-- [x] 1.8 Spis treści: klik pozycji przewija do sekcji, nagłówek nie pod sticky-headerem
-- [x] 1.9 Deep-link `/help#klucz` przewija do sekcji klucza
+- [x] 1.5 „Pomoc" widoczna w stopce sidebara obok „Ustawień", z ikoną — ef1bab9
+- [x] 1.6 Klik „Pomoc" → `/help`, pozycja podświetlona (`aria-current="page"`) — ef1bab9
+- [x] 1.7 Niezalogowany na `/help` → redirect na `/auth/signin` — ef1bab9
+- [x] 1.8 Spis treści: klik pozycji przewija do sekcji, nagłówek nie pod sticky-headerem — ef1bab9
+- [x] 1.9 Deep-link `/help#klucz` przewija do sekcji klucza — ef1bab9
 
 ### Faza 2: Treść pomocy (PL)
 
 #### Automatyczne
 
-- [ ] 2.1 Lint przechodzi: `npm run lint`
-- [ ] 2.2 Sprawdzanie typów przechodzi: `tsc --noEmit`
-- [ ] 2.3 Produkcyjny build przechodzi: `npm run build`
+- [x] 2.1 Lint przechodzi: `npm run lint`
+- [x] 2.2 Sprawdzanie typów przechodzi: `tsc --noEmit`
+- [x] 2.3 Produkcyjny build przechodzi: `npm run build`
 
 #### Ręczne
 
-- [ ] 2.4 Wszystkie 8 sekcji ma treść (brak placeholderów)
-- [ ] 2.5 `#kosz` rozróżnia „Odrzuć" (→ „Odrzucone") od „Do kosza" (→ „Usunięte")
-- [ ] 2.6 Cykl życia (4 stany + przejścia) i filtry („Zakończone" vs „Zrobione") wyjaśnione
-- [ ] 2.7 `#sesje` (statusy + „Ponów") i `#klucz` (skąd/gdzie/bezpieczeństwo) opisane
-- [ ] 2.8 Etykiety zgodne z UI (spot-check); poprawna polszczyzna z diakrytykami
+- [x] 2.4 Wszystkie 8 sekcji ma treść (brak placeholderów)
+- [x] 2.5 `#kosz` rozróżnia „Odrzuć" (→ „Odrzucone") od „Do kosza" (→ „Usunięte")
+- [x] 2.6 Cykl życia (4 stany + przejścia) i filtry („Zakończone" vs „Zrobione") wyjaśnione
+- [x] 2.7 `#sesje` (statusy + „Ponów") i `#klucz` (skąd/gdzie/bezpieczeństwo) opisane
+- [x] 2.8 Etykiety zgodne z UI (spot-check); poprawna polszczyzna z diakrytykami
 
 ### Faza 3: Wskazówka klucza w profilu
 

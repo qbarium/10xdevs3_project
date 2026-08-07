@@ -42,6 +42,34 @@ test.describe("Pomoc (/help) — zalogowany", () => {
     await expect(klucz).toBeVisible();
     await expect(klucz).toBeInViewport();
   });
+
+  test("sekcje mają treść merytoryczną: Odrzuć vs Do kosza, cykl życia, sesje, klucz", async ({ page }) => {
+    await page.goto("/help");
+    await expect(page.getByText("treść w przygotowaniu")).toHaveCount(0);
+
+    const kosz = page.locator("section#kosz");
+    for (const t of ["Odrzuć", "Odrzucone", "Do kosza", "Usunięte", "Wyczyść kosz"]) {
+      await expect(kosz).toContainText(t);
+    }
+
+    const cykl = page.locator("section#cykl-zycia");
+    for (const t of ["Nowe", "W toku", "Zrobione", "Anulowane"]) {
+      await expect(cykl).toContainText(t);
+    }
+
+    const sesje = page.locator("section#sesje");
+    for (const t of ["Ponów", "Przetwarzanie", "Gotowe", "Błąd"]) {
+      await expect(sesje).toContainText(t);
+    }
+
+    const klucz = page.locator("section#klucz");
+    await expect(klucz).toContainText("OpenAI");
+    await expect(klucz).toContainText("AES-256-GCM");
+    await expect(klucz.getByRole("link", { name: /wygeneruj klucz w/i })).toHaveAttribute(
+      "href",
+      "https://platform.openai.com/api-keys",
+    );
+  });
 });
 
 test.describe("Pomoc (/help) — ochrona", () => {

@@ -3,8 +3,10 @@
 // + sekcje per funkcja z kotwicami (deep-link /help#sekcja, np. z profilu na #klucz). Czyste Astro
 // (bez wyspy, bez zapytań); renderowana w powłoce AppLayout. SSR (prerender=false) — warunek ochrony
 // middleware (/help w PROTECTED_ROUTES; strona prerenderowana wymknęłaby się ochronie). Wzorzec treści
-// jak ByokOnboarding (tokeny motywu, oba warianty). Treść sekcji: Faza 2.
+// jak ByokOnboarding (tokeny motywu, oba warianty). Treść priorytetowo pokrywa realne punkty
+// zamieszania: Odrzuć vs Do kosza, cykl życia, statusy sesji, skąd klucz.
 import AppLayout from "@/layouts/AppLayout.astro";
+import { AI_PROVIDER_KEYS_URL, AI_PROVIDER_NAME } from "@/lib/config/byok";
 
 export const prerender = false;
 
@@ -21,6 +23,13 @@ const sections = [
   { id: "klucz", title: "Klucz API (BYOK)" },
   { id: "typy", title: "Typy wpisów" },
 ];
+
+const heading = "text-foreground mb-3 text-xl font-bold";
+const para = "text-muted-foreground text-sm leading-relaxed";
+const list = "text-muted-foreground mt-2 flex list-disc flex-col gap-1.5 pl-5 text-sm leading-relaxed";
+const strong = "text-foreground font-medium";
+const code = "bg-muted text-foreground rounded px-1.5 py-0.5 font-mono text-xs";
+const link = "text-foreground font-medium hover:underline";
 ---
 
 <AppLayout title="Pomoc" subtitle="Jak działa TaskerLight — krok po kroku i funkcja po funkcji">
@@ -32,7 +41,7 @@ const sections = [
         {
           sections.map((s) => (
             <li>
-              <a href={`#${s.id}`} class="text-foreground text-sm font-medium hover:underline">
+              <a href={`#${s.id}`} class:list={link}>
                 {s.title}
               </a>
             </li>
@@ -41,16 +50,178 @@ const sections = [
       </ul>
     </nav>
 
-    <!-- Sekcje — szkielet Fazy 1 (nagłówek + id + offset). Treść: Faza 2. -->
     <div class="flex flex-col gap-10">
-      {
-        sections.map((s) => (
-          <section id={s.id} class="scroll-mt-24">
-            <h2 class="text-foreground mb-3 text-xl font-bold">{s.title}</h2>
-            <p class="text-muted-foreground text-sm leading-snug">— treść w przygotowaniu —</p>
-          </section>
-        ))
-      }
+      <!-- 1. Zanim zaczniesz -->
+      <section id="start" class="scroll-mt-24">
+        <h2 class:list={heading}>Zanim zaczniesz</h2>
+        <p class:list={para}>
+          TaskerLight zamienia luźny tekst w uporządkowane wpisy — klasyfikację wykonuje model AI uruchamiany na
+          <span class:list={strong}>Twoim własnym kluczu {AI_PROVIDER_NAME}</span> (model BYOK, <span class="italic"
+            >bring your own key</span
+          >). Zanim wrzucisz pierwszy wsad:
+        </p>
+        <ul class:list={list}>
+          <li>
+            <a href={AI_PROVIDER_KEYS_URL} target="_blank" rel="noopener noreferrer" class:list={link}>
+              Wygeneruj klucz API w {AI_PROVIDER_NAME} ↗
+            </a>
+          </li>
+          <li>Zapisz go w <span class:list={strong}>Ustawieniach</span> (menu boczne → „Ustawienia").</li>
+          <li>Wróć do <span class:list={strong}>Skrzynki wejściowej</span> i wklej pierwszy tekst.</li>
+        </ul>
+        <p class:list={`${para} mt-3`}>
+          Szczegóły o kluczu i bezpieczeństwie znajdziesz w sekcji <a href="#klucz" class:list={link}
+            >Klucz API (BYOK)</a
+          >.
+        </p>
+      </section>
+
+      <!-- 2. Skrzynka → klasyfikacja → akceptacja -->
+      <section id="przeplyw" class="scroll-mt-24">
+        <h2 class:list={heading}>Skrzynka → klasyfikacja → akceptacja</h2>
+        <p class:list={para}>Główny obieg pracy prowadzi od surowego tekstu do zaakceptowanych wpisów:</p>
+        <ul class:list={list}>
+          <li>
+            <span class:list={strong}>Skrzynka wejściowa</span> (<code class:list={code}>/ingest</code>) — wklej luźne
+            myśli albo wrzuć plik <code class:list={code}>.txt</code>/<code class:list={code}>.md</code> (jedno albo drugie).
+          </li>
+          <li>
+            <span class:list={strong}>Klasyfikacja</span> — AI rozbija wsad na osobne, otypowane wpisy, zachowując język oryginału
+            i niczego nie zmyślając. Postęp pokazuje okno „Analizujemy wsad…".
+          </li>
+          <li>
+            <span class:list={strong}>Akceptacja</span> — nowe wpisy czekają jako „Do akceptacji". Dla każdego (lub zbiorczo)
+            wybierasz
+            <span class:list={strong}>Zatwierdź</span>, <span class:list={strong}>Odrzuć</span> albo
+            <span class:list={strong}>Edytuj</span>. Decyzja zawsze należy do Ciebie.
+          </li>
+        </ul>
+      </section>
+
+      <!-- 3. Cykl życia wpisu -->
+      <section id="cykl-zycia" class="scroll-mt-24">
+        <h2 class:list={heading}>Cykl życia wpisu</h2>
+        <p class:list={para}>
+          Po zatwierdzeniu wpis dostaje <span class:list={strong}>stan operacyjny</span>, widoczny na klikalnym
+          znaczniku:
+        </p>
+        <ul class:list={list}>
+          <li><span class:list={strong}>Nowe</span> — świeżo zaakceptowane, jeszcze nietknięte.</li>
+          <li><span class:list={strong}>W toku</span> — właśnie się nim zajmujesz.</li>
+          <li>
+            <span class:list={strong}>Zrobione</span> — ukończone. Dla notatki etykieta brzmi „Obsłużona", dla decyzji „Podjęta"
+            — słowo zależy od typu wpisu.
+          </li>
+          <li><span class:list={strong}>Anulowane</span> — porzucone.</li>
+        </ul>
+        <p class:list={`${para} mt-3`}>
+          Stan zmieniasz klikając znacznik (przejścia: „Rozpocznij", „Zrealizuj", „Anuluj", „Cofnij do «nowe»", „Otwórz
+          ponownie", „Przywróć"), w oknie edycji wpisu albo zbiorczo przyciskiem „Zmień stan".
+        </p>
+      </section>
+
+      <!-- 4. Widok „Wpisy" i filtry stanów -->
+      <section id="stany" class="scroll-mt-24">
+        <h2 class:list={heading}>Widok „Wpisy” i filtry stanów</h2>
+        <p class:list={para}>Zaakceptowane wpisy żyją w widoku „Wpisy". Oś stanu u góry zawęża listę:</p>
+        <ul class:list={list}>
+          <li>
+            <span class:list={strong}>Wszystko aktywne</span> / <span class:list={strong}>Nowe</span> / <span
+              class:list={strong}>W toku</span
+            > — wpisy w obiegu.
+          </li>
+          <li><span class:list={strong}>Zakończone</span> — wpisy w stanie „zrobione".</li>
+          <li><span class:list={strong}>Anulowane</span> — wpisy porzucone.</li>
+        </ul>
+        <p class:list={`${para} mt-3`}>
+          Drobiazg, który myli: zakładka <span class:list={strong}>Zakończone</span> i znacznik
+          <span class:list={strong}>Zrobione</span> to ten sam stan, tylko nazwany dwoma słowami. Przyciskiem „Dodaj wpis"
+          tworzysz wpis ręcznie (od razu „Nowe"), z pominięciem klasyfikacji.
+        </p>
+      </section>
+
+      <!-- 5. Kosz: Odrzucone i Usunięte -->
+      <section id="kosz" class="scroll-mt-24">
+        <h2 class:list={heading}>Kosz: Odrzucone i Usunięte</h2>
+        <p class:list={para}>
+          Do Kosza prowadzą <span class:list={strong}>dwie różne akcje</span> — to najczęstsze źródło nieporozumień:
+        </p>
+        <ul class:list={list}>
+          <li>
+            <span class:list={strong}>Odrzuć</span> działa na wpisie „Do akceptacji" (jeszcze niezatwierdzonym) — w Koszu
+            dostaje znacznik <span class:list={strong}>Odrzucone</span>.
+          </li>
+          <li>
+            <span class:list={strong}>Do kosza</span> działa na wpisie już zatwierdzonym — w Koszu dostaje znacznik
+            <span class:list={strong}>Usunięte</span>.
+          </li>
+        </ul>
+        <p class:list={`${para} mt-3`}>
+          Pochodzenie (Odrzucone / Usunięte) widać na znaczniku karty. <span class:list={strong}>Przywróć</span> wyjmuje wpis
+          z Kosza (odrzucony wraca „do akceptacji", usunięty — do zaakceptowanych). <span class:list={strong}
+            >Wyczyść kosz</span
+          > kasuje całą zawartość trwale — tej operacji nie da się cofnąć.
+        </p>
+      </section>
+
+      <!-- 6. Sesje importu i ponawianie -->
+      <section id="sesje" class="scroll-mt-24">
+        <h2 class:list={heading}>Sesje importu i ponawianie</h2>
+        <p class:list={para}>
+          Każdy wsad zapisuje się jako <span class:list={strong}>sesja importu</span> (dziennik pod
+          <code class:list={code}>/import-sessions</code>) ze statusem:
+        </p>
+        <ul class:list={list}>
+          <li><span class:list={strong}>Przetwarzanie…</span> — klasyfikacja trwa.</li>
+          <li><span class:list={strong}>Gotowe</span> — wpisy powstały.</li>
+          <li><span class:list={strong}>Brak wpisów</span> — wsad nie zawierał nic do sklasyfikowania.</li>
+          <li><span class:list={strong}>Błąd</span> — klasyfikacja się nie powiodła.</li>
+        </ul>
+        <p class:list={`${para} mt-3`}>
+          „Pokaż wpisy" otwiera wpisy danej sesji (aktywne, gdy status to „Gotowe" i są wpisy). Przy sesji „Błąd"
+          przycisk <span class:list={strong}>Ponów</span> uruchamia klasyfikację jeszcze raz — bez ponownego wklejania tekstu
+          (wymaga skonfigurowanego klucza).
+        </p>
+      </section>
+
+      <!-- 7. Klucz API (BYOK) -->
+      <section id="klucz" class="scroll-mt-24">
+        <h2 class:list={heading}>Klucz API (BYOK)</h2>
+        <p class:list={para}>
+          TaskerLight nie ma własnego serwera AI — klasyfikacja działa na Twoim kluczu {AI_PROVIDER_NAME} (model BYOK). Bez
+          klucza klasyfikacja nie ruszy, a Skrzynka pokaże ekran powitalny z instrukcją.
+        </p>
+        <ul class:list={list}>
+          <li>
+            <span class:list={strong}>Skąd:</span>
+            <a href={AI_PROVIDER_KEYS_URL} target="_blank" rel="noopener noreferrer" class:list={link}>
+              wygeneruj klucz w {AI_PROVIDER_NAME} ↗
+            </a>.
+          </li>
+          <li>
+            <span class:list={strong}>Gdzie:</span> wklej go w „Ustawieniach", pole „Klucz API {AI_PROVIDER_NAME}".
+          </li>
+          <li>
+            <span class:list={strong}>Bezpieczeństwo:</span> klucz szyfrujemy (AES-256-GCM) i przechowujemy wyłącznie zaszyfrowany
+            — nie da się go podejrzeć ani wyświetlić ponownie; nie trafia do logów ani telemetrii.
+          </li>
+          <li><span class:list={strong}>Zarządzanie:</span> klucz możesz w każdej chwili usunąć („Usuń klucz").</li>
+        </ul>
+      </section>
+
+      <!-- 8. Typy wpisów -->
+      <section id="typy" class="scroll-mt-24">
+        <h2 class:list={heading}>Typy wpisów</h2>
+        <p class:list={para}>AI przypisuje każdemu wpisowi dokładnie jeden typ:</p>
+        <ul class:list={list}>
+          <li><span class:list={strong}>Zadanie</span> — coś konkretnego do zrobienia.</li>
+          <li><span class:list={strong}>Notatka</span> — informacja do zapamiętania.</li>
+          <li><span class:list={strong}>Pomysł</span> — luźna koncepcja lub propozycja.</li>
+          <li><span class:list={strong}>Decyzja</span> — podjęte postanowienie.</li>
+          <li><span class:list={strong}>Inne</span> — nie pasuje do powyższych.</li>
+        </ul>
+        <p class:list={`${para} mt-3`}>Typ możesz zmienić w oknie edycji wpisu.</p>
+      </section>
     </div>
   </div>
 </AppLayout>
