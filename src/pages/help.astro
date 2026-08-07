@@ -1,0 +1,56 @@
+---
+// Strona „Pomoc" (S-17) — statyczna referencja „jak działa TaskerLight": orientacja „Jak zacząć"
+// + sekcje per funkcja z kotwicami (deep-link /help#sekcja, np. z profilu na #klucz). Czyste Astro
+// (bez wyspy, bez zapytań); renderowana w powłoce AppLayout. SSR (prerender=false) — warunek ochrony
+// middleware (/help w PROTECTED_ROUTES; strona prerenderowana wymknęłaby się ochronie). Wzorzec treści
+// jak ByokOnboarding (tokeny motywu, oba warianty). Treść sekcji: Faza 2.
+import AppLayout from "@/layouts/AppLayout.astro";
+
+export const prerender = false;
+
+// Sekcje strony — jedno źródło dla spisu treści i kotwic. `id` są stałe: deep-link z profilu celuje
+// w #klucz, więc zmiana id rozspójniłaby odnośniki. Offset `scroll-mt-24` chroni nagłówek sekcji
+// przed schowaniem pod sticky-nagłówkiem powłoki (AppLayout header: top-0, ~64 px).
+const sections = [
+  { id: "start", title: "Zanim zaczniesz" },
+  { id: "przeplyw", title: "Skrzynka → klasyfikacja → akceptacja" },
+  { id: "cykl-zycia", title: "Cykl życia wpisu" },
+  { id: "stany", title: "Widok „Wpisy” i filtry stanów" },
+  { id: "kosz", title: "Kosz: Odrzucone i Usunięte" },
+  { id: "sesje", title: "Sesje importu i ponawianie" },
+  { id: "klucz", title: "Klucz API (BYOK)" },
+  { id: "typy", title: "Typy wpisów" },
+];
+---
+
+<AppLayout title="Pomoc" subtitle="Jak działa TaskerLight — krok po kroku i funkcja po funkcji">
+  <div class="mx-auto w-full max-w-3xl">
+    <!-- Spis treści — kotwice do sekcji (deep-link /help#sekcja). -->
+    <nav aria-label="Spis treści" class="bg-card text-card-foreground mb-8 rounded-xl border p-5 shadow-sm">
+      <p class="text-muted-foreground mb-3 text-[10.5px] font-medium tracking-[0.09em] uppercase">Na tej stronie</p>
+      <ul class="flex flex-col gap-1.5">
+        {
+          sections.map((s) => (
+            <li>
+              <a href={`#${s.id}`} class="text-foreground text-sm font-medium hover:underline">
+                {s.title}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <!-- Sekcje — szkielet Fazy 1 (nagłówek + id + offset). Treść: Faza 2. -->
+    <div class="flex flex-col gap-10">
+      {
+        sections.map((s) => (
+          <section id={s.id} class="scroll-mt-24">
+            <h2 class="text-foreground mb-3 text-xl font-bold">{s.title}</h2>
+            <p class="text-muted-foreground text-sm leading-snug">— treść w przygotowaniu —</p>
+          </section>
+        ))
+      }
+    </div>
+  </div>
+</AppLayout>

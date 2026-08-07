@@ -3,7 +3,7 @@ import { json } from "@/lib/http";
 import { isMutatingMethod, isTrustedRequest } from "@/lib/security/csrf";
 import { createClient } from "@/lib/supabase";
 
-const PROTECTED_ROUTES = ["/profile", "/ingest", "/items", "/import-sessions"];
+const PROTECTED_ROUTES = ["/profile", "/ingest", "/items", "/import-sessions", "/help"];
 
 export const onRequest = defineMiddleware(async (context, next) => {
   // Anti-CSRF (S-14): odrzuć żądanie mutujące spoza tego samego originu PRZED autoryzacją —

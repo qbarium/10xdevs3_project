@@ -17,6 +17,11 @@ describe("activeNavId — aktywny stan powłoki wg adresu", () => {
     expect(activeNavId("/items/trash")).toBe("trash");
   });
 
+  it("Pomoc (/help) mapuje na „help” i łapie podścieżki (prefiks)", () => {
+    expect(activeNavId("/help")).toBe("help");
+    expect(activeNavId("/help/")).toBe("help");
+  });
+
   it("Skrzynka / Sesje / Ustawienia mapują na swoje id", () => {
     expect(activeNavId("/ingest")).toBe("ingest");
     expect(activeNavId("/import-sessions")).toBe("sessions");
