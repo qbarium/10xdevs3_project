@@ -119,6 +119,15 @@ const label = "flex-1 truncate max-[920px]:hidden";
       <Icon icon="settings" size={17} class="shrink-0" />
       <span class:list={[label]}>Ustawienia</span>
     </a>
+    <a
+      href="/help"
+      aria-label="Pomoc"
+      class:list={[navLayout, active === "help" ? navOn : navIdle]}
+      aria-current={active === "help" ? "page" : undefined}
+    >
+      <Icon icon="help" size={17} class="shrink-0" />
+      <span class:list={[label]}>Pomoc</span>
+    </a>
     <form method="POST" action="/api/auth/signout">
       <button type="submit" class:list={[navLayout, navIdle, "w-full text-left"]} aria-label="Wyloguj się">
         <Icon icon="log-out" size={17} class="shrink-0" />

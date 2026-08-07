@@ -26,6 +26,7 @@ export const NAV_MATCHERS: readonly NavMatcher[] = [
   { id: "entries", match: { type: "prefix", path: "/items/" } },
   { id: "sessions", match: { type: "prefix", path: "/import-sessions" } },
   { id: "settings", match: { type: "prefix", path: "/profile" } },
+  { id: "help", match: { type: "prefix", path: "/help" } },
 ];
 
 /** Id aktywnej pozycji dla adresu, albo `null` (np. landing/auth — poza powłoką). */
