@@ -47,7 +47,7 @@ TaskerLight przyjmuje surowy, nieuporządkowany wsad głosowo-tekstowy i rozdzie
 | S-14  | csrf-hardening           | (utwardzenie) endpointy mutujące odporne na CSRF — aplikacyjny origin-check + jawny SameSite | — | NFR Bezpieczeństwo (obrona w głąb) | done |
 | S-15  | ui-redesign              | (redesign) nowa szata „techniczna" (jasny+ciemny) + trwała powłoka (sidebar+topbar); wszystkie widoki | — | — (prezentacyjne; reguluje `ui-design-system.md`) | done |
 | S-16  | trash-sidebar-relocation | (reorg. IA) otworzyć „Kosz" jako osobne miejsce w panelu bocznym (nie zakładkę pod „Wpisami"); oś „Wpisów" tylko cykl życia (pochodzenie na badge, bez filtra) | S-06, S-15 | — (prezentacyjne; US-05/FR-013/FR-016 bez zmian zachowania) | done |
-| S-17  | help-page                | (pomoc) dodać w aplikacji stronę „Pomoc" opisującą działanie programu (orientacja „Jak zacząć" + sekcje per funkcja z kotwicami) + instrukcja „skąd wziąć klucz" na `/profile` | S-15 | — (pomoc użytkownika; poza pierwotnym MVP) | ready |
+| S-17  | help-page                | (pomoc) dodać w aplikacji stronę „Pomoc" opisującą działanie programu (orientacja „Jak zacząć" + sekcje per funkcja z kotwicami) + instrukcja „skąd wziąć klucz" na `/profile` | S-15 | — (pomoc użytkownika; poza pierwotnym MVP) | done |
 
 ## Strumienie
 
@@ -304,7 +304,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Decyzje (uzgodnione 2026-08-07, `/10x-frame`):** (1) forma = **osobna strona** `/help` (nie modal), link w stopce sidebara obok „Ustawienia"; (2) odbiorca = **oba** (orientacja startowa + referencja per funkcja) → struktura „Jak zacząć" + sekcje z kotwicami; (3) zakres = **pełny przegląd** + jawne wytłumaczenie mylących różnic; (4) **instrukcja klucza na `/profile`** wciągnięta do zakresu (jedyny fragment pomocy kontekstowej); (5) reszta pomocy kontekstowej (tooltipy, puste stany, czasowniki przejść na listach) — **poza zakresem**, osobny follow-up UX.
 - **Nośnik pracy:** samodzielna gałąź + PR. Frame: `context/changes/help-page/frame.md`. Plan fazowy powstanie z `/10x-plan`.
 - **Ryzyko:** niskie — zmiana głównie addytywna (nowa strona + pozycja w powłoce, wzorzec 1:1 jak „Kosz" w S-16: wariant w `Icon.astro`, `AppSidebar.astro`, `nav-active.ts` + test). Główne ryzyko to utrzymanie treści w zgodzie z UI przy przyszłych zmianach.
-- **Status:** ready
+- **Status:** done
 
 ## Przekazanie backlogu
 
@@ -350,6 +350,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 
 ## Done
 
+- **S-17: użytkownik ma w aplikacji jedno, odkrywalne z powłoki miejsce „Pomoc" (`/help`, pozycja w sidebarze) wyjaśniające jak działa TaskerLight — orientacja „Jak zacząć" + sekcje per funkcja z kotwicami (Odrzuć vs Do kosza, cykl życia, statusy sesji, klucz BYOK); plus instrukcja „skąd wziąć klucz" na `/profile`.** — Zarchiwizowano 2026-08-07 → `context/archive/2026-08-07-help-page/`. Lekcja: —.
 - **S-01: użytkownik może zapisać własny klucz API zewnętrznego dostawcy AI w profilu, podejrzeć go w postaci zamaskowanej (prefiks + ostatnie znaki) i usunąć; akcje wymagające klucza (submit) są zablokowane z komunikatem i linkiem do strony dostawcy, dopóki klucz nie jest skonfigurowany.** — Zarchiwizowano 2026-06-12 → `context/archive/2026-06-08-byok-key-config/`. Lekcja: —.
 - **S-02: użytkownik może wkleić tekst (do 100 000 znaków) lub wrzucić jeden plik `.txt`/`.md` (do 300 KB), kliknąć submit, zobaczyć blokujący wskaźnik aktywności podczas synchronicznej klasyfikacji, a po jej zakończeniu — typowane itemy jako pendingi w widoku „Elementy do akceptacji".** — Zarchiwizowano 2026-06-12 → `context/archive/2026-06-10-first-gated-generation/`. Lekcja: konfiguracja LLM fail-closed + modeluj schemat wg kardynalności (lessons.md); FR-015 złagodzony do best-effort (set null).
 - **S-03: użytkownik może zaznaczyć pendingi (model: per item + „zaznacz wszystkie"), zatwierdzić zaznaczone (z opcjonalną edycją `title`/`description`/`typ`) lub odrzucić; zaakceptowane trafiają do widoku Aktywne, odrzucone do Kosza (poprzedni status `rejected`).** — Zarchiwizowano 2026-06-14 → `context/archive/2026-06-13-validation-accept-reject/`. Lekcja: edycja bez optimistic concurrency = lost-update (świadome ograniczenie solo-MVP); ujednolicony kształt błędu API `{ok:false,code,error}` (lessons.md).
