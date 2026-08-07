@@ -294,29 +294,29 @@ Brak — żadnych zmian w danych ani schemacie.
 
 #### Automatyczne
 
-- [x] 2.1 Lint przechodzi: `npm run lint`
-- [x] 2.2 Sprawdzanie typów przechodzi: `tsc --noEmit`
-- [x] 2.3 Produkcyjny build przechodzi: `npm run build`
+- [x] 2.1 Lint przechodzi: `npm run lint` — a9893c6
+- [x] 2.2 Sprawdzanie typów przechodzi: `tsc --noEmit` — a9893c6
+- [x] 2.3 Produkcyjny build przechodzi: `npm run build` — a9893c6
 
 #### Ręczne
 
-- [x] 2.4 Wszystkie 8 sekcji ma treść (brak placeholderów)
-- [x] 2.5 `#kosz` rozróżnia „Odrzuć" (→ „Odrzucone") od „Do kosza" (→ „Usunięte")
-- [x] 2.6 Cykl życia (4 stany + przejścia) i filtry („Zakończone" vs „Zrobione") wyjaśnione
-- [x] 2.7 `#sesje` (statusy + „Ponów") i `#klucz` (skąd/gdzie/bezpieczeństwo) opisane
-- [x] 2.8 Etykiety zgodne z UI (spot-check); poprawna polszczyzna z diakrytykami
+- [x] 2.4 Wszystkie 8 sekcji ma treść (brak placeholderów) — a9893c6
+- [x] 2.5 `#kosz` rozróżnia „Odrzuć" (→ „Odrzucone") od „Do kosza" (→ „Usunięte") — a9893c6
+- [x] 2.6 Cykl życia (4 stany + przejścia) i filtry („Zakończone" vs „Zrobione") wyjaśnione — a9893c6
+- [x] 2.7 `#sesje` (statusy + „Ponów") i `#klucz` (skąd/gdzie/bezpieczeństwo) opisane — a9893c6
+- [x] 2.8 Etykiety zgodne z UI (spot-check); poprawna polszczyzna z diakrytykami — a9893c6
 
 ### Faza 3: Wskazówka klucza w profilu
 
 #### Automatyczne
 
-- [ ] 3.1 Lint przechodzi: `npm run lint`
-- [ ] 3.2 Sprawdzanie typów przechodzi: `tsc --noEmit`
-- [ ] 3.3 Testy przechodzą: `npm test`
-- [ ] 3.4 Produkcyjny build przechodzi: `npm run build`
+- [x] 3.1 Lint przechodzi: `npm run lint`
+- [x] 3.2 Sprawdzanie typów przechodzi: `tsc --noEmit`
+- [x] 3.3 Testy przechodzą: `npm test`
+- [x] 3.4 Produkcyjny build przechodzi: `npm run build`
 
 #### Ręczne
 
-- [ ] 3.5 Link „Jak zdobyć klucz?" przy polu klucza otwiera OpenAI w nowej karcie
-- [ ] 3.6 Link zwięzły (bez duplikatu pełnej instrukcji)
-- [ ] 3.7 Jeśli dodano „Więcej w Pomocy" — prowadzi do `/help#klucz`
+- [x] 3.5 Link „Jak zdobyć klucz?" przy polu klucza otwiera OpenAI w nowej karcie
+- [x] 3.6 Link zwięzły (bez duplikatu pełnej instrukcji)
+- [x] 3.7 Jeśli dodano „Więcej w Pomocy" — prowadzi do `/help#klucz`

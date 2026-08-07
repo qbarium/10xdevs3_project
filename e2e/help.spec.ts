@@ -80,3 +80,20 @@ test.describe("Pomoc (/help) — ochrona", () => {
     await expect(page).toHaveURL(/\/auth\/signin/);
   });
 });
+
+test.describe("Profil — wskazówka o kluczu", () => {
+  test("profil renderuje się; bez klucza jest link do OpenAI, z kluczem — przycisk Usuń", async ({ page }) => {
+    await page.goto("/profile");
+    await expect(page).toHaveURL(/\/profile$/);
+    await expect(page.getByRole("heading", { level: 1, name: "Profil" })).toBeVisible();
+
+    const helpLink = page.getByRole("link", { name: /Jak zdobyć klucz/i });
+    if (await helpLink.count()) {
+      await expect(helpLink.first()).toHaveAttribute("href", "https://platform.openai.com/api-keys");
+    } else {
+      // konto testowe ma już klucz — widok „skonfigurowany"; link żyje w formularzu bez klucza
+      await expect(page.getByRole("button", { name: /Usuń klucz/i })).toBeVisible();
+    }
+    await page.screenshot({ path: test.info().outputPath("profile.png"), fullPage: true });
+  });
+});

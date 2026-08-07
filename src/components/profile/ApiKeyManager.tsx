@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AI_PROVIDER_NAME } from "@/lib/config/byok";
+import { AI_PROVIDER_KEYS_URL, AI_PROVIDER_NAME } from "@/lib/config/byok";
 import type { ByokKeyStatus } from "@/types";
 
 interface Props {
@@ -119,6 +119,20 @@ export default function ApiKeyManager({ initialStatus }: Props) {
                 disabled={pending}
               />
             </div>
+            <p className="text-muted-foreground text-xs">
+              <a
+                href={AI_PROVIDER_KEYS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-foreground font-medium hover:underline"
+              >
+                Jak zdobyć klucz {AI_PROVIDER_NAME}? ↗
+              </a>{" "}
+              <span aria-hidden="true">·</span>{" "}
+              <a href="/help#klucz" className="hover:underline">
+                Więcej w Pomocy
+              </a>
+            </p>
             <Button type="submit" className="self-start" disabled={pending || !draft.trim()}>
               <Save className="size-4" />
               {pending ? "Zapisywanie…" : "Zapisz"}
