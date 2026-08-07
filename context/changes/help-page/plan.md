@@ -242,6 +242,10 @@ W formularzu klucza API (profil) dodać zwięzły link „Jak zdobyć klucz?" pr
 
 - Brak nowych — strona jest statyczna, bez endpointów i zapytań.
 
+### Testy E2E (Playwright)
+
+- `e2e/help.spec.ts` (aneks po `/10x-impl-review`, F1) — weryfikacja przeglądarkowa: render strony i aktywna pozycja „Pomoc" w sidebarze, kotwice spisu treści + deep-link `/help#klucz`, treść sekcji (Odrzuć vs Do kosza, cykl życia, sesje, klucz), redirect gościa na `/auth/signin`, render profilu z linkiem klucza. Local-only (poza CI, zgodnie z konwencją repo).
+
 ### Kroki testowania ręcznego
 
 1. Zalogowany: sidebar → „Pomoc" podświetla się i otwiera `/help`.

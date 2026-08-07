@@ -1,7 +1,7 @@
 ---
 change_id: help-page
 title: Pomoc dla użytkownika — strona w aplikacji opisująca działanie
-status: implemented
+status: impl_reviewed
 created: 2026-08-07
 updated: 2026-08-07
 archived_at: null
