@@ -310,13 +310,13 @@ Brak — żadnych zmian w danych ani schemacie.
 
 #### Automatyczne
 
-- [x] 3.1 Lint przechodzi: `npm run lint`
-- [x] 3.2 Sprawdzanie typów przechodzi: `tsc --noEmit`
-- [x] 3.3 Testy przechodzą: `npm test`
-- [x] 3.4 Produkcyjny build przechodzi: `npm run build`
+- [x] 3.1 Lint przechodzi: `npm run lint` — 8e9a5f4
+- [x] 3.2 Sprawdzanie typów przechodzi: `tsc --noEmit` — 8e9a5f4
+- [x] 3.3 Testy przechodzą: `npm test` — 8e9a5f4
+- [x] 3.4 Produkcyjny build przechodzi: `npm run build` — 8e9a5f4
 
 #### Ręczne
 
-- [x] 3.5 Link „Jak zdobyć klucz?" przy polu klucza otwiera OpenAI w nowej karcie
-- [x] 3.6 Link zwięzły (bez duplikatu pełnej instrukcji)
-- [x] 3.7 Jeśli dodano „Więcej w Pomocy" — prowadzi do `/help#klucz`
+- [x] 3.5 Link „Jak zdobyć klucz?" przy polu klucza otwiera OpenAI w nowej karcie — 8e9a5f4
+- [x] 3.6 Link zwięzły (bez duplikatu pełnej instrukcji) — 8e9a5f4
+- [x] 3.7 Jeśli dodano „Więcej w Pomocy" — prowadzi do `/help#klucz` — 8e9a5f4
