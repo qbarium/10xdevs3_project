@@ -1,7 +1,7 @@
 ---
 change_id: prod-feedback-fixes
 title: Naprawa 17 zgłoszeń użytkowników typu „Inne" z produkcji
-status: plan_reviewed
+status: implemented
 created: 2026-08-08
 updated: 2026-08-08
 archived_at: null

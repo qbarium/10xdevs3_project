@@ -48,7 +48,7 @@ TaskerLight przyjmuje surowy, nieuporządkowany wsad głosowo-tekstowy i rozdzie
 | S-15  | ui-redesign              | (redesign) nowa szata „techniczna" (jasny+ciemny) + trwała powłoka (sidebar+topbar); wszystkie widoki | — | — (prezentacyjne; reguluje `ui-design-system.md`) | done |
 | S-16  | trash-sidebar-relocation | (reorg. IA) otworzyć „Kosz" jako osobne miejsce w panelu bocznym (nie zakładkę pod „Wpisami"); oś „Wpisów" tylko cykl życia (pochodzenie na badge, bez filtra) | S-06, S-15 | — (prezentacyjne; US-05/FR-013/FR-016 bez zmian zachowania) | done |
 | S-17  | help-page                | (pomoc) dodać w aplikacji stronę „Pomoc" opisującą działanie programu (orientacja „Jak zacząć" + sekcje per funkcja z kotwicami) + instrukcja „skąd wziąć klucz" na `/profile` | S-15 | — (pomoc użytkownika; poza pierwotnym MVP) | done |
-| S-18  | prod-feedback-fixes      | (poprawki) naprawa 17 uwag testerów „Inne" z produkcji — 11 bugów/UX pełnym flow (Playwright), 6 featurów triage | S-15, S-17 | — (jakość/utrzymanie; backlog uwag z produkcji) | in-progress |
+| S-18  | prod-feedback-fixes      | (poprawki) naprawa 17 uwag testerów „Inne" z produkcji — 11 bugów/UX pełnym flow (Playwright), 6 featurów triage | S-15, S-17 | — (jakość/utrzymanie; backlog uwag z produkcji) | in-review |
 
 ## Strumienie
 
@@ -318,7 +318,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Niewiadome:** odtwarzalność części objawów tabletowych headless (Playwright) — rozstrzyga weryfikacja per ticket; niepotwierdzone → `cancelled` na prod.
 - **Decyzje (2026-08-08):** (1) jeden slice dla wszystkich poprawek; (2) bugi przed featurami; (3) kod wyłącznie lokalnie na gałęzi `feature/prod-feedback-fixes` — **bez merge**; (4) status + komentarze ticketów zapisywane na produkcji (Supabase), bo tam są obserwowane; (5) 6 featurów odłożonych zostaje `new` z komentarzem (nie `cancelled`).
 - **Nośnik pracy:** gałąź `feature/prod-feedback-fixes` (bez PR w tej rundzie). Plan: `context/changes/prod-feedback-fixes/plan.md` (11 faz).
-- **Status:** in-progress
+- **Status:** in-review (10 faz napraw + triage zaimplementowane i zweryfikowane E2E; build/lint/testy zielone; czeka na ręczną weryfikację użytkownika na lokalnym Taskerze; BEZ merge)
 
 ## Przekazanie backlogu
 
@@ -342,7 +342,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 | S-15             | ui-redesign                | Nowa szata „techniczna" + powłoka nawigacyjna                              | yes         | Na `feature/ui-redesign`; następny krok `/10x-research ui-redesign`               |
 | S-16             | trash-sidebar-relocation   | Kosz jako osobne miejsce w panelu bocznym                                 | yes         | Zaimplementowane 2026-08-06 (3 fazy: ed4d9a1/c1eb138/22d64e8; automatyczne bramki zielone). Czeka na `/10x-impl-review`; weryfikacja ręczna po stronie użytkownika. Następny krok `/10x-impl-review trash-sidebar-relocation` |
 | S-17             | help-page                  | Pomoc dla użytkownika — strona „jak działa aplikacja"                     | yes         | Sframe'owane 2026-08-07 (`/10x-frame`, pewność WYSOKA); następny krok `/10x-plan help-page` |
-| S-18             | prod-feedback-fixes        | Naprawa 17 uwag „Inne" z produkcji (11 napraw + 6 triage)                 | yes         | Zaplanowane 2026-08-08 (11 faz, `plan.md`); w toku na `feature/prod-feedback-fixes`, bez merge |
+| S-18             | prod-feedback-fixes        | Naprawa 17 uwag „Inne" z produkcji (11 napraw + 6 triage)                 | yes         | Zaimplementowane 2026-08-08 (10 faz napraw + triage; commity `4b104bc`..`a3982ee`; build/lint/testy zielone; E2E per faza red→green; impl-review per faza). Czeka na ręczną weryfikację użytkownika; **BEZ merge** |
 
 ## Otwarte pytania dotyczące mapy drogowej
 

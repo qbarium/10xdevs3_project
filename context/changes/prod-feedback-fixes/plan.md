@@ -414,4 +414,4 @@ Brak migracji bazy. Fix 10 dodaje endpoint + serwis, bez zmian schematu.
 
 ### Faza 11: Triage 6 featurów (bez kodu)
 #### Ręczne
-- [ ] 11.1 6 ticketów na prod z komentarzem i poprawnym statusem
+- [x] 11.1 6 ticketów na prod z komentarzem i poprawnym statusem (status `new` = świadomy dług)

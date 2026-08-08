@@ -78,3 +78,8 @@
 - **Uwaga:** zaktualizowano `item-card.test.ts` (zamrażał listę akcji rejected/deleted — konieczne po dodaniu „delete"). Wymuszona konsekwencja, nie scope creep.
 - **Weryfikacja:** `npm test` 562, `test:integration` 19, lint/tsc czyste. Model: opus (endpoint mutujący + bezpieczeństwo).
 - **Werdykt:** ZAAKCEPTOWANO, 0 poprawek.
+
+## Faza 11: Triage 6 featurów (bez kodu) — 2026-08-08
+- **Wykonanie:** 6 ticketów-featurów potwierdzonych jako zasadne, opisanych na prod komentarzem z werdyktem; status pozostaje `new` (świadomy dług, nie `cancelled`).
+- **Werdykty:** audio (a3beda31) → V2/OQ2; edycja AI (9fc5f4a8), split/merge (663d01fd), redesign interakcji (a6a328ce) → osobne większe wycinki; pull-to-refresh (1c0077b1) → gest natywny, weryfikacja na realnym urządzeniu; tuning promptu (3eca2a93) → osobna zmiana z realnym modelem (mock w testach).
+- **Werdykt:** ZAAKCEPTOWANO — zakres świadomie ograniczony, dług udokumentowany na prod i w backlogu.
