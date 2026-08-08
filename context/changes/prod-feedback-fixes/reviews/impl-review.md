@@ -38,3 +38,11 @@
 - **Izolacja:** podwójna — `finally` przywraca klucz + `afterEach` re-save przez API; `seed.spec` przeszedł po teście (konto kończy z kluczem). Obsłużony wyścig hydratacji (`toPass` retry).
 - **Weryfikacja:** `npm test` 558/558, `tsc` czysto, lint (po `lint:fix`).
 - **Werdykt:** ZAAKCEPTOWANO, 0 poprawek.
+
+## Faza 6: Reaktywny licznik „Do akceptacji" (6fa2b64b) — 2026-08-08
+- **Objaw (a) „elementy zostają na liście":** potwierdzony jako JUŻ naprawiony (nieodtwarzalny) — test akceptuje 2/3 pending, zaakceptowane znikają bez reloadu (przed i po fixie). `PendingItemsView` już miał `removeByIds`+`refetchAfterRemoval`.
+- **Objaw (b) licznik:** ✅ `sidebar-events.ts` +`pending-count-changed`; `PendingItemsView` emituje `dispatchPendingDelta(-count)` po sukcesie; badge w `AppSidebar` reaktywny (inline script), znika przy 0.
+- **Test:** `prod-fixes-phase6-pending-counter.spec.ts` — red→green (`data-pending-badge` nie istniał → RED; po fixie GREEN); seed 3 pending przez `/ingest` (mock classifier), akceptacja częściowa, dekrement + gałąź „zero".
+- **Dbałość:** agent wykrył ryzyko kaskady (natywny atrybut `hidden` vs warstwy Tailwind) i użył wykluczających się klas (`inline-flex`/`hidden`) zamiast atrybutu — bezpieczniejsze, spójne z toggle kropki klucza.
+- **Weryfikacja:** pełny E2E 16/16 (F1/F5 współdzielą pliki — przeszły); `npm test` 558/558; lint czysto.
+- **Werdykt:** ZAAKCEPTOWANO, 0 poprawek.

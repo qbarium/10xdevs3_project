@@ -69,12 +69,22 @@ const label = "flex-1 truncate max-[920px]:hidden";
       <Icon icon="clipboard-check" size={17} class="shrink-0" />
       <span class:list={[label]}>Do akceptacji</span>
       {
-        pendingCount > 0 && (
-          <span class="bg-primary text-primary-foreground inline-flex min-w-[20px] items-center justify-center rounded-[4px] px-1.5 py-0.5 font-mono text-[11px] font-bold max-[920px]:hidden">
-            {pendingCount}
-          </span>
-        )
+        /* Faza 6 (ticket 6fa2b64b): span ZAWSZE w DOM (nie warunkowy render jak dawniej) — stabilny cel dla
+          inline scriptu niżej, który dekrementuje licznik po akcji w wyspie `/items` bez reloadu. SSR
+          nadal decyduje o stanie startowym. Widoczność przez PARĘ WYKLUCZAJĄCYCH SIĘ klas (`inline-flex`
+          / `hidden`), NIGDY obie naraz — dwie unconditional utility klasy o tej samej specyficzności
+          (`display`) mogłyby się przebijać w nieprzewidywalnej kolejności zależnej od generatora Tailwind;
+          `max-[920px]:hidden` (wariant, osobna sprawa) zostaje bez zmian. */
       }
+      <span
+        data-pending-badge
+        class:list={[
+          "bg-primary text-primary-foreground min-w-[20px] items-center justify-center rounded-[4px] px-1.5 py-0.5 font-mono text-[11px] font-bold max-[920px]:hidden",
+          pendingCount > 0 ? "inline-flex" : "hidden",
+        ]}
+      >
+        <span data-pending-count>{pendingCount}</span>
+      </span>
     </a>
   </div>
 
@@ -166,7 +176,7 @@ const label = "flex-1 truncate max-[920px]:hidden";
   // useApiKey) aż do pełnego przeładowania strony. Inline script = progresywne wzbogacenie: sidebar
   // zostaje statycznym Astro, bez wyspy React (decyzja plan-review F2). Astro bundluje inline `<script>`
   // modułowo, więc import przez `@/` alias działa jak wszędzie indziej (wzorzec: `SessionBanner.astro`).
-  import { onKeyChanged } from "@/components/shell/sidebar-events";
+  import { onKeyChanged, onPendingDelta } from "@/components/shell/sidebar-events";
 
   const dot = document.querySelector("[data-key-dot]");
   const label = document.querySelector("[data-key-label]");
@@ -175,5 +185,20 @@ const label = "flex-1 truncate max-[920px]:hidden";
     dot?.classList.toggle("bg-note-line", configured);
     dot?.classList.toggle("bg-idea-line", !configured);
     if (label) label.textContent = configured ? "klucz aktywny" : "brak klucza";
+  });
+
+  // Faza 6 (ticket 6fa2b64b): licznik „Do akceptacji" (`pendingCount` we frontmatterze wyżej) ma ten sam
+  // problem jak wskaźnik klucza powyżej — SSR raz na render, bez połączenia z wyspą `/items`
+  // (PendingItemsView). Stan trzymamy w DOM (tekst `[data-pending-count]`, ustawiony SSR); zdarzenie
+  // niesie tylko DELTĘ (ujemną — accept/reject oba usuwają z pending), więc dodajemy ją do bieżącej
+  // wartości i chowamy/pokazujemy badge parą wykluczających się klas (patrz frontmatter wyżej).
+  const pendingBadge = document.querySelector("[data-pending-badge]");
+  const pendingCountEl = document.querySelector("[data-pending-count]");
+
+  onPendingDelta((delta) => {
+    const next = Math.max(0, Number(pendingCountEl?.textContent ?? "0") + delta);
+    if (pendingCountEl) pendingCountEl.textContent = String(next);
+    pendingBadge?.classList.toggle("inline-flex", next > 0);
+    pendingBadge?.classList.toggle("hidden", next <= 0);
   });
 </script>

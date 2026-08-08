@@ -19,6 +19,7 @@ import { ITEMS_LIST_PAGE_SIZE_KEY, writePageSizePref } from "@/components/lists/
 import PageSizeSelect from "@/components/lists/PageSizeSelect";
 import Pagination from "@/components/lists/Pagination";
 import { resetToFirstPage } from "@/components/lists/list-pagination";
+import { dispatchPendingDelta } from "@/components/shell/sidebar-events";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -148,6 +149,11 @@ export default function PendingItemsView({ initialItems, initialCriteria, initia
     // Kolejka się dosuwa (decyzja 2026-07-02): dociągnij bieżącą stronę (clamp do nowej liczby stron) —
     // w miejsce usuniętych wjeżdżają wpisy z kolejnych stron, licznik stron mówi prawdę.
     refetchAfterRemoval();
+    // Faza 6 (ticket 6fa2b64b): badge „Do akceptacji" w sidebarze jest SSR statyczny (AppLayout) — bez
+    // tego zdarzenia zostaje nieaktualny do reloadu. Accept i reject OBA usuwają z pending, więc oba
+    // dekrementują; `count` (FAKTYCZNIE zmienionych) bywa 0, gdy zaznaczone już nie były pending — delta 0
+    // jest wtedy no-opem po stronie sidebaru. Most: `sidebar-events.ts` (wzorzec Fazy 5).
+    dispatchPendingDelta(-count);
     // Licznik z serwera = liczba FAKTYCZNIE zmienionych (guard pomija itemy zmienione w innej karcie).
     if (count > 0) {
       const verb = action === "accept" ? "Zatwierdzono" : "Odrzucono";

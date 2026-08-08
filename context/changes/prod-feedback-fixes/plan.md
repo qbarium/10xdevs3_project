@@ -381,9 +381,9 @@ Brak migracji bazy. Fix 10 dodaje endpoint + serwis, bez zmian schematu.
 
 ### Faza 6: Reaktywny licznik „Do akceptacji" + weryfikacja odświeżania listy (ticket 6fa2b64b)
 #### Automatyczne
-- [ ] 6.1 E2E: częściowa akceptacja — lista i badge aktualne bez reloadu; badge znika przy 0
+- [x] 6.1 E2E: częściowa akceptacja — lista i badge aktualne bez reloadu; badge znika przy 0
 #### Ręczne
-- [ ] 6.2 Licznik i lista aktualne po akceptacji części
+- [x] 6.2 Licznik i lista aktualne po akceptacji części
 
 ### Faza 7: Widoczny scrollbar na tablecie (ticket be20465a)
 #### Automatyczne
