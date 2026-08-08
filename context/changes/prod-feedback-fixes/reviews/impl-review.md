@@ -62,3 +62,11 @@
 - **Weryfikacja:** spec 16 testów green, `npm test` 558/558, lint czysto.
 - **Ograniczenie:** realna korzyść dvh (recalc przy pasku adresu/rotacji) + zniknięcie „dead space" na fizycznym tablecie — do ręcznej weryfikacji użytkownika.
 - **Werdykt:** ZAAKCEPTOWANO — fix zasadny, regresja wykluczona; pełne potwierdzenie tabletowe w ręcznej weryfikacji.
+
+## Faza 9: Okno edycji — blokada tła i koniec pętli (62217cc8 + ac90c2a4) — 2026-08-08
+- **Zgodność z planem:** ✅ (a) `onInteractOutside preventDefault` na edit `DialogContent` (blokada tła, brak przypadkowego zamknięcia); (b) `open={open && !confirmDiscard}` — edytor i potwierdzenie NIGDY naraz; edytor zamyka się przez prop (nie `onOpenChange` → bez rekurencji), co rozrywa mechanizm pętli u źródła (przy zamkniętym edytorze outside-detekcja nieaktywna).
+- **Odkrycie (poza reconem, z testu):** dodatkowy `onInteractOutside preventDefault` na `DialogContent` POTWIERDZENIA — bez niego focus-restoration zamykanego edytora (cross-fade) był widziany przez Radix confirm jako focus-outside i confirm sam się odrzucał („mruganie", niedeterministyczny „Anuluj"). Bardzo dobra diagnoza.
+- **Test:** `prod-fixes-phase9-edit-modal.spec.ts` (hasTouch, 820×1180) — RED DETERMINISTYCZNY headless (cofnięcie fixu → blokada i „wróć do edycji nie wraca" padają; przywrócenie → GREEN). 2 testy + 3× repeat-each (determinizm). Uczciwie: nie udaje wizualnego „mrugania", asercje celują w deterministyczną przyczynę.
+- **Zachowane:** konsumenci (Accepted/Pending/SessionEntries — bramka nie wycieka, rodzic widzi `open=true`), tryb Podglądu read-only nietknięty.
+- **Weryfikacja:** `npm test` 558/558, eslint czysto. Model: opus (subtelna interakcja Radix).
+- **Werdykt:** ZAAKCEPTOWANO, 0 poprawek — wyróżnienie za wykrycie focus-restoration confirm.

@@ -400,9 +400,9 @@ Brak migracji bazy. Fix 10 dodaje endpoint + serwis, bez zmian schematu.
 
 ### Faza 9: Okno edycji — blokada tła i koniec pętli „wróć do edycji" (tickety 62217cc8 + ac90c2a4)
 #### Automatyczne
-- [ ] 9.1 E2E (dotyk): tło nieklikalne; dialog raz; „wróć do edycji" bez pętli; „odrzuć" zamyka
+- [x] 9.1 E2E (dotyk): tło nieklikalne; dialog raz; „wróć do edycji" bez pętli; „odrzuć" zamyka (RED deterministyczny, 3× repeat)
 #### Ręczne
-- [ ] 9.2 Brak przypadkowego zamykania; „wróć do edycji" bez zapętlenia
+- [x] 9.2 Brak przypadkowego zamykania; „wróć do edycji" bez zapętlenia (deterministyczne E2E)
 
 ### Faza 10: Trwałe usunięcie pojedynczego wpisu z kosza (ticket 02790656)
 #### Automatyczne
