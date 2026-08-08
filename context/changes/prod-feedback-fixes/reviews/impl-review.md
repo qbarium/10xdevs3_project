@@ -17,3 +17,10 @@
 - **Regresja:** `npm test` 558/558; screenshoty 4 stanów (dark/light × checked/unchecked) potwierdziły brak regresji jasny/checked.
 - **Uwaga:** agent samodzielnie wykrył i poprawił błąd własnej metody pomiaru (start blendu od checkboxa zamiast tła) przed wyciągnięciem wniosku o RED — pomiar rzetelny.
 - **Werdykt:** ZAAKCEPTOWANO, 0 poprawek.
+
+## Faza 3: Własna ikona „Do akceptacji" (2d65d300) — 2026-08-08
+- **Zgodność z planem:** ✅ nowy wariant `clipboard-check` w `Icon.astro` (schowek + „ptaszek", styl lucide); w `AppSidebar` „Do akceptacji" `inbox`→`clipboard-check`; `tray` (skrzynka) nietknięty.
+- **Test:** `prod-fixes-phase3-inbox-icon.spec.ts` — pixel-diff dwóch ikon sidebara (screenshot → canvas `getImageData` → odsetek różnych pikseli, znormalizowany rozmiar/kolor). Przed (tray vs inbox): 0.259; po (tray vs clipboard-check): 0.376; próg 0.32. RED→GREEN, dodatkowo zweryfikowane revert→RED, restore→GREEN.
+- **Rzetelność:** agent porównał 4 kandydatów ikon (clipboard-check najlepsza separacja 0.383); wykrył, że „list-checks" wygląda różnie, a scoring ma bliski baseline — pixel-diff się obronił.
+- **Uwaga:** próg 0.32 skalibrowany między realnym „przed" a „po" (nie intuicyjny); test lekko wrażliwy na render, ale podwójnie zweryfikowany. Stary wariant `inbox` pozostał zdefiniowany, nieużywany (nieszkodliwe, poza zakresem).
+- **Werdykt:** ZAAKCEPTOWANO, 0 poprawek.

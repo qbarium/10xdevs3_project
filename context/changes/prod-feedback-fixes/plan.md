@@ -361,10 +361,10 @@ Brak migracji bazy. Fix 10 dodaje endpoint + serwis, bez zmian schematu.
 
 ### Faza 3: Własna ikona „Do akceptacji" (ticket 2d65d300)
 #### Automatyczne
-- [ ] 3.1 E2E: ikony skrzynki i „Do akceptacji" różne (SVG)
-- [ ] 3.2 Lint/format czyste
+- [x] 3.1 E2E: ikony skrzynki i „Do akceptacji" różne (SVG)
+- [x] 3.2 Lint/format czyste
 #### Ręczne
-- [ ] 3.3 Obie pozycje mają różne ikony
+- [x] 3.3 Obie pozycje mają różne ikony
 
 ### Faza 4: Ujednolicenie terminologii stanu „zakończone" (ticket 164608bf)
 #### Automatyczne
