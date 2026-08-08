@@ -244,7 +244,7 @@ export default function TrashItemsView({ initialItems, initialCriteria, initialT
       </div>
 
       {/* Lista — JEDYNY obszar przewijania (scroll ograniczony do listy; treść przycięta do jej ramki). */}
-      <div className="min-h-0 flex-1 overflow-y-auto px-6">
+      <div className="scrollbar-stable min-h-0 flex-1 overflow-y-auto px-6">
         {items.length === 0 ? (
           filtersActive ? (
             <div

@@ -46,3 +46,10 @@
 - **Dbałość:** agent wykrył ryzyko kaskady (natywny atrybut `hidden` vs warstwy Tailwind) i użył wykluczających się klas (`inline-flex`/`hidden`) zamiast atrybutu — bezpieczniejsze, spójne z toggle kropki klucza.
 - **Weryfikacja:** pełny E2E 16/16 (F1/F5 współdzielą pliki — przeszły); `npm test` 558/558; lint czysto.
 - **Werdykt:** ZAAKCEPTOWANO, 0 poprawek.
+
+## Faza 7: Widoczny scrollbar na tablecie (be20465a) — 2026-08-08
+- **Zgodność z planem:** ✅ nowa utilitka `.scrollbar-stable` w `global.css` (`scrollbar-width: thin` + `scrollbar-color` + `::-webkit-scrollbar` 10px, tokeny motywu); dodana do wspólnej klasy 5 kontenerów list (Trash/Accepted/Pending/SessionEntries/ImportSessions). Wybór klasy nad globalnym selektorem — świadomy (nie objąć sidebara/dropdownów).
+- **Uczciwość weryfikacji (wzorowa):** agent zmierzył przed/po na tablecie i desktopie; `offsetWidth-clientWidth=0` zawsze (rezerwacja miejsca na pasek NIEobserwowalna w tym headless Chromium — nie touch-specific, limit środowiska). Sam obalił początkowy fałszywy red→green i przepisał test. Realny red→green: STRUKTURALNY (computed `scrollbar-width` auto→thin); drugi test — brak regresji desktop.
+- **Ograniczenie:** wizualna widoczność/rezerwacja paska na realnym tablecie (Android Chrome/iPadOS Safari; iOS `scrollbar-width` od 18.2) — poza zasięgiem headless, do ręcznej weryfikacji użytkownika.
+- **Weryfikacja:** spec 2/2, `npm test` 558/558, `tsc`/`eslint`/`prettier` czyste.
+- **Werdykt:** ZAAKCEPTOWANO — fix dostarczony i zweryfikowany strukturalnie; pełne potwierdzenie wizualne w gestii ręcznej weryfikacji na tablecie.

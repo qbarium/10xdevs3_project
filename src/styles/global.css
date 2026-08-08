@@ -205,4 +205,31 @@
   body {
     @apply bg-background text-foreground font-sans;
   }
+
+  /* Trwały, widoczny pasek przewijania na kontenerach list (ticket be20465a) — domyślny overlay-scrollbar
+     na tablecie/dotyku auto-ukrywa się, więc długa lista nie sygnalizuje, że da się przewijać. Firefox:
+     `scrollbar-width`/`scrollbar-color`. Chromium/WebKit (w tym Android): `::-webkit-scrollbar*` z
+     NIEZEROWĄ szerokością — pasek „on-canvas" rezerwujący miejsce, nie overlay malowany nad treścią.
+     Kolory z istniejących tokenów motywu (jasny+ciemny automatycznie przez `.dark`, bez nowych tokenów),
+     dyskretne: `--muted-foreground` (ten sam odcień co przygaszony tekst pomocniczy). Zastosowanie:
+     klasa `scrollbar-stable` dołożona do wspólnego kontenera list w 5 widokach (TrashItemsView,
+     AcceptedItemsView, PendingItemsView, SessionEntriesView, ImportSessionsView). */
+  .scrollbar-stable {
+    scrollbar-width: thin;
+    scrollbar-color: var(--muted-foreground) transparent;
+  }
+  .scrollbar-stable::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  .scrollbar-stable::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+  .scrollbar-stable::-webkit-scrollbar-thumb {
+    background-color: var(--muted-foreground);
+    border-radius: 9999px;
+  }
+  .scrollbar-stable::-webkit-scrollbar-thumb:hover {
+    background-color: var(--foreground);
+  }
 }

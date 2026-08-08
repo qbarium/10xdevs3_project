@@ -387,10 +387,10 @@ Brak migracji bazy. Fix 10 dodaje endpoint + serwis, bez zmian schematu.
 
 ### Faza 7: Widoczny scrollbar na tablecie (ticket be20465a)
 #### Automatyczne
-- [ ] 7.1 E2E (tablet): kontener przewijalny, scrollbar wymuszony
-- [ ] 7.2 Lint/format czyste
+- [x] 7.1 E2E (tablet): kontener przewijalny, scrollbar wymuszony (strukturalnie: `scrollbar-width` auto→thin)
+- [x] 7.2 Lint/format czyste
 #### Ręczne
-- [ ] 7.3 Widoczny pasek na tablecie; desktop bez regresji
+- [x] 7.3 Desktop bez regresji (E2E); widoczny pasek na realnym tablecie — do ręcznej weryfikacji użytkownika (limit headless)
 
 ### Faza 8: Wysokość i skala powłoki na tablecie (ticket 0a23baea)
 #### Automatyczne
