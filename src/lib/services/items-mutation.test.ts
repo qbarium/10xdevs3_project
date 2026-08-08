@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   createManualItem,
+  deleteFromTrash,
   deriveOperationalStatus,
   editItem,
   ItemConflictError,
@@ -37,6 +38,7 @@ function mockSupabase(result: Result | Result[]) {
     "from",
     "insert",
     "update",
+    "delete",
     "in",
     "eq",
     "select",
@@ -174,6 +176,34 @@ describe("restoreFromTrash (S-10: zwraca świeże wiersze Item[])", () => {
   it("rzuca na błąd serwera (pierwszy UPDATE)", async () => {
     const { supabase } = mockSupabase({ data: null, error: { message: "boom" } });
     await expect(restoreFromTrash(supabase, ["a"])).rejects.toThrow();
+  });
+});
+
+describe("deleteFromTrash (F10: twardy DELETE ograniczony do kosza)", () => {
+  it("buduje guarded DELETE (eq id + in [rejected,deleted], select id) i zwraca deletedCount=1 gdy skasowano", async () => {
+    const { supabase, calls } = mockSupabase({ data: [{ id: "a" }], error: null });
+    const res = await deleteFromTrash(supabase, "a");
+
+    expect(res.deletedCount).toBe(1);
+    // Twardy DELETE (nie UPDATE) — bez kroku `delete` skasowałoby to soft-delete albo nic.
+    expect(calls.some(([m]) => m === "delete")).toBe(true);
+    // Celowanie w JEDEN wiersz: eq('id', …). GUARD statusu kosza: in('acceptance_status', [rejected, deleted]) —
+    // to on chroni item aktywny (pending/accepted) przed skasowaniem tym kanałem.
+    expect(calls.filter(([m]) => m === "eq")).toContainEqual(["eq", ["id", "a"]]);
+    expect(calls.filter(([m]) => m === "in")).toContainEqual(["in", ["acceptance_status", ["rejected", "deleted"]]]);
+    // SELECT tylko "id" (liczymy skasowane wiersze), NIE pełny wiersz.
+    expect(calls.filter(([m]) => m === "select")).toContainEqual(["select", ["id"]]);
+  });
+
+  it("deletedCount=0 gdy nic nie skasowano (wiersz spoza kosza / nieistniejący / nie-własny) — sygnał do 404", async () => {
+    const { supabase } = mockSupabase({ data: [], error: null });
+    const res = await deleteFromTrash(supabase, "x");
+    expect(res.deletedCount).toBe(0);
+  });
+
+  it("rzuca na błąd serwera", async () => {
+    const { supabase } = mockSupabase({ data: null, error: { message: "boom" } });
+    await expect(deleteFromTrash(supabase, "a")).rejects.toThrow();
   });
 });
 

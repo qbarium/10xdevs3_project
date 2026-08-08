@@ -65,6 +65,8 @@ export interface UseItemMutation {
   rejectItems: (ids: string[]) => Promise<Item[] | null>;
   /** Trwale opróżnia kosz usera (S-06, FR-016); zwraca liczbę skasowanych wierszy (`deletedCount`), null przy błędzie. */
   emptyTrash: () => Promise<number | null>;
+  /** Trwale usuwa POJEDYNCZY wpis z kosza (prod-fix F10, DELETE /api/items/:id); `true` przy sukcesie, `false` przy błędzie/404. */
+  deleteFromTrash: (id: string) => Promise<boolean>;
   /** Edytuje pending/accepted z compare-and-swap (`expectedUpdatedAt`); zwraca item lub powód (404 / 409 / błąd). */
   editItem: (id: string, input: EditItemInput, expectedUpdatedAt: string) => Promise<EditItemResult>;
 }
@@ -151,6 +153,28 @@ export function useItemMutation(): UseItemMutation {
     } catch {
       setError("Błąd połączenia. Spróbuj ponownie.");
       return null;
+    } finally {
+      setPending(false);
+    }
+  }
+
+  // Trwałe usunięcie POJEDYNCZEGO wpisu z kosza (prod-fix F10) — DELETE /api/items/:id (bez body). Serwer
+  // ogranicza kasowanie do statusów kosza (poza koszem → 404), więc `false` obejmuje zarówno błąd sieci,
+  // jak i 404 „nie ma czego usunąć" — dla wywołującego (widok kosza) oba znaczą „nie usunięto".
+  async function deleteFromTrash(id: string): Promise<boolean> {
+    setPending(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/items/${id}`, { method: "DELETE" });
+      const data = (await res.json()) as { ok?: boolean };
+      if (!res.ok || !data.ok) {
+        setError("Nie udało się usunąć wpisu. Spróbuj ponownie.");
+        return false;
+      }
+      return true;
+    } catch {
+      setError("Błąd połączenia. Spróbuj ponownie.");
+      return false;
     } finally {
       setPending(false);
     }
@@ -251,6 +275,7 @@ export function useItemMutation(): UseItemMutation {
     acceptItems,
     rejectItems,
     emptyTrash,
+    deleteFromTrash,
     editItem,
   };
 }

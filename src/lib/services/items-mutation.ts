@@ -209,6 +209,28 @@ export async function emptyTrash(supabase: SupabaseClient): Promise<{ deletedCou
 }
 
 /**
+ * Trwałe usunięcie POJEDYNCZEGO wpisu z kosza (S-06 / prod-fix F10) — twardy DELETE celowany w jeden `id`,
+ * ograniczony do statusów kosza. Bliźniak `emptyTrash`, ale nie globalny: guard
+ * `.in('acceptance_status', ['rejected','deleted'])` gwarantuje, że tym kanałem NIE da się skasować itemu
+ * aktywnego (`pending`/`accepted`) — usuwać na stałe można wyłącznie to, co już jest w koszu. RLS
+ * (`items_delete_own`, `(select auth.uid()) = user_id`) dokłada izolację per-user, więc bez jawnego filtra
+ * `user_id` user kasuje wyłącznie SWÓJ wiersz. `deletedCount` z `.select("id")` (0 albo 1) rozróżnia
+ * „skasowano" od „nie ma czego skasować" (wiersz nie istnieje / nie jest w koszu / nie-własny) — endpoint
+ * mapuje 0 na 404.
+ */
+export async function deleteFromTrash(supabase: SupabaseClient, id: string): Promise<{ deletedCount: number }> {
+  const { data, error } = await supabase
+    .from("items")
+    .delete()
+    .eq("id", id)
+    .in("acceptance_status", ["rejected", "deleted"])
+    .select("id")
+    .overrideTypes<{ id: string }[], { merge: false }>();
+  if (error) throw new Error("Usunięcie wpisu z kosza nie powiodło się.", { cause: error });
+  return { deletedCount: data.length };
+}
+
+/**
  * Edycja pojedynczego itemu (title/description/type/operationalStatus) dla `pending` ORAZ `accepted`
  * (S-05). `operational_status` jest ustawiany JAWNIE z wejścia — UI prefilluje bieżącą wartość, więc
  * edycja treści bez tknięcia selektora zachowuje stan; cichy reset przez auto-derywację (`→'new'`,

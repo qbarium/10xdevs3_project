@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { listItems } from "@/lib/services/items";
 import {
   createManualItem,
+  deleteFromTrash,
   editItem,
   emptyTrash,
   ItemConflictError,
@@ -306,6 +307,43 @@ d("items-mutation — RLS + status-guard + derywacja (integracja)", () => {
     await expect(rowOf(B.supabase, itemB)).rejects.toThrow(); // item B zniknął → emptyTrash B naprawdę zadziałał
     const row = await rowOf(A.supabase, itemA); // KLUCZOWE: item A przetrwał globalny hard-delete B
     expect(row.acceptance_status).toBe("deleted");
+  });
+
+  // --- deleteFromTrash (F10): twardy DELETE POJEDYNCZEGO wiersza, ograniczony do kosza + izolowany RLS. ---
+  // Bliźniak emptyTrash, ale celowany w jeden `id`. Dwie własności krytyczne dla bezpieczeństwa: (1) guard
+  // `.in(status, [rejected,deleted])` NIE pozwala skasować itemu aktywnego (pending/accepted) tym kanałem;
+  // (2) izolacja per-user trzyma się wyłącznie na RLS (bez jawnego `.eq(user_id)`), więc B nie kasuje wpisu A.
+
+  it("deleteFromTrash kasuje TYLKO wiersz w koszu (rejected/deleted); pending i accepted NIETKNIĘTE (guard statusu)", async () => {
+    const deletedId = await insertItem(A.supabase, A.id, { acceptance_status: "deleted" });
+    const rejectedId = await insertItem(A.supabase, A.id, { acceptance_status: "rejected" });
+    const acceptedId = await insertItem(A.supabase, A.id, { acceptance_status: "accepted" });
+    const pendingId = await insertItem(A.supabase, A.id, { acceptance_status: "pending" });
+
+    // (1) wiersz w koszu (deleted) → faktycznie skasowany (deletedCount=1, zniknął z bazy)
+    expect((await deleteFromTrash(A.supabase, deletedId)).deletedCount).toBe(1);
+    await expect(rowOf(A.supabase, deletedId)).rejects.toThrow();
+
+    // (2) wiersz w koszu (rejected) → także skasowany (oba statusy kosza w guardzie)
+    expect((await deleteFromTrash(A.supabase, rejectedId)).deletedCount).toBe(1);
+    await expect(rowOf(A.supabase, rejectedId)).rejects.toThrow();
+
+    // (3) item AKTYWNY (accepted) → guard statusu wyklucza → nic nie skasowane, wiersz żyje w stanie accepted
+    expect((await deleteFromTrash(A.supabase, acceptedId)).deletedCount).toBe(0);
+    expect(await statusOf(A.supabase, acceptedId)).toBe("accepted");
+
+    // (4) item pending → tak samo pominięty; nie da się „usunąć trwale" czegoś spoza kosza tym endpointem
+    expect((await deleteFromTrash(A.supabase, pendingId)).deletedCount).toBe(0);
+    expect(await statusOf(A.supabase, pendingId)).toBe("pending");
+  });
+
+  it("B nie usuwa wpisu z kosza A (deleteFromTrash pod RLS → 0 skasowanych, wiersz A przetrwał)", async () => {
+    // IDOR po `id`: deleteFromTrash celuje w konkretny wiersz, więc gdyby izolacja polegała na czymś innym niż
+    // RLS, B skasowałby wpis A po jego id. Dowód: B woła na id wpisu A → 0 skasowanych, a wiersz A żyje.
+    const itemA = await insertItem(A.supabase, A.id, { acceptance_status: "deleted" });
+    const res = await deleteFromTrash(B.supabase, itemA);
+    expect(res.deletedCount).toBe(0); // RLS (items_delete_own) wyklucza wiersz A z DELETE-a B
+    expect(await statusOf(A.supabase, itemA)).toBe("deleted"); // wiersz A nietknięty (nadal w koszu)
   });
 
   // --- Round-trip cyklu życia itemu (Faza 4, ryzyko #5): dwuwymiarowy model stanu trzyma przy cyklu kosza ---

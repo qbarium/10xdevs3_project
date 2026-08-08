@@ -70,3 +70,11 @@
 - **Zachowane:** konsumenci (Accepted/Pending/SessionEntries — bramka nie wycieka, rodzic widzi `open=true`), tryb Podglądu read-only nietknięty.
 - **Weryfikacja:** `npm test` 558/558, eslint czysto. Model: opus (subtelna interakcja Radix).
 - **Werdykt:** ZAAKCEPTOWANO, 0 poprawek — wyróżnienie za wykrycie focus-restoration confirm.
+
+## Faza 10: Trwałe usunięcie pojedynczego wpisu z kosza (02790656) — 2026-08-08
+- **Zgodność z planem:** ✅ pełny łańcuch 6 plików — serwis `deleteFromTrash` (guarded `.in(["rejected","deleted"])`, `deletedCount`), endpoint `DELETE /api/items/[id]` (401 guard, walidacja UUID, 404 spoza kosza), hook, `item-card` („delete" + `ACTIONS_BY_STATUS`), `ItemCard` (`onDelete`+`canDelete`+GhostAction destructive), `TrashItemsView` (dialog potwierdzenia + optymistyczne usunięcie jak restore).
+- **Bezpieczeństwo (potrójna obrona):** guard statusu w serwisie (pending/accepted nieusuwalne tym kanałem), 404 dla nieistniejący/aktywny/cudzy (nie zdradza powodu), RLS `items_delete_own` (B nie usuwa A), CSRF przez middleware (DELETE same-origin jak PATCH).
+- **Testy:** unit 3 nowe (kształt guarded DELETE, `deletedCount` 1/0, rzut) → `npm test` 562; integracyjny 2 nowe (kasuje tylko kosz; RLS izolacja) → 19; E2E red→green (wypięcie `onDelete` → RED brak dialogu; przywrócenie → GREEN), seed własnymi danymi (runId, bo DELETE nieodwracalny), ponowny DELETE → 404, „Wyczyść kosz" nadal działa.
+- **Uwaga:** zaktualizowano `item-card.test.ts` (zamrażał listę akcji rejected/deleted — konieczne po dodaniu „delete"). Wymuszona konsekwencja, nie scope creep.
+- **Weryfikacja:** `npm test` 562, `test:integration` 19, lint/tsc czyste. Model: opus (endpoint mutujący + bezpieczeństwo).
+- **Werdykt:** ZAAKCEPTOWANO, 0 poprawek.

@@ -406,11 +406,11 @@ Brak migracji bazy. Fix 10 dodaje endpoint + serwis, bez zmian schematu.
 
 ### Faza 10: Trwałe usunięcie pojedynczego wpisu z kosza (ticket 02790656)
 #### Automatyczne
-- [ ] 10.1 Test serwisu `deleteFromTrash` (izolacja)
-- [ ] 10.2 E2E: usunięcie pojedynczego wpisu; „Wyczyść kosz" nadal działa
-- [ ] 10.3 Lint/tsc czyste
+- [x] 10.1 Test serwisu `deleteFromTrash` (izolacja) — unit (562) + integracyjny (19, RLS)
+- [x] 10.2 E2E: usunięcie pojedynczego wpisu; „Wyczyść kosz" nadal działa (red→green)
+- [x] 10.3 Lint/tsc czyste
 #### Ręczne
-- [ ] 10.4 Pojedynczy wpis usuwalny; potwierdzenie chroni
+- [x] 10.4 Pojedynczy wpis usuwalny; potwierdzenie chroni (E2E)
 
 ### Faza 11: Triage 6 featurów (bez kodu)
 #### Ręczne
