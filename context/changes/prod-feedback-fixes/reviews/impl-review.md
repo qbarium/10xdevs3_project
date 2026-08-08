@@ -1,0 +1,19 @@
+<!-- IMPL-REVIEW (narastający, per faza) -->
+# Impl-review — prod-feedback-fixes (per faza)
+
+> Przegląd implementacji po każdej fazie (orkiestrator, autonomicznie). Weryfikacja zachowania: Playwright. Skalowanie: fazy trywialne → lekki przegląd; fazy złożone (5, 6, 8, 9, 10) → pełniejszy (agent-recenzent / adwersarialna weryfikacja). Werdykt per faza.
+
+## Faza 1: Marka „TaskerLight" jako link (f4dc0119) — 2026-08-08
+- **Commit:** b3475c8
+- **Zgodność z planem:** ✅ marka `<div>` → `<a href="/ingest">` z `aria-label`, zwijanie `max-[920px]:justify-center`, bez `aria-current`/pierścienia — dokładnie kontrakt Fazy 1.
+- **Test:** `e2e/prod-fixes-phase1-brand-link.spec.ts` — red→green; klik `getByRole('link',{name:/TaskerLight/i})` → `toHaveURL(/\/ingest$/)`. Weryfikuje zachowanie (nawigację), nie tylko obecność elementu.
+- **Regresja:** dzieci (badge+span) i klasy układu zachowane; lint czysto.
+- **Dostępność:** link ma opisowy `aria-label`. ✅
+- **Werdykt:** ZAAKCEPTOWANO, 0 poprawek.
+
+## Faza 2: Widoczne checkboxy w dark (ef87e4f8) — 2026-08-08
+- **Zgodność z planem:** ✅ centralna zmiana `checkbox.tsx` — dodane `dark:border-white/40 dark:bg-white/10` (usunięte słabe `dark:bg-input/30`); tryb jasny i stan zaznaczony (`bg-primary`) bez zmian. Jedna zmiana pokrywa wszystkie listy.
+- **Test:** `prod-fixes-phase2-dark-checkbox.spec.ts` — red→green oparty na REALNYM kontraście: kolory (oklch) renderowane w canvasie 2D, dystans RGB ramki do tła karty. Przed: 59.9 (próg 100) → RED; po: 160.7 → GREEN. Weryfikacja widoczności, nie snapshot implementacji.
+- **Regresja:** `npm test` 558/558; screenshoty 4 stanów (dark/light × checked/unchecked) potwierdziły brak regresji jasny/checked.
+- **Uwaga:** agent samodzielnie wykrył i poprawił błąd własnej metody pomiaru (start blendu od checkboxa zamiast tła) przed wyciągnięciem wniosku o RED — pomiar rzetelny.
+- **Werdykt:** ZAAKCEPTOWANO, 0 poprawek.

@@ -354,10 +354,10 @@ Brak migracji bazy. Fix 10 dodaje endpoint + serwis, bez zmian schematu.
 
 ### Faza 2: Widoczne checkboxy w trybie ciemnym (ticket ef87e4f8)
 #### Automatyczne
-- [ ] 2.1 E2E (dark): checkbox ma widoczny kontrast
-- [ ] 2.2 Istniejące testy jednostkowe zielone (bez nowego testu)
+- [x] 2.1 E2E (dark): checkbox ma widoczny kontrast
+- [x] 2.2 Istniejące testy jednostkowe zielone (bez nowego testu)
 #### Ręczne
-- [ ] 2.3 Checkbox widoczny w dark przed/po zaznaczeniu; jasny bez zmian
+- [x] 2.3 Checkbox widoczny w dark przed/po zaznaczeniu; jasny bez zmian
 
 ### Faza 3: Własna ikona „Do akceptacji" (ticket 2d65d300)
 #### Automatyczne
