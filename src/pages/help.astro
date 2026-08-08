@@ -108,14 +108,11 @@ const link = "text-foreground font-medium hover:underline";
         <ul class:list={list}>
           <li><span class:list={strong}>Nowe</span> — świeżo zaakceptowane, jeszcze nietknięte.</li>
           <li><span class:list={strong}>W toku</span> — właśnie się nim zajmujesz.</li>
-          <li>
-            <span class:list={strong}>Zrobione</span> — ukończone. Dla notatki etykieta brzmi „Obsłużona", dla decyzji „Podjęta"
-            — słowo zależy od typu wpisu.
-          </li>
+          <li><span class:list={strong}>Zakończone</span> — ukończone.</li>
           <li><span class:list={strong}>Anulowane</span> — porzucone.</li>
         </ul>
         <p class:list={`${para} mt-3`}>
-          Stan zmieniasz klikając znacznik (przejścia: „Rozpocznij", „Zrealizuj", „Anuluj", „Cofnij do «nowe»", „Otwórz
+          Stan zmieniasz klikając znacznik (przejścia: „Rozpocznij", „Zakończ", „Anuluj", „Cofnij do «nowe»", „Otwórz
           ponownie", „Przywróć"), w oknie edycji wpisu albo zbiorczo przyciskiem „Zmień stan".
         </p>
       </section>
@@ -130,13 +127,11 @@ const link = "text-foreground font-medium hover:underline";
               class:list={strong}>W toku</span
             > — wpisy w obiegu.
           </li>
-          <li><span class:list={strong}>Zakończone</span> — wpisy w stanie „zrobione".</li>
+          <li><span class:list={strong}>Zakończone</span> — wpisy ukończone.</li>
           <li><span class:list={strong}>Anulowane</span> — wpisy porzucone.</li>
         </ul>
         <p class:list={`${para} mt-3`}>
-          Drobiazg, który myli: zakładka <span class:list={strong}>Zakończone</span> i znacznik
-          <span class:list={strong}>Zrobione</span> to ten sam stan, tylko nazwany dwoma słowami. Przyciskiem „Dodaj wpis"
-          tworzysz wpis ręcznie (od razu „Nowe"), z pominięciem klasyfikacji.
+          Przyciskiem „Dodaj wpis" tworzysz wpis ręcznie (od razu „Nowe"), z pominięciem klasyfikacji.
         </p>
       </section>
 

@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 // R-E2 (test-plan.md): pełna ścieżka sukcesu z PRD (smoke), na poziomie przeglądarki.
-// login (storageState) -> wklej -> klasyfikacja (atrapa mock) -> akceptacja -> Wpisy -> Zrobione -> Zakończone.
+// login (storageState) -> wklej -> klasyfikacja (atrapa mock) -> akceptacja -> Wpisy -> Zakończone.
 // Antywzorzec unikany: happy-path, który nigdy nie dociera do końcowej asercji w /items/done.
 test.describe("R-E2: pełna ścieżka do widoku Zakończone", () => {
   const created: string[] = [];
@@ -13,7 +13,9 @@ test.describe("R-E2: pełna ścieżka do widoku Zakończone", () => {
       .catch(() => undefined);
   });
 
-  test("wpis przechodzi wklej -> akceptacja -> Zrobione i ląduje w Zakończone", async ({ page }) => {
+  test("wpis przechodzi wklej -> akceptacja -> zmiana stanu na Zakończone i ląduje w widoku Zakończone", async ({
+    page,
+  }) => {
     const title = `E2E-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     // Generacja: wpisz unikalny wsad (realne klawisze — kontrolowana wyspa React) i wyślij.
@@ -45,12 +47,12 @@ test.describe("R-E2: pełna ścieżka do widoku Zakończone", () => {
     const id = await activeCard.getAttribute("data-item-id");
     if (id) created.push(id);
 
-    // Zaznacz wpis i oznacz „Zrobione" przez menu „Zmień stan" (akcja zbiorcza; jeden wpis → bez dialogu).
+    // Zaznacz wpis i oznacz „Zakończone" przez menu „Zmień stan" (akcja zbiorcza; jeden wpis → bez dialogu).
     // Ponawiaj (zaznacz + otwórz menu + klik), aż wpis zniknie z „Wpisy" (przeszedł do „Zakończone").
     await expect(async () => {
       await activeCard.getByRole("checkbox", { name: `Zaznacz: ${title}` }).check();
       await page.getByRole("button", { name: "Zmień stan" }).click();
-      await page.getByRole("menuitem", { name: "Zrobione" }).click();
+      await page.getByRole("menuitem", { name: "Zakończone" }).click();
       await expect(activeCard).toBeHidden({ timeout: 2_000 });
     }).toPass({ timeout: 15_000 });
 

@@ -53,7 +53,7 @@ interface Props {
   canAdd?: boolean;
 }
 
-// Cztery przyciski bulk w kolejności cyklu życia (Nowe → W toku → Zrobione → Anulowane).
+// Cztery przyciski bulk w kolejności cyklu życia (Nowe → W toku → Zakończone → Anulowane).
 const BULK_TARGETS: OperationalStatus[] = ["new", "in_progress", "done", "cancelled"];
 
 // Żądanie akcji zbiorczej wymagającej potwierdzenia (select-all). Dwa rodzaje: zmiana stanu operacyjnego

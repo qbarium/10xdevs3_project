@@ -14,11 +14,11 @@ export interface OperationalTransition {
 export const OPERATIONAL_TRANSITIONS: Record<OperationalStatus, OperationalTransition[]> = {
   new: [
     { target: "in_progress", label: "Rozpocznij" },
-    { target: "done", label: "Zrealizuj" },
+    { target: "done", label: "Zakończ" },
     { target: "cancelled", label: "Anuluj" },
   ],
   in_progress: [
-    { target: "done", label: "Zrealizuj" },
+    { target: "done", label: "Zakończ" },
     { target: "new", label: "Cofnij do „nowe”" },
     { target: "cancelled", label: "Anuluj" },
   ],

@@ -15,17 +15,17 @@ describe("labels (enum → PL)", () => {
   it("operationalStatusLabel mapuje wszystkie statusy operacyjne", () => {
     expect(operationalStatusLabel("new")).toBe("Nowe");
     expect(operationalStatusLabel("in_progress")).toBe("W toku");
-    expect(operationalStatusLabel("done")).toBe("Zrobione");
+    expect(operationalStatusLabel("done")).toBe("Zakończone");
     expect(operationalStatusLabel("cancelled")).toBe("Anulowane");
   });
 
-  it("operationalStatusLabel z typem zwraca nadpisanie per-typ dla done (S-04)", () => {
-    expect(operationalStatusLabel("done", "note")).toBe("Obsłużona");
-    expect(operationalStatusLabel("done", "idea")).toBe("Obsłużony");
-    expect(operationalStatusLabel("done", "decision")).toBe("Podjęta");
-    expect(operationalStatusLabel("done", "other")).toBe("Obsłużone");
+  it("operationalStatusLabel z typem zwraca nadpisanie per-typ dla done (S-04), ujednolicone do Zakończone (ticket 164608bf)", () => {
+    expect(operationalStatusLabel("done", "note")).toBe("Zakończone");
+    expect(operationalStatusLabel("done", "idea")).toBe("Zakończone");
+    expect(operationalStatusLabel("done", "decision")).toBe("Zakończone");
+    expect(operationalStatusLabel("done", "other")).toBe("Zakończone");
     // `task` nie ma nadpisania → generyczna etykieta
-    expect(operationalStatusLabel("done", "task")).toBe("Zrobione");
+    expect(operationalStatusLabel("done", "task")).toBe("Zakończone");
   });
 
   it("operationalStatusLabel z typem używa fallbacku dla stanów bez nadpisania", () => {
@@ -34,7 +34,7 @@ describe("labels (enum → PL)", () => {
     expect(operationalStatusLabel("in_progress", "decision")).toBe("W toku");
     expect(operationalStatusLabel("cancelled", "other")).toBe("Anulowane");
     // Bez typu — zachowanie wsteczne.
-    expect(operationalStatusLabel("done")).toBe("Zrobione");
+    expect(operationalStatusLabel("done")).toBe("Zakończone");
   });
 
   it("acceptanceStatusLabel mapuje wszystkie statusy akceptacji", () => {

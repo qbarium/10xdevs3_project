@@ -24,3 +24,10 @@
 - **Rzetelność:** agent porównał 4 kandydatów ikon (clipboard-check najlepsza separacja 0.383); wykrył, że „list-checks" wygląda różnie, a scoring ma bliski baseline — pixel-diff się obronił.
 - **Uwaga:** próg 0.32 skalibrowany między realnym „przed" a „po" (nie intuicyjny); test lekko wrażliwy na render, ale podwójnie zweryfikowany. Stary wariant `inbox` pozostał zdefiniowany, nieużywany (nieszkodliwe, poza zakresem).
 - **Werdykt:** ZAAKCEPTOWANO, 0 poprawek.
+
+## Faza 4: Ujednolicenie terminologii „Zakończone" (164608bf) — 2026-08-08
+- **Zgodność z planem:** ✅ done→„Zakończone" (`labels.ts:18` + per-typ `:26-29` wszystkie „Zakończone"); akcja „Zrealizuj"→„Zakończ" (`operational-transitions.ts`); `help.astro` przepisany (usunięty akapit o „dwóch słowach", już nieprawdziwy); filtr (`state-filter.ts`) bez zmian. Grep domknięty: 8 miejsc w `src/` + 2 istniejące specy (`happy-path-smoke`, `help.spec` — inaczej pękłyby).
+- **Test:** `prod-fixes-phase4-terminology.spec.ts` — red→green (cofnięcie `labels`+`help` do HEAD → RED 2/2; przywrócenie → GREEN 2/2). Sprawdza filtr, menu bulk „Zmień stan", badge na `/items/done`, sekcję pomocy: wymaga „Zakończone"/„Zakończ", brak „Zrobione"/„Zrealizuj".
+- **Weryfikacja:** `npm test` 558/558; Playwright 8/8 (nowy + 2 zmodyfikowane); `tsc` + `eslint` czyste.
+- **Obserwacja (dług, nie blokuje):** czasownik „Zakończ" z `operational-transitions.ts` jest dziś nieosiągalny w UI — interaktywny tryb `OperationalStatusBadge` (menu z czasownikami) nie ma konsumenta (`ItemCard` renderuje read-only; edycję przejął `EditItemDialog` z rzeczownikowym `Select`). Zmiana ujednolica string defensywnie; stan pre-istniejący, nie wprowadzony tą fazą. Widoczna terminologia (badge/filtr/pomoc) jest spójna.
+- **Werdykt:** ZAAKCEPTOWANO, 0 poprawek.

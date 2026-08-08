@@ -19,7 +19,7 @@ interface Props {
 }
 
 // Szata „techniczna" (S-15 Faza 3, wzorzec `.state` z makiety): ostry badge z kropką/haczykiem i kolorem
-// per stan z tokenów (`--prog-fg`/`--done-fg`, oba motywy). „W toku" niebieski, „Zrobione" zielony z
+// per stan z tokenów (`--prog-fg`/`--done-fg`, oba motywy). „W toku" niebieski, „Zakończone" zielony z
 // haczykiem, „Nowe"/„Anulowane" wyciszone. Zero zaszytych kolorów.
 const BADGE_BASE =
   "inline-flex items-center gap-1.5 rounded-[3px] border px-2 py-0.5 text-[11.5px] leading-none font-medium";
@@ -31,7 +31,7 @@ const STATE_TONE: Record<OperationalStatus, string> = {
   cancelled: "border-border text-muted-foreground",
 };
 
-/** Kropka stanu (kolor dziedziczony z tekstu) lub haczyk dla „Zrobione". */
+/** Kropka stanu (kolor dziedziczony z tekstu) lub haczyk dla „Zakończone". */
 function StateMark({ status }: { status: OperationalStatus }) {
   if (status === "done") return <CheckIcon className="size-3" aria-hidden="true" />;
   return <span className="size-1.5 shrink-0 rounded-full bg-current" aria-hidden="true" />;

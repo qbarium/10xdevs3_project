@@ -368,10 +368,10 @@ Brak migracji bazy. Fix 10 dodaje endpoint + serwis, bez zmian schematu.
 
 ### Faza 4: Ujednolicenie terminologii stanu „zakończone" (ticket 164608bf)
 #### Automatyczne
-- [ ] 4.1 Testy jednostkowe (zaktualizowane) zielone
-- [ ] 4.2 E2E: akcja/badge/filtr spójne
+- [x] 4.1 Testy jednostkowe (zaktualizowane) zielone
+- [x] 4.2 E2E: akcja/badge/filtr spójne
 #### Ręczne
-- [ ] 4.3 Brak „Zrobione"/„Zrealizuj"; pomoc spójna
+- [x] 4.3 Brak „Zrobione"/„Zrealizuj"; pomoc spójna
 
 ### Faza 5: Reaktywny wskaźnik statusu klucza w powłoce (ticket 80c4f735)
 #### Automatyczne
