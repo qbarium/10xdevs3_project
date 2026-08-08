@@ -347,10 +347,10 @@ Brak migracji bazy. Fix 10 dodaje endpoint + serwis, bez zmian schematu.
 
 ### Faza 1: Marka „TaskerLight" jako link do skrzynki (ticket f4dc0119)
 #### Automatyczne
-- [ ] 1.1 E2E: klik w markę → `/ingest`
-- [ ] 1.2 Lint/format czyste
+- [x] 1.1 E2E: klik w markę → `/ingest`
+- [x] 1.2 Lint/format czyste
 #### Ręczne
-- [ ] 1.3 Logo i napis prowadzą do skrzynki; wygląd niezmieniony
+- [x] 1.3 Logo i napis prowadzą do skrzynki; wygląd niezmieniony (E2E + zachowane klasy)
 
 ### Faza 2: Widoczne checkboxy w trybie ciemnym (ticket ef87e4f8)
 #### Automatyczne
