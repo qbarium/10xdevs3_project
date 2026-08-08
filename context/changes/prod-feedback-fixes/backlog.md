@@ -39,3 +39,25 @@ Kolejność wykonania (od prostych/niezależnych ku złożonym):
 | 3eca2a93 | Poprawić prompt klasyfikacji | Tuning promptu; w testach klasyfikator = `mock`, realna weryfikacja wymaga klucza modelu — osobna zmiana z prawdziwym modelem. | Komentarz „tuning promptu, poza zakresem tej rundy (mock w testach)"; `new`. |
 
 > Werdykt „triage" ≠ „anulowany". `cancelled` rezerwuję dla zgłoszeń **niepotwierdzonych / nieodtwarzalnych** podczas weryfikacji (np. bug, którego nie da się odtworzyć). Featury odłożone zostają `new` z komentarzem, żeby user widział je jako świadomie zaplanowany dług, nie odrzucone.
+
+## Pełne UUID ticketów (do operacji PATCH na prod)
+
+| prefix | pełny UUID | faza |
+|---|---|---|
+| f4dc0119 | f4dc0119-e225-4837-9f52-10eb04365941 | 1 |
+| ef87e4f8 | ef87e4f8-2365-490d-a875-25d5dc3ffd75 | 2 |
+| 2d65d300 | 2d65d300-265e-44b8-a608-b86939ee4496 | 3 |
+| 164608bf | 164608bf-1ca6-4fff-bfa9-b06e4955993c | 4 |
+| 80c4f735 | 80c4f735-5b5b-460f-947d-3c72bf12c242 | 5 |
+| 6fa2b64b | 6fa2b64b-84f3-4da9-ab68-b8192552c09a | 6 |
+| be20465a | be20465a-754c-4f54-baba-c20b2f61eeb6 | 7 |
+| 0a23baea | 0a23baea-98a7-41cb-80c7-24165cd44eff | 8 |
+| 62217cc8 | 62217cc8-d4e5-4331-a242-10984a4ac9de | 9 |
+| ac90c2a4 | ac90c2a4-31d3-4468-8048-77ff7998b926 | 9 |
+| 02790656 | 02790656-f350-47df-8f26-06db431add02 | 10 |
+| a3beda31 | a3beda31-df6e-41e1-a429-bcd5dacd1dbc | 11 (triage) |
+| 9fc5f4a8 | 9fc5f4a8-e2f8-4a21-b6a8-916d71679da1 | 11 (triage) |
+| 663d01fd | 663d01fd-dda3-4a48-9e10-5b90798e6053 | 11 (triage) |
+| a6a328ce | a6a328ce-486b-4cb0-9df1-5af568cbbb71 | 11 (triage) |
+| 1c0077b1 | 1c0077b1-a212-49d7-9957-1f3bc083b2fd | 11 (triage) |
+| 3eca2a93 | 3eca2a93-0d09-4169-8223-4632de60c199 | 11 (triage) |

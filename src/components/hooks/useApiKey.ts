@@ -5,6 +5,7 @@
 
 import { useState } from "react";
 
+import { dispatchKeyChanged } from "@/components/shell/sidebar-events";
 import type { ByokKeyStatus } from "@/types";
 
 const ENDPOINT = "/api/profile/byok-key";
@@ -47,6 +48,9 @@ export function useApiKey(initial: ByokKeyStatus): UseApiKey {
         return false;
       }
       setStatus({ configured: true, hint: data.hint ?? null, updatedAt: data.updatedAt ?? null });
+      // Powłoka (sidebar) liczy wskaźnik klucza serwerowo raz na render — bez tego zdarzenia zostaje
+      // nieaktualna do reloadu (ticket 80c4f735). Most wyspa→powłoka: `sidebar-events.ts`.
+      dispatchKeyChanged(true);
       return true;
     } catch {
       setError("Błąd połączenia. Spróbuj ponownie.");
@@ -67,6 +71,8 @@ export function useApiKey(initial: ByokKeyStatus): UseApiKey {
         return;
       }
       setStatus({ configured: false, hint: null, updatedAt: null });
+      // Jak wyżej (save) — zsynchronizuj wskaźnik w powłoce bez reloadu.
+      dispatchKeyChanged(false);
     } catch {
       setError("Błąd połączenia. Spróbuj ponownie.");
     } finally {

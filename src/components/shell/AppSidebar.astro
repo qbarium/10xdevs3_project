@@ -149,10 +149,31 @@ const label = "flex-1 truncate max-[920px]:hidden";
           {accountName}
         </div>
         <div class="text-sidebar-foreground/70 flex items-center gap-1.5 text-[11px]">
-          <span class:list={["size-1.5 shrink-0 rounded-full", keyConfigured ? "bg-note-line" : "bg-idea-line"]}></span>
-          {keyConfigured ? "klucz aktywny" : "brak klucza"}
+          <span
+            data-key-dot
+            class:list={["size-1.5 shrink-0 rounded-full", keyConfigured ? "bg-note-line" : "bg-idea-line"]}></span>
+          <span data-key-label>{keyConfigured ? "klucz aktywny" : "brak klucza"}</span>
         </div>
       </div>
     </div>
   </div>
 </aside>
+
+<script>
+  // Faza 5 (prod-feedback-fixes, ticket 80c4f735): wskaźnik klucza BYOK w stopce konta jest liczony
+  // SERWEROWO raz na render (`keyConfigured`, patrz frontmatter powyżej / `AppLayout.astro`) — bez tego
+  // nasłuchu zostaje nieaktualny po zapisie/usunięciu klucza w wyspie `/profile` (ApiKeyManager →
+  // useApiKey) aż do pełnego przeładowania strony. Inline script = progresywne wzbogacenie: sidebar
+  // zostaje statycznym Astro, bez wyspy React (decyzja plan-review F2). Astro bundluje inline `<script>`
+  // modułowo, więc import przez `@/` alias działa jak wszędzie indziej (wzorzec: `SessionBanner.astro`).
+  import { onKeyChanged } from "@/components/shell/sidebar-events";
+
+  const dot = document.querySelector("[data-key-dot]");
+  const label = document.querySelector("[data-key-label]");
+
+  onKeyChanged((configured) => {
+    dot?.classList.toggle("bg-note-line", configured);
+    dot?.classList.toggle("bg-idea-line", !configured);
+    if (label) label.textContent = configured ? "klucz aktywny" : "brak klucza";
+  });
+</script>

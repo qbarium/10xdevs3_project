@@ -375,9 +375,9 @@ Brak migracji bazy. Fix 10 dodaje endpoint + serwis, bez zmian schematu.
 
 ### Faza 5: Reaktywny wskaźnik statusu klucza w powłoce (ticket 80c4f735)
 #### Automatyczne
-- [ ] 5.1 E2E: usunięcie/dodanie klucza zmienia wskaźnik bez reloadu
+- [x] 5.1 E2E: usunięcie/dodanie klucza zmienia wskaźnik bez reloadu
 #### Ręczne
-- [ ] 5.2 Wskaźnik w powłoce zmienia się natychmiast
+- [x] 5.2 Wskaźnik w powłoce zmienia się natychmiast
 
 ### Faza 6: Reaktywny licznik „Do akceptacji" + weryfikacja odświeżania listy (ticket 6fa2b64b)
 #### Automatyczne

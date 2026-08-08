@@ -31,3 +31,10 @@
 - **Weryfikacja:** `npm test` 558/558; Playwright 8/8 (nowy + 2 zmodyfikowane); `tsc` + `eslint` czyste.
 - **Obserwacja (dług, nie blokuje):** czasownik „Zakończ" z `operational-transitions.ts` jest dziś nieosiągalny w UI — interaktywny tryb `OperationalStatusBadge` (menu z czasownikami) nie ma konsumenta (`ItemCard` renderuje read-only; edycję przejął `EditItemDialog` z rzeczownikowym `Select`). Zmiana ujednolica string defensywnie; stan pre-istniejący, nie wprowadzony tą fazą. Widoczna terminologia (badge/filtr/pomoc) jest spójna.
 - **Werdykt:** ZAAKCEPTOWANO, 0 poprawek.
+
+## Faza 5: Reaktywny wskaźnik klucza (80c4f735) — 2026-08-08
+- **Zgodność z planem:** ✅ nowy `sidebar-events.ts` (`BYOK_KEY_CHANGED_EVENT`, `dispatchKeyChanged`/`onKeyChanged`, wzór `item-topbar-events`, rozszerzalny o pending dla F6); `useApiKey` emituje po save/remove; `AppSidebar` inline `<script>` (progresywne wzbogacenie — decyzja plan-review) + selektory `data-key-dot`/`data-key-label`. Import w Astro inline script potwierdzony precedensem `SessionBanner.astro`.
+- **Test:** `prod-fixes-phase5-key-indicator.spec.ts` — red→green (wyłączenie emisji → RED: sidebar „klucz aktywny" zamiast „brak klucza", karta już przełączona — dokładnie ticket; przywrócenie → GREEN).
+- **Izolacja:** podwójna — `finally` przywraca klucz + `afterEach` re-save przez API; `seed.spec` przeszedł po teście (konto kończy z kluczem). Obsłużony wyścig hydratacji (`toPass` retry).
+- **Weryfikacja:** `npm test` 558/558, `tsc` czysto, lint (po `lint:fix`).
+- **Werdykt:** ZAAKCEPTOWANO, 0 poprawek.
