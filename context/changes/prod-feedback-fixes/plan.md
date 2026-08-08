@@ -394,9 +394,9 @@ Brak migracji bazy. Fix 10 dodaje endpoint + serwis, bez zmian schematu.
 
 ### Faza 8: Wysokość i skala powłoki na tablecie (ticket 0a23baea)
 #### Automatyczne
-- [ ] 8.1 E2E (tablet portret+pejzaż): opcje profilu osiągalne; brak nadmiarowego scrolla; desktop bez regresji
+- [x] 8.1 E2E (tablet portret+pejzaż): opcje osiągalne; brak nadmiarowego scrolla; desktop bez regresji (initial-scale red→green + 12 kombinacji + invariant S-15; dvh strukturalnie)
 #### Ręczne
-- [ ] 8.2 Wszystkie opcje profilu dostępne na tablecie
+- [x] 8.2 Opcje profilu osiągalne w scrollu (E2E); pełna korzyść dvh na realnym tablecie — weryfikacja użytkownika (limit headless)
 
 ### Faza 9: Okno edycji — blokada tła i koniec pętli „wróć do edycji" (tickety 62217cc8 + ac90c2a4)
 #### Automatyczne

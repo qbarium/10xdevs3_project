@@ -6,7 +6,9 @@ import { parseTheme, THEME_COOKIE } from "@/lib/theme";
 
 interface Props {
   title?: string;
-  /** Strony z powłoką pełnoekranową (AppLayout): opakuj baner + treść we wspólną kolumnę `h-screen` z
+  /** Strony z powłoką pełnoekranową (AppLayout): opakuj baner + treść we wspólną kolumnę o wysokości
+      `100dvh` (jednostka dynamiczna, nie `h-screen`/100vh — na tablecie/mobile uwzględnia pasek adresu i
+      nie zostaje z martwą przestrzenią/przycięciem po zmianie orientacji, F8/ticket 0a23baea) z
       wewnętrznym scrollem, by treść brała wysokość PO ewentualnym banerze (F1). Landing/auth: false →
       naturalny flow (wrapper znika przez `display:contents`). */
   fullHeight?: boolean;
@@ -28,12 +30,12 @@ const forceConfigBanner = import.meta.env.DEV && Astro.cookies.get("e2e_config_b
 <html lang="en" class:list={{ dark: theme === "dark" }} style={`color-scheme: ${theme}`}>
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <title>{title}</title>
   </head>
   <body>
-    <div class:list={fullHeight ? "flex h-screen flex-col overflow-hidden" : "contents"}>
+    <div class:list={fullHeight ? "flex h-[100dvh] flex-col overflow-hidden" : "contents"}>
       {
         missingConfigs.map((cfg) => (
           <Banner variant="error">

@@ -53,3 +53,12 @@
 - **Ograniczenie:** wizualna widoczność/rezerwacja paska na realnym tablecie (Android Chrome/iPadOS Safari; iOS `scrollbar-width` od 18.2) — poza zasięgiem headless, do ręcznej weryfikacji użytkownika.
 - **Weryfikacja:** spec 2/2, `npm test` 558/558, `tsc`/`eslint`/`prettier` czyste.
 - **Werdykt:** ZAAKCEPTOWANO — fix dostarczony i zweryfikowany strukturalnie; pełne potwierdzenie wizualne w gestii ręcznej weryfikacji na tablecie.
+
+## Faza 8: Wysokość i skala powłoki na tablecie (0a23baea) — 2026-08-08
+- **Zgodność z planem:** ✅ `Layout.astro` — meta viewport `initial-scale=1`; `h-screen` → `h-[100dvh]` (arbitrary value, bo `h-dvh` keyword niepewny w Tailwind 4.2.4); komentarz zaktualizowany. Pominięto `viewport-fit=cover` (brak obsługi safe-area — słusznie, nie dodawać bez kompensacji).
+- **Reprodukcja (uczciwa):** initial-scale red→green MIERZALNY; klasa dvh red→green strukturalny; `height==innerHeight` NIE red→green (headless 100vh==100dvh — no-regression only); objaw „opcje pod krawędzią" NIE odtwarza się headless (wymaga realnego paska adresu) — udokumentowane.
+- **Regresja (kluczowa, globalny promień rażenia):** 4 strony × 3 viewporty = 12 kombinacji zielone (przed i po); dodatkowo invariant S-15 `config-banner-shell-layout.spec` (powłoka nie używa sztywnego 100vh) + phase7 — 3/3. dvh nie złamał S-15.
+- **Dbałość:** `document.body.scrollHeight` (nie `scrollingElement` — `astro-dev-toolbar` zawyża w dev), wzór z `config-banner-shell-layout`.
+- **Weryfikacja:** spec 16 testów green, `npm test` 558/558, lint czysto.
+- **Ograniczenie:** realna korzyść dvh (recalc przy pasku adresu/rotacji) + zniknięcie „dead space" na fizycznym tablecie — do ręcznej weryfikacji użytkownika.
+- **Werdykt:** ZAAKCEPTOWANO — fix zasadny, regresja wykluczona; pełne potwierdzenie tabletowe w ręcznej weryfikacji.
