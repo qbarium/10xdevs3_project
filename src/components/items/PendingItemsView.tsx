@@ -227,7 +227,9 @@ export default function PendingItemsView({ initialItems, initialCriteria, initia
           <div className="border-border bg-muted flex flex-wrap items-center gap-3 rounded-[5px] border px-4 py-3">
             <label className="text-foreground flex items-center gap-2 text-sm">
               <Checkbox
-                checked={allSelected ? true : selectedCount > 0 ? "indeterminate" : false}
+                // Dwustanowo (ticket ef87e4f8): zaznaczony tylko przy komplecie; przy części zaznaczonych
+                // pozostaje odznaczony, a klik `toggleAll` zaznacza wszystkie. Bez stanu pośredniego.
+                checked={allSelected}
                 onCheckedChange={toggleAll}
                 aria-label="Zaznacz wszystkie"
                 className={ITEM_CHECKBOX_CLASS}
