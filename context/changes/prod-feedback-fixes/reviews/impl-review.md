@@ -84,3 +84,11 @@
 - **Wykonanie:** 6 ticketów-featurów potwierdzonych jako zasadne, opisanych na prod komentarzem z werdyktem; status pozostaje `new` (świadomy dług, nie `cancelled`).
 - **Werdykty:** audio (a3beda31) → V2/OQ2; edycja AI (9fc5f4a8), split/merge (663d01fd), redesign interakcji (a6a328ce) → osobne większe wycinki; pull-to-refresh (1c0077b1) → gest natywny, weryfikacja na realnym urządzeniu; tuning promptu (3eca2a93) → osobna zmiana z realnym modelem (mock w testach).
 - **Werdykt:** ZAAKCEPTOWANO — zakres świadomie ograniczony, dług udokumentowany na prod i w backlogu.
+
+## Faza 12: Przycisk „Dodaj wpis" zawsze dostępny (3b885540, [Nowe]) — 2026-08-09
+- **Przyczyna:** przycisk (wyspa `TopbarItemAction`) montowany tylko w `active.astro`; `done.astro`/`cancelled.astro` nie montowały go + `canAdd={false}` (stara, celowa decyzja S-07 „tylko Aktywne").
+- **Fix:** dodany `TopbarItemAction` + `canAdd` w `done.astro` i `cancelled.astro` (lustrzanie `active.astro`).
+- **Bonus (rzetelny):** `handleCreated` w `AcceptedItemsView` wstawiał nowy wpis (status „new") bezwarunkowo → na Zakończone/Anulowane zanieczyszczał listę błędną kartą. Dodany strażnik `matchesView` (wzór `handleSaved`). Udowodnione testem (bez strażnika: 1 zamiast 0).
+- **Test:** `prod-fixes-phase12-add-button.spec.ts` — red→green; test 2 dowiódł buga `handleCreated` (fail pośredni).
+- **Weryfikacja:** `npm test` 562/562; pełny E2E 37/37 (bez regresji); eslint czysto. Realizacja: agent (ostatnia delegowana — od 2026-08-09 poprawki robione bez agenta, na polecenie operatora).
+- **Werdykt:** ZAAKCEPTOWANO, 0 poprawek.

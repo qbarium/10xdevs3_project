@@ -416,3 +416,10 @@ Brak migracji bazy. Fix 10 dodaje endpoint + serwis, bez zmian schematu.
 ### Faza 11: Triage 6 featurów (bez kodu)
 #### Ręczne
 - [x] 11.1 6 ticketów na prod z komentarzem i poprawnym statusem (status `new` = świadomy dług)
+
+### Faza 12: Przycisk „Dodaj wpis" zawsze dostępny (ticket 3b885540, [Nowe] 2026-08-09)
+#### Automatyczne
+- [x] 12.1 E2E: przycisk „Dodaj wpis" obecny/klikalny przy filtrze Zakończone i Anulowane (red→green)
+- [x] 12.2 `npm test` 562 + pełny E2E 37; lint/tsc czyste
+#### Ręczne
+- [x] 12.3 Dodawanie z widoku Zakończone/Anulowane nie zanieczyszcza listy (nowy wpis trafia do Aktywne)

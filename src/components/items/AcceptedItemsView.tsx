@@ -272,7 +272,13 @@ export default function AcceptedItemsView({
     const targetFilter = nextFilterAfterCreate(criteria.type, item.type);
     if (targetFilter !== criteria.type) {
       handleFilterChange(targetFilter);
-    } else {
+    } else if (matchesView(item.operational_status, view)) {
+      // Serwer nadaje KAŻDEMU nowemu itemowi stan „new" (AddItemDialog — bez selektora stanu). Na
+      // Zakończone/Anulowane (Faza 12, ticket 3b885540: „Dodaj wpis” dostępny na każdym filtrze stanu)
+      // świeży item NIGDY nie pasuje do predykatu widoku — wstawienie optimistic pokazałoby błędnie
+      // oznaczony wpis (badge „Nowe” w „Zakończone") aż do najbliższej zmiany kryteriów. Item i tak
+      // powstał (dialog potwierdza sukces) — po prostu nie zaśmiecamy nim niepasującej listy, tak jak
+      // `handleSaved` już usuwa (zamiast dodawać) itemy niepasujące po edycji.
       applyOptimistic((prev) => [item, ...prev]);
     }
     setAddOpen(false);
