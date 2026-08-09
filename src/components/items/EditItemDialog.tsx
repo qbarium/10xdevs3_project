@@ -205,31 +205,15 @@ export default function EditItemDialog({ item, open, onOpenChange, onSaved, onNo
 
   return (
     <>
-      {/* `open={open && !confirmDiscard}` — edytor i potwierdzenie odrzucenia NIGDY nie są otwarte naraz.
-          Gdy `requestClose()` przy brudnym formularzu podnosi `confirmDiscard`, edytor się zamyka (prop, nie
-          `onOpenChange` — bez rekurencji), a jedynym aktywnym modalem zostaje potwierdzenie. To rozrywa pętlę
-          z produkcji (dwa modale Radix naraz → tap „Wróć do edycji" był „poza" wciąż otwartym edytorem →
-          re-fire zamknięcia → confirm wracał): przy zamkniętym edytorze jego warstwa outside-detekcji jest
-          nieaktywna, więc tap w potwierdzeniu nie jest już „poza edytorem". „Wróć do edycji" (`confirmDiscard`
-          → false) przywraca edytor RAZ; „Odrzuć" zamyka całość przez `onOpenChange(false)`. */}
       <Dialog
-        open={open && !confirmDiscard}
+        open={open}
         onOpenChange={(next) => {
           if (!next) requestClose();
         }}
       >
         {/* Szerokość `auto` (zamiast twardego max-w-lg) → okno rośnie też w POZIOMIE wraz z polem,
             symetrycznie do pionu; limit 95vw + scroll jako zabezpieczenie. */}
-        {/* `onInteractOutside` z `preventDefault` → prawdziwy blokujący backdrop: tap/klik poza oknem NIE
-            zamyka edytora i NIE wyzwala potwierdzenia (koniec przypadkowych zamknięć na dotyku). Zamknięcie
-            pozostaje świadome: Esc, „Anuluj", przycisk X (→ `requestClose`) albo „Odrzuć". `dialog.tsx`
-            forwarduje `...props` do Radix `Content`, więc bez zmian w prymitywie. */}
-        <DialogContent
-          className={contentClass}
-          onInteractOutside={(event) => {
-            event.preventDefault();
-          }}
-        >
+        <DialogContent className={contentClass}>
           {/* Przełącznik rozmiaru — obok przycisku zamknięcia (X). Maximize → wypełnij obszar listy. */}
           <button
             type="button"
@@ -351,18 +335,7 @@ export default function EditItemDialog({ item, open, onOpenChange, onSaved, onNo
           if (!next) setConfirmDiscard(false);
         }}
       >
-        {/* `onInteractOutside` z `preventDefault` również tutaj: gdy potwierdzenie wchodzi, zamykający się
-            edytor przywraca fokus (focus-restoration na unmount), co Radix potwierdzenia widziałby jako
-            focus-outside → samoistne odrzucenie potwierdzenia (`onOpenChange(false)` → `setConfirmDiscard(false)`)
-            i „mignięcie" okna. To była druga twarz walki dwóch modali o focus-scope z diagnozy. Potwierdzenie
-            rozstrzygamy WYŁĄCZNIE jego przyciskami (Wróć/Odrzuć) lub Esc — nie tapem/fokusem z zewnątrz. */}
-        <DialogContent
-          showCloseButton={false}
-          className="sm:max-w-sm"
-          onInteractOutside={(event) => {
-            event.preventDefault();
-          }}
-        >
+        <DialogContent showCloseButton={false} className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Niezapisane zmiany</DialogTitle>
             <DialogDescription>Masz niezapisane zmiany. Odrzucić je i zamknąć edycję?</DialogDescription>
