@@ -3,7 +3,7 @@ project: TaskerLight
 version: 1
 status: draft
 created: 2026-06-05
-updated: 2026-08-06
+updated: 2026-08-09
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -48,7 +48,7 @@ TaskerLight przyjmuje surowy, nieuporządkowany wsad głosowo-tekstowy i rozdzie
 | S-15  | ui-redesign              | (redesign) nowa szata „techniczna" (jasny+ciemny) + trwała powłoka (sidebar+topbar); wszystkie widoki | — | — (prezentacyjne; reguluje `ui-design-system.md`) | done |
 | S-16  | trash-sidebar-relocation | (reorg. IA) otworzyć „Kosz" jako osobne miejsce w panelu bocznym (nie zakładkę pod „Wpisami"); oś „Wpisów" tylko cykl życia (pochodzenie na badge, bez filtra) | S-06, S-15 | — (prezentacyjne; US-05/FR-013/FR-016 bez zmian zachowania) | done |
 | S-17  | help-page                | (pomoc) dodać w aplikacji stronę „Pomoc" opisującą działanie programu (orientacja „Jak zacząć" + sekcje per funkcja z kotwicami) + instrukcja „skąd wziąć klucz" na `/profile` | S-15 | — (pomoc użytkownika; poza pierwotnym MVP) | done |
-| S-18  | prod-feedback-fixes      | (poprawki) naprawa 17 uwag testerów „Inne" z produkcji — 11 bugów/UX pełnym flow (Playwright), 6 featurów triage | S-15, S-17 | — (jakość/utrzymanie; backlog uwag z produkcji) | in-review |
+| S-18  | prod-feedback-fixes      | (poprawki) naprawa 17 uwag testerów „Inne" z produkcji — 11 bugów/UX pełnym flow (Playwright), 6 featurów triage | S-15, S-17 | — (jakość/utrzymanie; backlog uwag z produkcji) | done |
 
 ## Strumienie
 
@@ -318,7 +318,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 - **Niewiadome:** odtwarzalność części objawów tabletowych headless (Playwright) — rozstrzyga weryfikacja per ticket; niepotwierdzone → `cancelled` na prod.
 - **Decyzje (2026-08-08):** (1) jeden slice dla wszystkich poprawek; (2) bugi przed featurami; (3) kod wyłącznie lokalnie na gałęzi `feature/prod-feedback-fixes` — **bez merge**; (4) status + komentarze ticketów zapisywane na produkcji (Supabase), bo tam są obserwowane; (5) 6 featurów odłożonych zostaje `new` z komentarzem (nie `cancelled`).
 - **Nośnik pracy:** gałąź `feature/prod-feedback-fixes` (bez PR w tej rundzie). Plan: `context/changes/prod-feedback-fixes/plan.md` (11 faz).
-- **Status:** in-review (10 faz napraw + triage zaimplementowane i zweryfikowane E2E; build/lint/testy zielone; czeka na ręczną weryfikację użytkownika na lokalnym Taskerze; BEZ merge)
+- **Status:** done
 
 ## Przekazanie backlogu
 
@@ -365,6 +365,7 @@ Poniższe fundamenty zakładają, że to jest obecne i NIE odbudowują tego.
 
 ## Done
 
+- **S-18: 11 realnych bugów/uwag UX z produkcji naprawionych pełnym flow (Playwright + testy jednostkowe) — marka→link, checkboxy w dark, ikona „Do akceptacji", terminologia „Zakończone", reaktywny wskaźnik klucza i licznik „Do akceptacji", scrollbar i wysokość powłoki na tablecie, usuwanie pojedynczego wpisu z kosza, „Dodaj wpis" przy każdym filtrze; Faza 9 (okno edycji) wycofana, pętla „Wróć do edycji" naprawiona osobno; 6 featurów w triage. Brama przeglądu S-18 zielona (testy 562, build, lint, E2E).** — Zarchiwizowano 2026-08-09 → `context/archive/2026-08-08-prod-feedback-fixes/`. Lekcja: —.
 - **S-17: użytkownik ma w aplikacji jedno, odkrywalne z powłoki miejsce „Pomoc" (`/help`, pozycja w sidebarze) wyjaśniające jak działa TaskerLight — orientacja „Jak zacząć" + sekcje per funkcja z kotwicami (Odrzuć vs Do kosza, cykl życia, statusy sesji, klucz BYOK); plus instrukcja „skąd wziąć klucz" na `/profile`.** — Zarchiwizowano 2026-08-07 → `context/archive/2026-08-07-help-page/`. Lekcja: —.
 - **S-01: użytkownik może zapisać własny klucz API zewnętrznego dostawcy AI w profilu, podejrzeć go w postaci zamaskowanej (prefiks + ostatnie znaki) i usunąć; akcje wymagające klucza (submit) są zablokowane z komunikatem i linkiem do strony dostawcy, dopóki klucz nie jest skonfigurowany.** — Zarchiwizowano 2026-06-12 → `context/archive/2026-06-08-byok-key-config/`. Lekcja: —.
 - **S-02: użytkownik może wkleić tekst (do 100 000 znaków) lub wrzucić jeden plik `.txt`/`.md` (do 300 KB), kliknąć submit, zobaczyć blokujący wskaźnik aktywności podczas synchronicznej klasyfikacji, a po jej zakończeniu — typowane itemy jako pendingi w widoku „Elementy do akceptacji".** — Zarchiwizowano 2026-06-12 → `context/archive/2026-06-10-first-gated-generation/`. Lekcja: konfiguracja LLM fail-closed + modeluj schemat wg kardynalności (lessons.md); FR-015 złagodzony do best-effort (set null).
