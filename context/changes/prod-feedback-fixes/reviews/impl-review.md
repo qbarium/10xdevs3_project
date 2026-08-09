@@ -70,6 +70,7 @@
 - **Zachowane:** konsumenci (Accepted/Pending/SessionEntries — bramka nie wycieka, rodzic widzi `open=true`), tryb Podglądu read-only nietknięty.
 - **Weryfikacja:** `npm test` 558/558, eslint czysto. Model: opus (subtelna interakcja Radix).
 - **Werdykt:** ZAAKCEPTOWANO, 0 poprawek — wyróżnienie za wykrycie focus-restoration confirm.
+- **⚠️ WYCOFANE 2026-08-09 (revert `9171630`):** operator odrzucił realizację — blokada tła nietrafiona (`[Wycofać]`), pętla „do odrzucenia". Cały commit F9 (`6ebdc65`) wycofany; `EditItemDialog.tsx` wrócił do stanu sprzed F9, spec9 usunięty; tickety 62217cc8 + ac90c2a4 anulowane na prod. **Wniosek:** mój przegląd F9 potwierdził zgodność z PLANEM i techniczne działanie (RED→GREEN), ale nie wychwycił, że rozwiązanie nie odpowiada realnym oczekiwaniom operatora — dowód wartości jego ręcznej weryfikacji i granicy przeglądu opartego wyłącznie na planie.
 
 ## Faza 10: Trwałe usunięcie pojedynczego wpisu z kosza (02790656) — 2026-08-08
 - **Zgodność z planem:** ✅ pełny łańcuch 6 plików — serwis `deleteFromTrash` (guarded `.in(["rejected","deleted"])`, `deletedCount`), endpoint `DELETE /api/items/[id]` (401 guard, walidacja UUID, 404 spoza kosza), hook, `item-card` („delete" + `ACTIONS_BY_STATUS`), `ItemCard` (`onDelete`+`canDelete`+GhostAction destructive), `TrashItemsView` (dialog potwierdzenia + optymistyczne usunięcie jak restore).

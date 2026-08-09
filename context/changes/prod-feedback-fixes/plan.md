@@ -399,10 +399,11 @@ Brak migracji bazy. Fix 10 dodaje endpoint + serwis, bez zmian schematu.
 - [x] 8.2 Opcje profilu osiągalne w scrollu (E2E); pełna korzyść dvh na realnym tablecie — weryfikacja użytkownika (limit headless)
 
 ### Faza 9: Okno edycji — blokada tła i koniec pętli „wróć do edycji" (tickety 62217cc8 + ac90c2a4)
+> ⚠️ WYCOFANE 2026-08-09 (revert `9171630`): operator odrzucił realizację — blokada nietrafiona (`[Wycofać]`), sposób realizacji pętli do odrzucenia. Cały commit F9 (`6ebdc65`) wycofany; `EditItemDialog.tsx` wrócił do stanu sprzed F9, spec9 usunięty. Tickety 62217cc8 + ac90c2a4 → anulowane na prod. Ewentualne wznowienie = nowy wpis/faza.
 #### Automatyczne
-- [x] 9.1 E2E (dotyk): tło nieklikalne; dialog raz; „wróć do edycji" bez pętli; „odrzuć" zamyka (RED deterministyczny, 3× repeat)
+- [ ] 9.1 E2E (dotyk): tło nieklikalne; dialog raz; „wróć do edycji" bez pętli; „odrzuć" zamyka — WYCOFANE
 #### Ręczne
-- [x] 9.2 Brak przypadkowego zamykania; „wróć do edycji" bez zapętlenia (deterministyczne E2E)
+- [ ] 9.2 Brak przypadkowego zamykania; „wróć do edycji" bez zapętlenia — WYCOFANE
 
 ### Faza 10: Trwałe usunięcie pojedynczego wpisu z kosza (ticket 02790656)
 #### Automatyczne
