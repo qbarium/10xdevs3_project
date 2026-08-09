@@ -8,7 +8,7 @@ type IconName =
   | "layers"
   | "tray"
   | "inbox"
-  | "clipboard-check"
+  | "circle-check"
   | "history"
   | "book"
   | "settings"
@@ -64,11 +64,10 @@ const { icon, size = 18, strokeWidth = 1.7, class: className } = Astro.props;
     )
   }
   {
-    icon === "clipboard-check" && (
+    icon === "circle-check" && (
       <Fragment>
-        <path d="M9 3h6v3H9Z" />
-        <path d="M7 6h10v15H7Z" />
-        <path d="m9.5 13.5 2 2 4-4.5" />
+        <circle cx="12" cy="12" r="10" />
+        <path d="m9 12 2 2 4-4" />
       </Fragment>
     )
   }
