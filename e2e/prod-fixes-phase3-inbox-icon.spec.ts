@@ -16,12 +16,12 @@ import { expect, test } from "@playwright/test";
 //   nakładający się obszar już przy przesunięciu współrzędnych o 1 jednostkę viewBox. Odnotowane zgodnie z
 //   poleceniem: „przed" NIE jest małe w sensie bezwzględnym — próg niżej dobrany jest więc względem tej
 //   realnej wartości, nie względem intuicyjnego zera.
-// - PO poprawce (tray vs nowy `clipboard-check`): diffFraction ≈ 0.383 (zmierzone niezależnie kilkoma
-//   kandydatami: `circle-check` dawał ~0.32-0.33, `list-checks` ~0.26 — czyli PRAWIE bez separacji od
-//   „przed", mimo pozornie odmiennego kształtu; `clipboard-check` dał największą, najbardziej odporną lukę,
-//   stąd wybór).
-// - Próg asercji: 0.32 — niemal dokładnie w połowie między 0.259 a 0.383 (punkt środkowy ≈ 0.321), z
-//   podobnym zapasem (~0.06) po obu stronach zmierzonych wartości.
+// - PO poprawce (tray vs faktycznie wdrożony `circle-check`): diffFraction ≈ 0.32-0.33 (zmierzone niezależnie
+//   kilkoma kandydatami: `clipboard-check` dawał ~0.383 — największa luka, `list-checks` ~0.26 — prawie bez
+//   separacji od „przed"). Operator wybrał `circle-check` ze względów semantycznych (kółko z ptaszkiem =
+//   akceptacja) mimo mniejszej separacji niż `clipboard-check`, dlatego próg zszedł niżej niż przy tamtym wariancie.
+// - Próg asercji: 0.29 — między myląca-parą „przed" (0.259) a wdrożonym „po" (~0.32), z zapasem ~0.03 po obu
+//   stronach. Chroni przed regresją „ikony zbyt podobne" (spadek poniżej 0.29), przechodzi dla `circle-check`.
 test.describe('Faza 3: własna ikona "Do akceptacji" (ticket 2d65d300)', () => {
   test('ikony "Skrzynka wejściowa" i "Do akceptacji" są wizualnie wyraźnie różne', async ({ page }) => {
     // Dowolna strona powłoki — sidebar jest wszędzie, dane nie są potrzebne.
@@ -97,8 +97,8 @@ test.describe('Faza 3: własna ikona "Do akceptacji" (ticket 2d65d300)', () => {
     // eslint-disable-next-line no-console -- pomiar diagnostyczny (wartość udokumentowana też w komentarzu kalibracyjnym powyżej).
     console.log("[phase3-inbox-icon] diffFraction=%o meanDistance=%o", diffFraction, meanDistance);
 
-    // Próg kalibrowany empirycznie — patrz komentarz na górze pliku (PRZED ≈ 0.259, PO ≈ 0.383, próg 0.32
-    // to punkt środkowy z zapasem ~0.06 po obu stronach zmierzonych wartości).
-    expect(diffFraction).toBeGreaterThanOrEqual(0.32);
+    // Próg kalibrowany empirycznie — patrz komentarz na górze pliku (PRZED ≈ 0.259, wdrożony circle-check ≈ 0.32,
+    // próg 0.29 z zapasem ~0.03 po obu stronach).
+    expect(diffFraction).toBeGreaterThanOrEqual(0.29);
   });
 });

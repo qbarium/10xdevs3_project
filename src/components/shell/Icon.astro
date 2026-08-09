@@ -7,7 +7,6 @@
 type IconName =
   | "layers"
   | "tray"
-  | "inbox"
   | "circle-check"
   | "history"
   | "book"
@@ -52,14 +51,6 @@ const { icon, size = 18, strokeWidth = 1.7, class: className } = Astro.props;
       <Fragment>
         <path d="M3 13h4l2 3h6l2-3h4" />
         <path d="M5 6h14l2 7v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-5L5 6Z" />
-      </Fragment>
-    )
-  }
-  {
-    icon === "inbox" && (
-      <Fragment>
-        <path d="M4 13h4l1.5 2.5h5L16 13h4" />
-        <path d="M5 5h14l1 8v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-5L5 5Z" />
       </Fragment>
     )
   }

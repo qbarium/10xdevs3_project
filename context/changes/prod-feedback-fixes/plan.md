@@ -423,3 +423,13 @@ Brak migracji bazy. Fix 10 dodaje endpoint + serwis, bez zmian schematu.
 - [x] 12.2 `npm test` 562 + pełny E2E 37; lint/tsc czyste
 #### Ręczne
 - [x] 12.3 Dodawanie z widoku Zakończone/Anulowane nie zanieczyszcza listy (nowy wpis trafia do Aktywne)
+
+### Poprawki po fazach (2026-08-09, przy bramie S-18)
+
+> Drobne poprawki zgłoszone bezpośrednio (czat / ręczna weryfikacja) już po zamknięciu faz 1–12. Odnotowane tu dla wierności śledzonego rekordu; pełne szczegóły w dzienniku operatora `docs/local/prod-feedback-fixes.md`. Przegląd bramy: `reviews/impl-review-s18-gate.md`.
+
+- [x] P1 Ikona „Do akceptacji": `clipboard-check` → `circle-check` (czytelniejsza semantyka akceptacji) — `9f39d66` (poprawka do Fazy 3, ticket 2d65d300). Próg testu Fazy 3 skorygowany 0.32 → 0.29.
+- [x] P2 Okno edycji — koniec pętli „Wróć do edycji" NOWYM podejściem (`suppressOutsideClose`; BEZ odrzuconej blokady tła z wycofanej Fazy 9) — `0fabd8f` (ticket ac90c2a4). Zamiennik wycofanej Fazy 9, zgodnie z regułą „wznowienie = nowy wpis".
+- [x] P3 Jeden przycisk czyszczenia w polu filtra (ukryty natywny `::-webkit-search-cancel-button`) — `4ba3505` (zgłoszenie z czatu, bez ticketu prod).
+- [x] P4 Dwustanowy „Zaznacz wszystkie" bez stanu pośredniego — świadoma zmiana UX mastera w 3 widokach list (osobno od czysto stylowej Fazy 2) — `2d31556` (pod ticketem ef87e4f8).
+- [x] P5 Widoczny „ptaszek" checkboxa w trybie ciemnym (zawężenie do stanu niezaznaczonego; nie psuje Fazy 2) — `ea20f29` (ticket ef87e4f8).

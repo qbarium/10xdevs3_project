@@ -13,11 +13,11 @@ import { expect, test, type Page } from "@playwright/test";
 // komponent) i alfę (po „/"). Sedno asercji: tło zaznaczonego ma alfę = 1 (pełny `primary`), nie 0.1.
 
 function parseOk(s: string): { L: number; alpha: number } | null {
-  const m = s.match(/okl(?:ab|ch)\(([^)]+)\)/);
+  const m = /okl(?:ab|ch)\(([^)]+)\)/.exec(s);
   if (!m) return null;
   const [main, alphaPart] = m[1].split("/");
   const L = parseFloat(main.trim().split(/\s+/)[0]);
-  const alpha = alphaPart !== undefined ? parseFloat(alphaPart) : 1;
+  const alpha = alphaPart ? parseFloat(alphaPart) : 1;
   return { L, alpha };
 }
 
@@ -55,7 +55,9 @@ test("checkboxy w ciemnym: niezaznaczony widoczny, zaznaczony z jasnym tłem i k
   const card = page.locator("article[data-item-id]", { hasText: title });
 
   // Tryb ciemny: klasa `.dark` na <html> (to samo źródło co ThemeToggle) — kolory to czysty CSS.
-  await page.evaluate(() => document.documentElement.classList.add("dark"));
+  await page.evaluate(() => {
+    document.documentElement.classList.add("dark");
+  });
 
   const boxUnchecked = card.locator('[data-slot="checkbox"]');
   await expect(boxUnchecked).toBeVisible();
@@ -64,13 +66,14 @@ test("checkboxy w ciemnym: niezaznaczony widoczny, zaznaczony z jasnym tłem i k
     border: getComputedStyle(el).borderColor,
     bg: getComputedStyle(el).backgroundColor,
   }));
+  // eslint-disable-next-line no-console -- pomiar diagnostyczny (jak w sąsiednich testach fazy)
   console.log("NIEZAZNACZONY:", JSON.stringify(unchecked));
 
   // Niezaznaczony: jasna, wyraźna ramka na ciemnej karcie (widoczny pusty checkbox).
   const ub = parseOk(unchecked.border);
-  expect(ub, `ramka niezaznaczonego (${unchecked.border}) w oklch/oklab`).not.toBeNull();
-  expect(ub!.L, "ramka niezaznaczonego ma być jasna").toBeGreaterThan(0.8);
-  expect(ub!.alpha, "ramka niezaznaczonego wystarczająco krycia").toBeGreaterThan(0.3);
+  if (!ub) throw new Error(`ramka niezaznaczonego (${unchecked.border}) nie w oklch/oklab`);
+  expect(ub.L, "ramka niezaznaczonego ma być jasna").toBeGreaterThan(0.8);
+  expect(ub.alpha, "ramka niezaznaczonego wystarczająco krycia").toBeGreaterThan(0.3);
 
   // Zaznacz.
   const cb = card.getByRole("checkbox", { name: `Zaznacz: ${title}` });
@@ -85,18 +88,19 @@ test("checkboxy w ciemnym: niezaznaczony widoczny, zaznaczony z jasnym tłem i k
       check: svg ? getComputedStyle(svg).color : "(brak svg)",
     };
   });
+  // eslint-disable-next-line no-console -- pomiar diagnostyczny (jak w sąsiednich testach fazy)
   console.log("ZAZNACZONY:", JSON.stringify(checked));
 
   const cbg = parseOk(checked.bg);
   const cck = parseOk(checked.check);
-  expect(cbg, `tło zaznaczonego (${checked.bg}) w oklch/oklab`).not.toBeNull();
-  expect(cck, `ptaszek (${checked.check}) w oklch/oklab`).not.toBeNull();
+  if (!cbg) throw new Error(`tło zaznaczonego (${checked.bg}) nie w oklch/oklab`);
+  if (!cck) throw new Error(`ptaszek (${checked.check}) nie w oklch/oklab`);
 
   // Sedno regresji: tło zaznaczonego jest PEŁNE (primary), nie białe 10% (alfa 0.1).
-  expect(cbg!.alpha, "tło zaznaczonego ma być pełne (primary), nie białe 10%").toBe(1);
-  expect(cbg!.L, "tło zaznaczonego jasne (primary w trybie ciemnym)").toBeGreaterThan(0.8);
+  expect(cbg.alpha, "tło zaznaczonego ma być pełne (primary), nie białe 10%").toBe(1);
+  expect(cbg.L, "tło zaznaczonego jasne (primary w trybie ciemnym)").toBeGreaterThan(0.8);
   // Ciemny ptaszek na jasnym tle → duży rozjazd jasności = wyraźnie widoczny.
-  expect(Math.abs(cbg!.L - cck!.L), "kontrast jasności ptaszek↔tło").toBeGreaterThan(0.5);
+  expect(Math.abs(cbg.L - cck.L), "kontrast jasności ptaszek↔tło").toBeGreaterThan(0.5);
 
   await card.screenshot({ path: "test-results/checkbox-dark-after.png" });
 });

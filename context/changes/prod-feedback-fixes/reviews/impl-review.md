@@ -24,6 +24,7 @@
 - **Rzetelność:** agent porównał 4 kandydatów ikon (clipboard-check najlepsza separacja 0.383); wykrył, że „list-checks" wygląda różnie, a scoring ma bliski baseline — pixel-diff się obronił.
 - **Uwaga:** próg 0.32 skalibrowany między realnym „przed" a „po" (nie intuicyjny); test lekko wrażliwy na render, ale podwójnie zweryfikowany. Stary wariant `inbox` pozostał zdefiniowany, nieużywany (nieszkodliwe, poza zakresem).
 - **Werdykt:** ZAAKCEPTOWANO, 0 poprawek.
+- **↻ AKTUALIZACJA 2026-08-09 (`9f39d66`):** ikona „Do akceptacji" zmieniona `clipboard-check` → `circle-check` (czytelniejsza semantyka akceptacji). Próg testu Fazy 3 skorygowany 0.32 → 0.29 (circle-check ma mniejszą separację od `tray` niż clipboard-check). Szczegóły: `reviews/impl-review-s18-gate.md` F1.
 
 ## Faza 4: Ujednolicenie terminologii „Zakończone" (164608bf) — 2026-08-08
 - **Zgodność z planem:** ✅ done→„Zakończone" (`labels.ts:18` + per-typ `:26-29` wszystkie „Zakończone"); akcja „Zrealizuj"→„Zakończ" (`operational-transitions.ts`); `help.astro` przepisany (usunięty akapit o „dwóch słowach", już nieprawdziwy); filtr (`state-filter.ts`) bez zmian. Grep domknięty: 8 miejsc w `src/` + 2 istniejące specy (`happy-path-smoke`, `help.spec` — inaczej pękłyby).
