@@ -1,5 +1,5 @@
 import { Maximize2Icon, Minimize2Icon } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { useItemMutation } from "@/components/hooks/useItemMutation";
@@ -52,6 +52,9 @@ export default function EditItemDialog({ item, open, onOpenChange, onSaved, onNo
   const [type, setType] = useState<ItemType>(item.type);
   const [operationalStatus, setOperationalStatus] = useState<OperationalStatus>(item.operational_status ?? "new");
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  // Krótkotrwała blokada „klik poza" tuż po zamknięciu potwierdzenia (ticket ac90c2a4) — patrz
+  // dismissConfirm() i onPointerDownOutside niżej.
+  const suppressOutsideClose = useRef(false);
   // Tryb rozszerzony: jednym klikiem okno wypełnia obszar listy (poniżej górnej nawigacji), dając duże
   // pole edycji dla długich itemów. Reset przy zmianie itemu przez remount (`key={item.id}` u rodzica).
   const [expanded, setExpanded] = useState(false);
@@ -122,6 +125,19 @@ export default function EditItemDialog({ item, open, onOpenChange, onSaved, onNo
   function requestClose(): void {
     if (isDirty) setConfirmDiscard(true);
     else onOpenChange(false);
+  }
+
+  // Zamknięcie modala potwierdzenia z POWROTEM do edycji (przycisk „Wróć do edycji" lub tap poza samym
+  // potwierdzeniem). Zamknięcie potwierdzenia generuje „echo" pointer/focus-outside na oknie edycji
+  // (jego przyciski są poza treścią okna) — bez tej krótkotrwałej blokady echo re-wyzwalałoby
+  // requestClose i potwierdzenie wracałoby w nieskończoność (ticket ac90c2a4). Reset w następnym cyklu
+  // zdarzeń: echo jest synchroniczne z zamknięciem, realny „klik poza" użytkownika przychodzi później.
+  function dismissConfirm(): void {
+    suppressOutsideClose.current = true;
+    setConfirmDiscard(false);
+    window.setTimeout(() => {
+      suppressOutsideClose.current = false;
+    }, 0);
   }
 
   // Tryb podglądu (S-10): osobny, prosty render tylko-do-odczytu — żadnych pól edycji, „Zapisz",
@@ -213,7 +229,28 @@ export default function EditItemDialog({ item, open, onOpenChange, onSaved, onNo
       >
         {/* Szerokość `auto` (zamiast twardego max-w-lg) → okno rośnie też w POZIOMIE wraz z polem,
             symetrycznie do pionu; limit 95vw + scroll jako zabezpieczenie. */}
-        <DialogContent className={contentClass}>
+        {/* Bramka pętli „Wróć do edycji" (ticket ac90c2a4): gdy przy niezapisanych zmianach nad oknem
+            edycji staje osobny modal potwierdzenia, tap w jego przyciski (lub poza) jest „poza" treścią
+            TEGO okna. Bez tej bramki Radix re-wywoływałby zamknięcie (requestClose → znów potwierdzenie)
+            w nieskończoność. Gdy potwierdzenie otwarte, ignorujemy każdą interakcję poza (pointer/fokus/
+            Esc) — obsługę przejmuje wyłącznie modal potwierdzenia. Okno edycji pozostaje widoczne. */}
+        <DialogContent
+          className={contentClass}
+          onPointerDownOutside={(event) => {
+            // Gdy potwierdzenie jest otwarte LUB właśnie się zamknęło (echo, patrz dismissConfirm),
+            // ignorujemy „klik poza" — inaczej tap w przyciski potwierdzenia (są POZA treścią tego okna)
+            // re-wyzwalałby zamknięcie i potwierdzenie wracałoby w pętli (ticket ac90c2a4).
+            if (confirmDiscard || suppressOutsideClose.current) event.preventDefault();
+          }}
+          onFocusOutside={(event) => {
+            // Okno edycji nie zamyka się od samego przeniesienia fokusu (m.in. gdy fokus wraca po
+            // zamknięciu potwierdzenia) — zamknięcie tylko przez świadomy klik poza / Esc / Anuluj.
+            event.preventDefault();
+          }}
+          onEscapeKeyDown={(event) => {
+            if (confirmDiscard) event.preventDefault();
+          }}
+        >
           {/* Przełącznik rozmiaru — obok przycisku zamknięcia (X). Maximize → wypełnij obszar listy. */}
           <button
             type="button"
@@ -332,7 +369,7 @@ export default function EditItemDialog({ item, open, onOpenChange, onSaved, onNo
       <Dialog
         open={confirmDiscard}
         onOpenChange={(next) => {
-          if (!next) setConfirmDiscard(false);
+          if (!next) dismissConfirm();
         }}
       >
         <DialogContent showCloseButton={false} className="sm:max-w-sm">
@@ -344,7 +381,7 @@ export default function EditItemDialog({ item, open, onOpenChange, onSaved, onNo
             <Button
               variant="outline"
               onClick={() => {
-                setConfirmDiscard(false);
+                dismissConfirm();
               }}
             >
               Wróć do edycji

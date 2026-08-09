@@ -30,6 +30,8 @@ export default function SearchBox({ value, onChange, className }: Props) {
         onChange={(event) => {
           onChange(event.target.value);
         }}
+        // Natywny przycisk czyszczenia `type="search"` (× w WebKit/Chrome) dublował nasz własny przycisk
+        // „Wyczyść wyszukiwanie" — ukryty globalnie w `global.css` (::-webkit-search-cancel-button).
         className="h-9 rounded-[5px] pr-8 pl-8"
       />
       {value !== "" && (

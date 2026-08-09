@@ -53,7 +53,7 @@ test.describe("Pomoc (/help) — zalogowany", () => {
     }
 
     const cykl = page.locator("section#cykl-zycia");
-    for (const t of ["Nowe", "W toku", "Zrobione", "Anulowane"]) {
+    for (const t of ["Nowe", "W toku", "Zakończone", "Anulowane"]) {
       await expect(cykl).toContainText(t);
     }
 

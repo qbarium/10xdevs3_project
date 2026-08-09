@@ -44,22 +44,25 @@ function shortDate(iso: string): string {
   return `${d.getUTCDate()} ${PL_MONTHS[d.getUTCMonth()]}`;
 }
 
-/** Przycisk-duch akcji inline (Edytuj / Do kosza / Podgląd / Przywróć) — token ghost, wyciszony w spoczynku. */
+/** Przycisk-duch akcji inline (Edytuj / Do kosza / Podgląd / Przywróć / Usuń trwale) — token ghost, wyciszony
+    w spoczynku. `destructive` przełącza hover na token `--destructive` (nieodwracalne usunięcie z kosza, F10). */
 function GhostAction({
   children,
   onClick,
   disabled,
+  destructive = false,
 }: {
   children: ReactNode;
   onClick: () => void;
   disabled?: boolean;
+  destructive?: boolean;
 }) {
   return (
     <Button
       type="button"
       variant="ghost"
       size="sm"
-      className="text-muted-foreground hover:text-foreground"
+      className={cn("text-muted-foreground", destructive ? "hover:text-destructive" : "hover:text-foreground")}
       disabled={disabled}
       onClick={onClick}
     >
@@ -86,6 +89,8 @@ interface Props {
   onTrash?: (item: Item) => void;
   onRestore?: (item: Item) => void;
   onPreview?: (item: Item) => void;
+  /** Trwałe usunięcie z kosza (F10) — dostępne tylko dla `rejected`/`deleted`; widok kosza otwiera potwierdzenie. */
+  onDelete?: (item: Item) => void;
 }
 
 export default function ItemCard({
@@ -102,6 +107,7 @@ export default function ItemCard({
   onTrash,
   onRestore,
   onPreview,
+  onDelete,
 }: Props) {
   const status = item.acceptance_status;
   // Akcja widoczna = handler podany ORAZ stan na nią pozwala (tabela w item-card.ts).
@@ -111,11 +117,12 @@ export default function ItemCard({
   const canTrash = onTrash != null && isActionAllowed(status, "trash");
   const canRestore = onRestore != null && isActionAllowed(status, "restore");
   const canPreview = onPreview != null && isActionAllowed(status, "preview");
+  const canDelete = onDelete != null && isActionAllowed(status, "delete");
 
   // Kolumna akcji po prawej — wyłącznie stan `pending` (Zatwierdź/Odrzuć/Edytuj, jak dotychczasowy widok).
   const pendingActions = canAccept || canReject || (status === "pending" && canEdit);
-  // Akcje-duchy w wierszu tytułu — stany `accepted` (Edytuj/Do kosza) i koszowe (Podgląd/Przywróć).
-  const inlineActions = (status !== "pending" && canEdit) || canTrash || canPreview || canRestore;
+  // Akcje-duchy w wierszu tytułu — stany `accepted` (Edytuj/Do kosza) i koszowe (Podgląd/Przywróć/Usuń trwale).
+  const inlineActions = (status !== "pending" && canEdit) || canTrash || canPreview || canRestore || canDelete;
 
   const op = item.operational_status;
   const created = shortDate(item.created_at);
@@ -201,6 +208,17 @@ export default function ItemCard({
                   }}
                 >
                   Przywróć
+                </GhostAction>
+              )}
+              {canDelete && (
+                <GhostAction
+                  destructive
+                  disabled={actionsDisabled}
+                  onClick={() => {
+                    onDelete(item);
+                  }}
+                >
+                  Usuń trwale
                 </GhostAction>
               )}
             </div>

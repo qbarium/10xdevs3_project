@@ -53,7 +53,7 @@ interface Props {
   canAdd?: boolean;
 }
 
-// Cztery przyciski bulk w kolejności cyklu życia (Nowe → W toku → Zrobione → Anulowane).
+// Cztery przyciski bulk w kolejności cyklu życia (Nowe → W toku → Zakończone → Anulowane).
 const BULK_TARGETS: OperationalStatus[] = ["new", "in_progress", "done", "cancelled"];
 
 // Żądanie akcji zbiorczej wymagającej potwierdzenia (select-all). Dwa rodzaje: zmiana stanu operacyjnego
@@ -272,7 +272,13 @@ export default function AcceptedItemsView({
     const targetFilter = nextFilterAfterCreate(criteria.type, item.type);
     if (targetFilter !== criteria.type) {
       handleFilterChange(targetFilter);
-    } else {
+    } else if (matchesView(item.operational_status, view)) {
+      // Serwer nadaje KAŻDEMU nowemu itemowi stan „new" (AddItemDialog — bez selektora stanu). Na
+      // Zakończone/Anulowane (Faza 12, ticket 3b885540: „Dodaj wpis” dostępny na każdym filtrze stanu)
+      // świeży item NIGDY nie pasuje do predykatu widoku — wstawienie optimistic pokazałoby błędnie
+      // oznaczony wpis (badge „Nowe” w „Zakończone") aż do najbliższej zmiany kryteriów. Item i tak
+      // powstał (dialog potwierdza sukces) — po prostu nie zaśmiecamy nim niepasującej listy, tak jak
+      // `handleSaved` już usuwa (zamiast dodawać) itemy niepasujące po edycji.
       applyOptimistic((prev) => [item, ...prev]);
     }
     setAddOpen(false);
@@ -331,7 +337,9 @@ export default function AcceptedItemsView({
           <div className="border-border bg-muted flex flex-wrap items-center gap-3 rounded-[5px] border px-4 py-3">
             <label className="text-foreground flex items-center gap-2 text-sm">
               <Checkbox
-                checked={allSelected ? true : selectedCount > 0 ? "indeterminate" : false}
+                // Dwustanowo (ticket ef87e4f8): zaznaczony tylko przy komplecie; przy części zaznaczonych
+                // pozostaje odznaczony, a klik `toggleAll` zaznacza wszystkie. Bez stanu pośredniego.
+                checked={allSelected}
                 onCheckedChange={toggleAll}
                 aria-label="Zaznacz wszystkie"
                 className={ITEM_CHECKBOX_CLASS}
@@ -373,7 +381,7 @@ export default function AcceptedItemsView({
       </div>
 
       {/* Lista — JEDYNY obszar przewijania (scroll ograniczony do listy; treść przycięta do jej ramki). */}
-      <div className="min-h-0 flex-1 overflow-y-auto px-6">
+      <div className="scrollbar-stable min-h-0 flex-1 overflow-y-auto px-6">
         {items.length === 0 ? (
           filtersActive ? (
             <div

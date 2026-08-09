@@ -6,20 +6,20 @@
 import type { AcceptanceStatus } from "@/types";
 
 /** Akcje pojedyncze karty wpisu (wspólne dla widoków głównych i trybu sesji). */
-export type ItemAction = "edit" | "accept" | "reject" | "trash" | "restore" | "preview";
+export type ItemAction = "edit" | "accept" | "reject" | "trash" | "restore" | "preview" | "delete";
 
 /**
  * Dozwolone akcje per stan akceptacji:
  *  - `pending`  → edycja / akceptuj / odrzuć (staging, FR-007);
  *  - `accepted` → edycja / do kosza;
- *  - `rejected` i `deleted` → podgląd (read-only) / przywróć (kosz w obu kierunkach, S-06).
+ *  - `rejected` i `deleted` → podgląd (read-only) / przywróć / trwałe usunięcie (kosz w obu kierunkach, S-06).
  * `Record` wymusza kompletność w czasie kompilacji (nowy stan bez wpisu się nie skompiluje).
  */
 const ACTIONS_BY_STATUS: Record<AcceptanceStatus, readonly ItemAction[]> = {
   pending: ["edit", "accept", "reject"],
   accepted: ["edit", "trash"],
-  rejected: ["preview", "restore"],
-  deleted: ["preview", "restore"],
+  rejected: ["preview", "restore", "delete"],
+  deleted: ["preview", "restore", "delete"],
 };
 
 /** Lista akcji dozwolonych dla stanu (kolejność bez znaczenia — o układzie decyduje karta). */

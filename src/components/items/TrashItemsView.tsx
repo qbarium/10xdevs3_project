@@ -81,9 +81,12 @@ export default function TrashItemsView({ initialItems, initialCriteria, initialT
   // Potwierdzenie restore (select-all): id do przywrócenia po akceptacji. Potwierdzenie empty: boolean.
   const [confirmRestore, setConfirmRestore] = useState<string[] | null>(null);
   const [confirmEmpty, setConfirmEmpty] = useState(false);
+  // Potwierdzenie trwałego usunięcia POJEDYNCZEGO wpisu (F10): trzymamy cały wiersz, by dialog pokazał tytuł.
+  // Zawsze wymagane (operacja nieodwracalna), inaczej niż restore (potwierdzenie tylko przy „zaznacz wszystkie").
+  const [confirmDelete, setConfirmDelete] = useState<Item | null>(null);
   // Synchroniczny zamek re-entry (jak AcceptedItemsView): stan aktualizuje się po re-renderze, ref od razu.
   const inFlightRef = useRef(false);
-  const { restoreFromTrash, emptyTrash, pending } = useItemMutation();
+  const { restoreFromTrash, emptyTrash, deleteFromTrash, pending } = useItemMutation();
 
   // Mostek do topbara powłoki (S-15 Faza 3): fraza z topbara przez `applyCriteria` (debounce hooka +
   // czyszczenie zaznaczenia); „Wyczyść kosz" z topbara otwiera potwierdzenie (destrukcyjny twardy DELETE).
@@ -189,6 +192,42 @@ export default function TrashItemsView({ initialItems, initialCriteria, initialT
     void executeEmpty();
   }
 
+  // Trwałe usunięcie POJEDYNCZEGO wpisu z kosza (F10). Pessimistic jak restore: wpis WYGASZONY na czas
+  // mutacji, znika z listy dopiero po sukcesie serwera (DELETE ograniczony do statusów kosza). Serwer zwraca
+  // 404 dla wiersza spoza kosza / cudzego → `false`; wtedy nie ruszamy listy, tylko komunikat błędu.
+  async function executeDelete(id: string): Promise<void> {
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
+    setInFlightIds(new Set([id]));
+    const ok = await deleteFromTrash(id);
+    if (!ok) {
+      toast.error("Nie udało się usunąć wpisu. Spróbuj ponownie.");
+      setInFlightIds(new Set());
+      inFlightRef.current = false;
+      return;
+    }
+    const idSet = new Set([id]);
+    applyOptimistic((prev) => removeByIds(prev, idSet));
+    setSelected((prev) => {
+      if (!prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+    // Kolejka się dosuwa (parytet z restore): dociągnij bieżącą stronę (clamp do nowej liczby stron).
+    refetchAfterRemoval();
+    toast.success("Wpis trwale usunięty.");
+    setInFlightIds(new Set());
+    inFlightRef.current = false;
+  }
+
+  function confirmDeleteProceed(): void {
+    if (!confirmDelete) return;
+    const id = confirmDelete.id;
+    setConfirmDelete(null);
+    void executeDelete(id);
+  }
+
   // Każda zmiana kryterium z paska filtrów → wyczyść zaznaczenie (invariant „selected ⊆ widoczne" — po
   // re-fetchu skład listy się zmienia) i re-fetchuj (autorytatywna lista z serwera).
   function applyCriteria(next: ListCriteria): void {
@@ -224,7 +263,9 @@ export default function TrashItemsView({ initialItems, initialCriteria, initialT
           <div className="border-border bg-muted flex flex-wrap items-center gap-3 rounded-[5px] border px-4 py-3">
             <label className="text-foreground flex items-center gap-2 text-sm">
               <Checkbox
-                checked={allSelected ? true : selectedCount > 0 ? "indeterminate" : false}
+                // Dwustanowo (ticket ef87e4f8): zaznaczony tylko przy komplecie; przy części zaznaczonych
+                // pozostaje odznaczony, a klik `toggleAll` zaznacza wszystkie. Bez stanu pośredniego.
+                checked={allSelected}
                 onCheckedChange={toggleAll}
                 aria-label="Zaznacz wszystkie"
                 className={ITEM_CHECKBOX_CLASS}
@@ -244,7 +285,7 @@ export default function TrashItemsView({ initialItems, initialCriteria, initialT
       </div>
 
       {/* Lista — JEDYNY obszar przewijania (scroll ograniczony do listy; treść przycięta do jej ramki). */}
-      <div className="min-h-0 flex-1 overflow-y-auto px-6">
+      <div className="scrollbar-stable min-h-0 flex-1 overflow-y-auto px-6">
         {items.length === 0 ? (
           filtersActive ? (
             <div
@@ -289,6 +330,10 @@ export default function TrashItemsView({ initialItems, initialCriteria, initialT
                 actionsDisabled={pending}
                 onRestore={(it) => {
                   void executeRestore([it.id]);
+                }}
+                onDelete={(it) => {
+                  // Trwałe usunięcie ZAWSZE przez potwierdzenie (nieodwracalne) — otwórz dialog, nie kasuj od razu.
+                  setConfirmDelete(it);
                 }}
               />
             ))}
@@ -382,6 +427,38 @@ export default function TrashItemsView({ initialItems, initialCriteria, initialT
             </Button>
             <Button variant="destructive" onClick={confirmEmptyProceed}>
               Wyczyść kosz
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Potwierdzenie trwałego usunięcia POJEDYNCZEGO wpisu (F10) — zawsze wymagane (nieodwracalny hard DELETE
+          ograniczony do kosza). Pokazuje tytuł usuwanego wpisu, by user wiedział, co kasuje. */}
+      <Dialog
+        open={confirmDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setConfirmDelete(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Usunąć wpis trwale?</DialogTitle>
+            <DialogDescription>
+              {confirmDelete ? `„${confirmDelete.title}” zostanie nieodwracalnie usunięty z kosza. ` : ""}
+              Tej operacji nie można cofnąć.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setConfirmDelete(null);
+              }}
+            >
+              Anuluj
+            </Button>
+            <Button variant="destructive" onClick={confirmDeleteProceed}>
+              Usuń trwale
             </Button>
           </DialogFooter>
         </DialogContent>

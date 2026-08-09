@@ -15,18 +15,19 @@ const ITEM_TYPE_LABELS: Record<ItemType, string> = {
 const OPERATIONAL_STATUS_LABELS: Record<OperationalStatus, string> = {
   new: "Nowe",
   in_progress: "W toku",
-  done: "Zrobione",
+  done: "Zakończone",
   cancelled: "Anulowane",
 };
 
 // Nadpisania etykiet stanu operacyjnego per typ itemu (S-04, wyłom z FR-009). Punkt rozszerzenia
 // pod przyszłe definiowanie etykiet per-typ; brak wpisu → fallback do generycznej etykiety
-// z OPERATIONAL_STATUS_LABELS. Obecnie tylko testowe nadpisania stanu `done`.
+// z OPERATIONAL_STATUS_LABELS. Ticket 164608bf: ujednolicone do jednego kanonu „Zakończone" —
+// nadpisania dziś pokrywają się z etykietą generyczną, mechanizm zostaje jako punkt rozszerzenia.
 const OPERATIONAL_STATUS_LABELS_BY_TYPE: Partial<Record<ItemType, Partial<Record<OperationalStatus, string>>>> = {
-  note: { done: "Obsłużona" },
-  idea: { done: "Obsłużony" },
-  decision: { done: "Podjęta" },
-  other: { done: "Obsłużone" },
+  note: { done: "Zakończone" },
+  idea: { done: "Zakończone" },
+  decision: { done: "Zakończone" },
+  other: { done: "Zakończone" },
 };
 
 const ACCEPTANCE_STATUS_LABELS: Record<AcceptanceStatus, string> = {
@@ -59,7 +60,7 @@ export function itemTypeLabel(type: ItemType): string {
 
 /**
  * Etykieta stanu operacyjnego. Z `type` zwraca nadpisanie per-typ (np. `note` + `done` →
- * „Obsłużona"), a w razie jego braku — generyczną etykietę. Bez `type` zachowuje dotychczasowe
+ * „Zakończone"), a w razie jego braku — generyczną etykietę. Bez `type` zachowuje dotychczasowe
  * zachowanie (kompatybilność wsteczna istniejących callerów).
  */
 export function operationalStatusLabel(status: OperationalStatus, type?: ItemType): string {

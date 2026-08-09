@@ -140,7 +140,7 @@ export default function SessionEntriesView({ initialItems, initialCriteria, init
       </div>
 
       {/* Lista — JEDYNY obszar przewijania (scroll ograniczony do listy; treść przycięta do jej ramki). */}
-      <div className="min-h-0 flex-1 overflow-y-auto px-6">
+      <div className="scrollbar-stable min-h-0 flex-1 overflow-y-auto px-6">
         {items.length === 0 ? (
           <div
             role="status"
